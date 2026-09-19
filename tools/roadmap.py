@@ -38,16 +38,16 @@ END = "<!-- roadmap:end -->"
 
 # Which band a status belongs in, and the colour that band gets in the diagram.
 BANDS = [
-    ("done", "Done", "done", re.compile(r"^\s*(~~)?\s*Done\b|\*\*Done\*\*")),
-    ("active", "In progress", "active", re.compile(r"In progress", re.I)),
-    ("planned", "Not started", "planned", re.compile(r"Not started", re.I)),
-    ("proposed", "Proposed", "proposed", re.compile(r"Proposed", re.I)),
+    ("done", "Done", "statusDone", re.compile(r"^\s*(~~)?\s*Done\b|\*\*Done\*\*")),
+    ("active", "In progress", "statusActive", re.compile(r"In progress", re.I)),
+    ("planned", "Not started", "statusPlanned", re.compile(r"Not started", re.I)),
+    ("proposed", "Proposed", "statusProposed", re.compile(r"Proposed", re.I)),
 ]
 
-CLASS_DEFS = """    classDef done fill:#2e8b57,color:#ffffff,stroke:#24633f
-    classDef active fill:#c47f00,color:#ffffff,stroke:#9a6400
-    classDef planned fill:#5b6b7a,color:#ffffff,stroke:#455260
-    classDef proposed fill:#7c6a94,color:#ffffff,stroke:#615275
+CLASS_DEFS = """    classDef statusDone fill:#2e8b57,color:#ffffff,stroke:#24633f
+    classDef statusActive fill:#c47f00,color:#ffffff,stroke:#9a6400
+    classDef statusPlanned fill:#5b6b7a,color:#ffffff,stroke:#455260
+    classDef statusProposed fill:#7c6a94,color:#ffffff,stroke:#615275
 """
 
 
@@ -167,7 +167,7 @@ def marks_diagram(marks: list[dict]) -> str:
 def critical_diagram(rows: list[dict]) -> str:
     lines = ["```mermaid", "flowchart LR"]
     for i, row in enumerate(rows):
-        status = "done" if row["done"] else "active"
+        status = "statusDone" if row["done"] else "statusActive"
         lines.append(f'    {row["code"]}["{i + 1}. {row["label"]}<br/>{row["size"]}"]:::{status}')
     for i in range(len(rows) - 1):
         lines.append(f'    {rows[i]["code"]} --> {rows[i + 1]["code"]}')

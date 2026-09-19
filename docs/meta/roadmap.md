@@ -31,14 +31,14 @@ flowchart LR
         MK10["MK10 Capability model extensions<br/>large"]
         MK11["MK11 Verification and semantics<br/>very large"]
     end
-    classDef done fill:#2e8b57,color:#ffffff,stroke:#24633f
-    classDef active fill:#c47f00,color:#ffffff,stroke:#9a6400
-    classDef planned fill:#5b6b7a,color:#ffffff,stroke:#455260
-    classDef proposed fill:#7c6a94,color:#ffffff,stroke:#615275
-    class MK1,MK2,MK3,MK4 done
-    class MK5,MK7,MK8 active
-    class MK6 planned
-    class MK9,MK10,MK11 proposed
+    classDef statusDone fill:#2e8b57,color:#ffffff,stroke:#24633f
+    classDef statusActive fill:#c47f00,color:#ffffff,stroke:#9a6400
+    classDef statusPlanned fill:#5b6b7a,color:#ffffff,stroke:#455260
+    classDef statusProposed fill:#7c6a94,color:#ffffff,stroke:#615275
+    class MK1,MK2,MK3,MK4 statusDone
+    class MK5,MK7,MK8 statusActive
+    class MK6 statusPlanned
+    class MK9,MK10,MK11 statusProposed
 ```
 
 | Mark | What it is | Stages | Size | Status |
@@ -61,19 +61,19 @@ Five milestones, in order — 3 of them done. Each is here because the one befor
 
 ```mermaid
 flowchart LR
-    MK8-S1-M1["1. MK8-S1-M1 part 2: user-declarable generics (A-2)<br/>very large"]:::done
-    MK5-S6-M1["2. MK5-S6-M1: `Option`/`Result` with `?` and `if let`<br/>large"]:::done
-    MK8-S1-M2["3. MK8-S1-M2: A-4 function values and move-taking parameters<br/>large"]:::done
-    MK6-S1-M1["4. MK6-S1-M1: process threads<br/>very large"]:::active
-    MK6-S2-M1["5. MK6-S2-M1: multithreaded downloads<br/>medium"]:::active
+    MK8-S1-M1["1. MK8-S1-M1 part 2: user-declarable generics (A-2)<br/>very large"]:::statusDone
+    MK5-S6-M1["2. MK5-S6-M1: `Option`/`Result` with `?` and `if let`<br/>large"]:::statusDone
+    MK8-S1-M2["3. MK8-S1-M2: A-4 function values and move-taking parameters<br/>large"]:::statusDone
+    MK6-S1-M1["4. MK6-S1-M1: process threads<br/>very large"]:::statusActive
+    MK6-S2-M1["5. MK6-S2-M1: multithreaded downloads<br/>medium"]:::statusActive
     MK8-S1-M1 --> MK5-S6-M1
     MK5-S6-M1 --> MK8-S1-M2
     MK8-S1-M2 --> MK6-S1-M1
     MK6-S1-M1 --> MK6-S2-M1
-    classDef done fill:#2e8b57,color:#ffffff,stroke:#24633f
-    classDef active fill:#c47f00,color:#ffffff,stroke:#9a6400
-    classDef planned fill:#5b6b7a,color:#ffffff,stroke:#455260
-    classDef proposed fill:#7c6a94,color:#ffffff,stroke:#615275
+    classDef statusDone fill:#2e8b57,color:#ffffff,stroke:#24633f
+    classDef statusActive fill:#c47f00,color:#ffffff,stroke:#9a6400
+    classDef statusPlanned fill:#5b6b7a,color:#ffffff,stroke:#455260
+    classDef statusProposed fill:#7c6a94,color:#ffffff,stroke:#615275
 ```
 
 | # | Milestone | Size | Why it is next |

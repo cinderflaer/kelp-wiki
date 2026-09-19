@@ -100,14 +100,14 @@ flowchart LR
         MK10["MK10 Capability model extensions<br/>large"]
         MK11["MK11 Verification and semantics<br/>very large"]
     end
-    classDef done fill:#2e8b57,color:#ffffff,stroke:#24633f
-    classDef active fill:#c47f00,color:#ffffff,stroke:#9a6400
-    classDef planned fill:#5b6b7a,color:#ffffff,stroke:#455260
-    classDef proposed fill:#7c6a94,color:#ffffff,stroke:#615275
-    class MK1,MK2,MK3,MK4 done
-    class MK5,MK7,MK8 active
-    class MK6 planned
-    class MK9,MK10,MK11 proposed
+    classDef statusDone fill:#2e8b57,color:#ffffff,stroke:#24633f
+    classDef statusActive fill:#c47f00,color:#ffffff,stroke:#9a6400
+    classDef statusPlanned fill:#5b6b7a,color:#ffffff,stroke:#455260
+    classDef statusProposed fill:#7c6a94,color:#ffffff,stroke:#615275
+    class MK1,MK2,MK3,MK4 statusDone
+    class MK5,MK7,MK8 statusActive
+    class MK6 statusPlanned
+    class MK9,MK10,MK11 statusProposed
 ```
 
 [The full roadmap](meta/roadmap.md) has every mark's scope and status, the
