@@ -1,11 +1,11 @@
 ---
 title: "Libraries (fpl)"
-description: "fpl is the first-party Kelp library catalogue - one folder per library in a single repository, twenty-five of them at the time of writing."
+description: "fpl is the first-party Kelp library catalogue - one folder per library in a single repository, twenty-six of them at the time of writing."
 isPublished: true
 tags: "library"
 ---
 `fpl` is the first-party Kelp library catalogue: one folder per library in a
-single repository, twenty-five of them at the time of writing.
+single repository, twenty-six of them at the time of writing.
 
 Unlike the standard library, which is compiled into `kelpc` and imported as
 `std/…`, every fpl library is a **dependency you fetch**: a folder from a git
@@ -35,8 +35,9 @@ impl "deps/hash/lib" as hash
 3. **A folder must stand alone.** Only the named folder is fetched, so a library
    here cannot `impl` another one: the sibling was never downloaded and there is
    no `deps/fpl/...` in the consumer's tree to name. When two libraries need the
-   same helper, they either carry their own copy (`httpx` and `encoding` both
-   hold a base64 encoder) or they stop being two libraries.
+   same helper, they either carry their own copy (`httpx` holds a base64 encoder,
+   and `url` a percent codec, because neither may import `encoding`) or they stop
+   being two libraries.
 4. **Publishing is pushing.** A library has no version, so there is nothing to
    tag: the next `coral sync` on any consumer takes the branch tip.
 
@@ -67,7 +68,7 @@ example whose output was checked against `kelpc`, and what it deliberately does
 
 ## Pages
 
-- [Catalogue](/libraries/catalogue): all twenty-five, grouped by what they do
+- [Catalogue](/libraries/catalogue): all twenty-six, grouped by what they do
 - [Writing a library](/libraries/writing-a-library): what a library has to be
 
 ## See also

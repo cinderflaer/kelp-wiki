@@ -1,10 +1,10 @@
 ---
 title: "Catalogue"
-description: "All twenty-five first-party libraries, grouped by what they do. Every one is a folder in the fpl repository and every one is a single manifest line."
+description: "All twenty-six first-party libraries, grouped by what they do. Every one is a folder in the fpl repository and every one is a single manifest line."
 isPublished: true
 tags: "library"
 ---
-All twenty-five first-party libraries, grouped by what they do. Every one is a
+All twenty-six first-party libraries, grouped by what they do. Every one is a
 folder in the [fpl repository](https://homelabone.xenoo.dev/gittea/Juniper/fpl)
 and every one is a single manifest line.
 
@@ -15,7 +15,8 @@ and every one is a single manifest line.
 | [`json`](/libraries/json) | JSON (RFC 8259) parser, writer, JSON-Pointer lookup, tree transforms |
 | [`config`](/libraries/config) | TOML/INI-ish reader: pairs, `[section]` tables, string arrays, comments |
 | [`csv`](/libraries/csv) | RFC-4180-ish CSV parse/write: quoting, escaped quotes, embedded newlines |
-| [`encoding`](/libraries/encoding) | Base64 (RFC 4648) and percent (RFC 3986) encode/decode |
+| [`encoding`](/libraries/encoding) | Base64 (RFC 4648), base32 (RFC 4648 §6), base58 (Bitcoin), hex, percent (RFC 3986) and form (`application/x-www-form-urlencoded`) encode/decode, plus a hexdump |
+| [`url`](/libraries/url) | RFC 3986 URI parsing, building, `remove_dot_segments` and relative-reference resolution |
 | [`lineproto`](/libraries/lineproto) | Buffered `send_line`/`read_line` over a socket: gated on `net` |
 
 ## Numbers and mathematics
