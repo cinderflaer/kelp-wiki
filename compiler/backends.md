@@ -45,7 +45,7 @@ Two consequences worth knowing:
    sweep asserts that every refusal begins with it:
 
    ```
-   error: the 'asm' backend does not support the enum `Maybe` yet
+   error: the 'asm' backend does not support the `extern fun std.time.now_unix_raw` yet
    ```
 
 2. **A refusal is a feature.** The backend earns coverage by agreeing with the C
@@ -62,15 +62,17 @@ per the SysV ABI, recursion, `print`/`print!` of integers, characters, booleans,
 `str`, floats and an owned buffer, `panic`/`assert`, `datac` aggregates by value
 at any size (including a `MEMORY`-class one as an argument), the six heap types
 `Bytes`, `String`, `View`, `Box<T>`, `List<T>` and `Map<K, V>` with their own free
-at every drop point, a `pd`'s generated storage, and calls to the `extern fun`s
-whose bodies this backend owns or can forward to libc through the PLT.
+at every drop point, `enum` tagged unions with a generated per-`enum` drop that
+switches on the runtime tag (`when`, `if let` and `?` all lower on top of them),
+a `pd`'s generated storage, and calls to the `extern fun`s whose bodies this
+backend owns or can forward to libc through the PLT.
 
-What it does not cover yet is the refusal list below: `enum` (and therefore
-`Option`/`Result`, `if let` and `?`), closures and function values, a `datac`
-holding a float or a heap field, the `List` methods that need an element
-comparison or a clone (`sort`, `contains`, `slice`), an owning `pd`, and a
-capability-gated call. Printing through `fmt`'s `Display` machinery is not
-covered either.
+What it does not cover yet is the refusal list below: an `enum` whose payload is
+a float, a `datac` holding a float field, closures and function values, the `List`
+methods that need an element comparison or a clone (`sort`, `contains`, `slice`),
+the `str` parsers' `mut` out-parameter and the heap-bodied `fs`/`io`/`net`/`path`
+externs, and a capability-gated call. Printing through `fmt`'s `Display` machinery
+is not covered either.
 
 Its layout:
 
@@ -84,24 +86,24 @@ Its layout:
 ## How much of it works today
 
 Measured on 2026-09-19 with the release binary, over
-`kelpc/tests/fixtures/*.kp` (287 files), by building each fixture with both
+`kelpc/tests/fixtures/*.kp` (292 files), by building each fixture with both
 backends:
 
 | | Count |
 | --- | --- |
 | Rejected by the compiler itself (the `should fail` fixtures) | 134 |
-| Accepted by the compiler | 153 |
-| of those, built by the `asm` backend | 106 |
-| of those, refused by the `asm` backend with the documented prefix | 47 |
+| Accepted by the compiler | 158 |
+| of those, built by the `asm` backend | 125 |
+| of those, refused by the `asm` backend with the documented prefix | 33 |
 | of those, failed for any other reason | 0 |
 
-The plan's own status table records the *suite* number: `200 of 273` integration
-tests passing under `--backend=asm`, with the C backend passing all 273, which
+The plan's own status table records the *suite* number: `219 of 278` integration
+tests passing under `--backend=asm`, with the C backend passing all 278, which
 counts multi-file projects and subprocess cases too, and so is not the same
 denominator as the fixture count above. Re-measure either before quoting it: both
 move with every slice, and the plan's header says it is updated as work lands.
 
-### What the 47 refusals are
+### What the 33 refusals are
 
 The differential sweep groups them into the categories the plan's ranking table
 uses (`cargo test --test backend_coverage -- --ignored --nocapture` prints it
@@ -109,13 +111,13 @@ verbatim, and it is the number the ratchet keeps honest):
 
 | Category | Fixtures |
 | --- | --- |
-| a heap type | 17 |
-| an `enum` | 19 |
-| a `datac` holding a float or a heap field | 2 |
-| a closure or a function value | 8 |
+| a heap type | 16 |
+| an `enum` whose payload is a float | 4 |
+| a `datac` holding a float field | 2 |
+| a closure or a function value | 10 |
 | a gated `extern` | 1 |
 
-One refusal per category, as the sweep prints them:
+One refusal per category, as the backend names them:
 
 ```
 error: the 'asm' backend does not support the `extern fun std.io.is_open_raw` yet
@@ -123,17 +125,15 @@ error: the 'asm' backend does not support the parameter `s: &Shape` of `area` ye
 error: the 'asm' backend does not support the parameter `self: &Circle` of `Circle#area` yet
 error: the 'asm' backend does not support the parameter `f: &closure(i32).R: i32` of `apply` yet
 error: the 'asm' backend does not support the `extern fun std.time.now_unix_raw` yet
-error: the 'asm' backend does not support this struct-returning expression (only a struct literal, a
-  named local, or a call are supported for a value over eight bytes wide) yet
 ```
 
 The heap-type row is the largest one and it is the catch-all, not one gap: a
-build stops at the first refusal it hits, so a fixture that would also meet an
-`enum` later is counted here when the first thing in its way is a heap type, a
-standard-library call over `net`/`io`/`process`/`fs`, or the `extern fun` behind
-one of those (the ranking treats an `extern fun` whose body this backend has no
-routine for as part of the heap row, because the allocator is what unblocks
-almost all of it). The category is recovered from each fixture's
+build stops at the first refusal it hits, so a fixture that would also meet a
+closure or a float payload later is counted here when the first thing in its way
+is a heap type, a standard-library call over `net`/`io`/`process`/`fs`, or the
+`extern fun` behind one of those (the ranking treats an `extern fun` whose body
+this backend has no routine for as part of the heap row, because the allocator is
+what unblocks almost all of it). The category is recovered from each fixture's
 first refusal message, so a fixture can move rows when a message's wording
 changes. The ranking table this page summarizes, and the per-fixture lists behind
 it, are in
@@ -141,13 +141,15 @@ it, are in
 with the measured brief for the next slice in `plan/mk7-next-slice.md`.
 
 Re-measured 2026-09-19, this is the state the plan calls "past halfway": the
-container set is closed (`Box`, `List`, `Map` all lower), the six heap types
-free themselves at every drop point, an owned passdown frees itself at process
-exit (the generated `kelp_drop_pds`, registered with `atexit` exactly as the C
-backend's handler is), and what is left is one construct family at a time —
-`enum`, closures, a `datac` with a float or heap field, the
-comparison-and-clone `List` methods, the `str`-to-`String` coercion, and a gated
-call.
+container set is closed (`Box`, `List`, `Map` all lower) and so is the aggregate
+set that `enum` closes (every aggregate shape lowers except a `datac` or an
+`enum` payload holding a float), the six heap types free themselves at every drop
+point, an owned passdown frees itself at process exit (the generated
+`kelp_drop_pds`, registered with `atexit` exactly as the C backend's handler is),
+and what is left is one construct family at a time — a float payload in an
+aggregate, closures, the comparison-and-clone `List` methods, the `str` parsers'
+`mut` out-parameter and the heap-bodied `fs`/`io`/`net`/`path` externs, and a
+gated call.
 
 ## Stages beyond tier 1
 
@@ -162,9 +164,10 @@ The plan splits the work into tiers, and only the first is in progress:
 | 8: runtime decoupling (parallel track) | in progress; see [Runtime](/compiler/runtime) |
 
 The memory gate is a test rather than an argument: `kelpc/tests/memory_gate.rs`
-runs `valgrind` over both backends' binaries (145 built by the C backend, 97 by
-the `asm` one) and asserts no findings, because the AddressSanitizer gate
-instruments generated C and cannot see this backend. See [Tests](/compiler/tests).
+runs `valgrind` over both backends' binaries — the plan's recorded count is 158
+built by the C backend and 125 by the `asm` one — and asserts no findings, because
+the AddressSanitizer gate instruments generated C and cannot see this backend. See
+[Tests](/compiler/tests).
 
 ## See also
 

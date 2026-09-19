@@ -108,23 +108,24 @@ backend cannot lower is **refused by name** rather than silently miscompiled.
 Three real refusals:
 
 ```text
-error: the 'asm' backend does not support the enum `E` yet
 error: the 'asm' backend does not support the `extern fun std.fs.exists_raw` yet
 error: the 'asm' backend does not support the parameter `f: &closure(&Item)` of `each` yet
+error: the 'asm' backend does not support the parameter `s: &Shape` of `area` yet
 ```
 
-Those are three different categories: a tagged union, a capability-gated call
-(the `extern` body behind `std/fs`), and a closure parameter typed with a
-module-declared type. Scalars, `while`, `print!` and arithmetic do lower; a
-program made of those builds and runs under `asm` today.
+Those are three different categories: an `extern` body that needs the heap (the
+`std/fs` call), a closure parameter typed with a module-declared type, and an
+`enum` whose payload is a float (`Shape`'s variants hold an `f64`). Scalars,
+`while`, `print!` and arithmetic do lower; a program made of those builds and runs
+under `asm` today.
 
 The roadmap keeps the current count, and it is the authority for the numbers:
-`plan/roadmap.md` records MK7 stage 1 as past halfway, with 200 of 273 integration
-tests passing on the `asm` backend, 273 of 273 on the C one, and 106 of the 153
+`plan/roadmap.md` records MK7 stage 1 as past halfway, with 219 of 278 integration
+tests passing on the `asm` backend, 278 of 278 on the C one, and 125 of the 158
 fixtures the C backend builds built and compared byte for byte
 ([roadmap](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/roadmap.md)).
 Those figures come from the roadmap, not from a run here. What the `asm` backend
-lowers today, and the 47 refusals it still has, are on the
+lowers today, and the 33 refusals it still has, are on the
 [Backends](/compiler/backends) page.
 
 If the `asm` backend cannot find the library directory it links against, point

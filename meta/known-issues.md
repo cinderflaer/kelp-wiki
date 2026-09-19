@@ -168,9 +168,9 @@ A program that pulls in `json` emits about 47 of these before the first real err
 
 Noted so nobody re-investigates them:
 
-- The `asm` backend refusing a construct by name (`does not support the enum
-  Maybe yet`) is the documented design: a construct it cannot lower is refused,
-  not silently miscompiled.
+- The `asm` backend refusing a construct by name (`does not support the extern
+  fun std.fs.exists_raw yet`) is the documented design: a construct it cannot lower
+  is refused, not silently miscompiled.
 - A method call on a returned temporary being refused
   (`set.union(a, b).len()`) is the borrow rule for a receiver-derived return, and
   the diagnostic names the fix.
