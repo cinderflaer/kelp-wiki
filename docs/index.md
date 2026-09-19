@@ -181,3 +181,19 @@ web-friendly view of them, with the standard library and the library catalogue
 added; where they disagree, the plan document wins and the page has a bug.
 
 See [Source documents](meta/source-documents.md) for the map.
+
+## Repositories
+
+The project lives in Gitea, at
+[`homelabone.xenoo.dev/gittea/Juniper`](https://homelabone.xenoo.dev/gittea/Juniper).
+
+| Repository | What it holds |
+| --- | --- |
+| [`kelp`](https://homelabone.xenoo.dev/gittea/Juniper/kelp) | The compiler `kelpc` in Rust, plus the `plan/*.md` documents that are the authority for the language. |
+| [`fpl`](https://homelabone.xenoo.dev/gittea/Juniper/fpl) | One folder per first-party Kelp library: `argparse`, `bigint`, `csv`, `json` and the rest of the catalogue. |
+| [`coral`](https://homelabone.xenoo.dev/gittea/Juniper/coral) | The build tool and package manager. |
+| [`lighthouse`](https://homelabone.xenoo.dev/gittea/Juniper/lighthouse) | Editor support: the LSP server, the VS Code extension and the IntelliJ plugin. |
+| [`kelp-wiki`](https://homelabone.xenoo.dev/gittea/Juniper/kelp-wiki) | The sources for this documentation. `main` is the MkDocs source; the `wikijs` branch is what this wiki imports. |
+
+All repositories, including the ones unrelated to Kelp:
+[homelabone.xenoo.dev/gittea/Juniper](https://homelabone.xenoo.dev/gittea/Juniper).
