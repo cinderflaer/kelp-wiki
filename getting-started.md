@@ -9,7 +9,7 @@ Three pages, in order:
 1. **[Install and build](/getting-started/install)**: build `kelpc`, run a file, pick a
    backend, and what the toolchain needs from the machine.
 2. **[Your first program](/getting-started/first-program)**: a guided tour of Kelp's shape in
-   one file, with output.
+   one file, with output, and the Coral commands that build and run it.
 3. **[Projects and coral.toml](/getting-started/projects)**: what a project is, what a
    `coral.toml` contains, and how dependencies land in `src/deps/`.
 
@@ -21,6 +21,11 @@ borrowed (`str`, `View`, `&T`); there is no garbage collector and no `unsafe`.
 Functions are declared with `fun`, return types with `.R: T`, errors are
 `Option`/`Result` values, and pattern matching is `when`. A module states what it
 may touch on its `impl` lines, and that is the only thing that grants authority.
+
+The build side has two tools and the split matters: `kelpc` is the compiler, and
+[Coral](/tooling/coral) is the build tool and package manager around it. A single
+`.kp` file needs only `kelpc`. Anything that becomes a project wants Coral, and it
+is easier to start with it than to adopt it once there are dependencies.
 
 ## Where to go next
 

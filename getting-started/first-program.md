@@ -1,12 +1,18 @@
 ---
 title: "Your first program"
-description: "The Kelp repository ships three examples - examples/hello.kp, examples/fib.kp and examples/download.kp. This page walks the first two, then adds the pieces a real program needs."
+description: "A guided tour of Kelp's shape in one file, with output - run through Coral from the first line so the manifest is never something you learn later."
 isPublished: true
 tags: "getting-started"
 ---
 The Kelp repository ships three examples: `examples/hello.kp`, `examples/fib.kp`
 and `examples/download.kp`. This page walks the first two, then adds the pieces a
 real program needs.
+
+Every command here is shown twice, once as bare `kelpc` and once through
+[Coral](/tooling/coral). Both work. Start with Coral anyway: it costs one
+`coral.toml` now, and it is the thing you would otherwise have to learn later,
+at the moment your program grows past a single file and suddenly needs a task, a
+dependency, or a pinned toolchain.
 
 ## Hello
 
@@ -20,6 +26,31 @@ fun main() {
 kelpc run hello.kp
 # hello, kelp
 ```
+
+### The same thing through Coral
+
+```sh
+coral init hello        # coral.toml, src/main.kp, tests/, src/tasks/
+coral run               # builds, then runs, forwarding argv and the exit code
+```
+
+`coral init` writes the manifest and a sample `src/main.kp`, so the same program
+from a project looks like this:
+
+```toml
+name = "hello"
+version = "0.1.0"
+entry = "src/main.kp"
+```
+
+and `coral run` builds and runs it. That is the whole difference at this size.
+What it buys you later is [what a project is](/getting-started/projects): `impl`
+paths relative to `src/`, dependencies fetched by `coral sync`, extra entry points
+as `[tasks]`, and a `[toolchain]` pin so a machine builds with the compiler the
+project names rather than whatever `kelpc` happens to be on `PATH`.
+
+From here on the page uses `kelpc`, because it is one word shorter and makes the
+language the subject. `coral build` and `coral run` accept the same sources.
 
 `print` takes exactly one argument and adds a newline; `print!` does not. Templates
 interpolate:
@@ -175,5 +206,6 @@ consumer decides the pattern. See [Capabilities](/language/capabilities).
 ## Next
 
 - [Projects and coral.toml](/getting-started/projects): the manifest, dependencies, tasks
+- [Coral](/tooling/coral): `init`, `build`, `run`, `check`, `sync`, toolchain pins
 - [Language](/language): the reference for everything above
 - [Libraries (fpl)](/libraries): JSON, CSV, dates, globs, HTTP helpers

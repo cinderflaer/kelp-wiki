@@ -12,7 +12,7 @@ tags: "getting-started"
 | a C compiler and glibc | the default `c` backend |
 | `as`, `ld` (binutils) and the glibc they link against | the `asm` backend |
 | `valgrind` (optional) | the memory gate test |
-| [Coral](/tooling) (optional) | project manifests, tasks, dependencies |
+| [Coral](/tooling/coral) (recommended) | the build tool and package manager: projects, dependencies, tasks, toolchain pins. One `coral.toml`, and it calls `kelpc` for you |
 
 ## Build the compiler
 
@@ -35,6 +35,12 @@ The binary lands at `target/release/kelpc`.
 ```sh
 ./target/release/kelpc build examples/download.kp      # artifact in build/download
 ```
+
+Through Coral the same two commands are `coral run` and `coral build`, run inside
+a project directory. Worth starting there at the first program rather than the
+first dependency, so the manifest is familiar before it has to be: `coral init`
+scaffolds one, and [Projects and coral.toml](/getting-started/projects) explains
+what lands in it.
 
 With no `-o`, the binary and the generated C (or assembly) land in `build/` in the
 **current working directory**, named after the last path segment compiled. So
