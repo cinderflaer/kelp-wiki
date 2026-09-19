@@ -1,8 +1,8 @@
 # Standard library index
 
 Every public name in the shipped standard library, one line each, generated from
-`kelpc/std/*.kp` at `kelp` commit `3a2f6f9`. Behaviour, panics and examples live in the
-[Standard library](../stdlib/index.md) chapter.
+`kelpc/std/*.kp` at `kelp` commit `175b0e3` by `tools/stdlib-index.py`. Behaviour, panics
+and examples live in the [Standard library](../stdlib/index.md) chapter.
 
 A module marked with a domain needs that capability delegated on the `impl` line, e.g.
 `impl "std/fs" with caps(fs = ["/srv/data/**"])`.
@@ -422,9 +422,9 @@ Functions:
 
 ## Not importable
 
-`std/rt` holds the capability matcher the compiler uses internally and is excluded
-from the shipped list, so `impl "std/rt"` is refused. The importable glob matcher
-is [`glob`](../libraries/glob.md).
+`std/rt` holds the capability matcher the compiler uses internally and is excluded from
+the shipped list, so `impl "std/rt"` is refused. The importable glob matcher is
+[`glob`](../libraries/glob.md).
 
 ## See also
 
