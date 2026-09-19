@@ -69,6 +69,14 @@ Two behaviours worth knowing:
   creates it if it is missing.
 - The name comes from the last path segment you passed, which is why a directory
   compiles to `build/<directory>` and a file to `build/<file stem>`.
+- **A directory argument must hold a `coral.toml`.** A directory without one is
+  refused, and neither `proj/` nor `.` is exempt:
+
+  ```text
+  $ kelpc build proj/
+  error: '/tmp/proj' is a directory but has no coral.toml (pass a .kp file, or add a manifest)
+  ```
+
 - **Passing `.` gives the artifact the name `a.out`** (and the C `a.c`), because
   the last segment has no stem. Name the directory (`kelpc build proj/`) or use
   `-o` when you care about the name, which a build script always should.
@@ -110,23 +118,27 @@ Three real refusals:
 ```text
 error: the 'asm' backend does not support the `extern fun std.fs.exists_raw` yet
 error: the 'asm' backend does not support the parameter `f: &closure(&Item)` of `each` yet
-error: the 'asm' backend does not support the parameter `s: &Shape` of `area` yet
+error: the 'asm' backend does not support the `extern fun std.time.now_unix_raw` yet
 ```
 
-Those are three different categories: an `extern` body that needs the heap (the
-`std/fs` call), a closure parameter typed with a module-declared type, and an
-`enum` whose payload is a float (`Shape`'s variants hold an `f64`). Scalars,
-`while`, `print!` and arithmetic do lower; a program made of those builds and runs
-under `asm` today.
+Those are three different categories: an `extern` whose body this backend has no
+routine for, which is the `std/fs` call here and which the plan counts in its
+catch-all heap row; a closure or a function value; and an `extern` refused for
+its capability gate rather than for the symbol (`time.now_unix_raw`). Scalars,
+`while`, `print!`, arithmetic and an aggregate holding a float all lower, so a
+program made of those builds and runs under `asm` today.
 
-The roadmap keeps the current count, and it is the authority for the numbers:
-`plan/roadmap.md` records MK7 stage 1 as past halfway, with 219 of 278 integration
-tests passing on the `asm` backend, 278 of 278 on the C one, and 125 of the 158
-fixtures the C backend builds built and compared byte for byte
-([roadmap](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/roadmap.md)).
-Those figures come from the roadmap, not from a run here. What the `asm` backend
-lowers today, and the 33 refusals it still has, are on the
-[Backends](/compiler/backends) page.
+`plan/mk7-own-backend.md` §0 and §5 own the current count. **144 of the 168
+fixtures the C backend accepts build under `asm`, and 24 are refused**, and the
+plan's status table records **240 of 289** integration tests passing under
+`--backend=asm`, with the C backend passing all 289 — a larger denominator,
+because the suite counts multi-file projects and subprocess cases as well
+([mk7-own-backend.md](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-own-backend.md)).
+The fixture pair was re-measured for this page, and the suite figure is the
+plan's, not a run here. Re-measure both before quoting them, because each moves
+with every slice; `plan/roadmap.md` still carries the older figures (219 of 278,
+278 of 278, 125 of 158) in its MK7 row. What the `asm` backend lowers today, and
+the 24 refusals it still has, are on the [Backends](/compiler/backends) page.
 
 If the `asm` backend cannot find the library directory it links against, point
 `KELPC_GLIBC_DIR` at the directory holding `crt1.o` and `libc.so`.
