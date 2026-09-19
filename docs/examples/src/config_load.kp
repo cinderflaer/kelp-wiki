@@ -1,0 +1,54 @@
+// config_load: read settings from a manifest-shaped text.
+//
+//   kelpc run config_load.kp
+//
+// Dependency:
+//
+//   [dependencies]
+//   config = "Juniper/fpl/config"
+//
+// Shows: the subset of TOML that coral.toml itself uses, typed accessors with
+// defaults, and the fact that an unquoted value which is not an integer is a
+// string. The text is in the program so the example runs with no file, and the
+// same call would read `fs.read_text(path)` in a real tool.
+
+impl "deps/config/lib" as config
+impl "std/str"
+
+// Every owned local lives here rather than in `main`: one declared inside an
+// `if let` arm does not build yet (see Known issues), and these are `String`s.
+fun show(cfg: &config.Config) {
+    val name = config.get_str(cfg, "", "name")
+    print(str.concat("config     name = ", name))
+
+    print("config     count = ${config.get_int(cfg, "", "count")}")
+    print("config     has(name) = ${config.has(cfg, "", "name")}")
+
+    // 1.5 is not an integer, so it is stored as the text it was written as.
+    val ratio = config.get_str(cfg, "", "ratio")
+    print(str.concat("config     ratio is text: ", ratio))
+
+    val host = config.get_str(cfg, "server", "host")
+    print(str.concat("config     server.host = ", host))
+
+    val features = config.get_array(cfg, "server", "features")
+    print("config     features = ${features.len()} entries")
+
+    // Accessors with defaults do not panic on a missing or wrong-typed key.
+    val fallback = config.get_str_or(cfg, "", "missing", "unset")
+    print(str.concat("config     missing = ", fallback.as_str()))
+    print("config     missing int = ${config.get_int_or(cfg, "", "missing", -1)}")
+    print("config     a text value read as int falls back = ${config.get_int_or(cfg, "", "ratio", -1)}")
+
+    // The entries are flat, so the section is part of the key.
+    print("config     entries = ${cfg.entries.len()}")
+}
+
+fun main() {
+    val text = "# a project\nname = \"demo\"\ncount = 7\nratio = 1.5\n\n[server]\nhost = \"127.0.0.1\"\nfeatures = [\"a\", \"b\"]  # trailing comment\n"
+
+    val parsed = config.parse(text)
+    if let Ok(cfg) = parsed {
+        show(cfg)
+    }
+}

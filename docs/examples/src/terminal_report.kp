@@ -1,0 +1,68 @@
+// terminal_report: a coloured table on stdout and log records on stderr.
+//
+//   kelpc run terminal_report.kp
+//
+// Dependencies:
+//
+//   [dependencies]
+//   term  = "Juniper/fpl/term"
+//   log   = "Juniper/fpl/log"
+//   table = "Juniper/fpl/table"
+//
+// Two of the three are gated, and the consumer writes the grant:
+//
+//   term needs env, to read NO_COLOR
+//   log  needs time, for the timestamp
+//
+// Shows: a report on stdout that a script can parse, log records on stderr that
+// a human can read, and the NO_COLOR convention. The program clears the variable
+// itself and then sets it, so the two halves behave the same way whatever the
+// environment it was started in; the entry module holds every domain, which is
+// why it may touch `env` directly.
+
+impl "std/env"
+impl "deps/term/lib" as term with caps(env = ["NO_COLOR"])
+impl "deps/log/lib" as log with caps(time = [])
+impl "deps/table/lib" as table
+
+fun main() {
+    var headers: List<String> = List.empty()
+    headers.push("check")
+    headers.push("result")
+    var report = table.new_table(headers)
+
+    var build_row: List<String> = List.empty()
+    build_row.push("build")
+    build_row.push("ok")
+    table.add_row(report, build_row)
+
+    var test_row: List<String> = List.empty()
+    test_row.push("tests")
+    test_row.push("2 failed")
+    table.add_row(report, test_row)
+
+    print!(table.render(&report))
+    print("")
+
+    // Colour on: no NO_COLOR in the environment, so each call wraps the text in
+    // an SGR sequence. `cat -v` in the recorded run shows the escapes.
+    env.unset("NO_COLOR")
+    print(term.green("build ok"))
+    print(term.red("tests failed"))
+    print(term.bold("summary"))
+    print("colour disabled = ${term.no_color()}")
+
+    // Colour off: the variable's presence is the whole switch, so the same three
+    // calls now return their argument unchanged.
+    env.set("NO_COLOR", "1")
+    print(term.green("build ok"))
+    print(term.red("tests failed"))
+    print(term.bold("summary"))
+    print("colour disabled = ${term.no_color()}")
+
+    // Log records are written to stderr, so stdout stays machine-readable.
+    val logger = log.new_logger("report", log.LEVEL_INFO)
+    log.info(&logger, "report rendered")
+    log.error(&logger, "two checks failed")
+    log.debug(&logger, "this one is dropped, below the minimum level")
+}

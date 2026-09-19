@@ -1,0 +1,60 @@
+// text_tools: checksums, encodings and dates over one string.
+//
+//   kelpc run text_tools.kp
+//
+// Dependencies:
+//
+//   [dependencies]
+//   hash     = "Juniper/fpl/hash"
+//   encoding = "Juniper/fpl/encoding"
+//   datetime = "Juniper/fpl/datetime"
+//
+// Shows: content hashes for a cache key, a base64 round trip, percent-encoding
+// for a URL, and a civil date printed from a Unix seconds count. Nothing here
+// needs a capability, not even the clock: the seconds count is supplied.
+
+impl "deps/hash/lib" as hash
+impl "deps/encoding/lib" as encoding
+impl "deps/datetime/lib" as datetime
+impl "std/result"
+impl "std/str"
+fun main() {
+    val text = "kelp"
+
+    print("hash       crc32   = ${hash.crc32_str(text)}")
+    print("hash       fnv1a32 = ${hash.fnv1a_32_str(text)}")
+    print("hash       fnv1a64 = ${hash.fnv1a_64_str(text)}")
+
+    val bytes = Bytes.from_str(text)
+    val encoded = encoding.base64_encode(&bytes)
+    print("encoding   base64  = ${encoded}")
+
+    val decoded = encoding.base64_decode(encoded.as_str())
+    if let Ok(round_trip) = decoded {
+        print("encoding   round trip = ${round_trip.as_str()}")
+    }
+
+    val escaped = encoding.percent_encode("kelp lang/1?q=a b")
+    print("encoding   percent = ${escaped}")
+    val unescaped = encoding.percent_decode(escaped.as_str())
+    if let Ok(plain) = unescaped {
+        print("encoding   unescaped = ${plain.as_str()}")
+    }
+
+    // 1700000000 is 2023-11-14T22:13:20Z, and day 2 of the week is Tuesday.
+    val civil = datetime.from_unix(1700000000)
+    val stamp = datetime.format_iso8601(&civil)
+    print(str.concat("datetime   1700000000 = ", stamp.as_str()))
+    print("datetime   day of week = ${datetime.day_of_week(&civil)}")
+    print("datetime   is_leap_year(2024) = ${datetime.is_leap_year(2024)}")
+
+    val parsed = datetime.parse_iso8601("2024-02-29T12:34:56Z")
+    if let Ok(moment) = parsed {
+        print("datetime   parsed seconds = ${datetime.to_unix(moment)}")
+        print("datetime   days from epoch = ${datetime.days_from_civil(1970, 1, 2)}")
+    }
+
+    // A bad escape is a value, not a panic.
+    val broken = encoding.percent_decode("%zz")
+    print("encoding   %zz is an error = ${result.is_err(broken)}")
+}

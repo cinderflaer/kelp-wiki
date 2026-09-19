@@ -137,6 +137,13 @@ nav:
       - sandbox_main: examples/sandbox_main.md
       - lines_server: examples/lines_server.md
       - http_fetch: examples/http_fetch.md
+      - numbers: examples/numbers.md
+      - text_tools: examples/text_tools.md
+      - collections: examples/collections.md
+      - config_load: examples/config_load.md
+      - bits_pack: examples/bits_pack.md
+      - terminal_report: examples/terminal_report.md
+      - http_headers: examples/http_headers.md
   - Compiler:
       - compiler/index.md
       - Architecture: compiler/architecture.md

@@ -1,0 +1,54 @@
+// bits_pack: sub-byte fields, a bit set, and a reproducible byte stream.
+//
+//   kelpc run bits_pack.kp
+//
+// Dependencies:
+//
+//   [dependencies]
+//   bits = "Juniper/fpl/bits"
+//   prng = "Juniper/fpl/prng"
+//
+// Shows: packing a flag and two narrow fields into two bytes, reading them back,
+// a fixed-size bit set over Bytes, and a seeded generator so the "random" bytes
+// are the same on every run.
+
+impl "deps/bits/lib" as bits
+impl "deps/prng/lib" as prng
+
+fun main() {
+    // One flag, then a 4-bit value, then a 3-bit value: eight bits, one byte.
+    var writer = bits.writer_new()
+    writer.write_bit(true)
+    writer.write_bits(5, 4)
+    writer.write_bits(3, 3)
+    val packed = bits.finish(writer)
+
+    print("bits       bytes written = ${packed.len()}")
+    print("bits       the byte = ${packed.get(0)}")
+
+    var reader = bits.reader_new(packed)
+    print("bits       flag = ${reader.read_bit()}")
+    print("bits       first field = ${reader.read_bits(4)}")
+    print("bits       second field = ${reader.read_bits(3)}")
+    print("bits       bits left = ${reader.remaining_bits()}")
+
+    // A BitSet is fixed at construction. Bit 0 is the top bit of byte 0.
+    var flags = bits.new(10)
+    flags.set(0, true)
+    flags.set(9, true)
+    print("bits       bitset length = ${flags.len()}")
+    print("bits       count_ones = ${flags.count_ones()}")
+    print("bits       get(1) = ${flags.get(1)}")
+    flags.clear()
+    print("bits       after clear = ${flags.count_ones()}")
+
+    // Seeded, so two runs print the same three bytes.
+    var rng = prng.new(7)
+    print("prng       byte 1 = ${prng.below(rng, 256)}")
+    print("prng       byte 2 = ${prng.below(rng, 256)}")
+    print("prng       byte 3 = ${prng.below(rng, 256)}")
+
+    // Same seed, same sequence: this line repeats the first draw.
+    var again = prng.new(7)
+    print("prng       same seed, first byte again = ${prng.below(again, 256)}")
+}

@@ -1,0 +1,78 @@
+// collections: the list and set helpers beyond the builtins.
+//
+//   kelpc run collections.kp
+//
+// Dependencies:
+//
+//   [dependencies]
+//   listx = "Juniper/fpl/listx"
+//   set   = "Juniper/fpl/set"
+//
+// Shows: fold, zip, chunks and a comparator sort over a list, then set union,
+// intersection and difference. The two libraries exist because a user module
+// cannot overload a name, so the numeric helpers spell their type into the
+// function name, and a String-keyed set is a separate type from a generic one.
+
+impl "deps/listx/lib" as listx
+impl "deps/set/lib" as set
+impl "std/option"
+
+fun main() {
+    var xs: List<i32> = List.empty()
+    xs.push(3)
+    xs.push(1)
+    xs.push(2)
+    xs.push(1)
+
+    print("listx      sum = ${listx.sum_i32(xs)}")
+    print("listx      min = ${listx.min_i32(xs)}")
+    print("listx      max = ${listx.max_i32(xs)}")
+    print("listx      fold(+, 0) = ${listx.fold(xs, 0, fun(acc: i32, x: &i32).R: i32 = acc + x)}")
+    print("listx      unique = ${listx.unique_i32(xs).len()} distinct values")
+
+    val at = listx.position_i32(xs, 2)
+    if let Some(i) = at {
+        print("listx      first index of 2 = ${i}")
+    }
+
+    var names: List<i32> = List.empty()
+    names.push(10)
+    names.push(20)
+    names.push(30)
+    val pairs = listx.zip(xs, names)
+    print("listx      zip stops at the shorter = ${pairs.len()} pairs")
+    print("listx      pair(0) = ${pairs.get(0).first} and ${pairs.get(0).second}")
+
+    val groups = listx.chunks(xs, 3)
+    print("listx      chunks of 3 = ${groups.len()} groups, first has ${groups.get(0).items.len()}")
+
+    // sort_by works for any element type, here descending.
+    listx.sort_by(xs, fun(a: &i32, b: &i32).R: bool = a > b)
+    print("listx      sorted descending = ${xs.get(0)} ${xs.get(1)} ${xs.get(2)} ${xs.get(3)}")
+
+    // Sets: insertion order is preserved, so these print in a stable order.
+    var left: set.Set<i32> = set.new()
+    left.insert(1)
+    left.insert(2)
+    left.insert(3)
+
+    var right: set.Set<i32> = set.new()
+    right.insert(3)
+    right.insert(4)
+
+    val both = set.union(left, right)
+    val shared = set.intersect(left, right)
+    val only_left = set.difference(left, right)
+    print("set        union = ${both.len()} members")
+    print("set        intersect = ${shared.len()} members")
+    print("set        difference = ${only_left.len()} members")
+    print("set        has(2) = ${left.has(2)}")
+
+    var words: set.StrSet = set.new_str()
+    words.insert("alpha")
+    words.insert("beta")
+    words.insert("alpha")
+    val list = words.to_list()
+    print("set        StrSet keeps 2 of 3 inserts: ${list.len()}")
+    print("set        first member = ${list.get(0).as_str()}")
+}

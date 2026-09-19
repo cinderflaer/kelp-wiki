@@ -1,0 +1,49 @@
+// http_headers: the request pieces std/http leaves out, with no network involved.
+//
+//   kelpc run http_headers.kp
+//
+// Dependencies:
+//
+//   [dependencies]
+//   httpx = "Juniper/fpl/httpx"
+//
+// Shows: a query string built from name/value pairs, a URL assembled from it, a
+// Basic auth header, the method helpers past GET and POST, and the value out of
+// a Set-Cookie header. Every one of these is data, so the program runs offline:
+// sending the request is the caller's job, and the caller holds the net grant.
+
+impl "std/http"
+impl "deps/httpx/lib" as httpx
+impl "std/str"
+
+fun main() {
+    // httpx reuses http.Header as a name/value pair, which saves a second type.
+    var pairs: List<http.Header> = List.empty()
+    pairs.push(http.Header(name = "q", value = "kelp lang"))
+    pairs.push(http.Header(name = "page", value = "2"))
+
+    val query = httpx.build_query(pairs)
+    print(str.concat("httpx      query = ", query.as_str()))
+
+    val url = httpx.url_with_query("http://example.invalid/search", pairs)
+    print(str.concat("httpx      url = ", url.as_str()))
+
+    val auth = httpx.basic_auth_header("ada", "s3cret")
+    print(str.concat("httpx      header = ", auth.name.as_str()))
+    print(str.concat("httpx      value = ", auth.value.as_str()))
+
+    val put = httpx.make_put("http://example.invalid/items/1", Bytes.from_str("{\"n\":1}"))
+    print(str.concat("httpx      put method = ", put.method.as_str()))
+    print("httpx      put body bytes = ${put.body.len()}")
+
+    val patch = httpx.make_patch("http://example.invalid/items/1", Bytes.from_str("{}"))
+    print(str.concat("httpx      patch method = ", patch.method.as_str()))
+
+    val delete = httpx.make_delete("http://example.invalid/items/1")
+    print(str.concat("httpx      delete method = ", delete.method.as_str()))
+
+    // Attributes are dropped: this reads the pair, not a cookie jar.
+    val cookie = httpx.parse_set_cookie("sid=abc123; Path=/; HttpOnly")
+    print(str.concat("httpx      cookie name = ", cookie.name.as_str()))
+    print(str.concat("httpx      cookie value = ", cookie.value.as_str()))
+}

@@ -99,6 +99,12 @@ run_ok fib.kp
 run_ok json_filter.kp
 run_ok csv_report.kp
 run_ok tests_and_bench.kp
+run_ok numbers.kp
+run_ok text_tools.kp
+run_ok collections.kp
+run_ok config_load.kp
+run_ok bits_pack.kp
+run_ok http_headers.kp
 
 # --- arguments: read a file, a directory, or the flags ---------------------
 printf 'the quick brown fox\njumps over the lazy dog\nand again\n' > "$WORK/input.txt"
@@ -170,6 +176,22 @@ if command -v python3 >/dev/null; then
 else
     echo "=== http_fetch — skipped, no python3 for a static server"
     echo
+fi
+
+# --- stdout for a script, stderr for a human -------------------------------
+TERM_DIR="$(stage terminal_report.kp)"
+if build "$TERM_DIR"; then
+    (cd "$TERM_DIR" && ./prog) >"$TERM_DIR/.stdout" 2>"$TERM_DIR/.stderr"
+    rc=$?
+    echo "=== terminal_report (exit $rc)"
+    echo "--- stdout (cat -v, so the escape bytes show as ^[):"
+    cat -v "$TERM_DIR/.stdout"
+    echo "--- stderr (the timestamp is the one thing that varies):"
+    cat "$TERM_DIR/.stderr"
+    echo
+    if [ "$rc" -eq 0 ]; then pass=$((pass + 1)); else fail=$((fail + 1)); fi
+else
+    fail=$((fail + 1))
 fi
 
 echo "## $pass passed, $fail failed"
