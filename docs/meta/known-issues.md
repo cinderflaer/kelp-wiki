@@ -11,9 +11,23 @@ construct by name is its documented behaviour.
 The full reports, including the generated C, are in the loose file
 `KelpLANG/bugreports.md` next to the repositories.
 
+**BUG-1, BUG-2 and BUG-3 are fixed** on `main`, each with a regression fixture in
+`kelpc/tests/fixtures/`; the reports stay here as the record the fixes were
+written against, each with a **Fixed** note. The only open defect on this page is
+the `pd var` one below.
+
 ---
 
 ## BUG-1: an owned local inside an `if let` arm or a `for` body gets its drop emitted out of scope
+
+**Fixed.** `borrowck::DropPlan` keyed every drop point by source span, and
+desugaring deliberately gives several distinct blocks one span: `if let`'s
+synthesized `else` block carried the `then` block's span, and a `for` loop's
+element block and its `while` body both carried the loop body's span. The plan now
+keys a block's drops by the block's *identity* — both passes reach the same
+`tir::Block` — and `tir::Block` carries no span at all, so no future key can be a
+span by accident. Fixture: `heap_drops_in_desugared_blocks.kp`, also in the
+AddressSanitizer list.
 
 **Severity:** high. Valid Kelp is refused, and with a different nesting it would be
 a bogus or double drop.
@@ -71,6 +85,12 @@ needed.
 
 ## BUG-2: a closure parameter that borrows a module-declared type emits a typedef before the type exists
 
+**Fixed.** `types::container_elem_c_type` is the spelling a type gets inside a
+typedef emitted before the `datac`s, and it now walks through a borrow — a `&Item`
+parameter is spelled `const struct tag_Item*`, the forward-declared tag, rather
+than `const struct_Item*`, a typedef name that does not exist yet. Fixture:
+`closure_datac_borrow_param.kp`.
+
 **Severity:** high for library authors. It makes any callback API over a module's
 own type impossible to declare: `json` cannot offer `each_value(v, f)`, and
 `listx`/`std/list` are fine only because their element type is a builtin.
@@ -119,6 +139,13 @@ builtin type: the callback-free shape `json` documents (`count_nodes`,
 ---
 
 ## BUG-3: warning noise in the generated C
+
+**Fixed**, both kinds. A condition that already renders as one parenthesized
+group — every binary expression, `when`'s tag test included — is no longer wrapped
+a second time, so `if a == b` emits `if (a == b)`; and a conversion bound the
+source's own range rules out is dropped, so `i32.to_u32` no longer compares an
+`int32_t` against `4294967295`. A fresh `json` build that emitted ~47 warnings now
+emits none.
 
 **Severity:** low (no miscompilation observed), but visible on every fresh build
 and it buries real diagnostics.

@@ -5,12 +5,25 @@ Source section:
 
 ## Comments
 
-`//` starts a line comment. There are **no block comments** (§2.1).
+`//` starts a line comment, and `/* ... */` a block comment (§2.1).
 
 ```kelp
 // one line, written as a full sentence when it explains a decision
 val limit = 10   // trailing comments are the same thing
+
+/* a block comment: one line, or several
+   lines of prose */
 ```
+
+A block comment ends at its own `*/`, and block comments **nest**: an inner `/*`
+needs its own `*/`. That is what makes commenting out a region which already
+contains a block comment work; C's first-`*/`-wins rule is what would turn it
+into a parse error further down the file. An unbalanced `/*` is reported as an
+*unterminated block comment*, at the opening delimiter.
+
+Neither form is a token: both are trivia, so a comment may sit wherever
+whitespace may, and `kelpc fmt` copies it verbatim. Delimiters inside a string or
+character literal are ordinary text, so `"a/*b*/c"` is the bytes `a/*b*/c`.
 
 ## Statements and whitespace
 

@@ -49,6 +49,8 @@ print(true)              // bools
 print(some_str)          // a str
 print(owned_string)      // a String, read without being consumed
 print(owned_bytes)       // a Bytes buffer
+print("first\nsecond")    // one call, two lines
+print("name\tvalue")     // tabs, too — see the escape set in §2.4
 ```
 
 `print` takes exactly one positional argument and accepts scalars, `str`,

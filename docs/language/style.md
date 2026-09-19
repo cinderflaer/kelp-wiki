@@ -16,7 +16,9 @@ and comment rules, and nothing else:
 - One blank line between top-level declarations and between functions; `fmt` caps
   a run of blank lines at one but never inserts a blank line you did not write.
 - Comments are `//`, written as full sentences when they explain a decision, and
-  never to restate the next line.
+  never to restate the next line. `/* ... */` is for the two things a line comment
+  cannot do — a note that spans lines, and commenting out a region of code. Block
+  comments nest, so commenting out a region that already contains one works.
 
 `fmt` holds four invariants, and they are why it is safe to run on any file:
 
