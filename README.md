@@ -60,14 +60,30 @@ Tag vocabulary, so the tag browser stays useful: one chapter tag per page
 
 ## Navigation
 
-Two independent things:
-
 - **Hierarchy** comes from the file paths. Nothing declares it.
-- **The ordered sidebar menu** is not in this repository. Wiki.js navigation
-  items have no children field, so the menu lives in Wiki.js itself: on
-  `homelabone` it is `/var/lib/wikijs/nav.json`, generated from the navigation
-  order the MkDocs site used, and applied with an `update navigation` statement
-  followed by a restart.
+- **The ordered sidebar menu** is edited in the admin UI, under *Theming →
+  Navigation*, and stored in the `navigation` row of the Wiki.js database.
+  Navigation items have no children field, so that menu is flat; the pages under
+  a chapter come from the file paths.
+
+`/var/lib/wikijs/nav.json` on `homelabone` is a **record** of that menu, not its
+source. The admin UI is the editor, and the record is refreshed from it:
+
+```sh
+ssh thinkbox "sudo -u postgres psql -d wikijs -tAc \"select config::text from navigation where key='site'\"" \
+  | python3 -c 'import sys,json; print(json.dumps(json.load(sys.stdin), indent=2))' > nav.json
+```
+
+The reverse, writing the file back into the wiki:
+
+```sh
+scp nav.json thinkbox:/tmp/ && ssh thinkbox "sudo install -o root -g root -m 644 /tmp/nav.json /var/lib/wikijs/nav.json \
+  && sudo -u postgres psql -d wikijs -c \"update navigation set config = (select pg_read_file('/var/lib/wikijs/nav.json'))::json where key='site'\" \
+  && sudo systemctl restart podman-wikijs"
+```
+
+The mode is a separate setting in the same admin screen: `TREE`, `MIXED` (menu
+plus page tree), `STATIC` (menu only) or `NONE`. It is currently `STATIC`.
 
 ## Sync
 
