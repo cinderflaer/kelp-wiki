@@ -1,14 +1,22 @@
 ---
 title: "Standard library index"
-description: "Every public name in the shipped standard library, one line each, generated from kelpc/std/.kp at kelp commit 940c524 by tools/stdlib-index.py, a generator kept at the archived branch mkdocs-archive. Behaviour, panics and examples live in the Standard..."
+description: "Every public name in the shipped standard library, one line each, generated from kelpc/std/.kp at kelp commit 940c524 by tools/stdlib-index.py, a generator kept at the archived branch mkdocs-archive, plus str.less and str.is_digit from kelp 2fa7de5. Behaviour, panics and examples live in the Standard..."
 isPublished: true
 tags: "reference"
 ---
 Every public name in the shipped standard library, one line each, generated from
 `kelpc/std/*.kp` at `kelp` commit `940c524` by `tools/stdlib-index.py`, which lived
 in this repository's MkDocs-era layout and is kept at branch `mkdocs-archive` and
-tag `mkdocs-final`, not in the current tree. Behaviour, panics and examples live
-in the [Standard library](/stdlib) chapter.
+tag `mkdocs-final`, not in the current tree.
+
+Two lines are the exception. `str.less` and `str.is_digit` landed in `kelp`
+`2fa7de5`, the only `kelpc/std/` change since `940c524`, and were added here by
+hand because the generator is not in this tree. Everything else matches
+`940c524`.
+
+`std/rt` has no section: it ships inside the binary but is compiler-internal and
+is not importable, so it is not part of the surface a program can name. Behaviour,
+panics and examples live in the [Standard library](/stdlib) chapter.
 
 A module marked with a domain needs that capability delegated on the `impl` line, e.g.
 `impl "std/fs" with caps(fs = ["/srv/data/**"])`.
