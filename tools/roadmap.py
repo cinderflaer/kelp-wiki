@@ -72,14 +72,43 @@ def clean(cell: str) -> str:
 
 
 def short(status: str, limit: int = 110) -> str:
-    """The status cell trimmed to its first clause, for a table."""
+    """The status cell, kept to the clauses that fit the table column.
+
+    A status usually needs two clauses: what is done, and what is in progress.
+    The first clause alone understates it — MK7's row would read "stage 0 done"
+    while its stage 1 is past halfway — so clauses are appended while they fit,
+    and a clause that does not fit is cut at a word boundary. An ellipsis marks
+    text the table did not have room for; nothing is added.
+    """
     text = clean(status)
-    for cut in (";", " — ", " - ", ". "):
-        if cut in text:
-            text = text.split(cut)[0]
-    if len(text) > limit:
-        text = text[: limit - 1].rstrip() + "…"
-    return text
+    clauses = [c.strip() for c in text.split(";") if c.strip()]
+    if not clauses:
+        return text
+    out = clauses[0].split(". ")[0]
+    for clause in clauses[1:]:
+        # A clause is often "the summary: the detail"; prefer the whole clause, then
+        # the summary alone, and only then cut the clause at a word boundary.
+        choices = [clause]
+        if ": " in clause:
+            choices.append(clause.split(": ")[0])
+        for choice in choices:
+            joined = f"{out}; {choice}"
+            if len(joined) <= limit:
+                out = joined
+                break
+        else:
+            room = limit - len(out) - 4  # "; " and the ellipsis
+            if room >= 24:
+                piece = clause[:room].rstrip()
+                if " " in piece:
+                    piece = piece[: piece.rfind(" ")]
+                out = f"{out}; {piece}"
+            break
+    if len(out) > limit:
+        out = out[: limit - 1].rstrip()
+    if len(out) < len(text):
+        out = out.rstrip(" ,;:") + "…"
+    return out
 
 
 def cells(line: str) -> list[str]:

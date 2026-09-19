@@ -112,7 +112,7 @@ flowchart LR
 
 [The full roadmap](meta/roadmap.md) has every mark's scope and status, the
 five-row critical path, and what is named but not scheduled. Generated from
-`plan/roadmap.md` at `kelp` commit `c3f0e7f`.
+`plan/roadmap.md` at `kelp` commit `940c524`.
 <!-- roadmap:end -->
 
 ## What the language has

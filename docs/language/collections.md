@@ -105,7 +105,8 @@ print(runs.get(key = 7))
 | `insert(key, v)` | `Unit`; stores `true`-style upsert |
 | `get(key)` | the value, or a borrow of it; panics when absent |
 | `get_or(key, fallback)` | the value or the fallback |
-| `has(key)` / `remove(key)` | `bool` |
+| `has(key)` | `bool` |
+| `remove(key)` | the value, moved out; **panics** when the key is absent |
 | `keys()` / `values()` | `List<String>` / `List<V>`, insertion order |
 | `clear()` | `Unit` |
 

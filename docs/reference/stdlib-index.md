@@ -1,7 +1,7 @@
 # Standard library index
 
 Every public name in the shipped standard library, one line each, generated from
-`kelpc/std/*.kp` at `kelp` commit `c3f0e7f` by `tools/stdlib-index.py`. Behaviour, panics
+`kelpc/std/*.kp` at `kelp` commit `940c524` by `tools/stdlib-index.py`. Behaviour, panics
 and examples live in the [Standard library](../stdlib/index.md) chapter.
 
 A module marked with a domain needs that capability delegated on the `impl` line, e.g.

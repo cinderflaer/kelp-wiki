@@ -4,7 +4,7 @@
 
 | Component | Needed for |
 | --- | --- |
-| Rust (2021 edition) | building `kelpc` |
+| Rust, 2024 edition (rustc 1.85 or newer) | building `kelpc`, which has no third-party dependencies |
 | a C compiler and glibc | the default `c` backend |
 | `as`, `ld` (binutils) and the glibc they link against | the `asm` backend |
 | `valgrind` (optional) | the memory gate test |
@@ -78,6 +78,7 @@ If the `asm` backend cannot find the library directory it needs, point
 
 ```sh
 cargo test                                   # unit tests + the fixture suite
+cargo test --test fmt                        # the formatter's corpus and properties
 KELPC_BACKEND=asm cargo test --test compile_and_run
 BACKENDS="c asm" ./kelpc/tests/run-all-backends.sh
 ```

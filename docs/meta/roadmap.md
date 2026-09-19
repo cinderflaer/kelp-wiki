@@ -2,7 +2,7 @@
 
 Kelp's milestones are **marks** (a named goal), **stages** (a significant part of a mark) and **stages' milestones**; the hierarchy and the identifier rules are in [`plan/roadmap.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/roadmap.md), which is the authority for everything on this page.
 
-Generated from `plan/roadmap.md` at `kelp` commit `c3f0e7f` by `tools/roadmap.py` in the wiki repository: re-run it and commit the result when the roadmap moves. The diagrams show order and status, not calendar time: the roadmap has no dates, because a mark moves when its prerequisites land rather than on a schedule.
+Generated from `plan/roadmap.md` at `kelp` commit `940c524` by `tools/roadmap.py` in the wiki repository: re-run it and commit the result when the roadmap moves. The diagrams show order and status, not calendar time: the roadmap has no dates, because a mark moves when its prerequisites land rather than on a schedule.
 
 ## The marks at a glance
 
@@ -49,11 +49,11 @@ flowchart LR
 | **MK4** | Capability security | S1 capabilities | medium | Done |
 | **MK5** | Standard library program | S1-S7, S4b, S4c | large | In progress: MK5-S1, MK5-S2 (M1 `io` + `process`, M2 `spawn_in`/`run_in`, the fallible `try_run`, and `fs.sym… |
 | **MK6** | Concurrency | S1 threads, S2 multithreaded downloads | very large | Not started |
-| **MK7** | Own backend | S1-S5 | very large | In progress, stage 0 done |
+| **MK7** | Own backend | S1-S5 | very large | In progress, stage 0 done; stage 1 (x86-64 assembly) is past halfway; 193/266 integration tests on the new… |
 | **MK8** | Self-hosting | S1-S3 language readiness, S4-S6 bootstrap | very large | In progress: MK8-S1-M1 part 1 (tagged unions + pattern `when`) and part 2 (A-2, generics) both done, A-3 ship… |
-| **MK9** | Systems substrate | S1-S9 | very large | Proposed |
-| **MK10** | Capability model extensions | S1-S3 | large | Proposed |
-| **MK11** | Verification and semantics | S1-S4 | very large | Proposed |
+| **MK9** | Systems substrate | S1-S9 | very large | Proposed; planned |
+| **MK10** | Capability model extensions | S1-S3 | large | Proposed; planned |
+| **MK11** | Verification and semantics | S1-S4 | very large | Proposed; planned |
 
 ## The critical path
 

@@ -115,11 +115,13 @@ module-declared type. Scalars, `while`, `print!` and arithmetic do lower; a
 program made of those builds and runs under `asm` today.
 
 The roadmap keeps the current count, and it is the authority for the numbers:
-`plan/roadmap.md` records MK7 stage 1 as past halfway, with 182 of 260 integration
-tests passing on the `asm` backend, 260 of 260 on the C one, and 85 of the 139
+`plan/roadmap.md` records MK7 stage 1 as past halfway, with 193 of 266 integration
+tests passing on the `asm` backend, 266 of 266 on the C one, and 97 of the 145
 fixtures the C backend builds built and compared byte for byte
 ([roadmap](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/roadmap.md)).
-Those figures come from the roadmap, not from a run here.
+Those figures come from the roadmap, not from a run here. What the `asm` backend
+lowers today, and the 48 refusals it still has, are on the
+[Backends](../compiler/backends.md) page.
 
 If the `asm` backend cannot find the library directory it links against, point
 `KELPC_GLIBC_DIR` at the directory holding `crt1.o` and `libc.so`.
