@@ -176,10 +176,17 @@ Tag only. The first Coral, and the first two fixes on top of it.
 
 ## Maintaining this page
 
-Add an entry when a tag is cut, before or with the release. Keep it to the
-headline plus the bullets a user needs: what changed in the manifest, which
-command appeared or went away, what the toolchain store does now. Link the tag;
-let the Gitea release carry the long version.
+This page carries **released versions only**. Nothing goes here until a version
+is tagged.
+
+Changes in the meantime accumulate in `coral/CHANGELOG.pending.md`, which is
+gitignored and never committed: a line when a user-visible change lands, in the
+manifest, the commands or the toolchain store.
+
+When a version drops, write its entry here from that file plus the tag's commit
+and the Gitea release body, then wipe the pending file back to its header. Keep
+it to the headline plus the bullets a user needs, and link the tag; let the Gitea
+release carry the long version.
 
 A tag with no release still gets an entry, marked as a tag only. That is how
 `v0.1.0`, `v0.2.0`, `v0.2.1`, `v0.5.1` and `v0.5.2` are recorded above.

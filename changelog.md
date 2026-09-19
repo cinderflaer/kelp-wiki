@@ -247,15 +247,20 @@ mapping is in `plan/roadmap.md`):
 
 ## Maintaining this page
 
-A release is not finished until it has an entry here. Cut one the way `0.2.3`
-above is cut: the version and date, a link to the Gitea release, the numbers
-(unit tests, end-to-end tests per backend), then what changed, grouped so a
-reader can skip what they do not care about. The groups are language, compiler,
-stdlib, fixes and limits.
+This page carries **released versions only**. Nothing goes here until a version
+is tagged.
+
+Changes in the meantime accumulate in `kelp/CHANGELOG.pending.md`, which is
+gitignored and never committed: add a line there when a user-visible change
+lands, grouped under language, compiler, stdlib, fixes and limits.
+
+When a version drops, write its entry here from that file plus the tag's commits
+and the Gitea release body, then wipe the pending file back to its header. Cut it
+the way `0.2.3` above is cut: the version and date, a link to the Gitea release,
+the numbers (unit tests, end-to-end tests per backend), then what changed,
+grouped so a reader can skip what they do not care about.
 
 Keep it short. Link to `plan/done.md` for the full story rather than copying it.
-The same rule applies to a change that lands between releases: if it is
-user-visible and it will be in the next tag, it needs a line in that tag's entry.
 
 Write the page without em dashes. Use a colon or a comma for an aside, a
 semicolon or a full stop between clauses, and a plain hyphen in a range.

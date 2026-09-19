@@ -12,7 +12,7 @@ and every one is a single manifest line.
 
 | Library | What it does |
 | --- | --- |
-| [`json`](/libraries/json) | JSON (RFC 8259) parser, writer, JSON-Pointer lookup, tree transforms |
+| [`json`](/libraries/json) | JSON (RFC 8259) parser, writer, JSON-Pointer lookup, tree transforms, closure traversal |
 | [`config`](/libraries/config) | TOML/INI-ish reader: pairs, `[section]` tables, string arrays, comments |
 | [`csv`](/libraries/csv) | RFC-4180-ish CSV parse/write: quoting, escaped quotes, embedded newlines |
 | [`encoding`](/libraries/encoding) | Base64 (RFC 4648), base32 (RFC 4648 §6), base58 (Bitcoin), hex, percent (RFC 3986) and form (`application/x-www-form-urlencoded`) encode/decode, plus a hexdump |

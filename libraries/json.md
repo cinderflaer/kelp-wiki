@@ -211,6 +211,8 @@ decimal index; the empty pointer names the whole document.
 
 | Function | Returns |
 | --- | --- |
+| `each_value(v, f: closure(&Json))` | visits every node in document order, `v` included |
+| `filter_array(v, pred: closure(&Json).R: bool)` | new `Json.Array` of cloned elements the predicate accepts; panics if `v` is not an array |
 | `count_nodes(v)` | node count of the subtree, `v` included |
 | `depth_of(v)` | 1 for a scalar, 2 for an array of scalars, ... |
 | `count_of_kind(v, want: &str)` | how many nodes report that `kind` |
@@ -218,12 +220,16 @@ decimal index; the empty pointer names the whole document.
 | `filter_array_by_kind(v, want)` | new `Json.Array` of cloned elements of that kind; panics if `v` is not an array |
 | `collect_strings(v)` | every string leaf, document order, copied out NUL-safe |
 
-**Closure-shaped traversal is not available.** `each_value(v, f)` and
-`filter_array(v, pred)` cannot be declared on kelpc 0.2.2: a closure parameter
-that is a borrow of a module-declared type emits a C typedef naming a tag
-declared later in the file, and `cc` rejects the program. A closure parameter of
-a builtin type does compile. Until that is fixed, write the index loop yourself
-and use the helpers above for the callback-free shapes.
+The two callback-shaped helpers take a closure that borrows `Json`, which is
+legal since `kelpc 0.2.3` fixed the C typedef a module-declared borrow in a
+closure parameter emits. `each_value` is for looking at every node;
+`filter_array` is the predicate form of `filter_array_by_kind`:
+
+```kelp
+val ints = json.filter_array(json.get(doc, "items"),
+    fun(x: &json.Json).R: bool = json.is_int(x))
+json.each_value(doc, fun(x: &json.Json) = print(json.kind(x)))
+```
 
 ## Writing
 
@@ -355,18 +361,9 @@ true
 
 ## Limits
 
-- No closure-based traversal (see above).
 - No `try_str`; use `text_or`, or `get_text` when the field may be absent.
 - `Json` cannot be pushed to in place. Build children first, then wrap.
 - `write`/`write_pretty` never emit `NaN`/`Infinity`: a non-finite float is
   `null`.
 - `sort_keys` keeps duplicate keys: the sort picks the smallest untaken key each
   step, so equal keys keep their relative order instead of collapsing.
-
-## Compiler bug affecting this library's idioms
-
-On kelpc 0.2.2 an owned local (`List`, `Map`, `String`, `Bytes`) declared inside
-`if let` or `for` emits its drop where the name is not in scope, so
-`if let Ok(v) = json.parse(text) { var xs: List<..> = .. }` fails to build.
-Declare the local before the block, or call a helper that owns it. Full report,
-repro and the generated C: [Known issues](/meta/known-issues) (BUG-1).
