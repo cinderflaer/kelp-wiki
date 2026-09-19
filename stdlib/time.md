@@ -1,0 +1,56 @@
+---
+title: "`std/time`"
+description: "Clocks and sleeping. Gated on time."
+isPublished: true
+tags: "stdlib, time"
+---
+Clocks and sleeping. **Gated on `time`.**
+
+```kelp
+impl "std/time" with caps(time = [])
+```
+
+`time` has no pattern to restrict, so an empty list is the whole grant: naming
+any function in the module is the authority.
+
+| Function | Returns | Notes |
+| --- | --- | --- |
+| `time.now_unix()` | `i64` | seconds since the epoch (UTC) |
+| `time.now_mono_ns()` | `i64` | nanoseconds on the **monotonic** clock: for durations, never for dates |
+| `time.sleep_ms(ms: u64)` | `Unit` | |
+
+```kelp
+impl "std/time"
+
+fun main() {
+    val start = time.now_mono_ns()
+    time.sleep_ms(2)
+    val elapsed = time.now_mono_ns() - start
+    print(elapsed >= 0)
+
+    val now = time.now_unix()
+    print(now > 0)
+
+    val civil = datetime.from_unix(now)
+    print(datetime.format_iso8601(&civil))
+}
+```
+
+## Notes
+
+- `now_unix` is integer seconds: no sub-second precision, no timezone (unix time
+  is UTC by definition).
+- Use `now_mono_ns` for measuring: `now_unix` can jump when the wall clock is
+  adjusted, the monotonic clock cannot.
+- There is no formatting here. Turning seconds into a date and back is
+  [`datetime`](/libraries/datetime), which needs no capability at all:
+  it is pure arithmetic on a number you supply.
+- [`log`](/libraries/log) and [`benchkit`](/libraries/benchkit) are the
+  two libraries that consume this module, and both therefore need `time`
+  delegated to *them*.
+
+## See also
+
+- [`datetime`](/libraries/datetime)
+- [`log`](/libraries/log)
+- [`benchkit`](/libraries/benchkit)
