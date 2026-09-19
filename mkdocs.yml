@@ -68,9 +68,18 @@ markdown_extensions:
       line_spans: __span
   - pymdownx.inlinehilite
   - pymdownx.snippets
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        # Mermaid diagrams: the script is vendored below, so a diagram renders
+        # without a CDN and the site works on a LAN with no internet.
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.tabbed:
       alternate_style: true
+
+extra_javascript:
+  - javascripts/mermaid.min.js
 
 nav:
   - Home: index.md
@@ -162,6 +171,7 @@ nav:
       - Capability patterns: reference/capability-patterns.md
   - Meta:
       - meta/index.md
+      - Roadmap: meta/roadmap.md
       - Source documents: meta/source-documents.md
       - Known issues: meta/known-issues.md
       - Contributing: meta/contributing.md

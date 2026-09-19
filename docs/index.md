@@ -69,6 +69,52 @@ by the first few lines of a file instead of by auditing it.
 
 </div>
 
+<!-- roadmap:start -->
+## Roadmap
+
+Of the 11 marks, **4 are done**, **3 in progress** (MK5, MK7, MK8) and 4 planned or proposed. The critical path is next at **MK6-S1-M1** — process threads. No dates: the milestones are ordered by dependency, not by calendar — a
+mark moves when its prerequisites land, and `plan/roadmap.md` is the record.
+
+```mermaid
+flowchart LR
+    subgraph done["Done"]
+        direction TB
+        MK1["MK1 Core language<br/>very large"]
+        MK2["MK2 Modules and compile-time<br/>small"]
+        MK3["MK3 Heap and containers<br/>large"]
+        MK4["MK4 Capability security<br/>medium"]
+    end
+    subgraph active["In progress"]
+        direction TB
+        MK5["MK5 Standard library program<br/>large"]
+        MK7["MK7 Own backend<br/>very large"]
+        MK8["MK8 Self-hosting<br/>very large"]
+    end
+    subgraph planned["Not started"]
+        direction TB
+        MK6["MK6 Concurrency<br/>very large"]
+    end
+    subgraph proposed["Proposed"]
+        direction TB
+        MK9["MK9 Systems substrate<br/>very large"]
+        MK10["MK10 Capability model extensions<br/>large"]
+        MK11["MK11 Verification and semantics<br/>very large"]
+    end
+    classDef done fill:#2e8b57,color:#ffffff,stroke:#24633f
+    classDef active fill:#c47f00,color:#ffffff,stroke:#9a6400
+    classDef planned fill:#5b6b7a,color:#ffffff,stroke:#455260
+    classDef proposed fill:#7c6a94,color:#ffffff,stroke:#615275
+    class MK1,MK2,MK3,MK4 done
+    class MK5,MK7,MK8 active
+    class MK6 planned
+    class MK9,MK10,MK11 proposed
+```
+
+[The full roadmap](meta/roadmap.md) has every mark's scope and status, the
+five-row critical path, and what is named but not scheduled. Generated from
+`plan/roadmap.md` at `kelp` commit `175b0e3`.
+<!-- roadmap:end -->
+
 ## What the language has
 
 | | |
