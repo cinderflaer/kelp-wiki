@@ -22,10 +22,10 @@ may touch on its `impl` lines, and that is the only thing that grants authority.
 
 | If you want to… | Read |
 | --- | --- |
-| know the language's shape in one page | [Language overview](language/index.md) |
-| look up a specific construct | [Language](language/index.md) chapter pages |
-| call something in the standard library | [Standard library](stdlib/index.md) |
-| grant (or restrict) authority | [Capabilities](language/capabilities.md) |
-| use a ready-made library | [Libraries (fpl)](libraries/index.md) |
-| understand a compiler error | [Errors and panics](language/errors.md), [Pitfalls](language/pitfalls.md) |
-| hack on `kelpc` itself | [Compiler](compiler/index.md) |
+| know the language's shape in one page | [Language overview](../language/index.md) |
+| look up a specific construct | [Language](../language/index.md) chapter pages |
+| call something in the standard library | [Standard library](../stdlib/index.md) |
+| grant (or restrict) authority | [Capabilities](../language/capabilities.md) |
+| use a ready-made library | [Libraries (fpl)](../libraries/index.md) |
+| understand a compiler error | [Errors and panics](../language/errors.md), [Pitfalls](../language/pitfalls.md) |
+| hack on `kelpc` itself | [Compiler](../compiler/index.md) |

@@ -8,7 +8,7 @@
 | a C compiler and glibc | the default `c` backend |
 | `as`, `ld` (binutils) and the glibc they link against | the `asm` backend |
 | `valgrind` (optional) | the memory gate test |
-| [Coral](tooling/index.md) (optional) | project manifests, tasks, dependencies |
+| [Coral](../tooling/index.md) (optional) | project manifests, tasks, dependencies |
 
 ## Build the compiler
 
@@ -62,7 +62,7 @@ error: the 'asm' backend does not support the enum `Maybe` yet
 ```
 
 `kelpc version` prints the compiler version. `kelpc fmt` formats sources (see
-[`kelpc` CLI](tooling/kelpc-cli.md)).
+[`kelpc` CLI](../tooling/kelpc-cli.md)).
 
 If the `asm` backend cannot find the library directory it needs, point
 `KELPC_GLIBC_DIR` at the directory holding `crt1.o` and `libc.so`.
@@ -99,5 +99,5 @@ their checksums.
 ## See also
 
 - [Your first program](first-program.md)
-- [`kelpc` CLI](tooling/kelpc-cli.md)
+- [`kelpc` CLI](../tooling/kelpc-cli.md)
 - [Compiler architecture](../compiler/index.md)

@@ -45,12 +45,11 @@ theme:
 extra:
   generator: false
 
-# Forward links to pages that are still being written are tolerated; every other
-# warning stays fatal under --strict. Flip `not_found` back to `warn` when the
-# last page lands.
+# Every warning is fatal under --strict, including a forward link, so a link to a
+# page that does not exist yet fails the build rather than publishing quietly.
 validation:
   links:
-    not_found: ignore
+    not_found: warn
     absolute_links: ignore
     unrecognized_links: ignore
 
