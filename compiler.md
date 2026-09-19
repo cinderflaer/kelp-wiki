@@ -53,3 +53,4 @@ with the backend's working plan in
 - [Language](/language): the surface syntax these stages implement
 - [Capabilities](/language/capabilities): the model the checker enforces
 - [Known issues](/meta/known-issues): defects in valid programs today
+- [Changelog](/changelog): what each release changed in the language and in these stages

@@ -71,6 +71,14 @@ by the first few lines of a file instead of by auditing it.
     [Known issues](/meta/known-issues) lists the defects that affect valid
     programs today, with repros.
 
+-   **Release history**
+
+    ---
+
+    [Changelog](/changelog) records every `kelpc` release: what the language
+    and the compiler gained, version by version. [Coral](/tooling/coral-changelog)
+    and [Lighthouse](/tooling/lighthouse-changelog) have their own.
+
 </div>
 
 <!-- roadmap:start -->

@@ -51,6 +51,11 @@ their checksums.
   those two are implemented twice (Kelp and C) and compared.
 - **A citation** for a documentation change: every page in this wiki names the
   section it came from, and a claim without a source is a claim to remove.
+- **A changelog entry** when a release is cut. A release is not finished until
+  its version, date, test counts and changes are in [Changelog](/changelog), or
+  in the [Coral](/tooling/coral-changelog) and
+  [Lighthouse](/tooling/lighthouse-changelog) pages. Keep the entry short and
+  link the tag; the full story lives in `plan/done.md` and in the Gitea release.
 - **A commit message that says why**, not which lines moved. The plan documents
   use the same voice.
 
@@ -87,6 +92,11 @@ carries the four keys the git storage module reads (`title`, `description`,
 `isPublished`, `tags`), and `tags` must be a comma-space separated string, not a
 YAML list. [Source documents](/meta/source-documents) has the front matter and the
 navigation rules in full.
+
+New prose written here avoids em dashes and en dashes. Use a colon or a comma
+for an aside, a semicolon or a full stop between clauses, and a plain hyphen in
+a range. Older pages here did not follow that rule; do not sweep them, only
+write the new text that way.
 
 The MkDocs layout this repository used before 2026-09-19 — `docs/`,
 `mkdocs.yml`, `hooks/kelp_lexer.py` and the generator scripts under `tools/` — is

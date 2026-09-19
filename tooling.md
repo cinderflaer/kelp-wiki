@@ -72,6 +72,9 @@ one of the three that runs while you type.
 - [Lighthouse](/tooling/lighthouse): the two sources of truth, the feature table, editor
   setup for both integrations, the standard-library snapshot, the tests, and the
   deliberate gaps.
+- [Coral changelog](/tooling/coral-changelog) and
+  [Lighthouse changelog](/tooling/lighthouse-changelog): every tag in each repository, and
+  what it changed.
 
 ## See also
 
