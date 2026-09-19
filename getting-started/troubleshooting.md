@@ -65,6 +65,7 @@ impl "std/option"
 | `List.empty()` or `Map.new()` has no element type | nothing said what is inside | write it on the binding: `var xs: List<i32> = List.empty()` |
 | `unexpected argument 'extra'` | `kelpc run` was given arguments | it takes none: `kelpc build` then run the binary, or `coral run -- <args>` |
 | `unknown backend 'llvm'` | a backend that does not exist | `c` or `asm` |
+| `could not write generated C to '/path/app.c': No such file or directory` | `-o` named a directory that does not exist | create it first, or build without `-o` and take the artifact from `build/` |
 | `panic: fs.read: cannot open file` / `errno 2` | the call ran and the file was not there | `fs` fails by panicking; check `fs.exists(path)` first, or use `fs.open` |
 | `panic: '<path>' is outside the fs capability granted to module '<m>'` | the pattern on the `impl` line does not cover the path | widen the grant, or note that the **entry module holds the wildcard** and only an imported module is restricted |
 | `error: entry file '.../tests/main.kp' is not inside '.../src'` | a task entry outside `src/` | task files live in `src/tasks/`; the top-level `tests/` directory Coral makes cannot be one |

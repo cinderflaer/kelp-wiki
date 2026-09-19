@@ -28,7 +28,9 @@ error: entry file '/tmp/calc/tests/main.kp' is not inside '/tmp/calc/src'
 
 so the task goes in `src/tasks/`, which is the other directory `coral init`
 writes. A task entry may import the project's own modules and its dependencies,
-because `impl` paths resolve against `src/` like anywhere else.
+because `impl` paths resolve against `src/` like anywhere else. Building the task
+compiles everything it imports, so a test task is a compile check of those modules
+even when every check passes.
 
 ## A project with a test task
 

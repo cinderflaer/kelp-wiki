@@ -25,6 +25,7 @@ small program looks like in Kelp:
 | Idea | What it uses | What it teaches |
 | --- | --- | --- |
 | `tail`, the other half of [your first tool](/getting-started/first-tool) | `fs.read_lines`, a descending `while` | indexing from the end, and control flow with no `break` |
+| A line-numbered printout, like `cat -n` | `fmt.pad_left`, a counter | keeping a running index while you walk a list |
 | A palindrome and anagram checker | `str.char_at`, `List<i32>.sort` | byte against character indices, sorting in place |
 | Collatz lengths for 1 to 100 | `while`, `i64` | integer division and modulo, and finding the longest by hand |
 | Roman numerals, both directions | `String.push_str`, `str.parse_i64` | building text when a template is not allowed |

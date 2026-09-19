@@ -110,6 +110,9 @@ kelpc fmt -w src/            # rewrite every .kp file under src/
 kelpc fmt --check src/       # write nothing, exit 1 if anything would change
 ```
 
+A path may be a file or a directory, and a directory recurses, so those two
+commands cover a whole project.
+
 `--check` is the CI shape. One caveat: **the server does not call `fmt`**, so
 there is no format-on-save. Run it yourself when you like, or add it to a
 pre-commit hook.

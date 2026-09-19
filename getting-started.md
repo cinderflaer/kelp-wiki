@@ -38,7 +38,9 @@ may touch on its `impl` lines, and that is the only thing that grants authority.
 The build side has two tools and the split matters: `kelpc` is the compiler, and
 [Coral](/tooling/coral) is the build tool and package manager around it. A single
 `.kp` file needs only `kelpc`. Anything that becomes a project wants Coral, and it
-is easier to start with it than to adopt it once there are dependencies.
+is easier to start with it than to adopt it once there are dependencies. `kelpc`
+never reads past the first `[section]` of a `coral.toml`, so tasks, dependencies
+and the toolchain pin are Coral's business alone.
 
 ## Where to go next
 
