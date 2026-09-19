@@ -1,4 +1,4 @@
-# `benchkit` — warmup and repeat timing
+# `benchkit`: warmup and repeat timing
 
 Timing over a closure on the monotonic clock, with median/percentile over the
 runs.
@@ -26,11 +26,11 @@ impl "deps/benchkit/lib" as benchkit with caps(time = [])
 | `report_line(label: &str, xs: &List<i64>)` | `String` | one line: `<label>: median=<..>ns p90=<..>ns p99=<..>ns (n=<..>)` |
 
 `trunc_to_usize(x: f64, n: usize)` is the smallest `usize` rank not above `x`,
-clamped to `n - 1` — the float-to-rank helper `percentile_ns` uses, since `f64`
+clamped to `n - 1`: the float-to-rank helper `percentile_ns` uses, since `f64`
 has no integer conversion.
 
 `f` is a plain `Unit`-returning closure: its result, if it has one, is not the
-point — the elapsed time is. So the workload under test is whatever computation
+point; the elapsed time is. So the workload under test is whatever computation
 or side effect `f`'s body does.
 `report_line` only builds the text; the caller owns printing it, so a report can
 collect several lines before printing any.
@@ -74,7 +74,7 @@ sleep1ms: median=1054061ns p90=1064981ns p99=1064981ns (n=5)
   allocator settle.
 - Percentiles use nearest-rank, so `percentile_ns(xs, 100.0)` is the maximum and
   `percentile_ns(xs, 0.0)` is the minimum. The index is computed by walking whole
-  units off the float (`f64` has no integer conversion), which is O(n) worst case
-  — fine for benchmark sample sizes.
+  units off the float (`f64` has no integer conversion), which is O(n) worst case,
+  fine for benchmark sample sizes.
 - A closure that captures an owned value moves it; pass what the workload needs
   as a parameter if the closure must stay callable elsewhere.

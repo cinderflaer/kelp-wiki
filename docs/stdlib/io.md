@@ -1,7 +1,6 @@
 # `std/io`
 
-Files as descriptors, buffered reading, and the print/read helpers. **Ungated** —
-`std/io` wraps descriptors, and it is `std/fs` that is gated on opening a path.
+Files as descriptors, buffered reading, and the print/read helpers. **Ungated.** `std/io` wraps descriptors, and it is `std/fs` that is gated on opening a path.
 A `File` handed to you by `process` or `net` needs no capability.
 
 ```kelp
@@ -80,7 +79,7 @@ fun main() {
   descriptor you did not open.
 - `read` returns **empty** `Bytes` at end of file, which is how the
   [`lineproto`](../libraries/lineproto.md) reader detects a closed peer.
-- Reading and writing do not allocate a buffer per call — `read_all` grows one.
+- Reading and writing do not allocate a buffer per call: `read_all` grows one.
 - There is no `fopen` mode here: opening by path is `fs.open(path, mode)`, which
   needs the `fs` grant. See [`std/fs`](fs.md).
 

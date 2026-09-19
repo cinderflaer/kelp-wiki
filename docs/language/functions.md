@@ -26,7 +26,7 @@ fun abs_diff(a: i32, b: i32).R: i32 {         // block body
 - An expression body (`= expr`) requires `.R: T`; a block body ends with
   `return expr`.
 - Parameters are `name: T`. A parameter is a **shared borrow** of its argument.
-  `name: mut T` is an exclusive borrow — the only spelling for mutation in
+  `name: mut T` is an exclusive borrow: the only spelling for mutation in
   parameter position (`&mut T` there is a parse error). `name: move T` takes
   ownership.
 - `mut` and `move` are mutually exclusive, `move` is refused on a `str` or a
@@ -45,14 +45,14 @@ print(str.concat("a", "b"))            // positional is fine too
 
 A name the function does not declare is an error, and so is naming an argument
 twice. The convention in this repository is to use named arguments wherever a
-call would otherwise be ambiguous — in practice every `datac` construction with
+call would otherwise be ambiguous: in practice every `datac` construction with
 two or more fields.
 
 ## Overloading, recursion
 
 - **A user program cannot overload a name.** `fun pick(a: i32)` and
   `fun pick(a: f64)` collide. Overloading exists only inside the shipped standard
-  library, and only for `abs`, `min`, `max`, `clamp` — which is how `math.min`
+  library, and only for `abs`, `min`, `max`, `clamp`, which is how `math.min`
   accepts `i32`, `i64` and `f64`.
 - Recursion is unrestricted, including mutual recursion.
 - A function may take type parameters: `fun first<T>(xs: List<T>).R: T`. Each
@@ -60,7 +60,7 @@ two or more fields.
 
 ## Function values
 
-A bare name of a declared `fun` is a value, typed `fun(T, U).R: V` — the `fun`
+A bare name of a declared `fun` is a value, typed `fun(T, U).R: V`: the `fun`
 keyword, the parameter types, and the same `.R:` clause a declaration uses:
 
 ```kelp
@@ -109,7 +109,7 @@ Capture rules:
 - A closure owns its environment and frees it where the closure dies.
 
 In practice, a stdlib or library callback is written `closure(&T).R: U`, and a
-`Copy` element is used **directly** inside the literal — `acc + x`, not
+`Copy` element is used **directly** inside the literal: `acc + x`, not
 `acc + *x`:
 
 ```kelp

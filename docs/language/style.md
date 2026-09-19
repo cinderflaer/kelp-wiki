@@ -6,7 +6,7 @@ Source section:
 ## Rules the formatter enforces
 
 `kelpc fmt` enforces indentation, spacing, trailing whitespace, the final newline
-and comment rules — and nothing else:
+and comment rules, and nothing else:
 
 - **4 spaces, no tabs**, and a hard 100-column limit (the limit is a review
   convention: `fmt` preserves your wrapping rather than re-wrapping).
@@ -23,7 +23,7 @@ and comment rules — and nothing else:
 | Invariant | Means |
 | --- | --- |
 | idempotent | formatting a formatted file changes nothing |
-| token-faithful | no token's text is ever rewritten — a formatted file is the same program |
+| token-faithful | no token's text is ever rewritten: a formatted file is the same program |
 | comment-preserving | comments survive exactly, including their position |
 | new-inode | a rewritten file is a new inode, so a hard link to it keeps the old bytes |
 
@@ -58,7 +58,7 @@ fun main() { ... }
   (`String`, `Bytes`, `Box`, `Metadata`, `Url`).
 - User code case is **not** enforced. The plan and the examples use `snake_case`
   for functions and lowercase for bindings, matching the standard library.
-- Named arguments are used wherever a call would otherwise be ambiguous — in
+- Named arguments are used wherever a call would otherwise be ambiguous: in
   practice every `datac` construction with two or more fields:
   `Circle(r = 2.0, x = 1.0)`.
 
@@ -70,7 +70,7 @@ fun main() { ... }
 - It does not rename anything.
 
 So the column limit, the order inside the last group and the naming rules need a
-review, not a formatter — `kelpc` has no `lint` command.
+review, not a formatter: `kelpc` has no `lint` command.
 
 ## See also
 

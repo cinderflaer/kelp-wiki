@@ -1,4 +1,4 @@
-# `encoding` — base64 and percent encoding
+# `encoding`: base64 and percent encoding
 
 Base64 (RFC 4648 standard alphabet, `=` padding) and percent-encoding
 (RFC 3986 unreserved set) over `str`/`Bytes`.
@@ -44,12 +44,12 @@ strip line breaks yourself first.
 | --- | --- |
 | `percent_encode(text: &str)` | `String`, every byte outside the unreserved set as `%XX`, uppercase hex |
 | `percent_decode(text: &str)` | `result.Result<String, DecodeErr>` |
-| `is_unreserved(c: u8)` | `bool` — letters, digits, `-`, `.`, `_`, `~` |
+| `is_unreserved(c: u8)` | `bool`: letters, digits, `-`, `.`, `_`, `~` |
 | `hex_upper(nibble: u8)` | the uppercase hex character for a nibble |
 | `hex_value(c: u8)` | `option.Option<u8>` for a hex digit |
 
 `percent_encode` works on bytes, so a UTF-8 multi-byte character comes out as
-one `%XX` per byte — which is what a URL wants.
+one `%XX` per byte, which is what a URL wants.
 
 `percent_decode` is URL percent-decoding, not
 `application/x-www-form-urlencoded`: **`+` is left alone**. It fails on a

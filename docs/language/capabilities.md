@@ -28,7 +28,7 @@ instead of by auditing it.
   else.** A module can delegate less than it holds, never more: granting a pattern
   the importer does not hold is an error.
 - Referencing a gated function without holding the domain is a **compile error
-  naming the missing domain and the grant to write** — not a runtime refusal.
+  naming the missing domain and the grant to write**: not a runtime refusal.
 
 ## Grants
 
@@ -40,7 +40,7 @@ impl "logger" with caps(fs = ["/var/log/myapp/**"], env = ["LOG_*"])
 
 A grant is `domain = [pattern, ...]`. Two domains in one line are fine. An **empty
 pattern list denies everything**: `with caps(process = [])` is a grant that
-permits no program — which is also the smallest grant a consumer can write to
+permits no program, which is also the smallest grant a consumer can write to
 satisfy the compiler for a module it does not actually want to let out.
 
 ### Patterns
@@ -56,7 +56,7 @@ satisfy the compiler for a module it does not actually want to let out.
 Consequences worth internalizing:
 
 - `127.0.0.1:*` does **not** cover `localhost`, even though both are this machine.
-  Two spellings of one address can fall under different grants — and the HTTP
+  Two spellings of one address can fall under different grants, and the HTTP
   connection pool is keyed on the host as written for exactly that reason.
 - A symlink inside a granted directory that points outside it is denied, because
   resolution happens first.
@@ -75,13 +75,13 @@ impl "deps/lineproto/lib" as lineproto with caps(net = ["127.0.0.1:*"])
 ```
 
 `fsx` needs `fs`, `log` and `benchkit` need `time`, `term` needs `env` for
-`NO_COLOR`, and `lineproto` needs `net`. A library holding no authority — `json`,
-`hash`, `month`-style arithmetic — needs nothing, and that is a property you can
+`NO_COLOR`, and `lineproto` needs `net`. A library holding no authority (`json`, `hash`, `month`-style arithmetic) needs
+nothing, and that is a property you can
 check by reading one line.
 
 There is a subtle case worth knowing: a module can hold a domain *without using
 it*, purely to satisfy the compiler on behalf of its own imports. `httpx` is the
-example — it only builds and reads plain data, but importing `std/http` needs
+example: it only builds and reads plain data, but importing `std/http` needs
 `net` delegated, so `httpx` writes `with caps(net = [])` internally: the smallest
 grant that compiles, and it never dials.
 
@@ -110,7 +110,7 @@ failure as a panic from the gated call.
 
 ## See also
 
-- [Capability patterns](../reference/capability-patterns.md) — the pattern grammar in full
+- [Capability patterns](../reference/capability-patterns.md): the pattern grammar in full
 - [`std/fs`](../stdlib/fs.md), [`std/net`](../stdlib/net.md), [`std/process`](../stdlib/process.md),
   [`std/env`](../stdlib/env.md), [`std/time`](../stdlib/time.md), [`std/rand`](../stdlib/rand.md)
-- [Compiler](../compiler/index.md) — how the check is implemented
+- [Compiler](../compiler/index.md): how the check is implemented

@@ -77,4 +77,4 @@ Two conventions worth knowing before reading a page:
 - **A `str` parameter takes a borrowed view.** A `String` needs `.as_str()`;
   a literal needs nothing.
 - **`Option`/`Result` have no methods.** Every combinator is a free function in
-  `std/option` / `std/result` — `option.unwrap(o = maybe)`, `result.is_err(r)`.
+  `std/option` / `std/result`: `option.unwrap(o = maybe)`, `result.is_err(r)`.

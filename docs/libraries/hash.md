@@ -1,10 +1,10 @@
-# `hash` — CRC-32 and FNV-1a checksums
+# `hash`: CRC-32 and FNV-1a checksums
 
 Non-cryptographic checksums over `Bytes`/`str`: CRC-32 (the zlib/PNG/gzip
 polynomial) and FNV-1a, 32- and 64-bit.
 
 No capability. These are content-addressing and cache-key hashes, not security
-primitives — there is no SHA here.
+primitives: there is no SHA here.
 
 ```toml
 [dependencies]

@@ -1,4 +1,4 @@
-# `listx` — `List<T>` ergonomics
+# `listx`: `List<T>` ergonomics
 
 The list operations `std/list` deliberately stops short of: `fold`, `zip`,
 `chunks`, `sort_by`, `sum`/`min`/`max`, `unique`, `position`.
@@ -22,7 +22,7 @@ datac Chunk<T>(val items: List<T>)
 ```
 
 `zip` returns `List<Pair<A, B>>` and `chunks` returns `List<Chunk<T>>` because
-`List<List<T>>` and `List<Pair>`-of-nested-containers cannot be written — a
+`List<List<T>>` and `List<Pair>`-of-nested-containers cannot be written: a
 nested container has no inline C representation ([syntax.md](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md) §12.1).
 
 ## Functions
@@ -42,7 +42,7 @@ nested container has no inline C representation ([syntax.md](https://homelabone.
 
 ## Why the type is in the name
 
-A user module cannot overload a function name (`syntax.md` §7.2 — overloading is
+A user module cannot overload a function name (`syntax.md` §7.2, overloading is
 stdlib-only), so where the standard library would write one `sum`/`min`/`max`
 per numeric type, this library spells the type into the name:
 `sum_i32`, `min_i64`, `max_f64`.
@@ -50,7 +50,7 @@ per numeric type, this library spells the type into the name:
 ## Cost
 
 - `sort_by` is an insertion-selection hybrid over `remove`/`insert`, which is
-  what makes it work for owned elements — but it is O(n²) comparisons and O(n²)
+  what makes it work for owned elements, but it is O(n²) comparisons and O(n²)
   element moves.
 - `unique_*` is O(n²) membership testing against the list built so far.
 - `fold`, `zip` and `chunks` are single passes.
@@ -111,7 +111,7 @@ true
 ## Notes
 
 - The closure parameter is written `&T` in the signature, but inside the literal
-  a `Copy` element is used directly (`acc + x`, `a > b`) — no `*` deref.
+  a `Copy` element is used directly (`acc + x`, `a > b`): no `*` deref.
 - `listx.fold(xs, 0, ...)` takes `init` by `move`; a `Copy` accumulator is
   copied, an owned one is moved in and moved through each step.
 - There is no `sort`, `filter`, `map`, `any`, `all` or `find_index` here: those

@@ -18,7 +18,7 @@ print(b)        // ok
 print(a)        // error: use of moved value 'a'
 ```
 
-**Passing an owned value to a parameter is not a move** — parameters borrow:
+**Passing an owned value to a parameter is not a move**: parameters borrow:
 
 ```kelp
 fun greet(s: String) { print(s) }
@@ -61,7 +61,7 @@ print((*r).count)     // dereference, then read a field
 
 Rules the checker enforces:
 
-- A borrow lives **until the end of its scope**, not until its last use — with
+- A borrow lives **until the end of its scope**, not until its last use: with
   one statement-sized exception: a borrow taken *inside an initializer* ends with
   that statement, because the bound value does not borrow it. So
   `val back = str.parse_i64(cand.as_str())` borrows `cand` for one call and keeps
@@ -70,11 +70,11 @@ Rules the checker enforces:
 - While a value is borrowed exclusively, nothing else may borrow it and the owner
   may not be assigned or moved.
 - While a value is borrowed shared, it cannot be borrowed exclusively, and it
-  cannot be assigned or moved — but a `Copy` value can always be *read*, because
+  cannot be assigned or moved, but a `Copy` value can always be *read*, because
   reading one is a copy rather than a move.
 - Dereferencing a `&mut` gives write access; dereferencing a `&` does not.
 - A function whose `.R: T` is a borrow must return something derived from its
-  **first reference parameter** — and a payload bound by a pattern counts as
+  **first reference parameter**, and a payload bound by a pattern counts as
   derived from the scrutinee it came out of:
 
   ```kelp

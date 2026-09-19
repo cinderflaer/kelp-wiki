@@ -38,7 +38,7 @@ local     = "file:///srv/git/fpl#other"  # a full URL, folder after '#'
 kelp = "v0.1.1"
 ```
 
-`kelpc` reads only the flat part — `name`, `version`, `entry` — and stops at the
+`kelpc` reads only the flat part (`name`, `version`, `entry`) and stops at the
 first `[section]`, so the sections below belong to Coral.
 
 ## What a project buys you
@@ -46,7 +46,7 @@ first `[section]`, so the sections below belong to Coral.
 - **`impl` paths are relative to `src/`**, not to the working directory or to the
   importing file. `impl "shapes/circle"` is always `<root>/src/shapes/circle.kp`,
   however deep the importer sits.
-- **The entry module may be somewhere other than `src/main.kp`** — the manifest
+- **The entry module may be somewhere other than `src/main.kp`**: the manifest
   names it.
 - **Dependencies** land under `src/`, because `kelpc` resolves every `impl` path
   against the project's `src/` and refuses one that steps outside it.
@@ -72,7 +72,7 @@ neither fetched nor importable.
 
 | Command | What it does |
 | --- | --- |
-| `coral sync` | installs the pinned toolchain and fetches every dependency — **the only command that moves a dependency forward** |
+| `coral sync` | installs the pinned toolchain and fetches every dependency: **the only command that moves a dependency forward** |
 | `coral build` | fetches a dependency that is missing, and nothing else; never refreshes one that is present |
 | `coral run` | build, then run, forwarding argv and the exit code |
 | `coral check` | build without keeping the artifact |
@@ -123,4 +123,4 @@ scoping and no hygiene.
 - [Install and build](install.md)
 - [`kelpc` CLI](../tooling/kelpc-cli.md) and [Coral](../tooling/coral.md)
 - [Libraries (fpl)](../libraries/index.md) and [Writing a library](../libraries/writing-a-library.md)
-- [Capabilities](../language/capabilities.md) — why a gated dependency needs a grant
+- [Capabilities](../language/capabilities.md): why a gated dependency needs a grant

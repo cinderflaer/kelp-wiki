@@ -15,7 +15,7 @@ KELPC_BACKEND=asm kelpc run examples/hello.kp
 
 No C compiler is in the `asm` chain: `as` assembles, `ld` links against glibc. If
 the library directory is not found automatically, set `KELPC_GLIBC_DIR` to the
-directory holding `crt1.o` and `libc.so` — which is also what the error message
+directory holding `crt1.o` and `libc.so`, which is also what the error message
 says when it fails.
 
 `backend.rs` holds only the selector: how a backend is named, which names exist,
@@ -30,7 +30,7 @@ Source:
 
 The fixture suite is backend-agnostic by construction: it compiles a fixture, runs
 the result, and compares stdout. So a second backend is validated by running the
-suite again with `KELPC_BACKEND` set to it — and the C backend's own output becomes
+suite again with `KELPC_BACKEND` set to it, and the C backend's own output becomes
 the thing the new backend is compared against, rather than a second opinion.
 
 Two consequences worth knowing:
@@ -74,12 +74,12 @@ backends:
 | --- | --- |
 | Rejected by the compiler itself (the `should fail` fixtures) | 134 |
 | Accepted by the compiler | 145 |
-| — of those, built by the `asm` backend | 97 |
-| — of those, refused by the `asm` backend with the documented prefix | 48 |
-| — of those, failed for any other reason | 0 |
+| of those, built by the `asm` backend | 97 |
+| of those, refused by the `asm` backend with the documented prefix | 48 |
+| of those, failed for any other reason | 0 |
 
-The plan's own status table records the *suite* number — `182 of 260` integration
-tests passing under `--backend=asm`, with the C backend passing all 260 — which
+The plan's own status table records the *suite* number: `182 of 260` integration
+tests passing under `--backend=asm`, with the C backend passing all 260, which
 counts multi-file projects and subprocess cases too, and so is not the same
 denominator as the fixture count above. Re-measure either before quoting it: both
 move with every slice, and the plan's header says it is updated as work lands.
@@ -102,15 +102,15 @@ The plan splits the work into tiers, and only the first is in progress:
 
 | Stage | State |
 | --- | --- |
-| 0 — the backend boundary | done |
-| 1 — x86-64 assembly text, `as` + `ld` | in progress (see above) |
-| 2 — machine-code bytes and a linker of our own | not started; tier 1 must pass the suite first |
-| 3 — freestanding, no libc | not started; blocked on tier 2 |
-| 8 — runtime decoupling (parallel track) | in progress; see [Runtime](runtime.md) |
+| 0: the backend boundary | done |
+| 1: x86-64 assembly text, `as` + `ld` | in progress (see above) |
+| 2: machine-code bytes and a linker of our own | not started; tier 1 must pass the suite first |
+| 3: freestanding, no libc | not started; blocked on tier 2 |
+| 8: runtime decoupling (parallel track) | in progress; see [Runtime](runtime.md) |
 
 ## See also
 
 - [Pipeline](architecture.md)
 - [Runtime](runtime.md)
 - [Tests](tests.md)
-- [Install and build](../getting-started/install.md) — the flags and environment variables
+- [Install and build](../getting-started/install.md): the flags and environment variables

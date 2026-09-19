@@ -25,7 +25,7 @@ These are deliberate, and each one has a workaround in this documentation.
 - **A receiver on a generic type must write the type's own parameters**, in order:
   `fun Pair<A, B>.first()`. There is no way to declare a method with parameters of
   its own.
-- **An `enum` carries no methods**, generic or not — combinators over `Option` and
+- **An `enum` carries no methods**, generic or not: combinators over `Option` and
   `Result` are free functions.
 - **A `Map` key must be `String`, an integer or `bool`.** The compiler generates
   the key's hash and equality, so the set is closed: a float is refused (`nan`),
@@ -39,11 +39,11 @@ These are deliberate, and each one has a workaround in this documentation.
 
 - **No partial moves.** An owned field cannot be read out of a borrowed
   structure, and an owned `enum` payload cannot be read out of an owned one
-  either — use a `Box` and `take()` it, or pass a borrow.
+  either: use a `Box` and `take()` it, or pass a borrow.
 - That is what makes some stdlib helpers `Copy`-only: `option.unwrap` on an
   `Option<String>`, `result.map` over a `Result<T, MyErr>` and `list.filter` over
   a `List<String>` each need a move out that does not exist yet.
-- **No references — and no `View` — in fields, `List` elements, `Map` values or
+- **No references (and no `View`) in fields, `List` elements, `Map` values or
   `Box` contents.** Text you must store is a `String`; a view is taken at the
   point of use.
 - A `View` never becomes a `str`: a slice has no NUL after it, so `str.len`/
@@ -55,7 +55,7 @@ These are deliberate, and each one has a workaround in this documentation.
   `Unit` or another container. Wrap the inner one in a one-field `datac` (as
   `csv.Row`, `listx.Chunk`, `table.Row` do) or a `Box`.
 - No iteration protocol: `for` is a desugared index walk over a `List`, and a
-  `Map` has no iterator — iterate `keys()` and look up.
+  `Map` has no iterator: iterate `keys()` and look up.
 
 ## Concurrency
 

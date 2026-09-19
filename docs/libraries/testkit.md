@@ -1,4 +1,4 @@
-# `testkit` — a tiny self-test harness
+# `testkit`: a tiny self-test harness
 
 A running tally plus typed `check_eq_*` helpers, printing `ok   <name>` /
 `FAIL <name>` as each check runs and summarising at the end.
@@ -43,7 +43,7 @@ just a final count. Output goes to stdout via the builtin `print`/`print!`.
 ## Why the type is in the name
 
 A user module cannot overload a function name (`syntax.md` §7.2 is stdlib-only),
-so there is no single `check_eq` — the equality checks are spelled per type
+so there is no single `check_eq`: the equality checks are spelled per type
 (`check_eq_i64`, `check_eq_str`, ...).
 
 `check_eq_f64` compares with `==`, so it is exact: for a computed float, compare

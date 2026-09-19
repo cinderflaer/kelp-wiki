@@ -32,7 +32,7 @@ fun main() {
 ## Notes
 
 - There is **no listing**: a program cannot enumerate the environment. That is
-  the capability model doing its job — a grant names the variables it may read, so
+  the capability model doing its job: a grant names the variables it may read, so
   "which variables exist?" is not a question the language lets you ask.
 - `get` panics on an unset name; check `has` first unless a missing variable is a
   bug.
@@ -43,5 +43,5 @@ fun main() {
 
 ## See also
 
-- [`term`](../libraries/term.md) — the one library that reads `NO_COLOR`
+- [`term`](../libraries/term.md): the one library that reads `NO_COLOR`
 - [Capability patterns](../reference/capability-patterns.md)

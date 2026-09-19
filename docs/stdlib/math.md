@@ -1,6 +1,6 @@
 # `std/math`
 
-Floating-point math, plus `abs`/`min`/`max`/`clamp` — the only overloaded names
+Floating-point math, plus `abs`/`min`/`max`/`clamp`: the only overloaded names
 in the language. Ungated.
 
 ```kelp
@@ -21,7 +21,7 @@ impl "std/math"
 | --- | --- | --- |
 | `sqrt(x)` | `f64` | |
 | `pow(base, exp)` | `f64` | |
-| `floor(x)` / `ceil(x)` / `round(x)` / `trunc(x)` | `f64` | `f64` in, `f64` out — there is no float→int conversion |
+| `floor(x)` / `ceil(x)` / `round(x)` / `trunc(x)` | `f64` | `f64` in, `f64` out: there is no float→int conversion |
 | `exp(x)` / `ln(x)` / `log2(x)` / `log10(x)` | `f64` | |
 | `sin(x)` / `cos(x)` / `tan(x)` | `f64` | radians |
 | `atan2(y, x)` | `f64` | the quadrant-aware arctangent |
@@ -68,8 +68,8 @@ fun main() {
   are the directed ones.
 - `sign` on `-0.0` and on NaN returns `0.0` (the `else` branch), which is worth
   knowing before using it as a multiplier.
-- The missing pieces — `gcd`, `lcm`, `is_prime`, `factorial`, `hypot`,
-  `log_base`, degree/radian conversion, checked and saturating `i64` arithmetic —
+- The missing pieces: `gcd`, `lcm`, `is_prime`, `factorial`, `hypot`,
+  `log_base`, degree/radian conversion, checked and saturating `i64` arithmetic,
   are in [`mathx`](../libraries/mathx.md).
 - Integer `+`/`-`/`*` overflow is unchecked, so `abs(i64::MIN)` wraps; `mathx`'s
   saturating forms are the fix.
@@ -77,5 +77,5 @@ fun main() {
 ## See also
 
 - [`mathx`](../libraries/mathx.md)
-- [`stats`](../libraries/stats.md) — `mean`, `median`, `variance`, regression
+- [`stats`](../libraries/stats.md): `mean`, `median`, `variance`, regression
 - [`complex`](../libraries/complex.md)

@@ -1,4 +1,4 @@
-# `set` — `Set<T>` and `StrSet`
+# `set` (`Set<T>` and `StrSet`)
 
 A thin wrapper over the builtin `Map<K, bool>`: `Set<T>` for `Copy` keys
 (integers and `bool`), `StrSet` for `String` keys, with union, intersect and
@@ -18,7 +18,7 @@ impl "deps/set/lib" as set
 ## Why two types
 
 A `String`-keyed `Map` takes its key as a bare `str` in every method
-(`insert`/`has`/`remove` — the map copies it in) while every other key type takes
+(`insert`/`has`/`remove`: the map copies it in) while every other key type takes
 it by value. That split is baked into the compiler's `Map` builtin (syntax.md
 §12.2), so one generic `insert<T>(v: T)` cannot serve both: at `T = String` the
 body would need `v.as_str()`, and at `T = i64` it must not have it. Hence
@@ -35,7 +35,7 @@ datac Set<T>(var entries: Map<T, bool>)
 | `new<T>()` | empty `Set<T>` |
 | `insert(s: mut Set<T>, v: T)` | `Unit` |
 | `has(s: &Set<T>, v: T)` | `bool` |
-| `remove(s: mut Set<T>, v: T)` | `bool` — whether `v` was present |
+| `remove(s: mut Set<T>, v: T)` | `bool`: whether `v` was present |
 | `len(s)` / `is_empty(s)` | `usize` / `bool` |
 | `clear(s: mut Set<T>)` | `Unit` |
 | `to_list(s: &Set<T>)` | `List<T>`, insertion order (the order `Map.keys()` gives) |
@@ -55,7 +55,7 @@ datac StrSet(var entries: Map<String, bool>)
 | Function | Returns |
 | --- | --- |
 | `new_str()` | empty `StrSet` |
-| `insert(s: mut StrSet, v: &str)` | `Unit` — takes the text borrowed and copies it in |
+| `insert(s: mut StrSet, v: &str)` | `Unit`: takes the text borrowed and copies it in |
 | `has(s: &StrSet, v: &str)` | `bool` |
 | `remove(s: mut StrSet, v: &str)` | `bool` |
 | `len(s)` / `is_empty(s)` / `clear(s)` | as above |
@@ -141,7 +141,7 @@ ada
 ## Notes
 
 - A `float` cannot be a `Set` key: the compiler's `Map` key set is `String`,
-  the integers and `bool` — `nan != nan` would make an inserted key unfindable.
+  the integers and `bool`: `nan != nan` would make an inserted key unfindable.
 - A `datac`, an enum or a container cannot be a key either: v1 has no equality
   for them.
 - Calling a method on a returned temporary is refused

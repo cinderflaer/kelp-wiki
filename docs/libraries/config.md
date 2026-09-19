@@ -1,8 +1,8 @@
-# `config` — TOML/INI-ish reader
+# `config`: TOML/INI-ish reader
 
 A small flat config reader: `key = "value"` pairs, `[section]` tables, arrays
 of strings, bare tokens, `#` comments. It is deliberately the subset
-`coral.toml` itself uses — one `key = value` per line, blank lines free.
+`coral.toml` itself uses: one `key = value` per line, blank lines free.
 
 No capability.
 
@@ -66,7 +66,7 @@ that is free. The first failing line stops the parse.
 
 | Function | Returns |
 | --- | --- |
-| `find_entry(cfg, section, key)` | `option.Option<usize>` — the entry position |
+| `find_entry(cfg, section, key)` | `option.Option<usize>`: the entry position |
 | `has(cfg, section, key)` | `bool` |
 | `get(cfg, section, key)` | `&Value`; panics `config.get: key not found` |
 | `get_str` / `get_int` / `get_array` | the typed value; panics when the key is absent or the type is wrong |

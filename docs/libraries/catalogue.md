@@ -12,7 +12,7 @@ and every one is a single manifest line.
 | [`config`](config.md) | TOML/INI-ish reader: pairs, `[section]` tables, string arrays, comments |
 | [`csv`](csv.md) | RFC-4180-ish CSV parse/write: quoting, escaped quotes, embedded newlines |
 | [`encoding`](encoding.md) | Base64 (RFC 4648) and percent (RFC 3986) encode/decode |
-| [`lineproto`](lineproto.md) | Buffered `send_line`/`read_line` over a socket — gated on `net` |
+| [`lineproto`](lineproto.md) | Buffered `send_line`/`read_line` over a socket: gated on `net` |
 
 ## Numbers and mathematics
 
@@ -63,5 +63,5 @@ and every one is a single manifest line.
 ## Adding one
 
 See [Writing a library](writing-a-library.md). A new library is a folder, a row in
-the repository's table and a page in this chapter — there is no release step,
+the repository's table and a page in this chapter: there is no release step,
 because there is no version.

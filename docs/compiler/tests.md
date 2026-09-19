@@ -2,7 +2,7 @@
 
 The suite is built on one idea: **compile a program, run it, compare what it
 printed**. Nothing asserts on generated C, so a test says what the language does
-rather than how a backend does it — and that is what lets the same suite validate
+rather than how a backend does it, and that is what lets the same suite validate
 a second backend.
 
 ```sh
@@ -11,7 +11,7 @@ KELPC_BACKEND=asm cargo test --test compile_and_run
 BACKENDS="c asm" ./kelpc/tests/run-all-backends.sh
 ```
 
-## The fixture suite — `kelpc/tests/compile_and_run.rs`
+## The fixture suite (`kelpc/tests/compile_and_run.rs`)
 
 266 tests (measured 2026-09-19), driving the real `kelpc` binary over two corpora:
 
@@ -26,7 +26,7 @@ different things with them:
 | Group | What the harness asserts |
 | --- | --- |
 | Compiled and run | stdout matches an exact expected value |
-| Compiled and run, expected to fail | the program panics with a specific message — the panic texts are golden |
+| Compiled and run, expected to fail | the program panics with a specific message: the panic texts are golden |
 | Rejected by the compiler | specific compiler diagnostics: moves, borrows, escapes, unsupported types, a bad grant, a bad `impl` path |
 
 The rejected group is the real proof that the move/borrow checker works rather
@@ -64,7 +64,7 @@ cargo test --test memory_gate    -- --ignored                 # valgrind over bo
 ```
 
 The memory gate exists because the AddressSanitizer gate cannot cover the
-assembly backend — it instruments the *generated C*, and there is none once
+assembly backend: it instruments the *generated C*, and there is none once
 `kelpc` emits its own assembly. Valgrind runs an asm-generated binary like any
 other.
 
@@ -87,7 +87,7 @@ cargo test --test cap_matcher   -- --ignored
 cargo test --test path_normalize
 ```
 
-## The formatter's corpus — `kelpc/tests/fmt.rs`
+## The formatter's corpus (`kelpc/tests/fmt.rs`)
 
 29 tests, plus `kelpc/tests/fmt_corpus/` (27 input/expected pairs). `kelpc fmt` is a
 token-level whitespace reformatter, so its interesting behaviour is a set of
@@ -108,13 +108,13 @@ Two benchmarks under `bench/`, each with a recorded `results.txt`:
 
 | Benchmark | What it measures |
 | --- | --- |
-| `bench/speed/` | four CPU-bound workloads — `collatz`, `float`, `mix`, `fib` — with the same algorithm and op counts in Rust, Kelp, C++ and Python; every program times itself and prints a checksum, and the harness keeps the fastest of three trials |
+| `bench/speed/` | four CPU-bound workloads (`collatz`, `float`, `mix`, `fib`) with the same algorithm and op counts in Rust, Kelp, C++ and Python; every program times itself and prints a checksum, and the harness keeps the fastest of three trials |
 | `bench/write_20gb/` | writing 20 GiB in the same four languages, which is entirely device-bound |
 
 The checksums are the point: equal checksums are what make the timings comparable,
 because they prove the four programs did the same work. In the recorded run Kelp,
 C++ and Rust are level to within about 1% on all four workloads, and Python is 27x
-to 87x slower depending on the workload — with one caveat the README records: an
+to 87x slower depending on the workload, with one caveat the README records: an
 unconstrained naive `fib` is rewritten into a loop by LLVM at 0.5 ns/op, so the
 call-cost workload needs a side-effecting counter to measure anything at all.
 
@@ -128,5 +128,5 @@ the number is trustworthy is longer than the number itself.
 - [Pipeline](architecture.md)
 - [Backends](backends.md)
 - [Runtime](runtime.md)
-- [Install and build](../getting-started/install.md) — the commands, quoted from here
-- [Known issues](../meta/known-issues.md) — defects the suite does not cover
+- [Install and build](../getting-started/install.md): the commands, quoted from here
+- [Known issues](../meta/known-issues.md): defects the suite does not cover

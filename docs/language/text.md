@@ -94,7 +94,7 @@ Formatting a number: `fmt.int(n)`, `fmt.uint(n)`, `fmt.float(x, decimals)`,
 `fmt.hex(n)`, `fmt.pad_left(s, width, fill)`, `fmt.pad_right(...)`. All return
 `String`. See [`std/fmt`](../stdlib/fmt.md).
 
-## `View` — borrowed text with a length
+## `View`: borrowed text with a length
 
 ```kelp
 val text = "the quick brown fox"
@@ -114,7 +114,7 @@ val owned: String = v.slice(4, 9)   // copies by length, not by strlen
 | `v.len()`, `v.is_empty()` | `usize`, `bool` |
 | `v.get(i)` | `u8` |
 | `v.slice(from, to)` | `View` |
-| `v.eq(other: View)` | `bool` — compares bytes and lengths |
+| `v.eq(other: View)` | `bool`: compares bytes and lengths |
 | `v.to_string()` | `String` |
 
 A `View` is `Copy`, but it cannot be stored: a field, `List` element, `Map` value
@@ -148,7 +148,7 @@ val x: f64 = big.to_f64()            // 3.0 — the only integer->float widening
 - **`.as_str()` or `.view()` on a temporary is refused**
   (`String.from_str("x").as_str()`): bind the `String` to a `val` first.
 - **A `String` argument where a `str` parameter is expected** needs
-  `.as_str()` — the error message names the argument.
+  `.as_str()`: the error message names the argument.
 
 ## See also
 

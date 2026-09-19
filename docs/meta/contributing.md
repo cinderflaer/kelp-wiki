@@ -43,7 +43,7 @@ their checksums.
 - **A fixture** for a language change: a `.kp` program under `kelpc/tests/fixtures`
   whose stdout is the expected output. Both backends run it, so a construct the
   `asm` backend cannot lower yet fails loudly with its name rather than silently.
-- **A test in the corpus** for a capability-matcher or path-normalizer change —
+- **A test in the corpus** for a capability-matcher or path-normalizer change:
   those two are implemented twice (Kelp and C) and compared.
 - **A citation** for a documentation change: every page in this wiki names the
   section it came from, and a claim without a source is a claim to remove.
@@ -53,7 +53,7 @@ their checksums.
 ## Style
 
 The formatter owns whitespace: `kelpc fmt -w <path>` and `kelpc fmt --check` are
-the two commands, and `fmt` is idempotent, token-faithful and comment-preserving —
+the two commands. `fmt` is idempotent, token-faithful and comment-preserving:
 it never rewrites a token, so a formatted file is the same program. See
 [Style](../language/style.md) for the rules it cannot enforce (the 100-column
 limit, declaration order inside a group, naming).
@@ -62,7 +62,7 @@ limit, declaration order inside a group, naming).
 
 [Known issues](known-issues.md) lists what is already known. A useful report has:
 
-1. the smallest program that shows it — three lines beats a paragraph;
+1. the smallest program that shows it: three lines beats a paragraph;
 2. the exact command and the exact error, including the failing generated-C line
    if the failure came from `cc`;
 3. what you expected instead, in one sentence;
@@ -93,11 +93,11 @@ source moves:
 
 Mermaid diagrams are checked with Mermaid's own parser before you trust them:
 `npm install jsdom` once, `mkdocs build --strict`, then
-`node tools/check-mermaid.cjs` — MkDocs copies a diagram's text without judging
+`node tools/check-mermaid.cjs`: MkDocs copies a diagram's text without judging
 it, so an invalid one only shows up in the browser as an error box.
 
 ## See also
 
-- [Source documents](source-documents.md) — which file is the authority
-- [Compiler](../compiler/index.md) — the pipeline a change has to fit into
-- [Tooling](../tooling/index.md) — `kelpc`, Coral, Lighthouse
+- [Source documents](source-documents.md), which file is the authority
+- [Compiler](../compiler/index.md): the pipeline a change has to fit into
+- [Tooling](../tooling/index.md): `kelpc`, Coral, Lighthouse

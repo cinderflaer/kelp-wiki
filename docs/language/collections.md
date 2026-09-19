@@ -112,7 +112,7 @@ print(runs.get(key = 7))
 ## `Box<T>`
 
 A box holds one value or nothing. It is the owning pointer, and it is what makes
-recursive types — and moving a value out of a borrowed structure — expressible.
+recursive types (and moving a value out of a borrowed structure) expressible.
 
 ```kelp
 var slot: Box<i32> = Box.empty()

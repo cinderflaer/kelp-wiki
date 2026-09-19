@@ -9,7 +9,7 @@ impl "std/http" with caps(net = ["api.example.com:443"])
 ```
 
 Naming `net.connect` needs the `net` domain, so a project that imports this module
-without delegating gets a compile error naming the module — not a client that
+without delegating gets a compile error naming the module: not a client that
 fails at runtime.
 
 ## Types
@@ -25,7 +25,7 @@ datac Lease(val fd: i32, val reused: bool)
 ```
 
 Constants: `DEFAULT_SCHEME` (`http`), `DEFAULT_PORT` (`80`), `DEFAULT_TIMEOUT_MS`
-(`30000`), `DEFAULT_MAX_REDIRECTS` (`5`), and `pool_size` — spliced in by the
+(`30000`), `DEFAULT_MAX_REDIRECTS` (`5`), and `pool_size`: spliced in by the
 compiler from the project's `http_pool` setting in `coral.toml` (default 4, `0`
 disables pooling).
 
@@ -44,7 +44,7 @@ disables pooling).
 
 Response header lookup is case-insensitive (`name_eq`). The body framing handles
 **all four** cases: `Content-Length`, `Transfer-Encoding: chunked`, a bodyless
-response, and the read-to-end-of-file fallback — the last is the only one that
+response, and the read-to-end-of-file fallback: the last is the only one that
 costs a connection.
 
 ## Keep-alive and the pool
@@ -53,7 +53,7 @@ HTTP/1.1 is persistent by default, so the client does not send
 `Connection: close`; a connection goes back into the pool when the body was
 completely framed and the server did not ask to close.
 
-The pool is keyed on the host **as written** — never on a resolved address,
+The pool is keyed on the host **as written**: never on a resolved address,
 because the capability check matches the string the author wrote. `size` is the
 number of idle connections to *keep*, not a hard cap: a request that arrives while
 every kept connection is busy gets a fresh one, so a program never fails because
@@ -65,13 +65,13 @@ its pool was small.
 | `Pool.warm()` | `Unit` (`mut`) |
 | `Pool.checkout()` | `Lease` (`mut`) |
 | `Pool.release(lease, reusable: bool)` | `Unit` (`mut`) |
-| `Pool.size()` / `Pool.len()` | `usize` — the keep count, and how many are idle |
+| `Pool.size()` / `Pool.len()` | `usize`: the keep count, and how many are idle |
 | `Lease.socket()` | `net.Socket` |
 
 A `Lease` is a **ticket, not an owner**: the pool holds every descriptor, a lease
 is permission to use one for one exchange, and `release` consumes it. Since a
 `datac` is never `Copy`, releasing twice or using a lease after release is a
-compile error — the ownership check is free.
+compile error: the ownership check is free.
 
 ## Example
 
@@ -100,7 +100,7 @@ Start a server first (`python3 -m http.server 8000`, or the same program with
 ## Notes
 
 - **Not here, deliberately:** gzip, HTTP/2, cookies, proxies,
-  `Expect: 100-continue`, idle reaping, and `https` — TLS is a later milestone,
+  `Expect: 100-continue`, idle reaping, and `https`: TLS is a later milestone,
   and `parse_url` refuses it by name rather than pretending.
 - Redirects: `max_redirects` and `follow_redirects` on the `Client`. A 307/308
   keeps the body; other redirects drop it.

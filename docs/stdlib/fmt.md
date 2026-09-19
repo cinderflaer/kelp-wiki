@@ -46,12 +46,12 @@ ab...
 
 ## Notes
 
-- `fmt.hex` takes one `u64`, not a buffer — use `fmt.bytes` for a buffer.
+- `fmt.hex` takes one `u64`, not a buffer: use `fmt.bytes` for a buffer.
 - The fill character is a **byte**, not a `char`: pass `'0'` (which is a `u8` in
   that position) rather than a string.
 - Padding counts bytes, so a multi-byte character pads short.
 - There is no grouping/separator option, no sign control, no scientific
-  notation, and no width/precision mini-language — `fmt.float(x, d)` is the whole
+  notation, and no width/precision mini-language: `fmt.float(x, d)` is the whole
   float API.
 
 ## See also

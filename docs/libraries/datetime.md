@@ -1,4 +1,4 @@
-# `datetime` — civil calendar math over Unix seconds
+# `datetime`: civil calendar math over Unix seconds
 
 Gregorian date/time arithmetic from an `i64` count of Unix seconds to a `Civil`
 value and back, plus leap years, day of week, and ISO-8601 parse/format.
@@ -33,12 +33,12 @@ All values are UTC; there is no timezone or offset handling.
 
 | Function | Returns |
 | --- | --- |
-| `from_unix(seconds: i64)` | `Civil` — the UTC civil time of that instant |
-| `to_unix(c: &Civil)` | `i64` — the inverse |
-| `civil_from_days(z: i64)` | `Ymd` — days since 1970-01-01 to a date |
-| `days_from_civil(year: i64, month: i32, day: i32)` | `i64` — the inverse |
+| `from_unix(seconds: i64)` | `Civil`: the UTC civil time of that instant |
+| `to_unix(c: &Civil)` | `i64`: the inverse |
+| `civil_from_days(z: i64)` | `Ymd`: days since 1970-01-01 to a date |
+| `days_from_civil(year: i64, month: i32, day: i32)` | `i64`: the inverse |
 | `add_seconds(c: &Civil, delta: i64)` | `Civil` |
-| `diff_seconds(a: &Civil, b: &Civil)` | `i64` — `a - b`, in seconds |
+| `diff_seconds(a: &Civil, b: &Civil)` | `i64`: `a - b`, in seconds |
 | `day_of_week(c: &Civil)` | `i32`: 0 = Sunday ... 6 = Saturday |
 | `is_leap_year(year: i64)` | `bool` |
 

@@ -8,7 +8,7 @@ impl "std/process" with caps(process = ["/usr/bin/curl"]) // spawn/run need a pa
 ```
 
 `process` patterns are absolute program paths, matched the same way `fs` paths
-are: normalized, symlinks resolved. Reading `argv` needs no pattern — the empty
+are: normalized, symlinks resolved. Reading `argv` needs no pattern: the empty
 grant (`with caps(process = [])`) is enough to name `process.args`, because there
 is no resource argument to match.
 
@@ -52,7 +52,7 @@ datac Child(
 | `exit(code: i32)` | — | ends the process with that status |
 | `getpid()` | `i64` | |
 
-`args` does **not** include the program itself — the child's argv is its own.
+`args` does **not** include the program itself: the child's argv is its own.
 
 ## Example
 

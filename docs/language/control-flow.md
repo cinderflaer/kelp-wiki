@@ -4,7 +4,7 @@ Source section:
 [`syntax.md` §6](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
 
 Kelp has `if`/`else` (with `if let`), `for`, `while`, `when` and `return`. There
-is no `break`, no `continue`, no `loop`, no `goto` and no exceptions — a
+is no `break`, no `continue`, no `loop`, no `goto` and no exceptions: a
 condition that must end a loop early goes in the `while` header.
 
 ## `if` / `else`
@@ -58,7 +58,7 @@ if let Rect(w, h) = shape {
   first, which is how `if let Ok(v) = json.parse(text)` is legal at all.
 - A payload binds as a **copy** when it is `Copy` and as a **shared borrow**
   otherwise. So in `if let Ok(x) = parsed` where `parsed: Result<Civil, _>`, `x`
-  is already a `&Civil` — pass `x`, not `&x`.
+  is already a `&Civil`: pass `x`, not `&x`.
 
 !!! warning "Declare owned locals outside the arm"
     On the current compiler an owned local declared inside an `if let` arm (or a
@@ -155,7 +155,7 @@ fun sum_to(n: i32).R: i32 {
 expression-bodied function does not use `return` at all.
 
 A block whose **last statement is `panic(...)`** diverges, so it satisfies any
-declared return type — including a borrowed one. That rule is what makes a
+declared return type, including a borrowed one. That rule is what makes a
 "this cannot happen" accessor expressible:
 
 ```kelp

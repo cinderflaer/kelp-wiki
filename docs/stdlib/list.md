@@ -51,14 +51,14 @@ fun main() {
 ## Notes
 
 - The literal is written `fun(x: &T).R: U = <expr>`, and inside it a `Copy`
-  element is used **directly** — `x * 2`, not `*x * 2`.
+  element is used **directly**: `x * 2`, not `*x * 2`.
 - `filter` requires `Copy` (it builds a new list out of what `get` hands back),
   so `List<String>` cannot be filtered here. `listx` documents the same limit;
   clone in the callback if you need owned results.
 - `map` needs no `Copy`: it hands the borrow to the callback and stores whatever
   the callback returns.
 - There is no `fold`, `zip`, `chunks`, `sort_by`, `sum`/`min`/`max`, `unique` or
-  `position` — those are in [`listx`](../libraries/listx.md).
+  `position`: those are in [`listx`](../libraries/listx.md).
 
 ## See also
 

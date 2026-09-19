@@ -26,8 +26,8 @@ fun main() {
 ## Notes
 
 - **Unseeded on purpose**: this is the system source, so it is not reproducible.
-  For anything that must replay — tests, simulations, a shuffle you want to
-  reproduce from a seed — use [`prng`](../libraries/prng.md), which needs no
+  For anything that must replay (tests, simulations, a shuffle you want to
+  reproduce from a seed), use [`prng`](../libraries/prng.md), which needs no
   capability at all because it is arithmetic on a `u64`.
 - `rand.below` is the modulo-reduction helper here; `prng.below` has the same
   modulo bias caveat.
@@ -36,5 +36,5 @@ fun main() {
 
 ## See also
 
-- [`prng`](../libraries/prng.md) — seeded, reproducible, capability-free
+- [`prng`](../libraries/prng.md): seeded, reproducible, capability-free
 - [Capability patterns](../reference/capability-patterns.md)

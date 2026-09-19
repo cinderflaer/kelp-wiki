@@ -1,6 +1,6 @@
 # `std/path`
 
-Lexical path handling: split, join, name, extension, normalize. Ungated — and
+Lexical path handling: split, join, name, extension, normalize. Ungated, and
 purely textual: nothing here touches the filesystem, and nothing here knows
 whether the path exists.
 
@@ -13,7 +13,7 @@ impl "std/path"
 | `is_absolute(s: &str)` | `bool` | true when the text starts with `/` |
 | `normalize(s: &str)` | `String` | lexical normalization (see below) |
 | `last_sep(s: &str)` | `usize` | offset of the last `/`, or 0 when there is none |
-| `file_name(s: &str)` | `&str` | everything after the last `/` — a borrow |
+| `file_name(s: &str)` | `&str` | everything after the last `/`: a borrow |
 | `extension(s: &str)` | `&str` | after the last `.`, or `""` |
 | `has_extension(s: &str, ext: &str)` | `bool` | |
 | `stem(s: &str)` | `String` | the file name without its extension |
@@ -26,7 +26,7 @@ impl "std/path"
 same lexical normalization, and `fs` patterns are matched against a normalized,
 symlink-resolved path. It is documented in
 [`syntax.md` §15.2](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md)
-and implemented twice — in Kelp here and in C in the runtime — with the
+and implemented twice (in Kelp here and in C in the runtime) with the
 differential tests comparing the two.
 
 ```kelp
@@ -62,7 +62,7 @@ true
 ## Notes
 
 - `last_sep` returns 0 when there is no separator, which makes `file_name` return
-  the whole string — the intended behaviour for a bare name.
+  the whole string: the intended behaviour for a bare name.
 - `extension` looks at the last `.` **anywhere** in the name, so `.gitignore`
   has the extension `gitignore` and no stem-to-speak-of. Check for the shapes you
   care about if that matters.

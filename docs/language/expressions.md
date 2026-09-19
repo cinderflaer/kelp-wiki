@@ -43,7 +43,7 @@ val c = 7.0 / 2.0    // 3.5
 
 - Integer `/` truncates toward zero and `%` follows the dividend's sign.
   **Division by zero is undefined rather than checked.**
-- Integer `+`, `-` and `*` overflow is **not checked** — it wraps. If a wrap
+- Integer `+`, `-` and `*` overflow is **not checked**: it wraps. If a wrap
   matters, use the checked or saturating helpers in
   [`mathx`](../libraries/mathx.md).
 - Float arithmetic is IEEE: `nan`, `inf` and `-0.0` behave as usual, and
@@ -52,13 +52,13 @@ val c = 7.0 / 2.0    // 3.5
 ## Bitwise
 
 `& | ^ << >> ~` require two integers **of the same type** (or one, for `~`) and
-produce that type. `bool` is not a bitwise domain — `a & b` on two booleans reads
+produce that type. `bool` is not a bitwise domain: `a & b` on two booleans reads
 as a non-short-circuiting `and`, and `&&` is right there.
 
 A shift count is the same type as the value, and a shift by ≥ the width is
 undefined, exactly as in C. `>>` on a signed type is arithmetic
-(sign-propagating), and `~x` is `0 - x - 1`, so on a `u32` it flips all 32 bits —
-mask it (`~x & 255`) when you wanted a byte.
+(sign-propagating), and `~x` is `0 - x - 1`, so on a `u32` it flips all 32 bits.
+Mask it (`~x & 255`) when you wanted a byte.
 
 ```kelp
 val masked = flags & 3
@@ -76,7 +76,7 @@ val field = (*r).count     // dereference, then field access
 (*w).count = 9             // dereference, then write
 ```
 
-`&x` borrows, `a & b` masks — position decides. See
+`&x` borrows, `a & b` masks: position decides. See
 [Ownership and borrowing](ownership.md) for the rules the checker enforces.
 
 ## The `?` operator
@@ -94,7 +94,7 @@ fun quarter(n: i64).R: result.Result<i64, String> {
 
 Rules (§5.2):
 
-- It works on `Option` **or** `Result` — the compiler knows the *shape*, not the
+- It works on `Option` **or** `Result`: the compiler knows the *shape*, not the
   module, so a program's own declaration of either works.
 - The enclosing function must return an enum of the same shape, with the same
   failure payload type. v1 has no error conversion, so `Result<i64, String>`
@@ -104,7 +104,7 @@ Rules (§5.2):
 - A failure returns immediately, so the enclosing function's locals are dropped
   on the way out, exactly as any `return` drops them.
 - `?` is postfix and binds tighter than every binary operator. Because it moves a
-  payload out of the operand, **a borrow cannot be an operand** — match a
+  payload out of the operand, **a borrow cannot be an operand**: match a
   borrowed operand with `when` or `if let` instead.
 
 ## Compound assignment

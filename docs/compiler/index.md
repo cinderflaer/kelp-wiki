@@ -38,14 +38,14 @@ with the backend's working plan in
 
 ## Pages
 
-- [Pipeline](architecture.md) — each stage, and what it is responsible for
-- [Backends](backends.md) — C and assembly, and why a refusal is a feature
-- [Runtime](runtime.md) — the C that is still C, and the capability matcher
-- [Tests](tests.md) — the fixture suite, the differential sweeps, the memory gate
+- [Pipeline](architecture.md): each stage, and what it is responsible for
+- [Backends](backends.md): C and assembly, and why a refusal is a feature
+- [Runtime](runtime.md): the C that is still C, and the capability matcher
+- [Tests](tests.md): the fixture suite, the differential sweeps, the memory gate
 
 ## See also
 
-- [Install and build](../getting-started/install.md) — building `kelpc` and running a file
-- [Language](../language/index.md) — the surface syntax these stages implement
-- [Capabilities](../language/capabilities.md) — the model the checker enforces
-- [Known issues](../meta/known-issues.md) — defects in valid programs today
+- [Install and build](../getting-started/install.md): building `kelpc` and running a file
+- [Language](../language/index.md): the surface syntax these stages implement
+- [Capabilities](../language/capabilities.md): the model the checker enforces
+- [Known issues](../meta/known-issues.md): defects in valid programs today

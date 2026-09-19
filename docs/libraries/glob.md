@@ -1,4 +1,4 @@
-# `glob` — `*`/`?` pattern matching
+# `glob`: `*`/`?` pattern matching
 
 A public glob matcher over `*` and `?`: `*` matches any run of characters
 (including none), `?` matches exactly one, everything else matches itself
@@ -36,7 +36,7 @@ impl "deps/glob/lib" as glob
 ## Cost
 
 The classic O(len(pattern) × len(text)) DP table, flattened to one
-`List<bool>` (a nested container has no inline C representation — syntax.md
+`List<bool>` (a nested container has no inline C representation, syntax.md
 §12.1) and indexed by `row * cols + col`.
 
 ## Example

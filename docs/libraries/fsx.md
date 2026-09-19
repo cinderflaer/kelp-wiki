@@ -1,4 +1,4 @@
-# `fsx` — composition over `std/fs`
+# `fsx`: composition over `std/fs`
 
 Atomic writes, a recursive directory copy, a text `tail`, and a byte-for-byte
 file comparison.
@@ -66,7 +66,7 @@ line3
 
 - `write_atomic` is the point of the library: `std/fs.write` truncates in place,
   so a crash mid-write leaves a half-written file.
-- `copy_dir` is the walk `std/fs` stops short of — `fs.copy` copies one file
+- `copy_dir` is the walk `std/fs` stops short of: `fs.copy` copies one file
   only. `fsx` itself is a folder and cannot import another folder in this repo,
   so anything more (a filtered copy, a size cap) belongs in the caller.
 - `tail` reads the whole file and splits it; it is not a seek-from-end.

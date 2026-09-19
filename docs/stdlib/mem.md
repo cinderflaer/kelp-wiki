@@ -27,7 +27,7 @@ fun main() {
 !!! note "Why this is small"
     Growth goes through `Bytes.push`/`reserve`, and `String`/`List`/`Map` manage
     their own storage, so there is nothing else for a `mem` module to expose in
-    v1 — no `free` (drops are automatic), no `realloc`, no address arithmetic.
+    v1: no `free` (drops are automatic), no `realloc`, no address arithmetic.
 
 ## See also
 

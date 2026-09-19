@@ -1,4 +1,4 @@
-# `complex` — complex numbers over `f64`
+# `complex`: complex numbers over `f64`
 
 The four arithmetic operations, conjugate, magnitude, angle, polar construction
 and text formatting.
@@ -78,7 +78,7 @@ Output:
   magnitudes.
 - `abs` is `sqrt(re² + im²)`, so a component large enough to overflow its square
   loses precision; `mathx.hypot` would be the safer form if you need it.
-- No `pow`, `sqrt`, `exp`, `log`, `sin`/`cos` of a complex argument — only the
+- No `pow`, `sqrt`, `exp`, `log`, `sin`/`cos` of a complex argument: only the
   operations listed above.
 - `to_string` always prints exactly six decimals per part and drops the sign of a
   negative zero (`-0.0` prints as `+0.000000`).

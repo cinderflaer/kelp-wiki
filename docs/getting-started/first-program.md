@@ -28,7 +28,7 @@ fun main() {
 }
 ```
 
-A template is **not a value** — it may only appear as the single argument of
+A template is **not a value**: it may only appear as the single argument of
 `print`/`print!`. To build text, use `str.concat`, `fmt.*`, or a `String`:
 
 ```kelp
@@ -170,6 +170,6 @@ consumer decides the pattern. See [Capabilities](../language/capabilities.md).
 
 ## Next
 
-- [Projects and coral.toml](projects.md) — the manifest, dependencies, tasks
-- [Language](../language/index.md) — the reference for everything above
-- [Libraries (fpl)](../libraries/index.md) — JSON, CSV, dates, globs, HTTP helpers
+- [Projects and coral.toml](projects.md): the manifest, dependencies, tasks
+- [Language](../language/index.md): the reference for everything above
+- [Libraries (fpl)](../libraries/index.md): JSON, CSV, dates, globs, HTTP helpers

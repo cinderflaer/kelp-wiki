@@ -3,8 +3,8 @@
 `fpl` is the first-party Kelp library catalogue: one folder per library in a
 single repository, twenty-five of them at the time of writing.
 
-Unlike the standard library — which is compiled into `kelpc` and imported as
-`std/…` — every fpl library is a **dependency you fetch**: a folder from a git
+Unlike the standard library, which is compiled into `kelpc` and imported as
+`std/…`, every fpl library is a **dependency you fetch**: a folder from a git
 remote, landed in your project's `src/deps/`.
 
 ```toml
@@ -29,7 +29,7 @@ impl "deps/hash/lib" as hash
    `src/deps/<name>/` *is* the tree it built with, and `coral build` never touches
    a dependency that is already there.
 3. **A folder must stand alone.** Only the named folder is fetched, so a library
-   here cannot `impl` another one — the sibling was never downloaded and there is
+   here cannot `impl` another one: the sibling was never downloaded and there is
    no `deps/fpl/...` in the consumer's tree to name. When two libraries need the
    same helper, they either carry their own copy (`httpx` and `encoding` both
    hold a base64 encoder) or they stop being two libraries.
@@ -63,10 +63,10 @@ example whose output was checked against `kelpc`, and what it deliberately does
 
 ## Pages
 
-- [Catalogue](catalogue.md) — all twenty-five, grouped by what they do
-- [Writing a library](writing-a-library.md) — what a library has to be
+- [Catalogue](catalogue.md): all twenty-five, grouped by what they do
+- [Writing a library](writing-a-library.md): what a library has to be
 
 ## See also
 
-- [Projects and coral.toml](../getting-started/projects.md) — the manifest side
-- [Capabilities](../language/capabilities.md) — what a grant means
+- [Projects and coral.toml](../getting-started/projects.md): the manifest side
+- [Capabilities](../language/capabilities.md): what a grant means

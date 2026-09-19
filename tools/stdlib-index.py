@@ -113,7 +113,7 @@ def module_page(mod: str, path: pathlib.Path) -> tuple[list[str], int, int]:
 
     head = f"## `std/{mod}`"
     if mod in GATED:
-        head += f" — needs `{GATED[mod]}`"
+        head += f" (needs `{GATED[mod]}`)"
     out = [head + "\n"]
     if types:
         out.append("Types:\n")

@@ -15,7 +15,7 @@ enum Option<T> {
 
 The enum is the point: `Some`/`None` is one of the two shapes `?` and `if let`
 understand, so a function that can fail one way returns `Option<T>` and its caller
-writes `val x = f(...)?`. Nothing in the compiler knows this module exists — the
+writes `val x = f(...)?`. Nothing in the compiler knows this module exists: the
 *shape* is the contract, so a program's own `Option` works identically.
 
 ## Functions
@@ -31,13 +31,13 @@ writes `val x = f(...)?`. Nothing in the compiler knows this module exists — t
 | `or_else<T>(o, f: fun().R: Option<T>)` | `Option<T>` | **`T` must be `Copy`** |
 | `each<T>(o, f: closure(&T))` | `Unit` | |
 
-There are no methods on `Option` — an `enum` carries no methods in v1, so every
+There are no methods on `Option`: an `enum` carries no methods in v1, so every
 combinator is a free function and takes the option as its first argument.
 
 ## Why some of them need `Copy`
 
 V1 has no partial moves: an owned payload cannot be read out of an owned enum. So
-`option.unwrap` on an `Option<String>` is a compile error — the way out is
+`option.unwrap` on an `Option<String>` is a compile error: the way out is
 `if let`/`when`, which borrows the payload, or a `Box` you can `take()` from.
 
 ## Example
@@ -69,11 +69,11 @@ fun main() {
 
 - The payload of a pattern binds as a **copy** for `Copy` types and as a shared
   borrow otherwise, so `if let Some(v) = maybe` where `maybe: Option<Civil>` gives
-  you a `&Civil` — pass `v`, not `&v`.
+  you a `&Civil`: pass `v`, not `&v`.
 - `unwrap`'s panic message is `Option.unwrap: value is None`; `expect` prints the
   message you give it.
 - `Option` is owned and not `Copy`, so passing one to a parameter borrows it and
-  you can keep using it — unless the parameter is `move`.
+  you can keep using it, unless the parameter is `move`.
 
 ## See also
 

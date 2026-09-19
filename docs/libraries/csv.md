@@ -1,4 +1,4 @@
-# `csv` — RFC-4180-ish CSV parse and write
+# `csv`: RFC-4180-ish CSV parse and write
 
 Comma-separated fields, double-quote quoting, `""` as an escaped quote inside a
 quoted field, embedded commas, quotes and newlines inside a quoted field. A bare
@@ -27,7 +27,7 @@ enum ParseErr {
 ```
 
 `Row` wraps `List<String>` in a one-field `datac` because `List<List<String>>`
-cannot be written — a nested container has no C representation to hold inline
+cannot be written: a nested container has no C representation to hold inline
 ([syntax.md](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md) §12.1). The same pattern `listx`'s `Chunk<T>` uses.
 
 ## `Row` methods

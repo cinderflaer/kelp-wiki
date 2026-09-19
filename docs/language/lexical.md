@@ -39,7 +39,7 @@ mut  pd  return  true  val  var  when  while
 
 `fn`, `let`, `struct`, `use`, `loop`, `break`, `continue`, `match`, `trait` and
 `self` are **not** keywords: writing `fn` is a parse error, and `self` is an
-ordinary identifier. `in` is not a keyword either — `for x in xs` reads it as a
+ordinary identifier. `in` is not a keyword either: `for x in xs` reads it as a
 separator, so a binding may be named `in`.
 
 ## Literals
@@ -54,14 +54,14 @@ val f = "n = $a, sum = ${a + 1}"   // string template
 ```
 
 - **Integer literals are decimal digits only**: no suffix, no hex, no digit
-  separators. A literal has no width of its own — it takes the integer type its
+  separators. A literal has no width of its own: it takes the integer type its
   context requires, and `i32` when nothing determines it. To write a bit pattern
   you write the decimal value (`192`, `128`) or compute it.
 - **Float literals** are `digits.digits`, and are `f64` unless the context
   requires `f32`.
 - A **character literal** is one Unicode scalar value in single quotes: `'x'`,
   `' '`, `'"'`, `'é'`, `'中'`. It takes the integer type its context requires and
-  is `char` when nothing determines one — which is why byte-level code reads the
+  is `char` when nothing determines one, which is why byte-level code reads the
   way it thinks:
 
   ```kelp

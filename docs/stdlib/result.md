@@ -74,12 +74,12 @@ fun describe(e: &str.ParseErr).R: String = when e {
 
 - `unwrap` needs no `Copy` bound in the *signature* list above because the
   stdlib's generic handling differs from `Option`'s in places; the practical rule
-  is the same: an owned payload that cannot be moved out is not `unwrap`-able —
+  is the same: an owned payload that cannot be moved out is not `unwrap`-able:
   use `if let`/`when`, which borrow the payload.
 - `?` propagates only between *identical* failure payload types. v1 has no error
   conversion, so `Result<i64, String>` cannot be propagated out of a function
   returning `Result<i64, IoErr>`; `map_err` is the bridge.
-- A function returning `Unit` — including `main` — has nowhere to propagate to.
+- A function returning `Unit` (including `main`) has nowhere to propagate to.
 
 ## See also
 

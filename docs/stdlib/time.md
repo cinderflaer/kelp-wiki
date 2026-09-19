@@ -6,13 +6,13 @@ Clocks and sleeping. **Gated on `time`.**
 impl "std/time" with caps(time = [])
 ```
 
-`time` has no pattern to restrict, so an empty list is the whole grant — naming
+`time` has no pattern to restrict, so an empty list is the whole grant: naming
 any function in the module is the authority.
 
 | Function | Returns | Notes |
 | --- | --- | --- |
 | `time.now_unix()` | `i64` | seconds since the epoch (UTC) |
-| `time.now_mono_ns()` | `i64` | nanoseconds on the **monotonic** clock — for durations, never for dates |
+| `time.now_mono_ns()` | `i64` | nanoseconds on the **monotonic** clock: for durations, never for dates |
 | `time.sleep_ms(ms: u64)` | `Unit` | |
 
 ```kelp
@@ -39,7 +39,7 @@ fun main() {
 - Use `now_mono_ns` for measuring: `now_unix` can jump when the wall clock is
   adjusted, the monotonic clock cannot.
 - There is no formatting here. Turning seconds into a date and back is
-  [`datetime`](../libraries/datetime.md), which needs no capability at all —
+  [`datetime`](../libraries/datetime.md), which needs no capability at all:
   it is pure arithmetic on a number you supply.
 - [`log`](../libraries/log.md) and [`benchkit`](../libraries/benchkit.md) are the
   two libraries that consume this module, and both therefore need `time`

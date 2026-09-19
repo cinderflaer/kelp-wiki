@@ -23,5 +23,5 @@ Lookup pages: the things you come back to rather than read through.
 compiler, not the standard library, so their methods are documented with the
 language rather than in the index:
 
-- [Text](../language/text.md) — `String`, `Bytes`, `View`
-- [Collections](../language/collections.md) — `List`, `Map`, `Box`
+- [Text](../language/text.md): `String`, `Bytes`, `View`
+- [Collections](../language/collections.md): `List`, `Map`, `Box`

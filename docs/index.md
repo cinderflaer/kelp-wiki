@@ -14,7 +14,7 @@ fun main() {
 ```
 
 Those two `impl` lines are the program's entire network and filesystem
-authority. There is no other place authority can be acquired — a program cannot
+authority. There is no other place authority can be acquired: a program cannot
 read a file, open a socket, spawn a process or read the clock unless the module
 making the call was granted that resource. "What can this code do?" is answered
 by the first few lines of a file instead of by auditing it.
@@ -27,7 +27,7 @@ by the first few lines of a file instead of by auditing it.
 
     ---
 
-    Read [Getting started](getting-started/index.md) — the language in one page,
+    Read [Getting started](getting-started/index.md): the language in one page,
     then a program you can build and run.
 
 -   **The language**
@@ -72,7 +72,7 @@ by the first few lines of a file instead of by auditing it.
 <!-- roadmap:start -->
 ## Roadmap
 
-Of the 11 marks, **4 are done**, **3 in progress** (MK5, MK7, MK8) and 4 planned or proposed. The critical path is next at **MK6-S1-M1** — process threads. No dates: the milestones are ordered by dependency, not by calendar — a
+Of the 11 marks, **4 are done**, **3 in progress** (MK5, MK7, MK8) and 4 planned or proposed. The critical path is next at **MK6-S1-M1**: process threads. No dates: the milestones are ordered by dependency, not by calendar. A
 mark moves when its prerequisites land, and `plan/roadmap.md` is the record.
 
 ```mermaid
@@ -112,7 +112,7 @@ flowchart LR
 
 [The full roadmap](meta/roadmap.md) has every mark's scope and status, the
 five-row critical path, and what is named but not scheduled. Generated from
-`plan/roadmap.md` at `kelp` commit `175b0e3`.
+`plan/roadmap.md` at `kelp` commit `c3f0e7f`.
 <!-- roadmap:end -->
 
 ## What the language has

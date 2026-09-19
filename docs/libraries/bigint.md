@@ -1,4 +1,4 @@
-# `bigint` — arbitrary-precision integers
+# `bigint`: arbitrary-precision integers
 
 Arbitrary-precision integers over base-2³² `List<u32>` limbs: `from_i64`,
 `to_string`, `add`, `sub`, `mul`, `compare`.
@@ -24,7 +24,7 @@ datac BigInt(val sign: i32, val limbs: List<u32>)
 - `sign` is `-1`, `0` or `1`.
 - Zero is `sign = 0` with an empty limb list.
 - `limbs` never carries a trailing zero limb, so two `BigInt`s with the same
-  value always have the same representation — which is what makes `compare` a
+  value always have the same representation, which is what makes `compare` a
   plain limb-by-limb walk.
 
 ## Functions
@@ -53,7 +53,7 @@ Constants: `BASE` (`4294967296`), `DECIMAL_CHUNK` (`1000000000`).
 
 There is no `div`/`mod`/`divmod`. `to_string` works by repeatedly dividing the
 limbs by 10⁹ with the single-limb `div_small`/`mod_small`, which is exactly the
-piece a full long division would also need — a general long division is enough
+piece a full long division would also need: a general long division is enough
 more work than the rest of the library combined that it is deliberately out of
 scope. Add it separately if a caller needs it.
 

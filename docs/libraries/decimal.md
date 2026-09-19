@@ -1,4 +1,4 @@
-# `decimal` — fixed-point decimals over `i64`
+# `decimal`: fixed-point decimals over `i64`
 
 A `Decimal` is an `i64` `value` scaled by `10^-scale`: `scale = 2` means `value`
 is in hundredths, so `1234` at scale 2 is `12.34`. Exact for money-shaped
@@ -31,9 +31,9 @@ enum ParseErr {
 
 | Function | Returns |
 | --- | --- |
-| `from_i64(n: i64, scale: u32)` | `Decimal` — `n * 10^scale` |
+| `from_i64(n: i64, scale: u32)` | `Decimal`: `n * 10^scale` |
 | `from_str(s: &str, scale: u32)` | `result.Result<Decimal, ParseErr>` |
-| `pow10_i64(n: u32)` | `i64` — `10^n` |
+| `pow10_i64(n: u32)` | `i64`: `10^n` |
 
 `from_str` accepts `"12.34"`, `"-0.5"`, `"7"` (which at scale 2 is `700`, i.e.
 `7.00`). Rules:
@@ -109,7 +109,7 @@ true
 ## Notes
 
 - Range: `value` is an `i64`, so the maximum scaled value is about 9.22×10¹⁸;
-  `from_i64` and `mul` can overflow silently — integer `+`/`-`/`*` overflow is
+  `from_i64` and `mul` can overflow silently: integer `+`/`-`/`*` overflow is
   unchecked ([syntax.md](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md) §5).
   Keep `scale` small if `value` is large.
 - `rescale` narrowing uses the "round half away from zero" rule, with the

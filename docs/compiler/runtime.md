@@ -12,16 +12,16 @@ them is no longer emitted at all.
 | `cap_matcher_ref.c` | not emitted | the C capability matcher, kept as the differential oracle |
 | `path_normalize_ref.c` | not emitted | the C path normalizer, kept as the differential oracle |
 
-## `cap_glue.c` — what the capability runtime still is in C
+## `cap_glue.c`: what the capability runtime still is in C
 
 Spliced together with prototypes for the `std/rt` functions it calls (see
 `codegen_c.rs`), and deliberately free of any matching logic. Three things stayed:
 
 | Piece | Why it is still C |
 | --- | --- |
-| Buffered plumbing — `host:port` formatting, `PATH_MAX` scratch buffers, cutting a pattern's host part | it is the same code the C reference used, so moving it cannot change a verdict; a buffer is declared one byte longer than `PATH_MAX` where a Kelp function writes into it, because `Bytes` keeps its NUL in the slot *at* `len` |
-| The deny path — `fprintf` to stderr plus `exit(1)` | it is I/O, and belongs with the rest of the runtime's I/O |
-| The allowlist loop — "any pattern that admits the resource admits the call" | three lines per check kind with no matching in it |
+| Buffered plumbing: `host:port` formatting, `PATH_MAX` scratch buffers, cutting a pattern's host part | it is the same code the C reference used, so moving it cannot change a verdict; a buffer is declared one byte longer than `PATH_MAX` where a Kelp function writes into it, because `Bytes` keeps its NUL in the slot *at* `len` |
+| The deny path: `fprintf` to stderr plus `exit(1)` | it is I/O, and belongs with the rest of the runtime's I/O |
+| The allowlist loop: "any pattern that admits the resource admits the call" | three lines per check kind with no matching in it |
 
 `kelp_resolve_path` is also still C: it resolves symlinks before matching, which
 is the step that makes a symlink inside a grant pointing outside it a denial. It

@@ -14,7 +14,7 @@ page here and its source disagree, the source is right and the page is a bug.
 | [`plan/mk7-own-backend.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-own-backend.md) | the `asm` backend's working plan |
 | [`plan/mk7-next-slice.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-next-slice.md) | the next slice of that work |
 | [`README.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/README.md) | the front door: what the language has, how to build, the repository layout |
-| `kelpc/std/*.kp` | the standard library, which is the authority for its own signatures — the [index](../reference/stdlib-index.md) is generated from it |
+| `kelpc/std/*.kp` | the standard library, which is the authority for its own signatures: the [index](../reference/stdlib-index.md) is generated from it |
 | `kelpc/src/*.rs` | the compiler; each file's `//!` header describes its job |
 | `kelpc/tests/` | the fixture suite and the gates |
 | `bench/speed/` | the four-workload benchmark |
@@ -33,7 +33,7 @@ page here and its source disagree, the source is right and the page is a bug.
 MkDocs Material, one page per topic, chapters as directories. Two details:
 
 - `hooks/kelp_lexer.py` teaches Pygments the `kelp` fence language, so Kelp code
-  blocks are highlighted — Kelp lexes as Rust with its own keywords promoted.
+  blocks are highlighted: Kelp lexes as Rust with its own keywords promoted.
 - `mkdocs.yml` is the navigation tree. The build runs `--strict`, so a broken link
   or a bad page fails the build rather than publishing quietly. While chapters
   were still being written, `validation.links.not_found` was set to `ignore`; flip

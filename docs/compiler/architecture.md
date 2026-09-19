@@ -2,14 +2,14 @@
 
 Every stage below reads the previous stage's output and hands one structure on:
 source text, tokens, an untyped AST, a typed IR, a drop plan, and finally C or
-assembly. The pass boundaries are deliberate — a checker bug is easier to find
+assembly. The pass boundaries are deliberate: a checker bug is easier to find
 when the pass that owns it is the only one running.
 
 Authority:
 [`plan/architecture.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/architecture.md),
 "Compiler crate layout" and "Key implementation notes".
 
-## Lexing — `lexer.rs`
+## Lexing (`lexer.rs`)
 
 Source text to span-carrying tokens. Every token carries a byte range
 (`Span { start, end }`), which is what makes a diagnostic point at a line and
@@ -21,7 +21,7 @@ column rather than at an offset. Two details matter downstream:
   entry point, because the parser's input drops comments and the AST has no node
   for them.
 
-## Preprocessing — `preprocess.rs`
+## Preprocessing (`preprocess.rs`)
 
 `%*alias*%` substitution, a flat, global, purely textual pass with no parameters,
 no hygiene and no scoping. Two definition sites feed one table:
@@ -31,12 +31,12 @@ no hygiene and no scoping. Two definition sites feed one table:
 | `alias.kpconf` at the project root | one `name="replacement text"` per line |
 | an inline declaration in any `.kp` | `alias %*name*% = <raw text to end of line>` |
 
-The right-hand side is macro text, never type-checked — which is why the
+The right-hand side is macro text, never type-checked, which is why the
 declaration has its own keyword. The pass runs over the token stream before the
 parser and keeps **both** the definition span and the use span, so an
 alias-induced type error still points somewhere useful.
 
-## Parsing — `parser.rs`
+## Parsing (`parser.rs`)
 
 Recursive descent for declarations and statements, with a Pratt parser for
 expression precedence. Two constructs do not survive parsing as themselves:
@@ -48,10 +48,10 @@ expression precedence. Two constructs do not survive parsing as themselves:
   so no later pass knows the loop kind exists and there is no iterator protocol to
   implement.
 
-`pretty.rs` is an AST printer and is dead code — a formatter cannot be built on
+`pretty.rs` is an AST printer and is dead code: a formatter cannot be built on
 the AST, for the reasons `fmt.rs`'s header gives.
 
-## Modules and resolution — `resolve.rs`
+## Modules and resolution (`resolve.rs`)
 
 Multi-file loading and name resolution:
 
@@ -70,14 +70,14 @@ Multi-file loading and name resolution:
 the standard library is compiled by the same lexer, parser and checker as user
 code.
 
-## Type checking — `infer.rs`
+## Type checking (`infer.rs`)
 
 The largest pass (~7.6k lines). It owns:
 
 - type inference and checking over the AST, including generics and `Option`/`Result`;
 - **stdlib-only argument-type overloading** for `math.abs`/`min`/`max`/`clamp`;
 - resolving `datac`-typed parameters into `Ty::Ref` and synthesizing the borrow
-  node at call sites — callers never write `&`;
+  node at call sites: callers never write `&`;
 - the `when`/`if let` pattern rules, including that a payload binds as a copy when
   it is `Copy` and as a shared borrow otherwise;
 - rejecting an `extern` that has no compiler-supplied body.
@@ -85,7 +85,7 @@ The largest pass (~7.6k lines). It owns:
 The output is `tir.rs`: the same shape, every node annotated with its resolved
 type and span.
 
-## Move and borrow checking — `borrowck.rs`
+## Move and borrow checking (`borrowck.rs`)
 
 Two milestones in one pass, over the typed IR:
 
@@ -93,7 +93,7 @@ Two milestones in one pass, over the typed IR:
 | --- | --- |
 | Moves | scalars and `&str` are `Copy`; a `datac` is not, so a bare identifier read moves it, while a `.field` read goes through the place chain without consuming anything |
 | Borrows | a `datac` parameter is a shared borrow unless `mut`-marked; a borrow lives to the end of its scope, with a statement-sized exception for a borrow taken inside an initializer |
-| Drops | the pass produces a **drop plan** keyed by span, which the code generators consult — no second walk, and no lockstep between two passes |
+| Drops | the pass produces a **drop plan** keyed by span, which the code generators consult: no second walk, and no lockstep between two passes |
 
 The drop plan is why `codegen_c.rs` only has to ask "which locals die at the end of
 this block" and "which die before this return" as it writes each one.
@@ -103,11 +103,11 @@ this block" and "which die before this return" as it writes each one.
 | Module | Emits | Notes |
 | --- | --- | --- |
 | `codegen_c.rs` | C source text | value-position blocks use the GNU statement-expression extension `({ ...; expr; })`, which both `gcc` and `clang` accept; the `Bytes`/`String` runtime (allocation, bounds checks, `free`) is a fixed C preamble; output is `#line`-annotated back to `.kp` |
-| `codegen_asm.rs` | x86-64 assembly text | a stack machine — every expression evaluates into `rax` — with a linear-scan register allocator pinning integer/`bool`/`char` locals to five callee-saved registers |
+| `codegen_asm.rs` | x86-64 assembly text | a stack machine (every expression evaluates into `rax`) with a linear-scan register allocator pinning integer/`bool`/`char` locals to five callee-saved registers |
 
 Details, and what each backend refuses, are in [Backends](backends.md).
 
-## Finishing — `driver.rs`
+## Finishing (`driver.rs`)
 
 The only place in the compiler that invokes an external tool, and a backend does
 not share it:
@@ -149,7 +149,7 @@ fun main() {
 | Pass | What it makes of the program above |
 | --- | --- |
 | `lexer.rs` | tokens, each with a byte range; the newlines are tokens too, and they are what ends statements |
-| `preprocess.rs` | unchanged here — there is no `%*alias*%` to substitute |
+| `preprocess.rs` | unchanged here: there is no `%*alias*%` to substitute |
 | `parser.rs` | the AST, with `for x in xs` already rewritten into an index-and-`while` walk over the list |
 | `resolve.rs` | a module graph with `std/str` next to this file, and the capability set of each module (empty here, since nothing gated is imported) |
 | `infer.rs` | `area(p)`: the parameter is a `datac`, so it becomes a shared borrow and the call site gets a synthesized `&` the author never wrote |
@@ -162,7 +162,7 @@ fun main() {
 
 | Missing | Consequence |
 | --- | --- |
-| A library or object target | "Using a library" means copying or fetching a folder of `.kp` sources — see [Libraries](../libraries/index.md) |
+| A library or object target | "Using a library" means copying or fetching a folder of `.kp` sources: see [Libraries](../libraries/index.md) |
 | Machine-readable diagnostics | There is no `kelpc check --json`, which is why editor tooling parses prose |
 | An optimiser | Optimisation is whatever `cc -O2` does to the generated C; the assembly backend's allocator exists to keep it in the same league, not to optimise |
 | Incremental compilation and a build cache | [Coral](../getting-started/install.md) owns the project-level cache |

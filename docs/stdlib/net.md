@@ -29,7 +29,7 @@ of the descriptor.
 | `connect(host, port)` | `Socket` | panics on failure (`net.connect: connection failed`) |
 | `listen(port)` | `Listener` | port `0` asks the OS for a free one |
 | `accept(l)` | `Socket` | blocks until a peer connects |
-| `Listener.port()` | `u16` | the bound port — how you learn what `0` became |
+| `Listener.port()` | `u16` | the bound port: how you learn what `0` became |
 | `Listener.close()` | `Unit` | |
 | `close(s)` | `Unit` | |
 | `shutdown_write(s)` | `Unit` | half-close, which is how a line protocol says "no more input" |
@@ -79,6 +79,6 @@ fun main() {
 
 ## See also
 
-- [`std/http`](http.md) — an HTTP/1.1 client over this module
-- [`lineproto`](../libraries/lineproto.md) — CRLF line protocols
+- [`std/http`](http.md): an HTTP/1.1 client over this module
+- [`lineproto`](../libraries/lineproto.md): CRLF line protocols
 - [Capability patterns](../reference/capability-patterns.md)

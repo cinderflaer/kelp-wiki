@@ -9,8 +9,8 @@ condition that cannot be handled becomes a `panic`, which ends the process.
 
 ## `Option` and `Result`
 
-Both are ordinary enums, and the compiler knows their *shape* — not the module
-they came from — so a program's own declaration of either works identically:
+Both are ordinary enums, and the compiler knows their *shape*, not the module
+they came from, so a program's own declaration of either works identically:
 
 ```kelp
 enum Option<T> {
@@ -41,7 +41,7 @@ if option.is_none(o = maybe) {
 print(result.unwrap_or(r = parsed, fallback = 0))
 ```
 
-## `?` — propagation
+## `?`: propagation
 
 `expr?` evaluates `expr`; if it carries a failure, that failure is returned out of
 the enclosing function, otherwise the expression's value is the success payload.
@@ -55,9 +55,9 @@ fun quarter(n: i64).R: result.Result<i64, str.ParseErr> {
 
 - The enclosing function must return the same shape with the **same failure
   payload type**. v1 has no error conversion: `Result<i64, String>` cannot be
-  propagated out of a function returning `Result<i64, IoErr>` — `result.map_err`
+  propagated out of a function returning `Result<i64, IoErr>`: `result.map_err`
   is the bridge.
-- A function returning `Unit` — including `main` — has nowhere to propagate to.
+- A function returning `Unit` (including `main`) has nowhere to propagate to.
 - The value composes: `1 + half(n = n)?`.
 - A failure returns immediately, dropping the frame's locals exactly as a
   `return` does.
@@ -81,7 +81,7 @@ division by zero in [`complex.div`](../libraries/complex.md), a scale mismatch i
 [`decimal`](../libraries/decimal.md).
 
 **The divergence rule.** A block whose *last statement* is a `panic(...)`
-diverges, so it satisfies any declared return type — including a borrowed one.
+diverges, so it satisfies any declared return type, including a borrowed one.
 That is what makes a "this cannot happen" accessor expressible:
 
 ```kelp

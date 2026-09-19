@@ -59,9 +59,15 @@ def band_of(status: str) -> str:
 
 
 def clean(cell: str) -> str:
-    """A table cell as plain text: no bold, no links, no strikethrough."""
+    """A table cell as plain text: no bold, no links, no strikethrough, no dashes.
+
+    The table text comes from plan/roadmap.md, which uses em dashes as its own
+    punctuation; this page renders that table rather than quoting it, so the
+    dashes become commas here.
+    """
     cell = cell.replace("**", "").replace("~~", "")
     cell = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", cell)
+    cell = cell.replace(" — ", ", ").replace("—", ",")
     return re.sub(r"\s+", " ", cell).strip()
 
 
@@ -188,13 +194,13 @@ def home_block(marks: list[dict], critical: list[dict], rev: str) -> str:
     )
     if next_row:
         summary += (
-            f" The critical path is next at **{next_row['code']}** — "
+            f" The critical path is next at **{next_row['code']}**: "
             f"{next_row['label'].split(':', 1)[-1].strip()}."
         )
     return f"""{START}
 ## Roadmap
 
-{summary} No dates: the milestones are ordered by dependency, not by calendar — a
+{summary} No dates: the milestones are ordered by dependency, not by calendar. A
 mark moves when its prerequisites land, and `plan/roadmap.md` is the record.
 
 {marks_diagram(marks)}
@@ -238,7 +244,7 @@ def main() -> int:
         f"which is the authority for everything on this page.",
         "",
         f"Generated from `plan/roadmap.md` at `kelp` commit `{rev}` by `tools/roadmap.py` in the "
-        f"wiki repository — re-run it and commit the result when the roadmap moves. The diagrams "
+        f"wiki repository: re-run it and commit the result when the roadmap moves. The diagrams "
         f"show order and status, not calendar time: the roadmap has no dates, because a mark "
         f"moves when its prerequisites land rather than on a schedule.",
         "",
@@ -258,7 +264,7 @@ def main() -> int:
             "",
             "## The critical path",
             "",
-            f"Five milestones, in order — {done} of them done. Each is here because the one "
+            f"Five milestones, in order: {done} of them done. Each is here because the one "
             "before it is a prerequisite, or because the payoff is what the rest of the list "
             "exists for. Everything else is in the open items or the backlog.",
             "",
@@ -289,9 +295,9 @@ def main() -> int:
         "",
         "## See also",
         "",
-        "- [Source documents](source-documents.md) — which file is the authority for what",
-        "- [Known issues](known-issues.md) — what is broken today, with repros",
-        "- [Compiler](../compiler/index.md) — the pipeline the milestones extend",
+        "- [Source documents](source-documents.md): which file is the authority for what",
+        "- [Known issues](known-issues.md): what is broken today, with repros",
+        "- [Compiler](../compiler/index.md): the pipeline the milestones extend",
         "",
     ]
     PAGE.parent.mkdir(parents=True, exist_ok=True)

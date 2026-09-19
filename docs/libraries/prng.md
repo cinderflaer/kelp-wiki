@@ -1,9 +1,9 @@
-# `prng` — seeded, reproducible pseudo-randomness
+# `prng`: seeded, reproducible pseudo-randomness
 
 xorshift64* (Marsaglia's xorshift with Vigna's multiplicative finishing step).
 Deliberately **not** `std/rand`: that module is gated and unseeded on purpose
 (unreproducible is the point of a system RNG), while this one exists so the same
-seed always produces the same sequence — for tests, simulations, and anything
+seed always produces the same sequence: for tests, simulations, and anything
 that needs to replay a run.
 
 No capability: this is arithmetic on a `u64`, not a random source.
@@ -101,8 +101,8 @@ Two generators seeded `42` produce the same first value; seed `0` produces the
 - Not cryptographically secure. Do not use it for keys, tokens or anything an
   attacker benefits from predicting.
 - Only `List<i32>` has `shuffle`/`choice` helpers; there is no generic list form
-  (a user module cannot overload — syntax.md §7.2 — and no generic random helper
-  is written).
+  (a user module cannot overload, per syntax.md §7.2, and no generic random
+  helper is written).
 - `next_f64` gives `[0, 1)`; for a range use `below`/`range` on integers and
   scale yourself for floats.
 - The generator has a period of 2⁶⁴−1 and a state of 64 bits; it is fast and

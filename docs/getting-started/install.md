@@ -33,7 +33,7 @@ The binary lands at `target/release/kelpc`.
 ```
 
 With no `-o`, the binary and the generated C (or assembly) land in `build/` in the
-**current working directory**, named after the last path segment compiled —
+**current working directory**, named after the last path segment compiled. So
 `kelpc build myproject/` writes `build/myproject` and `build/myproject.c`, and
 `kelpc build src/main.kp` writes `build/main`. Pass `-o` when that is not where
 you want it.
@@ -46,7 +46,7 @@ environment variable:
 | Backend | What it does | Chain |
 | --- | --- | --- |
 | `c` (default) | transpiles to C | `cc -O2 -fwrapv -lm` |
-| `asm` | emits x86-64 assembly itself | `as`, `ld` — no C compiler |
+| `asm` | emits x86-64 assembly itself | `as`, `ld`: no C compiler |
 
 ```sh
 ./target/release/kelpc build examples/hello.kp --backend=asm

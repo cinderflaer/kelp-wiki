@@ -20,7 +20,7 @@ impl "std/str"
 | `char_count(s: &str)` | `usize` | codepoints |
 | `char_at(s: &str, i: usize)` | `u32` | the codepoint at character index `i` |
 | `decode_at(s: &str, at: usize)` | `u32` | the codepoint starting at byte offset `at` |
-| `substring(s: &str, from: usize)` | `&str` | from a byte offset to the end — a borrow, no copy |
+| `substring(s: &str, from: usize)` | `&str` | from a byte offset to the end: a borrow, no copy |
 | `copy_range(s: &str, from: usize, to: usize)` | `String` | copies the byte range |
 | `prefix(s: &str, n: usize)` | `String` | the first `n` bytes, copied |
 | `index_of(s: &str, needle: &str)` | `option.Option<usize>` | byte offset, `None` when absent |

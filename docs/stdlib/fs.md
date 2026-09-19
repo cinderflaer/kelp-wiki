@@ -87,7 +87,7 @@ fun main() {
 - `remove` on a directory fails; `remove_all` is the recursive one.
 - `copy` is files-only. A recursive copy is
   [`fsx.copy_dir`](../libraries/fsx.md), which is also where `write_atomic`
-  (write-then-rename) lives — `write_text` truncates in place, so a crash
+  (write-then-rename) lives: `write_text` truncates in place, so a crash
   mid-write leaves a half-file.
 - `Metadata.mode` is the raw mode bits; the boolean `is_dir`/`is_file` are what
   most callers want.

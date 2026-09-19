@@ -15,4 +15,4 @@ This site is a **derived** document. The authorities live in the repositories:
 `plan/syntax.md` for the language and style, `plan/architecture.md` for the design,
 `plan/roadmap.md` for the plan and `plan/done.md` for what has shipped. Each page
 here cites the section it came from, and where a page and its source disagree, the
-source wins — that is a bug in the page, so please report it.
+source wins. That is a bug in the page, so please report it.

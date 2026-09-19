@@ -1,4 +1,4 @@
-# `stats` — descriptive statistics and linear regression
+# `stats`: descriptive statistics and linear regression
 
 mean, median, variance, standard deviation, percentile, histogram and ordinary
 least squares over `List<f64>`.

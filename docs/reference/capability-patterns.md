@@ -12,9 +12,8 @@ impl "logger" with caps(fs = ["/var/log/myapp/**"], env = ["LOG_*"])
 ```
 
 `domain = [pattern, ...]`, one or more domains, in any order. **An empty list
-denies everything**: `with caps(process = [])` is a grant that permits no program
-— and, usefully, the smallest grant that satisfies the compiler for a module you
-do not want to let out.
+denies everything**: `with caps(process = [])` is a grant that permits no program. It is also the smallest grant that satisfies
+the compiler for a module you do not want to let out.
 
 ## Pattern grammar by domain
 
@@ -24,7 +23,7 @@ do not want to let out.
 | `fs` | absolute path, `*` within one component, `**` across components | a path normalized lexically and **symlink-resolved** first |
 | `process` | absolute program path, same wildcards as `fs` | the program path, normalized as for `fs` |
 | `env` | variable name, `*` | the name string |
-| `time` | no pattern | — (an empty list is the whole grant) |
+| `time` | no pattern | (an empty list is the whole grant) |
 | `rand` | no pattern | — |
 
 ## `net`
@@ -71,7 +70,7 @@ There is no way to enumerate the environment: a grant names what may be read, so
 
 ## `time` and `rand`
 
-No pattern exists — the domain is the grant:
+No pattern exists: the domain is the grant:
 
 ```kelp
 impl "std/time" with caps(time = [])
@@ -85,7 +84,7 @@ impl "std/rand" with caps(rand = [])
 - A non-entry module holds exactly what its importer granted, and **can delegate
   less than it holds, never more**: granting a pattern the importer does not hold
   is an error.
-- A module can hold a domain without using it — `httpx` writes
+- A module can hold a domain without using it: `httpx` writes
   `with caps(net = [])` internally only because importing `std/http` requires
   `net` to be delegated somewhere. The smallest grant that compiles is the
   idiomatic way to say "this module does not dial".
@@ -101,6 +100,6 @@ compared by a differential test corpus. See [Compiler](../compiler/index.md).
 
 ## See also
 
-- [Capabilities](../language/capabilities.md) — the model
-- [Standard library](../stdlib/index.md) — which module needs which domain
-- [Standard library index](stdlib-index.md) — domains per module at a glance
+- [Capabilities](../language/capabilities.md): the model
+- [Standard library](../stdlib/index.md), which module needs which domain
+- [Standard library index](stdlib-index.md): domains per module at a glance

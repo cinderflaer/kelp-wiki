@@ -19,7 +19,7 @@ the fix. Source: [`syntax.md` §18 and §22](https://homelabone.xenoo.dev/gittea
 | `argument 'b' has type 'String', expected 'str'` | the parameter takes a view: add `.as_str()` |
 | `argument 'x' has type 'View', expected 'str'` | a slice has no NUL after it: `v.to_string()` |
 | `.as_str()` on a temporary is refused | bind the `String` to a `val` first (same for `.view()`) |
-| `field 'text' is a borrowed type ('View')` | a view cannot be stored — store a `String` |
+| `field 'text' is a borrowed type ('View')` | a view cannot be stored: store a `String` |
 | `cannot compare 'View' values with '=='` | use `v.eq(other)`, which compares bytes and lengths |
 | `field 'text' is a borrowed type (str)` | same as the `View` case: a field must be owned |
 
@@ -48,7 +48,7 @@ the fix. Source: [`syntax.md` §18 and §22](https://homelabone.xenoo.dev/gittea
 | --- | --- |
 | a borrowed binding cannot be captured | pass it as a parameter of the literal instead |
 | `*x` on a closure parameter fails | a `Copy` parameter is used directly: `acc + x`, not `acc + *x` |
-| a closure parameter over a module-declared type fails to compile | a compiler bug, not a language rule — see [Known issues](../meta/known-issues.md) |
+| a closure parameter over a module-declared type fails to compile | a compiler bug, not a language rule: see [Known issues](../meta/known-issues.md) |
 
 ## Modules and capabilities
 
@@ -71,11 +71,11 @@ the fix. Source: [`syntax.md` §18 and §22](https://homelabone.xenoo.dev/gittea
 
 ## The one behaviour that is not a warning
 
-Integer `+`, `-` and `*` overflow is **unchecked** — it wraps silently. If a wrap
+Integer `+`, `-` and `*` overflow is **unchecked**: it wraps silently. If a wrap
 matters, use [`mathx`](../libraries/mathx.md)'s checked or saturating forms.
 
 ## See also
 
-- [Known issues](../meta/known-issues.md) — the defects that affect valid programs
+- [Known issues](../meta/known-issues.md): the defects that affect valid programs
 - [Ownership and borrowing](ownership.md), [Text](text.md), [Collections](collections.md)
 - [Capabilities](capabilities.md)

@@ -1,7 +1,7 @@
 # Known issues
 
 The defects that affect **valid** Kelp programs, with a repro each. Everything
-here was found by compiling and running real code — the examples in this wiki, all
+here was found by compiling and running real code: the examples in this wiki, all
 twenty-five `fpl` libraries, and the standard library's own surface.
 
 Environment for every report: `kelpc 0.2.2`, commit `3a2f6f9`, default `c` backend,
@@ -13,7 +13,7 @@ The full reports, including the generated C, are in the loose file
 
 ---
 
-## BUG-1 — an owned local inside an `if let` arm or a `for` body gets its drop emitted out of scope
+## BUG-1: an owned local inside an `if let` arm or a `for` body gets its drop emitted out of scope
 
 **Severity:** high. Valid Kelp is refused, and with a different nesting it would be
 a bogus or double drop.
@@ -69,7 +69,7 @@ needed.
 
 ---
 
-## BUG-2 — a closure parameter that borrows a module-declared type emits a typedef before the type exists
+## BUG-2: a closure parameter that borrows a module-declared type emits a typedef before the type exists
 
 **Severity:** high for library authors. It makes any callback API over a module's
 own type impossible to declare: `json` cannot offer `each_value(v, f)`, and
@@ -113,21 +113,21 @@ The identical program with a builtin element type (`closure(&i64)`) compiles and
 runs.
 
 **Workaround:** index the container in the caller and keep the closure parameter a
-builtin type — the callback-free shape `json` documents (`count_nodes`,
+builtin type: the callback-free shape `json` documents (`count_nodes`,
 `depth_of`, `collect_strings`).
 
 ---
 
-## BUG-3 — warning noise in the generated C
+## BUG-3: warning noise in the generated C
 
 **Severity:** low (no miscompilation observed), but visible on every fresh build
 and it buries real diagnostics.
 
 Two kinds, both from `codegen_c`:
 
-- extraneous parentheses on nearly every equality comparison —
+- extraneous parentheses on nearly every equality comparison:
   `if ((a == b))` → `-Wparentheses-equality`;
-- a tautological out-of-range compare in the `i32.to_u32` bound check — the upper
+- a tautological out-of-range compare in the `i32.to_u32` bound check: the upper
   half is unreachable for an `i32` source → `-Wtautological-constant-out-of-range-compare`.
 
 A program that pulls in `json` emits about 47 of these before the first real error.
@@ -166,5 +166,5 @@ Noted so nobody re-investigates them:
 
 ## See also
 
-- [Pitfalls](../language/pitfalls.md) — errors you can fix by writing different code
-- [Contributing](contributing.md) — how to report one of these
+- [Pitfalls](../language/pitfalls.md): errors you can fix by writing different code
+- [Contributing](contributing.md): how to report one of these

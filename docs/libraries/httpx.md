@@ -1,11 +1,11 @@
-# `httpx` — HTTP helpers over `std/http`
+# `httpx`: HTTP helpers over `std/http`
 
 The pieces `std/http`'s client deliberately leaves out: a query-string builder, a
 Basic-Auth header, the method helpers past `GET`/`POST`, and a minimal
 `Set-Cookie` reader.
 
 **No `net` grant of its own.** This library only builds and reads plain data
-(`Request`, `Response`, `String`) and never calls a net-touching function — but
+(`Request`, `Response`, `String`) and never calls a net-touching function, but
 merely *importing* `std/http` requires delegating it a `net` grant (the module
 holds `net` as a whole, not per function), so this library declares
 `impl "std/http" with caps(net = [])`: the smallest grant that satisfies the
@@ -32,7 +32,7 @@ impl "deps/httpx/lib" as httpx
 
 ## Query strings
 
-`http.Header` is reused purely as a generic name/value pair here — nothing HTTP
+`http.Header` is reused purely as a generic name/value pair here: nothing HTTP
 about it at this call, but it saves declaring a second identical `datac`.
 
 | Function | Returns | Notes |
@@ -46,8 +46,8 @@ about it at this call, but it saves declaring a second identical `datac`.
 
 | Function | Returns |
 | --- | --- |
-| `basic_auth_header(user: &str, pass: &str)` | `http.Header` — `Authorization: Basic <base64(user:pass)>` |
-| `base64_encode(data: &Bytes)` | `String` — this library's own encoder |
+| `basic_auth_header(user: &str, pass: &str)` | `http.Header`: `Authorization: Basic <base64(user:pass)>` |
+| `base64_encode(data: &Bytes)` | `String`: this library's own encoder |
 
 The base64 encoder and the percent-encoder are this library's own copies, not a
 dependency on the `encoding` folder: a folder here must stand alone (only the
@@ -128,7 +128,7 @@ abc123
 - Cookies are read, never stored or sent back: no jar, no expiry, no `Domain`
   matching.
 - `build_query` does not sort or deduplicate pairs; order is list order.
-- `percent_encode` uses the URL unreserved set only — no `+`-for-space form
+- `percent_encode` uses the URL unreserved set only: no `+`-for-space form
   (`application/x-www-form-urlencoded`).
 - Nothing here sends a request. Wiring it to `http.Client.send` (and therefore
   real `net` authority) is the caller's `impl` line.

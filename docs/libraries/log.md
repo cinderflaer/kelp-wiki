@@ -1,4 +1,4 @@
-# `log` — leveled records to stderr
+# `log`: leveled records to stderr
 
 Leveled log lines with a unix timestamp and a stable prefix.
 
@@ -48,7 +48,7 @@ datac Logger(val name: String, val min_level: i32)
 | `level_name(level: i32)` | `&str` | `"DEBUG"`, `"INFO"`, `"WARN"`, or `"ERROR"` for anything unrecognised |
 
 `max_level` is not a thing: `level < min_level` drops the record, so a higher
-`min_level` means fewer records. There is no `logger.set_level` — `min_level` is
+`min_level` means fewer records. There is no `logger.set_level`: `min_level` is
 a `val` field, so a new level means a new `Logger`.
 
 ## Line format
@@ -95,7 +95,7 @@ The exact timestamp varies with the run.
 
 ## Notes
 
-- Not thread-safe and not line-buffered by this library — each record is one
+- Not thread-safe and not line-buffered by this library: each record is one
   `eprint` call, so a record is written whole as long as nothing else writes to
   the same fd.
 - No structured fields, no JSON output, no log rotation, no `log_at` shortcut for

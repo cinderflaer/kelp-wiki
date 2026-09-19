@@ -84,7 +84,7 @@ fun label(s: &Shape).R: &str = when s {
 
 - The number of bindings must equal the number of payload fields; `_` ignores
   one.
-- The scrutinee must be a **place** — a binding, a field path, or a dereference —
+- The scrutinee must be a **place** (a binding, a field path, or a dereference),
   not a call's result, because a non-`Copy` payload binds as a borrow of it and
   that borrow has to outlive the arm's body. Bind the value to a `val` first when
   you have an expression.
@@ -121,7 +121,7 @@ val n: Option<i32> = Option.Some(value = 7)
 - Type arguments are **inferred at a construction**; write them explicitly only
   when inference has nothing to go on: `Option.Some<i64>(value = 7)`.
 - A payload-less variant cannot take an instantiation, because there is no call to
-  attach it to — write the expected type instead:
+  attach it to: write the expected type instead:
   `val none: Option<i32> = Option.None`.
 
 ## Methods

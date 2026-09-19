@@ -2,7 +2,7 @@
 
 Reproduced from
 [`syntax.md` §20](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md),
-which is the authority. Note that `View` is an ordinary identifier here — it is a
+which is the authority. Note that `View` is an ordinary identifier here: it is a
 builtin type name like `str` or `String`, not a keyword.
 
 ```
@@ -64,7 +64,7 @@ arg          := [ ident "=" ] expr
 
 - `line` is what a top-level file holds, and the parser enforces the order the
   productions appear in: imports first, then declarations.
-- `postfix` carries the three postfix forms: `?`, field access, and a call — which
+- `postfix` carries the three postfix forms: `?`, field access, and a call, which
   is why `f(x)?` and `a.b.c(1)` both parse.
 - `primary` includes `block` and `if`/`when` as expressions, which is how
   `val label: String = if flag { "yes" } else { "no" }` works.

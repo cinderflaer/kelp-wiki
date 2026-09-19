@@ -60,7 +60,7 @@ const PI2: f64 = math.PI * 2.0
 
 A `const` is a top-level compile-time value. The type is mandatory, the
 initializer must be foldable at compile time, and every use is substituted as a
-literal — so a `const` costs no storage and no startup work. A `const` may only
+literal, so a `const` costs no storage and no startup work. A `const` may only
 name constants declared before it.
 
 ## `pd` passdowns
@@ -111,7 +111,7 @@ impl %*db*%
 
 Aliases also come from `alias.kpconf` at the project root, one
 `name="replacement text"` per line. Substitution has no parameters, no scoping
-and no hygiene — `%*a*%` defined as `%*b*% * 2` with `%*b*%` defined as `40 + 2`
+and no hygiene: `%*a*%` defined as `%*b*% * 2` with `%*b*%` defined as `40 + 2`
 prints `84`, because precedence is whatever the expanded text happens to produce.
 
 ## See also

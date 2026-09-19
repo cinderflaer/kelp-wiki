@@ -34,7 +34,7 @@ print(c.total())
 - `fun mut Type.name()` takes an **exclusive** borrow, so the receiver must be
   reachable mutably: a `var` binding, a `mut` parameter, or a field of one.
   Calling it on a `val` binding fails with `cannot borrow 'c' as exclusive`.
-- Passing a receiver to a method does not move it — the receiver is always
+- Passing a receiver to a method does not move it: the receiver is always
   borrowed, which is why there is no `fun move Type.name()`.
 - `self` inside `fun mut T.m()` is a `&mut T`: a pointer, and `Copy`, so naming a
   field and then calling another method on `self` is legal.
@@ -73,7 +73,7 @@ print(u.len())
 ## Builtin methods
 
 `String`, `Bytes`, `View`, `List`, `Map` and `Box` have compiler-provided
-methods — `String.push_str`, `List.push`, `n.to_u64` and so on. They are listed in
+methods: `String.push_str`, `List.push`, `n.to_u64` and so on. They are listed in
 [Text](text.md), [Collections](collections.md) and
 [Standard library](../stdlib/index.md).
 
@@ -88,7 +88,7 @@ fun Pair<A, B>.first_of().R: A = first
 fun mut Pair<A, B>.replace_second(v: B) { second = v }
 ```
 
-- The parameters must be exactly the type's, in order — a rename would make the
+- The parameters must be exactly the type's, in order: a rename would make the
   body's `T` mean something the declaration does not say.
 - The type arguments are the receiver's own instantiation, so `p.first_of()` on a
   `Pair<i32, String>` is instantiated once for `A = i32, B = String`.

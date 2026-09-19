@@ -1,4 +1,4 @@
-# `bits` — `BitSet`, `BitWriter`, `BitReader`
+# `bits` (`BitSet`, `BitWriter`, `BitReader`)
 
 A fixed-size `BitSet` over `Bytes`, and an MSB-first `BitWriter`/`BitReader`
 pair for packing bit-fields narrower than a byte.
@@ -19,7 +19,7 @@ impl "deps/bits/lib" as bits
 ## Bit order
 
 **Bit 0 is the most-significant bit of byte 0.** `write_bits`/`read_bits` write
-and read their `n`-bit field most-significant-bit first — the order a wire format
+and read their `n`-bit field most-significant-bit first: the order a wire format
 or a compressed index almost always wants.
 
 ## `BitSet`
@@ -50,8 +50,8 @@ datac BitWriter(var out: Bytes, var pending: u8, var pending_bits: usize)
 | --- | --- |
 | `writer_new()` | empty writer |
 | `w.write_bit(bit: bool)` | `Unit` |
-| `w.write_bits(v: u32, n: usize)` | `Unit` — the low `n` bits of `v`, `n` up to 32, MSB first |
-| `finish(w: move BitWriter)` | `Bytes` — pads the last partial byte with zero bits and returns the buffer |
+| `w.write_bits(v: u32, n: usize)` | `Unit`: the low `n` bits of `v`, `n` up to 32, MSB first |
+| `finish(w: move BitWriter)` | `Bytes`: pads the last partial byte with zero bits and returns the buffer |
 
 `finish` takes the writer **by value** (`move`): a `mut` receiver only borrows,
 and moving `out` out of a borrowed receiver is the partial move v1 refuses, so
@@ -72,7 +72,7 @@ datac BitReader(val data: Bytes, var pos: usize)
 | `reader_new(data: move Bytes)` | reader over `data`, at bit 0 |
 | `r.read_bit()` | `bool`; **panics** `bits.BitReader.read_bit: no bits left` |
 | `r.read_bits(n: usize)` | `u32`, `n` up to 32, MSB first |
-| `r.remaining_bits()` | `usize` — `data.len() * 8 - pos` |
+| `r.remaining_bits()` | `usize`: `data.len() * 8 - pos` |
 
 `reader_new` takes the `Bytes` by `move`.
 
@@ -132,5 +132,5 @@ The written stream is `1` then `0101`, padded to `10101000` = 168.
 - `read_bits` returns a `u32`, so a field wider than 32 bits is not expressible
   in one call.
 - A write past a byte boundary is padded on the left (high-order bits) because
-  writing is MSB-first — a stream read back with a `BitReader` sees exactly the
+  writing is MSB-first: a stream read back with a `BitReader` sees exactly the
   bits written, with trailing zeros after the last one.

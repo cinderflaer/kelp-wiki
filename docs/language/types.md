@@ -15,7 +15,7 @@ valid inside the scope that lent it.
 | `f32` `f64` | Copy | IEEE floats |
 | `bool` | Copy | `true` / `false` |
 | `char` | Copy | one Unicode scalar value, written `'x'`. A code point, **not** an integer |
-| `str` | borrowed | NUL-terminated UTF-8 view into storage owned elsewhere. No length — deriving one costs a `strlen` |
+| `str` | borrowed | NUL-terminated UTF-8 view into storage owned elsewhere. No length: deriving one costs a `strlen` |
 | `View` | borrowed | a **length-carrying** borrowed text view: pointer *and* length. Slices without allocating, scans without `strlen` |
 | `String` | owned | UTF-8 text, validated on construction, freed at scope exit |
 | `Bytes` | owned | raw byte buffer, freed at scope exit |
@@ -31,7 +31,7 @@ There is no `void`: a function with no `.R: T` returns `Unit`.
 
 ## Nothing converts itself, except text
 
-Operands must match exactly — there is no implicit numeric promotion at all. The
+Operands must match exactly: there is no implicit numeric promotion at all. The
 one implicit conversion in the language is `str`/`View` → `String`, and it fires
 only at an exact `String` expectation:
 
@@ -79,7 +79,7 @@ val p: Pair<i32, String> = Pair(first = 1, second = "one")
   `List<Option<i32>>`, `Box<Pair<i32, i32>>`. The count is checked.
 - Two instantiations are two different types: `Pair<i32, i32>` cannot be passed
   where `Pair<String, String>` is expected.
-- A type argument may not be `str` or a reference — a field may not be borrowed.
+- A type argument may not be `str` or a reference: a field may not be borrowed.
 - A generic type may refer to itself **through a `Box` or a `List`**.
 - Generic *functions* do not exist in v1.
 

@@ -1,4 +1,4 @@
-# `mathx` — the arithmetic `std/math` stops short of
+# `mathx`: the arithmetic `std/math` stops short of
 
 `gcd`/`lcm`, primality, factorial, `hypot`, a chosen-base logarithm,
 degree/radian conversion, and checked/saturating `i64` arithmetic.
@@ -31,19 +31,19 @@ Constants: `I64_MAX` (`9223372036854775807`), `I64_MIN` (`-9223372036854775808`)
 
 ## Checked and saturating `i64`
 
-Kelp's integer `+`/`-`/`*` overflow is unchecked ([syntax.md](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md) §5) — it silently
+Kelp's integer `+`/`-`/`*` overflow is unchecked ([syntax.md](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md) §5): it silently
 wraps. There is no
 overflow flag to read, so these detect it by inspecting signs (add/sub) or by
 dividing the product back out (mul).
 
 | Function | Returns |
 | --- | --- |
-| `add_checked_i64(a, b)` | `option.Option<i64>` — `None` on overflow |
+| `add_checked_i64(a, b)` | `option.Option<i64>`: `None` on overflow |
 | `sub_checked_i64(a, b)` | `option.Option<i64>` |
 | `mul_checked_i64(a, b)` | `option.Option<i64>` |
-| `add_saturating_i64(a, b)` | `i64` — clamps to `I64_MAX` / `I64_MIN` |
+| `add_saturating_i64(a, b)` | `i64`: clamps to `I64_MAX` / `I64_MIN` |
 | `sub_saturating_i64(a, b)` | `i64` |
-| `mul_saturating_i64(a, b)` | `i64` — clamps toward the sign of the true product |
+| `mul_saturating_i64(a, b)` | `i64`: clamps toward the sign of the true product |
 
 ## Example
 

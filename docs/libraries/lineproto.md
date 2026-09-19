@@ -1,4 +1,4 @@
-# `lineproto` — buffered CRLF lines over a socket
+# `lineproto`: buffered CRLF lines over a socket
 
 A small line-oriented request/response helper over a `std/net` `Socket` the
 caller already holds: `send_line` appends `\r\n` and sends it whole, and
@@ -6,7 +6,7 @@ caller already holds: `send_line` appends `\r\n` and sends it whole, and
 time. SMTP/IMAP/Redis-shaped text protocols.
 
 **Gated on `net`.** The library never calls `net.connect`/`net.listen` itself,
-only `net.send_all`/`net.recv` on a socket the consumer connected — but it
+only `net.send_all`/`net.recv` on a socket the consumer connected, but it
 genuinely calls a `net`-gated function, so its consumer must delegate a real
 grant:
 
@@ -30,7 +30,7 @@ datac LineReader(val fd: i32, var buf: Bytes, var start: usize)
 
 `LineReader` stores the socket's raw `fd: i32` rather than a `net.Socket` field:
 `net.Socket` is not `Copy`, and a `datac` field can only be read out by
-reference, never moved out by value — so every call reconstructs
+reference, never moved out by value, so every call reconstructs
 `net.Socket(fd = fd)` locally instead of storing one.
 
 ## Functions
@@ -54,7 +54,7 @@ Constants: `CR` (13), `LF` (10).
 - A trailing fragment with no `\r\n` at EOF is **discarded**, not returned.
 - The terminator must be exactly CRLF: a bare `\n` is content.
 
-## Example — the server side
+## Example: the server side
 
 ```kelp
 impl "std/net"

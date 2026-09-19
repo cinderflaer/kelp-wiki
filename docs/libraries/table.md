@@ -1,4 +1,4 @@
-# `table` — column layout with auto-sized widths
+# `table`: column layout with auto-sized widths
 
 Builds an aligned text table over a header row and `List<Row>`: widths are taken
 from the widest cell, columns are left-aligned and joined with `" | "`.
@@ -22,7 +22,7 @@ datac Table(val headers: List<String>, var rows: List<Row>)
 ```
 
 Rows are `List<Row>` rather than `List<List<String>>` because a `List` cannot
-hold another `List` directly — no inline C representation for a nested container
+hold another `List` directly: no inline C representation for a nested container
 ([syntax.md](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md) §12.1). Each row's cells are wrapped in a one-field `Row` `datac`,
 the same fix `listx`'s `Chunk<T>` uses.
 

@@ -1,7 +1,7 @@
 # Standard library index
 
 Every public name in the shipped standard library, one line each, generated from
-`kelpc/std/*.kp` at `kelp` commit `175b0e3` by `tools/stdlib-index.py`. Behaviour, panics
+`kelpc/std/*.kp` at `kelp` commit `c3f0e7f` by `tools/stdlib-index.py`. Behaviour, panics
 and examples live in the [Standard library](../stdlib/index.md) chapter.
 
 A module marked with a domain needs that capability delegated on the `impl` line, e.g.
@@ -161,7 +161,7 @@ Functions:
 - `fun eprint(s: &str)`
 - `fun eprint_bare(s: &str)`
 
-## `std/fs` — needs `fs`
+## `std/fs` (needs `fs`)
 
 Types:
 
@@ -194,7 +194,7 @@ Functions:
 - `fun temp_path(prefix: &str).R: String`
 - `fun metadata(path: &str).R: Metadata`
 
-## `std/process` — needs `process`
+## `std/process` (needs `process`)
 
 Types:
 
@@ -219,7 +219,7 @@ Functions:
 - `fun exit(code: i32)`
 - `fun getpid().R: i64`
 
-## `std/net` — needs `net`
+## `std/net` (needs `net`)
 
 Types:
 
@@ -324,7 +324,7 @@ Functions:
 - `fun make_get(url: &str).R: Request`
 - `fun post_text(url: &str, body: &str, content_type: &str).R: Response`
 
-## `std/time` — needs `time`
+## `std/time` (needs `time`)
 
 Functions:
 
@@ -332,7 +332,7 @@ Functions:
 - `fun now_mono_ns().R: i64`
 - `fun sleep_ms(ms: u64)`
 
-## `std/rand` — needs `rand`
+## `std/rand` (needs `rand`)
 
 Functions:
 
@@ -340,7 +340,7 @@ Functions:
 - `fun below(n: u64).R: u64`
 - `fun bytes(n: usize).R: Bytes`
 
-## `std/env` — needs `env`
+## `std/env` (needs `env`)
 
 Functions:
 

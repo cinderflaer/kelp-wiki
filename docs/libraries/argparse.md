@@ -1,4 +1,4 @@
-# `argparse` — flags, options, positionals and `--help` text
+# `argparse`: flags, options, positionals and `--help` text
 
 Parses a plain `List<String>` (typically `process.args()`, but the list is a
 parameter, so the library stays ungated and works standalone too).
@@ -46,12 +46,12 @@ enum ParseErr {
 
 | Function | Returns | Notes |
 | --- | --- | --- |
-| `new(prog: &str)` | `Parser` | bind with `var` — `add_*` mutates it |
+| `new(prog: &str)` | `Parser` | bind with `var`: `add_*` mutates it |
 | `add_flag(p: mut Parser, name: &str, help: &str)` | `Unit` | |
 | `add_option(p: mut Parser, name: &str, default: &str, help: &str)` | `Unit` | `default` is what `get_option` returns when unset |
 | `parse(p: &Parser, args: &List<String>)` | `result.Result<ParsedArgs, ParseErr>` | unknown `--name`, or a `--name` option with no following token, is an error |
 | `has_flag(pa: &ParsedArgs, name: &str)` | `bool` | |
-| `get_option(p: &Parser, pa: &ParsedArgs, name: &str)` | `String` | explicitly set value, else the declared default. **Panics** `argparse.get_option: 'name' was never declared with add_option` — that is a caller bug, not user input |
+| `get_option(p: &Parser, pa: &ParsedArgs, name: &str)` | `String` | explicitly set value, else the declared default. **Panics** `argparse.get_option: 'name' was never declared with add_option`, that is a caller bug, not user input |
 | `positionals(pa: &ParsedArgs)` | `&List<String>` | every token that was not `--…` |
 | `help_text(p: &Parser)` | `String` | rendered usage, flags and options |
 | `err_name(e: &ParseErr)` | `&str` | the offending name |

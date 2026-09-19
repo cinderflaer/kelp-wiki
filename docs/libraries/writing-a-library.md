@@ -36,7 +36,7 @@ impl "deps/mylib/lib" as mylib
 The consumer's `impl` path is always `deps/<manifest-name>/<entry-file>`, because
 a folder dependency lands **flat**: the *contents* of the folder you named go to
 `src/deps/<name>/`. The clone behind it uses `--filter=blob:none --sparse`, so a
-sibling folder in the same repo never comes down — which is exactly why rule 3
+sibling folder in the same repo never comes down, which is exactly why rule 3
 below is a rule.
 
 ## The five rules
@@ -45,13 +45,13 @@ below is a rule.
    outside the folder is available, so the folder has to be self-contained.
 2. **The entry file has no fixed name.** `lib.kp` is the convention; the consumer
    writes the path, so whatever they name is the entry.
-3. **A folder cannot `impl` a sibling.** Not a style rule — the sibling was never
+3. **A folder cannot `impl` a sibling.** Not a style rule: the sibling was never
    fetched. Two libraries that genuinely share code become one folder, or the
    *consumer* declares both and wires them together.
 4. **A library declares its own capabilities.** A library's own
    `impl "std/fs" with caps(...)` is the grant it needs; the consumer's manifest
    grants it nothing. A JSON library holds no authority; a library that reads
-   files asks for it where the read is written — and the consumer decides the
+   files asks for it where the read is written, and the consumer decides the
    pattern at its own `impl` line.
 5. **An `index.toml` or a README table is metadata for humans.** Coral does not
    read either: the manifest's folder path is the name.
@@ -62,7 +62,7 @@ below is a rule.
   into the function (`sum_i32`, `min_f64`) and why `set` ships two types
   (`Set<T>` and `StrSet`) where the standard library would overload one.
 - **`List` and `Map` cannot nest directly**, so a nested container is wrapped in a
-  one-field `datac` — `csv.Row`, `listx.Chunk` and `table.Row` are exactly that.
+  one-field `datac`: `csv.Row`, `listx.Chunk` and `table.Row` are exactly that.
 - **A closure parameter that borrows a module-declared type fails to codegen**, so
   a library offers index loops and callback-free helpers where the natural API
   would have taken a callback. See [Known issues](../meta/known-issues.md).
@@ -76,7 +76,7 @@ below is a rule.
 1. Add the folder with its `.kp` source (entry `lib.kp`).
 2. Add a row to the repository's root `README.md` table and to `index.toml`.
 3. Add a page to this chapter.
-4. Push. That *is* publishing — there is no version to bump.
+4. Push. That *is* publishing: there is no version to bump.
 
 ## See also
 

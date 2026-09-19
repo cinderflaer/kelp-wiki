@@ -2,11 +2,11 @@
 
 Three pages, in order:
 
-1. **[Install and build](install.md)** — build `kelpc`, run a file, pick a
+1. **[Install and build](install.md)**: build `kelpc`, run a file, pick a
    backend, and what the toolchain needs from the machine.
-2. **[Your first program](first-program.md)** — a guided tour of Kelp's shape in
+2. **[Your first program](first-program.md)**: a guided tour of Kelp's shape in
    one file, with output.
-3. **[Projects and coral.toml](projects.md)** — what a project is, what a
+3. **[Projects and coral.toml](projects.md)**: what a project is, what a
    `coral.toml` contains, and how dependencies land in `src/deps/`.
 
 ## The one-paragraph version
