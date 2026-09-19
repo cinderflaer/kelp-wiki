@@ -4,8 +4,10 @@ description: "Parses text into an owned Json tree, reads it back through typed a
 isPublished: true
 tags: "library, data-formats"
 ---
-Parses text into an owned `Json` tree, reads it back through typed accessors,
-queries it by key or by [JSON Pointer](https://www.rfc-editor.org/rfc/rfc6901),
+Parses text into an owned `Json` tree, reads it back through typed accessors —
+including keyed ones that take a default, for a field that may be absent —
+queries it by key or by
+[JSON Pointer](https://www.rfc-editor.org/rfc/rfc6901),
 transforms it (clone, equals, merge, sort keys) and writes it compact, pretty or
 canonical.
 
@@ -138,6 +140,50 @@ and applies the fallback.
 | `get(v, key)` | `&Json`; panics `json.get: key not found` |
 | `keys(v)` | `List<String>` of every key, document order; empty list for a non-object |
 | `index(v)` | `Map<String, usize>`: key to position, for repeated lookups. First occurrence wins |
+
+### Keyed lookup with a default
+
+`get` panics on an absent key and the safe readers take a *value* rather than a
+key, so "this field, or a default" had no direct spelling: a caller wrote
+`if json.has(doc, key) { … json.get(doc, key) … }` by hand, and the
+natural-looking `json.text_or(v = json.get(doc, "body"), fallback = "")` panics on
+the record that leaves the field out — which is exactly the record a default
+exists for.
+
+| Function | Returns |
+| --- | --- |
+| `get_text(v, key, fallback: &str)` | `String`: the field, or the fallback when it is absent or not a string |
+| `get_int(v, key, fallback: i64)` | `i64`, likewise |
+| `get_float(v, key, fallback: f64)` | `f64`; an `Int` widens, as `as_f64_or` does |
+| `get_bool(v, key, fallback: bool)` | `bool` |
+| `get_strings(v, key)` | `List<String>`: an array of strings as an owned list |
+
+Each is a presence check followed by the matching value-level accessor, so they
+agree with `text_or`/`as_i64_or`/`as_f64_or`/`as_bool_or` by construction, and each
+answers the fallback for a **wrongly typed** field as well as for an absent one: a
+`body` that is a number reads as the default instead of panicking.
+
+`get_strings` skips a non-string element rather than turning it into an empty
+string, so `["bug", 7, "ui"]` reads as two labels and not three: a caller that
+gets two cannot mistake the hole for a value, while a caller that got `""` would
+store a label nobody typed. An absent key, a `null` and a non-array all read as an
+empty list.
+
+```kelp
+// A record with a required field and three optional ones, read the way a codec
+// reads one: the required field through `get` (which panics when it is absent),
+// the optional ones through the keyed accessors.
+val parsed = json.parse("{\"id\":7,\"title\":\"a ticket\",\"tags\":[\"bug\",7,\"ui\"]}")
+if let Ok(doc) = parsed {
+    print(json.get_int(doc, "id", 0))            // 7
+    print(json.as_i64(json.get(doc, "id")))       // 7 — the panicking form
+    print(json.get_text(doc, "body", ""))        // "" — the field is absent
+    print(json.get_text(doc, "title", ""))       // "a ticket"
+    val tags = json.get_strings(doc, "tags")      // ["bug", "ui"]
+    print(tags.len())                            // 2
+    print(json.get_bool(doc, "closed", false))   // false
+}
+```
 
 ## JSON Pointer
 
@@ -310,7 +356,7 @@ true
 ## Limits
 
 - No closure-based traversal (see above).
-- No `try_str`; use `text_or`.
+- No `try_str`; use `text_or`, or `get_text` when the field may be absent.
 - `Json` cannot be pushed to in place. Build children first, then wrap.
 - `write`/`write_pretty` never emit `NaN`/`Infinity`: a non-finite float is
   `null`.

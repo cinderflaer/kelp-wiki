@@ -38,7 +38,9 @@ Functions:
 - `fun ends_with(s: &str, suffix: &str).R: bool`
 - `fun contains(s: &str, needle: &str).R: bool`
 - `fun eq(a: &str, b: &str).R: bool`
+- `fun less(a: &str, b: &str).R: bool`
 - `fun is_space(c: u8).R: bool`
+- `fun is_digit(c: u8).R: bool`
 - `fun trim_start(s: &str).R: &str`
 - `fun trim_end(s: &str).R: String`
 - `fun prefix(s: &str, n: usize).R: String`
@@ -410,7 +412,7 @@ Functions:
 | Module | Functions | Types/constants | Domain |
 | --- | ---: | ---: | --- |
 | `std/mem` | 1 | 0 | — |
-| `std/str` | 35 | 1 | — |
+| `std/str` | 37 | 1 | — |
 | `std/path` | 11 | 0 | — |
 | `std/math` | 29 | 3 | — |
 | `std/fmt` | 7 | 0 | — |

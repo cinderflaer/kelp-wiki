@@ -32,8 +32,10 @@ impl "std/str"
 | `ends_with(s, suffix)` | `bool` | |
 | `contains(s, needle)` | `bool` | |
 | `eq(a: &str, b: &str)` | `bool` | byte equality; `str` cannot use `==` |
+| `less(a: &str, b: &str)` | `bool` | byte order: first differing byte decides, a prefix is less; `str` has no `<` |
 | `trim(s)` / `trim_start(s)` / `trim_end(s)` | `String` / `&str` / `String` | whitespace is space, tab, LF, CR |
-| `is_space(c: u8)` | `bool` | |
+| `is_space(c: u8)` | `bool` | space, tab, LF, CR |
+| `is_digit(c: u8)` | `bool` | ASCII `0`-`9` |
 | `to_upper(s)` / `to_lower(s)` | `String` | **ASCII only** |
 | `repeat(s: &str, n: usize)` | `String` | |
 | `replace(s: &str, from: &str, to: &str)` | `String` | every occurrence |
@@ -96,7 +98,11 @@ fun main() {
   string. That is what makes `fsx.tail` count a file's final newline as an extra
   line.
 - `str` cannot be compared with `==` (it is a pointer), so `str.eq` is the
-  comparison. `List<String>.contains` and friends do the right thing for you.
+  comparison — and `str.less` is the ordering, for the same reason. `less`
+  compares bytes, not codepoints, which is the same answer `List<u8>.sort` gives
+  and the one a caller's sort depends on; write an explicit codepoint comparison
+  if that is what you meant.
+- `str.is_digit` pairs with `str.is_space` for hand-written number parsers.
 - A `String` argument needs `.as_str()`: the module takes views, not owners.
 
 ## See also
