@@ -121,11 +121,18 @@ the 0.2.1 release above changed, from the index rather than from the compiler.
 
 ## Maintaining this page
 
-Add an entry when a release is cut, and say which piece it is: an IntelliJ
-plugin release, or a version move in the extension or the server. When the
-features themselves come from the server, say so and say which server version
-they need; a plugin release that only changes highlighting is worth one line,
-not a feature list.
+This page carries **released versions only**. Nothing goes here until a release
+is cut.
+
+Changes in the meantime accumulate in `lighthouse/CHANGELOG.pending.md`, which is
+gitignored and never committed: a line per user-visible change, saying which
+piece it belongs to (`server`, `vscode` or `intellij`).
+
+When a release is cut, write its entry here from that file plus the tag's commits
+and the Gitea release body, then wipe the pending file back to its header. When
+the features themselves come from the server, say so and say which server version
+they need; a plugin release that only changes highlighting is worth one line, not
+a feature list.
 
 Write the page without em dashes. Use a colon or a comma for an aside, a
 semicolon or a full stop between clauses, and a plain hyphen in a range.

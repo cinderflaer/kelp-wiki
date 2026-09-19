@@ -51,11 +51,12 @@ their checksums.
   those two are implemented twice (Kelp and C) and compared.
 - **A citation** for a documentation change: every page in this wiki names the
   section it came from, and a claim without a source is a claim to remove.
-- **A changelog entry** when a release is cut. A release is not finished until
-  its version, date, test counts and changes are in [Changelog](/changelog), or
-  in the [Coral](/tooling/coral-changelog) and
-  [Lighthouse](/tooling/lighthouse-changelog) pages. Keep the entry short and
-  link the tag; the full story lives in `plan/done.md` and in the Gitea release.
+- **A line in the pending changelog** for a user-visible change, in the
+  repository it landed in: `CHANGELOG.pending.md`, which is gitignored and never
+  committed. A wiki changelog page is written only when a version is released:
+  [Changelog](/changelog), [Coral](/tooling/coral-changelog) and
+  [Lighthouse](/tooling/lighthouse-changelog) carry releases only, and the
+  release writes its entry from the pending file, then wipes it.
 - **A commit message that says why**, not which lines moved. The plan documents
   use the same voice.
 
