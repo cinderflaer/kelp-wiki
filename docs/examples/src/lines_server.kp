@@ -1,0 +1,60 @@
+// lines_server: a tiny line protocol: PING becomes PONG, QUIT becomes BYE.
+//
+//   kelpc build lines_server.kp -o lines_server && ./lines_server 4599
+//
+// Dependencies and the grant:
+//
+//   [dependencies]
+//   lineproto = "Juniper/fpl/lineproto"
+//
+//   impl "deps/lineproto/lib" as lineproto with caps(net = ["127.0.0.1:*"])
+//
+// A library that touches the outside world carries its own `impl` lines, so the
+// *consumer* is the one that decides the pattern. This program serves one
+// connection and exits, which is what makes it a runnable example; a real server
+// loops over `net.accept`.
+
+impl "std/net"
+impl "std/str"
+impl "std/process"
+impl "deps/lineproto/lib" as lineproto with caps(net = ["127.0.0.1:*"])
+
+fun port_from(argv: &List<String>).R: u16 {
+    if argv.len() >= 2 {
+        val parsed = str.parse_i64(argv.get(1).as_str())
+        if let Ok(v) = parsed {
+            return v.to_u16()
+        }
+    }
+    return 4599
+}
+
+fun main() {
+    val argv = process.args()
+    val port = port_from(argv)
+    val listener = net.listen(port)
+    print(listener.port())
+
+    val sock = net.accept(listener)
+    var reader = lineproto.new_reader(sock)
+    var serving = true
+    while serving {
+        val line = reader.read_line()
+        if let Some(text) = line {
+            if str.eq(text.as_str(), "PING") {
+                lineproto.send_line(sock, "PONG")
+            } else if str.eq(text.as_str(), "QUIT") {
+                lineproto.send_line(sock, "BYE")
+                serving = false
+            } else {
+                val reply = str.concat("ERR unknown: ", text.as_str())
+                lineproto.send_line(sock, reply.as_str())
+            }
+        } else {
+            serving = false
+        }
+    }
+
+    net.close(sock)
+    listener.close()
+}

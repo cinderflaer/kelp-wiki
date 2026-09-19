@@ -1,0 +1,18 @@
+// sandbox_vault: a module that may read exactly one directory.
+//
+// This file is not run on its own; `sandbox-main.kp` imports it. It is here to
+// show where authority is declared: on the `impl` line, in the module that makes
+// the call, not in the caller, and not at the call site.
+
+impl "std/fs" with caps(fs = ["/tmp/kelp-sandbox/vault/**"])
+impl "std/str"
+
+// Reads a file inside the granted directory. A path outside it is refused by the
+// capability check at the call, which panics with the call site, the attempted
+// path and the granted patterns.
+//
+// The path is bound to a `val` first: `.as_str()` on a temporary is refused.
+fun read(name: &str).R: String {
+    val path = str.concat("/tmp/kelp-sandbox/vault/", name)
+    return fs.read_text(path.as_str())
+}

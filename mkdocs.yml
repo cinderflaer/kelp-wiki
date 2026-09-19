@@ -125,6 +125,18 @@ nav:
       - list: stdlib/list.md
       - option: stdlib/option.md
       - result: stdlib/result.md
+  - Examples:
+      - examples/index.md
+      - wordcount: examples/wordcount.md
+      - fib: examples/fib.md
+      - json_filter: examples/json_filter.md
+      - csv_report: examples/csv_report.md
+      - glob_tree: examples/glob_tree.md
+      - cli_tool: examples/cli_tool.md
+      - tests_and_bench: examples/tests_and_bench.md
+      - sandbox_main: examples/sandbox_main.md
+      - lines_server: examples/lines_server.md
+      - http_fetch: examples/http_fetch.md
   - Compiler:
       - compiler/index.md
       - Architecture: compiler/architecture.md

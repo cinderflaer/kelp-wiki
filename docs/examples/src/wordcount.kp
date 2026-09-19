@@ -1,0 +1,80 @@
+// wordcount: lines, words and bytes in a file.
+//
+//   kelpc build wordcount.kp -o wordcount && ./wordcount /absolute/path/to/file
+//
+// In a project with a coral.toml: coral run -- <file>
+//
+// The path must be absolute: an `fs` call is gated on a pattern, patterns are
+// absolute, which is why the example checks and explains rather than panicking.
+//
+// Demonstrates: the fs capability, reading text, a byte loop over a str, and
+// building output with fmt/str rather than string concatenation.
+
+impl "std/fs"
+impl "std/str"
+impl "std/fmt"
+impl "std/process"
+impl "std/path" as p
+
+fun is_space(c: u8).R: bool = c == ' ' || c == '\t' || c == '\n' || c == '\r'
+
+// A gated call takes an **absolute** path, and v1 has no way to make one:
+// there is no `fs.cwd()` and no `getcwd` behind it, so a relative argument
+// cannot be turned into an absolute one by the program. `fs.read_text("in.txt")`
+// therefore panics ("is outside the fs capability granted to module ..."), even
+// with a `/**` grant. Refusing it here gives the caller a sentence instead.
+fun require_absolute(tool: &str, path: &str) {
+    if !p.is_absolute(path) {
+        val message = str.concat("error: ", tool)
+        val rest = String.from_str(" takes an absolute path (this language has no cwd accessor)")
+        print(str.concat(message.as_str(), rest.as_str()))
+        process.exit(2)
+    }
+}
+
+fun report(label: &str, n: i64) {
+    val padded = fmt.pad_right(label, 8, ' ')
+    val count = fmt.int(n)
+    print(str.concat(padded.as_str(), count.as_str()))
+}
+
+fun main() {
+    val argv = process.args()
+    if argv.len() < 2 {
+        print("usage: wordcount <file>")
+        process.exit(2)
+    }
+
+    val path = argv.get(1)
+    require_absolute("wordcount", path.as_str())
+    val text = fs.read_text(path.as_str())
+    val s = text.as_str()
+    val bytes = str.len(s)
+
+    var lines: i64 = 0
+    var words: i64 = 0
+    var in_word = false
+    var i: usize = 0
+    while i < bytes {
+        val c = str.byte(s, i)
+        if c == '\n' {
+            lines += 1
+        }
+        if is_space(c) {
+            in_word = false
+        } else if !in_word {
+            words += 1
+            in_word = true
+        }
+        i += 1
+    }
+
+    // A file whose last line has no newline still counts as one line.
+    if bytes > 0 && str.byte(s, bytes - 1) != '\n' {
+        lines += 1
+    }
+
+    report("lines", lines)
+    report("words", words)
+    report("bytes", bytes.to_i64())
+}

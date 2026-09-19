@@ -1,0 +1,44 @@
+// lines_client: talk to `lines_server` with PING, then QUIT.
+//
+//   kelpc build lines_client.kp -o lines_client && ./lines_client 4599
+//
+// Demonstrates: connecting to a granted host, sending CRLF-terminated lines, and
+// reading one reply at a time from a buffered reader (a client that reads a line
+// only after writing one never has to reason about overshoot).
+
+impl "std/net"
+impl "std/str"
+impl "std/process"
+impl "deps/lineproto/lib" as lineproto with caps(net = ["127.0.0.1:*"])
+
+fun port_from(argv: &List<String>).R: u16 {
+    if argv.len() >= 2 {
+        val parsed = str.parse_i64(argv.get(1).as_str())
+        if let Ok(v) = parsed {
+            return v.to_u16()
+        }
+    }
+    return 4599
+}
+
+fun main() {
+    val argv = process.args()
+    val port = port_from(argv)
+
+    val sock = net.connect("127.0.0.1", port)
+    var reader = lineproto.new_reader(sock)
+
+    lineproto.send_line(sock, "PING")
+    val first = reader.read_line()
+    if let Some(text) = first {
+        print(text)
+    }
+
+    lineproto.send_line(sock, "QUIT")
+    val second = reader.read_line()
+    if let Some(text) = second {
+        print(text)
+    }
+
+    net.close(sock)
+}

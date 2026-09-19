@@ -1,0 +1,43 @@
+// json_filter: keep the records whose score reaches a threshold, and print the
+// result canonically.
+//
+//   kelpc run main.kp
+//
+// The `json` library is a dependency, not part of the standard library, so a
+// project declares it:
+//
+//   [dependencies]
+//   json = "Juniper/fpl/json"
+//
+// and imports it as `deps/json/lib` after `coral sync`.
+//
+// Demonstrates: parsing into an owned tree, walking an array by index, typed
+// readers, and rebuilding a tree bottom-up (a `Json` cannot be pushed to in
+// place, so children are collected first and wrapped).
+
+impl "deps/json/lib" as json
+
+// A helper, not because the work is long, but because an owned local declared
+// inside an `if let` arm does not build yet, see the wiki's Known issues.
+fun keep_high_scores(doc: &json.Json).R: String {
+    var kept: List<json.Json> = List.empty()
+    var i: usize = 0
+    while i < json.array_len(doc) {
+        val item = json.array_get(doc, i)
+        val score = json.as_i64(json.get(item, "score"))
+        if score >= 7 {
+            kept.push(json.clone(item))
+        }
+        i += 1
+    }
+    val out = json.array(kept)
+    return json.write_sorted(&out)
+}
+
+fun main() {
+    val text = "[{\"name\":\"ada\",\"score\":9},{\"name\":\"bob\",\"score\":3},{\"name\":\"cyd\",\"score\":7}]"
+    val parsed = json.parse(text)
+    if let Ok(doc) = parsed {
+        print(keep_high_scores(doc))
+    }
+}

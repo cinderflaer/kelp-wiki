@@ -1,0 +1,43 @@
+// http_fetch: GET a URL and write the body to a file atomically.
+//
+//   python3 -m http.server 8765 --directory /tmp/kelp-http   # then:
+//   kelpc run http_fetch.kp
+//
+// Two grants are in play, and both are written where the call is:
+//
+//   impl "std/http" with caps(net = ["127.0.0.1:*"])
+//   impl "deps/fsx/lib" as fsx with caps(fs = ["/tmp/**"])
+//
+// `fsx` is a dependency:
+//
+//   [dependencies]
+//   fsx = "Juniper/fpl/fsx"
+//
+// Demonstrates: the capability grant on an import, an HTTP request built as data,
+// reading a response's status, and `write_atomic` instead of a truncate-in-place
+// write (a reader never sees half a file).
+
+impl "std/http" with caps(net = ["127.0.0.1:*"])
+impl "std/str"
+impl "deps/fsx/lib" as fsx with caps(fs = ["/tmp/**"])
+
+fun main() {
+    val client = http.default_client()
+    val request = http.Request(
+        method = "GET",
+        url = "http://127.0.0.1:8765/notes.txt",
+        headers = http.empty_headers(),
+        body = Bytes.empty(),
+    )
+
+    val response = client.send(request)
+    print(response.status)
+    print(response.is_ok())
+
+    val body = response.text()
+    print(str.len(body.as_str()))
+
+    val path = "/tmp/kelp-http-body.txt"
+    fsx.write_atomic(path, Bytes.from_str(body.as_str()))
+    print(path)
+}

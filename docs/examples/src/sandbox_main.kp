@@ -1,0 +1,30 @@
+// sandbox_main: grant a module one directory, then try to exceed it.
+//
+//   mkdir -p /tmp/kelp-sandbox/vault
+//   printf 'inside the grant\n' > /tmp/kelp-sandbox/vault/ok.txt
+//   printf 'outside\n' > /tmp/kelp-sandbox/secret.txt
+//   kelpc build sandbox_main.kp -o sandbox_main && ./sandbox_main
+//
+// Authority flows *down*: the entry module holds the wildcard for every domain,
+// and the pattern it writes on the import line is what the imported module holds.
+// `sandbox_vault` then delegates a covered subset to `std/fs`, which is where its
+// reads actually happen.
+//
+// The program prints the file inside the grant twice, once through the gated
+// module and once directly, and then names a path outside it. That last call
+// panics with the call site, the attempted path and the granted patterns, and the
+// process exits non-zero: a refusal in Kelp is not a catchable error.
+
+impl "std/fs"
+impl "sandbox_vault" as vault with caps(fs = ["/tmp/kelp-sandbox/vault/**"])
+
+fun main() {
+    print(vault.read("ok.txt"))
+
+    // Inside the grant, straight from the entry module: fine, because the entry
+    // module holds everything.
+    print(fs.read_text("/tmp/kelp-sandbox/vault/ok.txt"))
+
+    // Outside the grant, through the gated module: refused.
+    print(vault.read("../secret.txt"))
+}

@@ -1,0 +1,72 @@
+// csv_report: total a column of a CSV file and print it as a table.
+//
+//   kelpc run main.kp
+//
+// Dependencies:
+//
+//   [dependencies]
+//   csv   = "Juniper/fpl/csv"
+//   table = "Juniper/fpl/table"
+//
+// Demonstrates: CSV parsing over rows of fields, a `Map` used as an
+// accumulator (insertion order is preserved, so the report is stable), a
+// `Map` key taken as a bare `str`, and the table library's two-line contract
+// (`new_table` then one `add_row` per row).
+
+impl "deps/csv/lib" as csv
+impl "deps/table/lib" as table
+impl "std/str"
+impl "std/fmt"
+
+// Totals the `units` column per region. A separate function because several
+// owned locals here would otherwise sit inside an `if let` arm, which does not
+// build yet (see Known issues).
+fun totals_by_region(rows: &List<csv.Row>).R: Map<String, i64> {
+    var totals: Map<String, i64> = Map.new()
+    var i: usize = 1          // row 0 is the header
+    while i < rows.len() {
+        val row = rows.get(i)
+        val region = row.get(0)
+        val parsed = str.parse_i64(row.get(1))
+        if let Ok(units) = parsed {
+            var running: i64 = 0
+            if totals.has(region) {
+                running = totals.get(region)
+            }
+            totals.insert(key = region, v = running + units)
+        }
+        i += 1
+    }
+    return totals
+}
+
+fun render(totals: &Map<String, i64>) {
+    var headers: List<String> = List.empty()
+    headers.push("region")
+    headers.push("units")
+    var t = table.new_table(headers)
+
+    val names = totals.keys()
+    var i: usize = 0
+    while i < names.len() {
+        val name = names.get(i)
+        var cells: List<String> = List.empty()
+        cells.push(name.clone())
+        cells.push(fmt.int(totals.get(name.as_str())))
+        table.add_row(t, cells)
+        i += 1
+    }
+    print!(table.render(&t))
+    print("")
+}
+
+fun main() {
+    val text = "region,units\nnorth,12\nsouth,7\nnorth,5\n"
+    val parsed = csv.parse(text)
+    if let Ok(rows) = parsed {
+        // No owned local in this arm: an owned local declared inside an `if let`
+        // arm does not build yet (see Known issues). A `&`-expression on a
+        // temporary is refused too, but a parameter borrows one for free.
+        render(totals_by_region(rows))
+    }
+}
