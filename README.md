@@ -1,3 +1,10 @@
+---
+title: "About this repository"
+description: "How the Kelp documentation wiki is stored: one file per page, the path is the page path, and Wiki.js syncs it every five minutes in both directions."
+isPublished: true
+tags: "meta"
+---
+
 # kelp-wiki
 
 The content of the Kelp documentation wiki, served at
@@ -69,9 +76,12 @@ arrives here as a commit; a commit here becomes a page. Neither side is
 authoritative over the other, so edit where it suits you.
 
 There is one directed dependency: Wiki.js imports the diff of the **last commit
-only**. A commit that touches many files is fine, but if a sync is interrupted
-mid-run, the module considers the commit handled and will not retry it. Touch the
-files again in a new commit to force a re-import.
+only**, and a branch is checked out by the module's init step on every container
+restart. Two consequences:
+
+- A container restart between your commit and the next sync marks the commit as
+  handled without importing it. Touch the file again in a new commit.
+- An interrupted sync does the same. The same fix applies.
 
 ## History
 
