@@ -17,11 +17,11 @@ BACKENDS="c asm" ./kelpc/tests/run-all-backends.sh
 
 ## The fixture suite (`kelpc/tests/compile_and_run.rs`)
 
-278 tests (measured 2026-09-19), driving the real `kelpc` binary over two corpora:
+289 tests (measured 2026-09-19), driving the real `kelpc` binary over two corpora:
 
 | Corpus | Count | Shape |
 | --- | --- | --- |
-| `kelpc/tests/fixtures/*.kp` | 292 files | one loose file per single-file test |
+| `kelpc/tests/fixtures/*.kp` | 302 files | one loose file per single-file test |
 | `kelpc/tests/projects/<name>/` | 45 directories | multi-file: a module graph needs a directory, and a granted module needs an importer |
 
 Every fixture lands in exactly one of three groups, because the harness does three
@@ -93,7 +93,7 @@ cargo test --test path_normalize
 
 ## The formatter's corpus (`kelpc/tests/fmt.rs`)
 
-29 tests, plus `kelpc/tests/fmt_corpus/` (27 input/expected pairs). `kelpc fmt` is a
+29 tests, plus `kelpc/tests/fmt_corpus/` (28 input/expected pairs). `kelpc fmt` is a
 token-level whitespace reformatter, so its interesting behaviour is a set of
 **properties** rather than a set of hand-written outputs:
 

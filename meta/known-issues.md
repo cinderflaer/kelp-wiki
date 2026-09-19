@@ -77,8 +77,10 @@ kelp_list_drop__i32(&kelp_xs);                      // line 733: correct drop
 }
 ```
 
-The same shape appears at a `for` loop's exit path. Both are `c`-only: the `asm`
-backend refuses the construct by name first.
+The same shape appears at a `for` loop's exit path. Both were `c`-only when this
+bug was live: the `asm` backend refused the construct by name then, and it lowers
+the same shape now (`heap_drops_in_desugared_blocks.kp` builds under `asm`), so
+the defect was never a second backend's to hit.
 
 **Workarounds:** declare the owned local before the block; move the body into a
 helper function that owns the local; or use a plain `if` when the pattern is not
