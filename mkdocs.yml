@@ -78,6 +78,8 @@ nav:
   - Getting started:
       - getting-started/index.md
       - Install and build: getting-started/install.md
+      - Your first program: getting-started/first-program.md
+      - Projects and coral.toml: getting-started/projects.md
   - Language:
       - language/index.md
       - Lexical structure: language/lexical.md
@@ -90,6 +92,13 @@ nav:
       - Ownership and borrowing: language/ownership.md
       - Text: language/text.md
       - Collections: language/collections.md
+      - Modules and imports: language/modules.md
+      - Capabilities: language/capabilities.md
+      - Errors and panics: language/errors.md
+      - Limits in v1: language/limits.md
+      - Style: language/style.md
+      - Grammar summary: language/grammar.md
+      - Pitfalls: language/pitfalls.md
   - Standard library:
       - stdlib/index.md
       - mem: stdlib/mem.md
@@ -97,3 +106,52 @@ nav:
       - path: stdlib/path.md
       - math: stdlib/math.md
       - fmt: stdlib/fmt.md
+      - io: stdlib/io.md
+      - fs: stdlib/fs.md
+      - process: stdlib/process.md
+      - net: stdlib/net.md
+      - http: stdlib/http.md
+      - time: stdlib/time.md
+      - rand: stdlib/rand.md
+      - env: stdlib/env.md
+      - list: stdlib/list.md
+      - option: stdlib/option.md
+      - result: stdlib/result.md
+  - Libraries (fpl):
+      - libraries/index.md
+      - Catalogue: libraries/catalogue.md
+      - Writing a library: libraries/writing-a-library.md
+      - argparse: libraries/argparse.md
+      - benchkit: libraries/benchkit.md
+      - bigint: libraries/bigint.md
+      - bits: libraries/bits.md
+      - complex: libraries/complex.md
+      - config: libraries/config.md
+      - csv: libraries/csv.md
+      - datetime: libraries/datetime.md
+      - decimal: libraries/decimal.md
+      - encoding: libraries/encoding.md
+      - fsx: libraries/fsx.md
+      - glob: libraries/glob.md
+      - hash: libraries/hash.md
+      - httpx: libraries/httpx.md
+      - json: libraries/json.md
+      - lineproto: libraries/lineproto.md
+      - listx: libraries/listx.md
+      - log: libraries/log.md
+      - mathx: libraries/mathx.md
+      - prng: libraries/prng.md
+      - set: libraries/set.md
+      - stats: libraries/stats.md
+      - table: libraries/table.md
+      - term: libraries/term.md
+      - testkit: libraries/testkit.md
+  - Reference:
+      - reference/index.md
+      - Standard library index: reference/stdlib-index.md
+      - Capability patterns: reference/capability-patterns.md
+  - Meta:
+      - meta/index.md
+      - Source documents: meta/source-documents.md
+      - Known issues: meta/known-issues.md
+      - Contributing: meta/contributing.md

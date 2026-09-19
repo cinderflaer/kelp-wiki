@@ -74,9 +74,9 @@ val f = "n = $a, sum = ${a + 1}"   // string template
 
   A code point that does not fit the type the context asks for is a **compile
   error**, not a truncation: `val ch: u8 = '中'` is refused by name.
-- **String literals** use the escapes `\n`, `\t`, `\r`, `\\`, `\"` and
-  `\u{...}`. The set is closed: there is no `\x1b`, which is why the `term`
-  library builds its ESC byte as `'\u{1b}'`.
+- **String and character literals** use this escape set (grammar §20): `\n`,
+  `\t`, `\r`, `\0`, `\'`, `\"`, `\\` and `\u{...}`. The set is closed: there is
+  no `\x1b`, which is why the `term` library builds its ESC byte as `'\u{1b}'`.
 
 ## String templates
 
