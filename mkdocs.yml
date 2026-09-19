@@ -1,0 +1,90 @@
+site_name: Kelp
+site_description: >-
+  Documentation for Kelp: a statically typed, compiled systems language whose
+  headline feature is capability-based security.
+site_url: https://homelabone.xenoo.dev/kelp/
+repo_url: https://homelabone.xenoo.dev/gittea/Juniper/kelp
+repo_name: Juniper/kelp
+edit_uri: ""
+copyright: Kelp — Juniper
+
+hooks:
+  - hooks/kelp_lexer.py
+
+theme:
+  name: material
+  language: en
+  features:
+    - navigation.sections
+    - navigation.indexes
+    - navigation.top
+    - navigation.footer
+    - navigation.tracking
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.select
+    - content.tabs.link
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+extra:
+  generator: false
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+
+nav:
+  - Home: index.md
+  - Getting started:
+      - getting-started/index.md
+      - Install and build: getting-started/install.md
+  - Language:
+      - language/index.md
+      - Lexical structure: language/lexical.md
+      - Types: language/types.md
+      - Operators and expressions: language/expressions.md
+      - Control flow: language/control-flow.md
+      - Functions: language/functions.md
+      - Methods and receivers: language/methods.md
+      - datac and enum: language/data-types.md
+      - Ownership and borrowing: language/ownership.md
+      - Text: language/text.md
+      - Collections: language/collections.md
+  - Standard library:
+      - stdlib/index.md
+      - mem: stdlib/mem.md
+      - str: stdlib/str.md
+      - path: stdlib/path.md
+      - math: stdlib/math.md
+      - fmt: stdlib/fmt.md
