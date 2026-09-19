@@ -15,7 +15,7 @@ which is the authority.
 
 | Command | What it does |
 | --- | --- |
-| `coral init [name]` | scaffold a new project (`--kelp <ver>` writes a toolchain pin too) |
+| `coral init [name]` | scaffold a project: `coral.toml`, `src/main.kp`, `tests/`, `src/tasks/`. Flags: `--no-git`, `--no-sample`, `--version <v>`, `--kelp <ver>` (writes the toolchain pin) |
 | `coral sync [--dry-run] [--offline]` | install the pinned toolchain and fetch dependencies, **without building** |
 | `coral build [--release] [--offline]` | compile the project's entry point with `kelpc` |
 | `coral run [--release] [--offline] [-- args...]` | build, then run, forwarding argv and the exit code |
@@ -35,6 +35,52 @@ There is **no `coral add` and no `coral update`**. A dependency is a line in
 
 Coral finds `kelpc` in this order: `$KELPC`, then the project's `[toolchain]`
 pin, then `~/.coral/bin/kelpc`, then `PATH`.
+
+## A session
+
+Run with no arguments, `coral` prints the command list. The rest, on a project
+whose only task is `hello` (`$KELPC` here points at a compiler built from source,
+which is how the resolution order above shows itself):
+
+```
+$ coral task
+hello    src/hello.kp
+
+$ coral build
+coral: building 'coraltest' (dev)
+
+$ coral run
+coral: 'coraltest' is up to date
+from coral
+
+$ coral build --release
+coral: building 'coraltest' (release)
+
+$ coral check
+coral: building 'coraltest' (check)
+coral: 'coraltest' checks out
+
+$ coral task hello
+coral: building 'task-hello' (tasks)
+task ran
+
+$ coral clean
+$ ls
+coral.toml  src
+```
+
+Where the work lands, inside the project's `build/`:
+
+| Target | Path |
+| --- | --- |
+| dev build | `build/dev/<project>` and `build/dev/<project>.c` |
+| release build | `build/release/<project>` and `.c` |
+| check | `build/check/<project>` and `.c` — nothing is put in `dev/` or `release/` |
+| a task | `build/tasks/task-<name>` and `.c`, built as its own unit |
+| build cache | `build/.coral-cache/<unit>.<mode>.fp`, the fingerprints that make `coral run` say "up to date" |
+
+The second `coral run` above is the interesting line: an unchanged project is not
+recompiled, and the program's own output is what you see.
 
 ## The manifest
 
@@ -166,6 +212,10 @@ coral: refreshing 'util' from ssh://gitea@thinkbox:2222/Juniper/kelp-util.git
 coral: 'util' is at 4f2a9c1e...
 coral: 'myproject' synced (installed 0, fetched 1)
 ```
+
+(That block is quoted from
+[Coral's README](https://homelabone.xenoo.dev/gittea/Juniper/coral/src/branch/main/README.md);
+the session above was run.)
 
 ## Pinning the compiler
 

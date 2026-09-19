@@ -117,6 +117,17 @@ nav:
       - list: stdlib/list.md
       - option: stdlib/option.md
       - result: stdlib/result.md
+  - Compiler:
+      - compiler/index.md
+      - Architecture: compiler/architecture.md
+      - Backends: compiler/backends.md
+      - Runtime: compiler/runtime.md
+      - Tests and gates: compiler/tests.md
+  - Tooling:
+      - tooling/index.md
+      - kelpc CLI: tooling/kelpc-cli.md
+      - Coral: tooling/coral.md
+      - Lighthouse: tooling/lighthouse.md
   - Libraries (fpl):
       - libraries/index.md
       - Catalogue: libraries/catalogue.md

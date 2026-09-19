@@ -122,6 +122,42 @@ so debugging the generated program is `gdb ./foo` against a file that is actuall
 there. `-fwrapv` makes signed overflow wrap in C, matching what the language
 promises; `-lm` is for `std/math`'s externs.
 
+## Following one program through the passes
+
+```kelp
+impl "std/str"
+
+datac Point(val x: i32, val y: i32)
+
+fun area(p: Point).R: i32 = p.x * p.y
+
+fun main() {
+    val p = Point(x = 3, y = 4)
+    if p.x > 0 {
+        print(area(p))
+    }
+
+    var xs: List<i32> = List.empty()
+    xs.push(1)
+    xs.push(2)
+    for x in xs {
+        print(x)
+    }
+}
+```
+
+| Pass | What it makes of the program above |
+| --- | --- |
+| `lexer.rs` | tokens, each with a byte range; the newlines are tokens too, and they are what ends statements |
+| `preprocess.rs` | unchanged here — there is no `%*alias*%` to substitute |
+| `parser.rs` | the AST, with `for x in xs` already rewritten into an index-and-`while` walk over the list |
+| `resolve.rs` | a module graph with `std/str` next to this file, and the capability set of each module (empty here, since nothing gated is imported) |
+| `infer.rs` | `area(p)`: the parameter is a `datac`, so it becomes a shared borrow and the call site gets a synthesized `&` the author never wrote |
+| `tir.rs` | the same tree, every node carrying `Ty` and `Span` |
+| `borrowck.rs` | `p` is borrowed by `area` and still owned afterwards; a drop plan for the `Point` and for the `List` |
+| `codegen_c.rs` | C with `#line` markers back into the `.kp`, plus the heap preamble the drop plan asked for |
+| `driver.rs` | `<out>.c` written beside the binary, `cc -O2 -fwrapv -lm` invoked |
+
 ## What is *not* in the pipeline
 
 | Missing | Consequence |
