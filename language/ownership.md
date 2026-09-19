@@ -132,6 +132,8 @@ no way to leak deliberately.
 ## See also
 
 - [Types](/language/types)
+- [Return types and `return`](/language/returns)
+- [Bindings and assignment](/language/bindings)
 - [Collections](/language/collections)
 - [Errors and panics](/language/errors)
 - [Pitfalls](/language/pitfalls)

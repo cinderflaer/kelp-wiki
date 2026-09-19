@@ -22,13 +22,10 @@ These are deliberate, and each one has a workaround in this documentation.
 
 ## Data and generics
 
-- **No generic functions.** `datac` and `enum` take type parameters; `fun` does
-  not. A function that must work for several types is written per type, which is
-  why `listx` has `sum_i32`/`sum_i64`/`sum_f64` and `testkit` has
-  `check_eq_i64`/`check_eq_str`.
-- **A receiver on a generic type must write the type's own parameters**, in order:
-  `fun Pair<A, B>.first()`. There is no way to declare a method with parameters of
-  its own.
+- **No extra type parameters on a method.** A `datac`, an `enum` and a `fun` may
+  each declare type parameters, but a receiver on a generic type must write the
+  type's own parameters, in order: `fun Pair<A, B>.first()`. A method cannot add
+  parameters of its own. See [Generics and type parameters](/language/generics).
 - **An `enum` carries no methods**, generic or not: combinators over `Option` and
   `Result` are free functions.
 - **A `Map` key must be `String`, an integer or `bool`.** The compiler generates

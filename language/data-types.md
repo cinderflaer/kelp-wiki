@@ -137,5 +137,6 @@ carries none** in v1, so combinators over `Option`/`Result` are free functions i
 ## See also
 
 - [Collections](/language/collections)
+- [Generics and type parameters](/language/generics)
 - [Ownership and borrowing](/language/ownership)
 - [Errors and panics](/language/errors)

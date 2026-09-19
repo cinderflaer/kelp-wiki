@@ -118,5 +118,7 @@ mutate their receiver).
 ## See also
 
 - [datac and enum](/language/data-types)
+- [Return types and `return`](/language/returns)
+- [Generics and type parameters](/language/generics)
 - [Ownership and borrowing](/language/ownership)
 - [Functions](/language/functions)

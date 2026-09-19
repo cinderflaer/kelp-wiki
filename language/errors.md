@@ -113,5 +113,6 @@ of an `if`/`when` used as a value.
 ## See also
 
 - [`std/option`](/stdlib/option), [`std/result`](/stdlib/result)
+- [Return types and `return`](/language/returns)
 - [Control flow](/language/control-flow) for `if let` and `when`
 - [Pitfalls](/language/pitfalls)

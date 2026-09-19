@@ -136,5 +136,6 @@ calls — in which case it is exclusive. See
 ## See also
 
 - [Methods and receivers](/language/methods)
+- [Return types and `return`](/language/returns)
 - [Generics and type parameters](/language/generics)
 - [Control flow](/language/control-flow) for `return` and the divergence rule

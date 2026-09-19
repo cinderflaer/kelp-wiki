@@ -36,15 +36,19 @@ error, and so is a `const` or `pd` after a `datac`, `enum` or `fun`
 | --- | --- |
 | [Lexical structure](/language/lexical) | comments, identifiers, keywords, literals, templates, operators |
 | [Types](/language/types) | the type table, `Copy` vs owned vs borrowed, `str` and `View` |
+| [Bindings and assignment](/language/bindings) | `val` and `var`, type inference, assignment, mutable paths |
 | [Operators and expressions](/language/expressions) | precedence, arithmetic, bitwise, `?`, borrows and dereference |
 | [Control flow](/language/control-flow) | `if`/`else`, `if let`, `for`, `while`, `when`, `return` |
 | [Functions](/language/functions) | declaration, `.R: T`, named arguments, function values, closures |
+| [Return types and `return`](/language/returns) | the `.R: T` clause, bodies, the divergence rule, borrowed returns |
 | [Methods and receivers](/language/methods) | `Type.name`, `mut` receivers, generic receivers |
 | [datac and enum](/language/data-types) | records, tagged unions, generics, construction, matching |
+| [Generics and type parameters](/language/generics) | type parameters, instantiation, generic receivers and functions |
 | [Ownership and borrowing](/language/ownership) | moves, drops, borrows, partial moves, `Box.take` |
 | [Text](/language/text) | `str`, `View`, `String`, `Bytes`, printing, conversions |
 | [Collections](/language/collections) | `List<T>`, `Map<K, V>`, `Box<T>` |
-| [Modules and imports](/language/modules) | `impl`, aliases, `pd` passdowns, projects |
+| [Modules and imports](/language/modules) | `impl`, aliases, projects |
+| [Constants and passdowns](/language/passdowns) | `const`, `pd` passdowns and the hidden borrow |
 | [Capabilities](/language/capabilities) | the model, grants, patterns, delegation |
 | [Errors and panics](/language/errors) | `Option`, `Result`, `?`, `panic`, `assert` |
 | [Limits in v1](/language/limits) | what the language deliberately does not have |

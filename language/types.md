@@ -95,5 +95,7 @@ There is none: `if` and `while` take a `bool`, and nothing else converts to one.
 
 - [Text](/language/text) for `str`, `View`, `String`, `Bytes`
 - [Collections](/language/collections) for `List`, `Map`, `Box`
+- [Bindings and assignment](/language/bindings)
+- [Generics and type parameters](/language/generics)
 - [datac and enum](/language/data-types)
 - [Ownership and borrowing](/language/ownership)

@@ -178,5 +178,6 @@ arm of an `if`/`when` used as a value.
 ## See also
 
 - [Functions](/language/functions)
+- [Return types and `return`](/language/returns)
 - [Errors and panics](/language/errors)
 - [Ownership and borrowing](/language/ownership)
