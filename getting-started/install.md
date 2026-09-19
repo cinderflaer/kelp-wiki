@@ -109,6 +109,7 @@ their checksums.
 
 ## See also
 
+- [Set up your editor](/getting-started/editor)
 - [Your first program](/getting-started/first-program)
 - [`kelpc` CLI](/tooling/kelpc-cli)
 - [Compiler architecture](/compiler)

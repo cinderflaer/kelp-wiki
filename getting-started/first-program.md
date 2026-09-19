@@ -205,6 +205,7 @@ consumer decides the pattern. See [Capabilities](/language/capabilities).
 
 ## Next
 
+- [A first real tool](/getting-started/first-tool): a `head` that runs, with `argv` and an exit code
 - [Projects and coral.toml](/getting-started/projects): the manifest, dependencies, tasks
 - [Coral](/tooling/coral): `init`, `build`, `run`, `check`, `sync`, toolchain pins
 - [Language](/language): the reference for everything above

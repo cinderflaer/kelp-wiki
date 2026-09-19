@@ -125,6 +125,8 @@ scoping and no hygiene.
 ## See also
 
 - [Install and build](/getting-started/install)
+- [Testing what you write](/getting-started/testing): a `[tasks]` entry that checks your code
+- [When it does not work](/getting-started/troubleshooting): manifest and capability failures
 - [`kelpc` CLI](/tooling/kelpc-cli) and [Coral](/tooling/coral)
 - [Libraries (fpl)](/libraries) and [Writing a library](/libraries/writing-a-library)
 - [Capabilities](/language/capabilities): why a gated dependency needs a grant

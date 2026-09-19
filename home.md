@@ -32,7 +32,7 @@ by the first few lines of a file instead of by auditing it.
     ---
 
     Read [Getting started](/getting-started): the language in one page,
-    then a program you can build and run.
+    then a program, a tool with an exit code, and tests around it.
 
 -   **The language**
 
