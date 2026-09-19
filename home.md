@@ -82,24 +82,20 @@ mark moves when its prerequisites land, and `plan/roadmap.md` is the record.
 ```mermaid
 flowchart LR
     subgraph done["Done"]
-        direction TB
         MK1["MK1 Core language<br/>very large"]
         MK2["MK2 Modules and compile-time<br/>small"]
         MK3["MK3 Heap and containers<br/>large"]
         MK4["MK4 Capability security<br/>medium"]
     end
     subgraph active["In progress"]
-        direction TB
         MK5["MK5 Standard library program<br/>large"]
         MK7["MK7 Own backend<br/>very large"]
         MK8["MK8 Self-hosting<br/>very large"]
     end
     subgraph planned["Not started"]
-        direction TB
         MK6["MK6 Concurrency<br/>very large"]
     end
     subgraph proposed["Proposed"]
-        direction TB
         MK9["MK9 Systems substrate<br/>very large"]
         MK10["MK10 Capability model extensions<br/>large"]
         MK11["MK11 Verification and semantics<br/>very large"]
