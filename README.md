@@ -99,6 +99,37 @@ restart. Two consequences:
   handled without importing it. Touch the file again in a new commit.
 - An interrupted sync does the same. The same fix applies.
 
+## Syntax highlighting
+
+Kelp fences are highlighted by a Prism grammar that Wiki.js does not ship. Wiki.js
+sets `Prism.plugins.autoloader.languages_path = "/_assets/js/prism/"` and calls
+`Prism.highlightAllUnder()` after every render, so the grammar belongs at that
+path, and the container ships 471 Prism components and none of them is Kelp.
+
+Files written inside the container are lost when it is recreated, so nginx answers
+the path from the host instead. Two paths, one file:
+
+| URL | Why |
+| --- | --- |
+| `/_assets/js/prism/prism-kelp.min.js` | what Prism's autoloader asks for |
+| `/_assets/kelp/prism-kelp.js` | what the theme loads, sent `no-store` |
+
+Source: `/var/lib/wikijs/prism/prism-kelp.min.js` on `homelabone`. The nginx
+locations are in `/etc/nixos/wikijs.nix`.
+
+The second path is not redundant. Cloudflare cached a 404 for the first one for
+four hours while it did not exist, and the tunnel token has no cache-purge
+permission, so the theme could not rely on the autoloader recovering. The injected
+head waits for Prism to exist, loads the grammar, and highlights once, which also
+covers a page that rendered before the grammar arrived.
+
+## Theme
+
+The admin Theme screen covers the built-in options. Beyond it, `injectCSS` and
+`injectHead` are the levers, and both live in the `theming` row of the database, so
+neither is versioned by this repository. The current injected head is kept on disk
+at `/var/lib/wikijs/theme-inject-head.html`.
+
 ## History
 
 `main` was the MkDocs Material source until 2026-09-19: `docs/`, `mkdocs.yml`,
