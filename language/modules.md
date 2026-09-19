@@ -84,19 +84,47 @@ fun log_area(c: Circle) {
 
 - A function that mentions a passdown gets it wired in as a hidden parameter; one
   that never mentions one pays nothing.
-- The reference is a borrow: `pd var` is an exclusive borrow and is therefore
-  writable from inside functions, while `pd val` is shared. Ordinary borrow rules
-  apply, so two functions cannot hold the same `pd var` exclusively at once.
+- The hidden parameter is a **borrow**, and its mutability is what the function
+  does with the passdown: a function that writes it — directly, or through a
+  function it calls — holds an exclusive borrow, and one that only reads it
+  holds a shared one. So `pd var` is writable from inside functions while the
+  ordinary borrow rules still apply: two functions cannot hold the same passdown
+  exclusively at once, and one call cannot take it both exclusively and shared
+  (`combine(tally, tally)` where `combine` takes `mut Tally` is refused). A
+  `pd var` that no function writes is a shared borrow everywhere, so handing it
+  to a function that also reads it is fine.
 - A passdown is module-scoped. A local of the same name shadows it inside that
-  scope, and there is no spelling for reaching another module's passdown.
+  scope, and there is no spelling for reaching another module's passdown — which
+  is also why a library cannot keep the caller's tally in one.
 - An owned passdown is freed once, at process exit.
 
-> **The `pd var` foot-gun**
+A `pd var` that nothing writes is the common case for configuration and lookup
+tables, and it costs nothing to read:
+
+```kelp
+pd var config: String = String.from_str(s = "api")
+
+fun describe(name: &String) {
+    print(name.as_str())
+    print(config.as_str())   // shared borrow: the argument and this read coexist
+}
+
+fun main() {
+    describe(config)
+}
+```
+
+Write it once — `config = ...` in any function, or a `mut` method on it — and
+every reference in the chain becomes an exclusive borrow instead, which is what
+makes the write checked rather than free.
+
+> **Why a library still takes a `mut` parameter**
 >
-> On kelpc 0.2.2 a module-scope `pd var` counter does not thread reliably
-> through a call chain: a function that only *calls* a function which reads the
-> passdown does not see it. That is why [`testkit`](/libraries/testkit)
-> takes an explicit `mut Report` parameter instead of a global tally.
+> [`testkit`](/libraries/testkit) takes an explicit `mut Report` rather than a
+> module-scope counter, and the reason is scope, not the borrow rules: a
+> passdown belongs to the module that declares it, so a library could never
+> tally into its caller's state. A `mut` parameter crosses the module
+> boundary; a `pd var` cannot.
 
 ## Projects and path resolution
 
@@ -122,5 +150,6 @@ prints `84`, because precedence is whatever the expanded text happens to produce
 ## See also
 
 - [Capabilities](/language/capabilities)
+- [Constants and passdowns](/language/passdowns)
 - [Projects and coral.toml](/getting-started/projects)
 - [Tooling](/tooling)

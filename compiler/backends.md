@@ -84,24 +84,24 @@ Its layout:
 ## How much of it works today
 
 Measured on 2026-09-19 with the release binary, over
-`kelpc/tests/fixtures/*.kp` (279 files), by building each fixture with both
+`kelpc/tests/fixtures/*.kp` (287 files), by building each fixture with both
 backends:
 
 | | Count |
 | --- | --- |
 | Rejected by the compiler itself (the `should fail` fixtures) | 134 |
-| Accepted by the compiler | 145 |
-| of those, built by the `asm` backend | 97 |
-| of those, refused by the `asm` backend with the documented prefix | 48 |
+| Accepted by the compiler | 153 |
+| of those, built by the `asm` backend | 106 |
+| of those, refused by the `asm` backend with the documented prefix | 47 |
 | of those, failed for any other reason | 0 |
 
-The plan's own status table records the *suite* number: `193 of 266` integration
-tests passing under `--backend=asm`, with the C backend passing all 266, which
+The plan's own status table records the *suite* number: `200 of 273` integration
+tests passing under `--backend=asm`, with the C backend passing all 273, which
 counts multi-file projects and subprocess cases too, and so is not the same
 denominator as the fixture count above. Re-measure either before quoting it: both
 move with every slice, and the plan's header says it is updated as work lands.
 
-### What the 48 refusals are
+### What the 47 refusals are
 
 The differential sweep groups them into the categories the plan's ranking table
 uses (`cargo test --test backend_coverage -- --ignored --nocapture` prints it
@@ -109,22 +109,19 @@ verbatim, and it is the number the ratchet keeps honest):
 
 | Category | Fixtures |
 | --- | --- |
-| a heap type | 20 |
-| an `enum` | 18 |
+| a heap type | 17 |
+| an `enum` | 19 |
 | a `datac` holding a float or a heap field | 2 |
-| a closure or a function value | 7 |
+| a closure or a function value | 8 |
 | a gated `extern` | 1 |
 
-One refusal per category, plus a second from the heap row (its refusals come from
-more than one place), as the sweep prints them:
+One refusal per category, as the sweep prints them:
 
 ```
+error: the 'asm' backend does not support the `extern fun std.io.is_open_raw` yet
 error: the 'asm' backend does not support the parameter `s: &Shape` of `area` yet
-error: the 'asm' backend does not support the parameter `f: &closure(i32).R: i32` of `apply` yet
 error: the 'asm' backend does not support the parameter `self: &Circle` of `Circle#area` yet
-error: the 'asm' backend does not support the method `List.sort` on a `List` yet
-error: the 'asm' backend does not support the passdown `pd primes` (its type is `List<i32>`, and the
-  asm backend does not yet free a passdown at process exit — see plan/mk7-own-backend.md §5) yet
+error: the 'asm' backend does not support the parameter `f: &closure(i32).R: i32` of `apply` yet
 error: the 'asm' backend does not support the `extern fun std.time.now_unix_raw` yet
 error: the 'asm' backend does not support this struct-returning expression (only a struct literal, a
   named local, or a call are supported for a value over eight bytes wide) yet
@@ -132,11 +129,11 @@ error: the 'asm' backend does not support this struct-returning expression (only
 
 The heap-type row is the largest one and it is the catch-all, not one gap: a
 build stops at the first refusal it hits, so a fixture that would also meet an
-`enum` later is counted here when the first thing in its way is a heap type, an
-owned passdown, a standard-library call over `net`/`io`/`process`/`fs`, or the
-`extern fun` behind one of those (the ranking treats an `extern fun` whose body
-this backend has no routine for as part of the heap row, because the allocator is
-what unblocks almost all of it). The category is recovered from each fixture's
+`enum` later is counted here when the first thing in its way is a heap type, a
+standard-library call over `net`/`io`/`process`/`fs`, or the `extern fun` behind
+one of those (the ranking treats an `extern fun` whose body this backend has no
+routine for as part of the heap row, because the allocator is what unblocks
+almost all of it). The category is recovered from each fixture's
 first refusal message, so a fixture can move rows when a message's wording
 changes. The ranking table this page summarizes, and the per-fixture lists behind
 it, are in
@@ -145,9 +142,12 @@ with the measured brief for the next slice in `plan/mk7-next-slice.md`.
 
 Re-measured 2026-09-19, this is the state the plan calls "past halfway": the
 container set is closed (`Box`, `List`, `Map` all lower), the six heap types
-free themselves at every drop point, and what is left is one construct family at
-a time — `enum`, closures, a `datac` with a float or heap field, the
-comparison-and-clone `List` methods, an owning passdown, and a gated call.
+free themselves at every drop point, an owned passdown frees itself at process
+exit (the generated `kelp_drop_pds`, registered with `atexit` exactly as the C
+backend's handler is), and what is left is one construct family at a time —
+`enum`, closures, a `datac` with a float or heap field, the
+comparison-and-clone `List` methods, the `str`-to-`String` coercion, and a gated
+call.
 
 ## Stages beyond tier 1
 

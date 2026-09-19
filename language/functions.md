@@ -128,10 +128,13 @@ val total = listx.fold(xs, 0, fun(acc: i32, x: &i32).R: i32 = acc + x)
 ## `pd` passdowns as hidden parameters
 
 A function that mentions a `pd` binding gets it wired in as a hidden parameter;
-one that never mentions one pays nothing. See
+one that never mentions one pays nothing. The parameter is a shared borrow
+unless the function writes the passdown — directly, or through a function it
+calls — in which case it is exclusive. See
 [Modules and imports](/language/modules).
 
 ## See also
 
 - [Methods and receivers](/language/methods)
+- [Generics and type parameters](/language/generics)
 - [Control flow](/language/control-flow) for `return` and the divergence rule

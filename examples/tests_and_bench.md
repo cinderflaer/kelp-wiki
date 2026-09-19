@@ -102,9 +102,8 @@ The nanoseconds differ run to run; the shape of the line does not.
 - **`check_eq_f64` compares with `==`,** so it is exact. A computed float needs a
   tolerance comparison, which is `check(report, diff < 0.0001, "name")`.
 - **The report is passed as a `mut` parameter,** not held in a module-level
-  variable. A `pd var` counter does not thread reliably through a call chain on
-  the current compiler, which is why the library takes an explicit `Report`. See
-  [Known issues](/meta/known-issues).
+  variable: a passdown is module-scoped, so a library could not keep the
+  caller's tally in one. See [Known issues](/meta/known-issues).
 - **`time_many` runs warmup iterations first,** untimed, and then one timed
   iteration per sample. Two warmup runs and five samples is a reasonable default
   for a fast function; a slower one wants fewer samples.
@@ -117,4 +116,5 @@ The nanoseconds differ run to run; the shape of the line does not.
 
 - [`testkit`](/libraries/testkit) and [`benchkit`](/libraries/benchkit)
 - [`std/time`](/stdlib/time) for the clock `benchkit` reads
-- [Known issues](/meta/known-issues) for the `pd var` caveat
+- [Modules and imports](/language/modules) for the `pd` borrow rule the tally
+  pattern follows

@@ -25,8 +25,9 @@ datac Report(var passed: usize, var failed: usize, var failures: List<String>)
 ```
 
 The tally is an explicit `mut Report` parameter rather than a module-scope
-counter, because a module-scope `pd var` does not thread reliably through a call
-chain on kelpc 0.2.2.
+counter: a passdown belongs to the module that declares it, so a library cannot
+keep the caller's state in one — a `mut` parameter is what crosses the module
+boundary.
 
 ## Functions
 

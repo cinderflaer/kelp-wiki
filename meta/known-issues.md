@@ -17,8 +17,7 @@ The full reports, including the generated C, are in the loose file
 
 **BUG-1, BUG-2 and BUG-3 are fixed** on `main`, each with a regression fixture in
 `kelpc/tests/fixtures/`; the reports stay here as the record the fixes were
-written against, each with a **Fixed** note. The only open defect on this page is
-the `pd var` one below.
+written against, each with a **Fixed** note.
 
 ---
 
@@ -165,19 +164,6 @@ A program that pulls in `json` emits about 47 of these before the first real err
 
 ---
 
-## `pd var` does not thread through a call chain
-
-A module-scope `pd var` counter is not seen by a function that only *calls* a
-function which reads the passdown. That is why
-[`testkit`](/libraries/testkit) takes an explicit `mut Report` parameter
-instead of a global tally, and the pattern is worth copying:
-
-```kelp
-fun tally(r: mut Report, cond: bool, name: &str) { ... }   // not a `pd var`
-```
-
----
-
 ## Not bugs
 
 Noted so nobody re-investigates them:
@@ -194,6 +180,15 @@ Noted so nobody re-investigates them:
   [`mathx`](/libraries/mathx) exists.
 - `str` and `View` not being comparable with `==` is deliberate: `str.eq` is the
   comparison.
+- **A `pd var` does thread through a call chain.** A module-scope counter read by
+  a function that a second function only *calls* prints what it should — measured
+  at this page's own environment commit (`3a2f6f9`) and on `main`, on both
+  backends, for a direct call, a two-step chain and a read-then-write function.
+  The note that it did not was describing the argument-forwarding codegen bug
+  fixed in `edb3283` (a caller holding no hidden parameter passed the global by
+  value, so the file failed to compile), which outlived itself here as a claim.
+  What *was* real in that area — a read-only `pd var` still being an exclusive
+  borrow — is fixed too; see [Modules and imports](/language/modules).
 
 ## See also
 
