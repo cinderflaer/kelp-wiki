@@ -1,12 +1,14 @@
 ---
 title: "Standard library index"
-description: "Every public name in the shipped standard library, one line each, generated from kelpc/std/.kp at kelp commit 940c524 by tools/stdlib-index.py. Behaviour, panics and examples live in the Standard..."
+description: "Every public name in the shipped standard library, one line each, generated from kelpc/std/.kp at kelp commit 940c524 by tools/stdlib-index.py, a generator kept at the archived branch mkdocs-archive. Behaviour, panics and examples live in the Standard..."
 isPublished: true
 tags: "reference"
 ---
 Every public name in the shipped standard library, one line each, generated from
-`kelpc/std/*.kp` at `kelp` commit `940c524` by `tools/stdlib-index.py`. Behaviour, panics
-and examples live in the [Standard library](/stdlib) chapter.
+`kelpc/std/*.kp` at `kelp` commit `940c524` by `tools/stdlib-index.py`, which lived
+in this repository's MkDocs-era layout and is kept at branch `mkdocs-archive` and
+tag `mkdocs-final`, not in the current tree. Behaviour, panics and examples live
+in the [Standard library](/stdlib) chapter.
 
 A module marked with a domain needs that capability delegated on the `impl` line, e.g.
 `impl "std/fs" with caps(fs = ["/srv/data/**"])`.
