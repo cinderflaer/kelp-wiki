@@ -69,7 +69,11 @@ Consequences worth internalizing:
 - A symlink inside a granted directory that points outside it is denied, because
   resolution happens first.
 - **An `fs` path passed to a gated call must be absolute and must not contain
-  `..`.**
+  `..`.** Build one from a relative argument with
+  `path.absolute(fs.cwd(), arg)`: `fs.cwd()` reads the process's working
+  directory, it matches no pattern (holding `fs` is the whole grant for a call
+  with no path argument), and `path.absolute` normalizes the join so the check
+  accepts the result.
 
 ## Library grants
 

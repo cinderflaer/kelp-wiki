@@ -28,18 +28,29 @@ fun report(file: &str, lines: usize) {
     print(str.concat(line.as_str(), name))
 }
 
+// A relative argument is resolved against the working directory, so the gated
+// call still receives an absolute path: `fs` patterns are absolute, and the
+// capability check normalizes before it matches.
+fun absolute_or_here(name: &str, here: &str).R: String {
+    if path.is_absolute(name) {
+        return String.from_str(name)
+    }
+    return path.absolute(here, name)
+}
+
 fun main() {
     val argv = process.args()
-    // Annotated, because `root = argv.get(1).clone()` assigns a `String`: a bare
-    // `"."` would have made this binding a `str`.
-    var root: String = "."
+    // Annotated, because `raw = argv.get(1).clone()` assigns a `String`: a bare
+    // `"."` would have made this binding a `str`. With no argument the walk
+    // starts at the working directory, resolved to an absolute path because
+    // every gated call needs one: patterns are absolute and the check
+    // normalizes before it matches.
+    var raw: String = "."
     if argv.len() >= 2 {
-        root = argv.get(1).clone()
+        raw = argv.get(1).clone()
     }
-    if !path.is_absolute(root.as_str()) {
-        print("error: glob_tree takes an absolute directory (this language has no cwd accessor)")
-        process.exit(2)
-    }
+    val here = fs.cwd()
+    val root = absolute_or_here(raw.as_str(), here.as_str())
 
     val everything = fs.walk(root.as_str())
     val candidates = glob.glob_filter("*.kp", everything)

@@ -12,9 +12,11 @@ the [catalogue](/libraries).
 Three constraints are worth knowing before you pick one, because they shape what a
 small program looks like in Kelp:
 
-- **A file tool takes an absolute path.** v1 has no `cwd` accessor, so a program
-  cannot turn `notes.txt` into `/home/you/notes.txt`. When a path is in the way,
-  print the result instead of writing it to a file.
+- **A path is resolved, not refused.** A gated call takes an absolute path,
+  because `fs` patterns are absolute and the check normalizes before it matches.
+  `fs.cwd()` and `path.absolute(fs.cwd(), arg)` turn `notes.txt` into one, so a
+  tool can take a relative argument. See
+  [A first real tool](/getting-started/first-tool).
 - **Anything outside the program is a capability**, granted on the `impl` line. A
   program that prints needs no grant; a program that reads a file needs `fs`.
 - **A test or task entry lives under `src/`.** That matters only at the top of the
@@ -31,7 +33,7 @@ small program looks like in Kelp:
 | Roman numerals, both directions | `String.push_str`, `str.parse_i64` | building text when a template is not allowed |
 | A right-aligned multiplication table | `fmt.pad_left`, `fmt.int` | formatting into a `String` rather than printing pieces |
 | A dice roller with a histogram | `rand.below`, `str.repeat` | a capability grant, and a `Map` as a counter |
-| A passphrase from a word list on disk | `fs.read_lines`, `rand.below` | two grants in one program, and absolute paths |
+| A passphrase from a word list on disk | `fs.read_lines`, `rand.below` | two grants in one program, and resolving a relative path with `fs.cwd` |
 | Countdown to a date | `time.now_unix` | the `time` grant, and integer date arithmetic |
 
 ## Rung 2: one library from the catalogue

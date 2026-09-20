@@ -26,7 +26,17 @@ impl "std/str"
 impl "std/path"
 
 fun usage() {
-    print("usage: head [--lines N] <absolute-path>")
+    print("usage: head [--lines N] <path>")
+}
+
+// A relative argument is resolved against the working directory, so the gated
+// call still receives an absolute path: `fs` patterns are absolute, and the
+// capability check normalizes before it matches.
+fun absolute_or_here(name: &str, here: &str).R: String {
+    if path.is_absolute(name) {
+        return String.from_str(name)
+    }
+    return path.absolute(here, name)
 }
 
 // `None` means "not a usable count", and the caller keeps the default.
@@ -62,12 +72,10 @@ fun main() {
     }
 
     val target = argv.get(at)
-    if !path.is_absolute(target.as_str()) {
-        print("error: head takes an absolute path (this language has no cwd accessor)")
-        process.exit(2)
-    }
+    val here = fs.cwd()
+    val resolved = absolute_or_here(target.as_str(), here.as_str())
 
-    val lines = fs.read_lines(target.as_str())
+    val lines = fs.read_lines(resolved.as_str())
     var i: usize = 0
     while i < lines.len() && i.to_i64() < count {
         print(lines.get(i).as_str())
@@ -123,19 +131,19 @@ file path sits at index 1 unless `--lines` claimed it first. `process.args()` is
 gated on `process`, but reading it needs only the empty grant:
 `impl "std/process"` is enough.
 
-**A path has to be absolute.** `fs` patterns are absolute, and v1 has no `cwd`
-accessor, so the program cannot turn a relative argument into an absolute one. It
-checks and explains instead of panicking:
+**A path is resolved against the working directory.** `fs` patterns are
+absolute, so a relative argument cannot reach a gated call as written: the
+program asks `fs.cwd()` for the working directory and runs the argument through
+`path.absolute`, which normalizes the join so the check accepts it. Then both
+spellings name the same file:
 
 ```sh
 ./head five.txt
+./head /tmp/five.txt
 ```
 
-```
-error: head takes an absolute path (this language has no cwd accessor)
-```
-
-The exit code is 2, which is the shell convention for "you called it wrong".
+The second command in the section above passes an absolute path, which
+`absolute_or_here` returns unchanged.
 
 **Files fail by panicking.** `fs` has no `Result`: a failing syscall aborts the
 process with the errno. That is a real, uncaught failure and it looks like this:

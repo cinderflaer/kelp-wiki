@@ -41,18 +41,29 @@ fun report(file: &str, lines: usize) {
     print(str.concat(line.as_str(), name))
 }
 
+// A relative argument is resolved against the working directory, so the gated
+// call still receives an absolute path: `fs` patterns are absolute, and the
+// capability check normalizes before it matches.
+fun absolute_or_here(name: &str, here: &str).R: String {
+    if path.is_absolute(name) {
+        return String.from_str(name)
+    }
+    return path.absolute(here, name)
+}
+
 fun main() {
     val argv = process.args()
-    // Annotated, because `root = argv.get(1).clone()` assigns a `String`: a bare
-    // `"."` would have made this binding a `str`.
-    var root: String = "."
+    // Annotated, because `raw = argv.get(1).clone()` assigns a `String`: a bare
+    // `"."` would have made this binding a `str`. With no argument the walk
+    // starts at the working directory, resolved to an absolute path because
+    // every gated call needs one: patterns are absolute and the check
+    // normalizes before it matches.
+    var raw: String = "."
     if argv.len() >= 2 {
-        root = argv.get(1).clone()
+        raw = argv.get(1).clone()
     }
-    if !path.is_absolute(root.as_str()) {
-        print("error: glob_tree takes an absolute directory (this language has no cwd accessor)")
-        process.exit(2)
-    }
+    val here = fs.cwd()
+    val root = absolute_or_here(raw.as_str(), here.as_str())
 
     val everything = fs.walk(root.as_str())
     val candidates = glob.glob_filter("*.kp", everything)
@@ -84,7 +95,7 @@ fun main() {
 ## Run it
 
 ```sh
-kelpc build glob_tree.kp -o glob_tree && ./glob_tree /absolute/directory
+kelpc build glob_tree.kp -o glob_tree && ./glob_tree [directory]
 ```
 
 ## Output
@@ -119,9 +130,10 @@ when the examples do.
   there. Without the second, the program would try to read a directory as a file.
 - **A gated call takes an absolute path.** `fs.read_text("notes.txt")` panics with
   "is outside the fs capability granted to module ..." even under a `/**` grant,
-  because there is no `cwd` accessor in v1 and the matcher compares absolute
-  patterns. The example checks with `path.is_absolute` and exits 2 with a sentence
-  instead of panicking. See the trap list in the
+  because the matcher compares absolute patterns, so a relative argument is
+  resolved with `path.absolute(fs.cwd(), arg)` first. The directory argument is
+  optional: with none, the walk starts at the working directory. See the trap
+  list in the
   [chapter index](/examples#what-the-examples-deliberately-do-not-hide).
 - **`glob_filter` clones what it keeps,** because a `List` only lends its elements
   by reference. The candidates are owned strings.

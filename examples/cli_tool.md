@@ -127,16 +127,24 @@ fun run(parser: &argparse.Parser, pa: &argparse.ParsedArgs) {
     }
 
     val label = argparse.get_option(parser, pa, "label")
+    val here = fs.cwd()
     var i: usize = 0
     while i < names.len() {
         val name = names.get(i)
-        if !path.is_absolute(name.as_str()) {
-            print("error: cli_tool takes absolute paths (this language has no cwd accessor)")
-            process.exit(2)
-        }
-        measure(name.as_str(), label.as_str(), want_lines, want_words, want_bytes)
+        val resolved = absolute_or_here(name.as_str(), here.as_str())
+        measure(resolved.as_str(), label.as_str(), want_lines, want_words, want_bytes)
         i += 1
     }
+}
+
+// A relative argument is resolved against the working directory, so the tool
+// takes `notes.txt` and the gated call still receives an absolute path: `fs`
+// patterns are absolute, and the capability check normalizes before it matches.
+fun absolute_or_here(name: &str, here: &str).R: String {
+    if path.is_absolute(name) {
+        return String.from_str(name)
+    }
+    return path.absolute(here, name)
 }
 
 // `process.args()` includes `argv[0]`, the program's own path, exactly as a C
@@ -180,7 +188,7 @@ project, where `coral run -- <args>` forwards them):
 
 ```sh
 kelpc build cli_tool.kp -o cli_tool
-./cli_tool --label counted /absolute/path/to/input.txt
+./cli_tool --label counted input.txt
 ./cli_tool --help
 ```
 

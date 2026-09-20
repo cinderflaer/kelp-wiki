@@ -90,8 +90,8 @@ programs keep the fixes visible in comments rather than papering over them:
   parsing: [cli_tool](/examples/cli_tool);
 - **`.as_str()` on a temporary is refused**, so the path is bound to a `val`
   first: [sandbox_vault](/examples/sandbox_main);
-- **a gated call takes an absolute path** and v1 has no `cwd` accessor to make one,
-  so the tools check with `p.is_absolute` and explain instead of panicking:
+- **a gated call takes an absolute path**, so a relative argument is resolved
+  through `path.absolute(fs.cwd(), arg)` before it is used:
   [glob_tree](/examples/glob_tree).
 
 Three smaller ones, each a single error message: `is_none` belongs to `option`

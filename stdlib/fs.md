@@ -32,6 +32,7 @@ datac Metadata(val size: u64, val mtime: i64, val mode: u32, val is_dir: bool, v
 | `append(path, data)` | `Unit` | |
 | `exists(path)` | `bool` | |
 | `is_file(path)` / `is_dir(path)` | `bool` | |
+| `cwd()` | `String` | the process's working directory, absolute |
 | `size(path)` | `u64` | |
 | `metadata(path)` | `Metadata` | size, mtime, mode, kind |
 | `remove(path)` | `Unit` | |
@@ -88,6 +89,10 @@ fun main() {
 
 - `list` returns **names**, not paths; join them with
   [`path.join`](/stdlib/path) or use `walk`, which returns full paths.
+- `cwd()` matches no pattern: holding `fs` is the whole grant, because a call
+  with no path argument has nothing to match. Resolve a relative argument with
+  `path.absolute(fs.cwd(), arg)`; the capability check takes only an absolute
+  path free of `..`, so a bare `"notes.txt"` cannot be passed to `read` at all.
 - `remove` on a directory fails; `remove_all` is the recursive one.
 - `copy` is files-only. A recursive copy is
   [`fsx.copy_dir`](/libraries/fsx), which is also where `write_atomic`

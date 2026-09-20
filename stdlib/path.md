@@ -16,6 +16,7 @@ impl "std/path"
 | --- | --- | --- |
 | `is_absolute(s: &str)` | `bool` | true when the text starts with `/` |
 | `normalize(s: &str)` | `String` | lexical normalization (see below) |
+| `absolute(base: &str, p: &str)` | `String` | `p` resolved against `base`, then normalized |
 | `last_sep(s: &str)` | `usize` | offset of the last `/`, or 0 when there is none |
 | `file_name(s: &str)` | `&str` | everything after the last `/`: a borrow |
 | `extension(s: &str)` | `&str` | after the last `.`, or `""` |
@@ -32,6 +33,12 @@ symlink-resolved path. It is documented in
 [`syntax.md` §15.2](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md)
 and implemented twice (in Kelp here and in C in the runtime) with the
 differential tests comparing the two.
+
+`absolute(base, p)` is the pair `normalize` needs: `p` alone when `p` is already
+absolute, otherwise `base` with `p` appended, then the same `normalize` call. The
+result is what an `fs` call accepts, because the capability check takes only an
+absolute path without `..`. The base a command-line tool has is
+[`fs.cwd()`](/stdlib/fs).
 
 ```kelp
 impl "std/path"
@@ -72,6 +79,11 @@ true
   care about if that matters.
 - There is no `canonicalize`: resolving symlinks needs the filesystem, so it
   lives in `std/fs`/the runtime and is what the capability check does.
+- `absolute` is lexical like everything else here: it does not check that the
+  result exists, and it cannot see a symlink. `fs.cwd()` supplies the base it
+  usually resolves against.
+- `absolute` panics when the base is not absolute, or when the join climbs above
+  `/` with `..`: the same refusal `normalize` makes, for the same reason.
 - Paths are bytes: strings are assumed UTF-8 and the separators are ASCII `/`.
 
 ## See also
