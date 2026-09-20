@@ -127,8 +127,58 @@ covers a page that rendered before the grammar arrived.
 
 The admin Theme screen covers the built-in options. Beyond it, `injectCSS` and
 `injectHead` are the levers, and both live in the `theming` row of the database, so
-neither is versioned by this repository. The current injected head is kept on disk
-at `/var/lib/wikijs/theme-inject-head.html`.
+neither is versioned by this repository. The current injected CSS and head are kept
+on disk at `/var/lib/wikijs/theme-inject-css.css` and
+`/var/lib/wikijs/theme-inject-head.html`.
+
+### The accent is the seaweed green
+
+Blue is gone: the accent is the green of `seaweed.png`, the site logo. The three
+tones of that file are `#79d16d` light, `#64b659` mid and `#529c4e` dark. Surfaces
+and text take the dark tone, because white navigation labels on the mid tone fall
+to 2.3:1 contrast, and hover and focus states take the mid tone. Inline code in
+prose keeps the Wiki.js indigo, so that code stays distinct from links.
+
+The accent cannot be set from the admin Theme screen. Wiki.js builds Vuetify with
+`new Vuetify({ rtl, theme: { dark } })`, so the palette stays at the factory
+values, and the light primary is the Vuetify blue `#1976D2`. The theme's own
+`accentColor` property (`blue darken-2` in `themes/default/theme.yml`) is not read
+by the compiled theme either: `theme0.js` names `blue` directly. Both are
+overridden in `injectCSS`, which restyles the theme classes `.primary` and
+`.primary--text`, the two link rules in `app.css`, and the pieces of theme chrome
+that name a blue palette directly (`.blue`, `.blue-grey`, `.indigo`, the admin
+`.dialog-header` gradient and the form focus ring).
+
+Every selector starts with `html body`. Wiki.js injects this CSS into the head
+before Vuetify appends its runtime `<style id="vuetify-theme-stylesheet">`, and
+that stylesheet sets `.primary` with `!important`: the extra element selector makes
+the override win on specificity instead of on order, which no amount of ordering
+would do.
+
+The injected head carries two scripts: the Kelp Prism grammar loader described
+above, and a few lines that repaint the browser-chrome metas. `views/master.pug`
+hardcodes `#1976d2` in `theme-color` and `msapplication-TileColor`, and the
+container image is not ours to edit.
+
+### Changing it
+
+Edit the row, then restart: Wiki.js reads the settings once per process, so a
+write to the database alone changes nothing.
+
+```sh
+scp theming.json theme-inject-css.css thinkbox:/tmp/ \
+  && ssh thinkbox "sudo install -o root -g root -m 644 /tmp/theme-inject-css.css /var/lib/wikijs/theme-inject-css.css \
+  && sudo install -o root -g root -m 644 /tmp/theming.json /var/lib/wikijs/theming.json \
+  && sudo -u postgres psql -d wikijs -c \"update settings set value = (select pg_read_file('/var/lib/wikijs/theming.json'))::json where key='theming'\" \
+  && sudo systemctl restart podman-wikijs"
+```
+
+The file read back by `pg_read_file` has to live under `/var/lib/wikijs`: the
+PostgreSQL unit runs with a private `/tmp`, so a file copied to `/tmp` is not the
+file the database sees, and the update fails with `No such file or directory`.
+
+The row as it stood before the green, head script included, is kept at
+`/var/lib/wikijs/theming-backup.json`.
 
 ## History
 
