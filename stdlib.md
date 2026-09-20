@@ -25,6 +25,7 @@ The domain each module needs comes from the compiler's own table
 | `std/path` | — | lexical path handling |
 | `std/math` | — | `sqrt`, `pow`, trig, `abs`/`min`/`max`/`clamp` |
 | `std/fmt` | — | number and padding formatting into `String` |
+| `std/encoding` | — | base64, base32, base58, hex and percent encoding |
 | `std/io` | — | `File`, `BufReader`, `print`/`eprint` |
 | `std/fs` | `fs` | read, write, walk, metadata |
 | `std/process` | `process` | `args`, `spawn`, `run`, `exit` |
@@ -64,6 +65,7 @@ The builtins are described in [Text](/language/text) and
 | `path` | [`std/path`](/stdlib/path) |
 | `math` | [`std/math`](/stdlib/math) |
 | `fmt` | [`std/fmt`](/stdlib/fmt) |
+| `encoding` | [`std/encoding`](/stdlib/encoding) |
 | `io` | [`std/io`](/stdlib/io) |
 | `fs` | [`std/fs`](/stdlib/fs) |
 | `process` | [`std/process`](/stdlib/process) |
