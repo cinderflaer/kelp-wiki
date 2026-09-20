@@ -18,7 +18,7 @@ prng = "Juniper/fpl/prng"
 ```
 
 ```kelp
-impl "deps/prng/lib" as prng
+impl "deps/prng/lib"
 ```
 
 ## Type
@@ -54,7 +54,7 @@ a sampled index), not for a fairness-critical draw.
 ## Example
 
 ```kelp
-impl "deps/prng/lib" as prng
+impl "deps/prng/lib"
 
 fun main() {
     var r = prng.new(42)

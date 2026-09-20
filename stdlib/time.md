@@ -7,7 +7,7 @@ tags: "stdlib, time"
 Clocks and sleeping. **Gated on `time`.**
 
 ```kelp
-impl "std/time" with caps(time = [])
+impl "std/time" caps(time = [])
 ```
 
 `time` has no pattern to restrict, so an empty list is the whole grant: naming

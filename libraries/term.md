@@ -15,7 +15,7 @@ term = "Juniper/fpl/term"
 ```
 
 ```kelp
-impl "deps/term/lib" as term with caps(env = ["NO_COLOR"])
+impl "deps/term/lib" caps(env = ["NO_COLOR"])
 ```
 
 `NO_COLOR` follows [no-color.org](https://no-color.org): the variable's mere
@@ -65,7 +65,7 @@ static storage to borrow from.
 ## Example
 
 ```kelp
-impl "deps/term/lib" as term with caps(env = ["NO_COLOR"])
+impl "deps/term/lib" caps(env = ["NO_COLOR"])
 impl "std/env"
 
 fun main() {

@@ -11,12 +11,12 @@ A grant is written on the `impl` line that acquires it:
 
 ```kelp
 impl "std/fs"
-impl "std/http" with caps(net = ["api.example.com:443", "127.0.0.1:*"])
-impl "logger" with caps(fs = ["/var/log/myapp/**"], env = ["LOG_*"])
+impl "std/http" caps(net = ["api.example.com:443", "127.0.0.1:*"])
+impl "logger" caps(fs = ["/var/log/myapp/**"], env = ["LOG_*"])
 ```
 
 `domain = [pattern, ...]`, one or more domains, in any order. **An empty list
-denies everything**: `with caps(process = [])` is a grant that permits no program. It is also the smallest grant that satisfies
+denies everything**: `caps(process = [])` is a grant that permits no program. It is also the smallest grant that satisfies
 the compiler for a module you do not want to let out.
 
 ## Pattern grammar by domain
@@ -33,10 +33,10 @@ the compiler for a module you do not want to let out.
 ## `net`
 
 ```kelp
-impl "std/net" with caps(net = ["api.example.com:443"])   // one host, one port
-impl "std/net" with caps(net = ["*.example.com"])         // any subdomain
-impl "std/net" with caps(net = ["127.0.0.1:*"])           // loopback, any port
-impl "std/net" with caps(net = ["*"])                     // anything
+impl "std/net" caps(net = ["api.example.com:443"])   // one host, one port
+impl "std/net" caps(net = ["*.example.com"])         // any subdomain
+impl "std/net" caps(net = ["127.0.0.1:*"])           // loopback, any port
+impl "std/net" caps(net = ["*"])                     // anything
 ```
 
 - Matching is on **names, never resolved addresses**. `127.0.0.1:*` does not cover
@@ -49,9 +49,9 @@ impl "std/net" with caps(net = ["*"])                     // anything
 ## `fs` and `process`
 
 ```kelp
-impl "std/fs" with caps(fs = ["/var/lib/myapp/**"])
-impl "std/fs" with caps(fs = ["/srv/data/*.csv"])
-impl "std/process" with caps(process = ["/usr/bin/curl"])
+impl "std/fs" caps(fs = ["/var/lib/myapp/**"])
+impl "std/fs" caps(fs = ["/srv/data/*.csv"])
+impl "std/process" caps(process = ["/usr/bin/curl"])
 ```
 
 - Paths must be **absolute**, and a path containing `..` is refused.
@@ -59,14 +59,14 @@ impl "std/process" with caps(process = ["/usr/bin/curl"])
   matching, so a symlink inside the grant that points outside it is denied.
 - `*` stays within one component; `**` spans components.
 - `process` matches the program path; `process.args()` needs no pattern, so
-  `with caps(process = [])` is enough to read `argv`.
+  `caps(process = [])` is enough to read `argv`.
 
 ## `env`
 
 ```kelp
-impl "std/env" with caps(env = ["NO_COLOR"])   // one variable
-impl "std/env" with caps(env = ["APP_*"])      // a prefix
-impl "std/env" with caps(env = ["*"])          // anything
+impl "std/env" caps(env = ["NO_COLOR"])   // one variable
+impl "std/env" caps(env = ["APP_*"])      // a prefix
+impl "std/env" caps(env = ["*"])          // anything
 ```
 
 There is no way to enumerate the environment: a grant names what may be read, so
@@ -77,8 +77,8 @@ There is no way to enumerate the environment: a grant names what may be read, so
 No pattern exists: the domain is the grant:
 
 ```kelp
-impl "std/time" with caps(time = [])
-impl "std/rand" with caps(rand = [])
+impl "std/time" caps(time = [])
+impl "std/rand" caps(rand = [])
 ```
 
 ## Delegation
@@ -89,7 +89,7 @@ impl "std/rand" with caps(rand = [])
   less than it holds, never more**: granting a pattern the importer does not hold
   is an error.
 - A module can hold a domain without using it: `httpx` writes
-  `with caps(net = [])` internally only because importing `std/http` requires
+  `caps(net = [])` internally only because importing `std/http` requires
   `net` to be delegated somewhere. The smallest grant that compiles is the
   idiomatic way to say "this module does not dial".
 - Referencing a gated function without holding the domain is a compile error

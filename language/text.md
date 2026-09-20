@@ -63,6 +63,13 @@ print("name\tvalue")     // tabs, too — see the escape set in §2.4
 arguments. A template (`"$x"`) is the only way to print a mixture, and a template
 is not a value.
 
+A template interpolates **any** scalar or text value, owned or borrowed, so
+`print("w = ${s}")` works with `s` a `String`, a `Bytes` or a `View` as well as
+with a `str` or a number. An owned piece is freed once the line is printed; a
+borrow and a `View` are not freed at all. Under `--backend=asm` a template is
+limited to five non-float slots for now, and an owned piece takes two of them
+([Backends](/compiler/backends)).
+
 `std/io` adds `print_bare`, `eprint` and `eprint_bare` for control over the
 newline and the stream, plus `File` writes. See
 [`std/io`](/stdlib/io).
@@ -145,6 +152,9 @@ val x: f64 = big.to_f64()            // 3.0 — the only integer->float widening
 - `to_<T>()` exists on every integer type for every integer type, plus
   `to_f64()`/`to_f32()`. Widening is exact; narrowing panics when the value does
   not fit; a float has no `to_<int>`.
+- `try_to_<T>()` is the fallible twin, for the pairs whose plain conversion can
+  lose a value: it hands back `Option<T>`, so a caller tests rather than
+  panicking. A widening has no `try_to_<T>` (see [Types](/language/types)).
 - `str.from_i64`, `str.from_u64`, `str.from_f64(x, decimals)` return `String`.
 - `str.parse_i64`, `str.parse_u64`, `str.parse_f64` return
   `Result<T, str.ParseErr>`, where `ParseErr` is `Empty` or `Invalid`.
@@ -152,7 +162,10 @@ val x: f64 = big.to_f64()            // 3.0 — the only integer->float widening
 ## Two traps
 
 - **`.as_str()` or `.view()` on a temporary is refused**
-  (`String.from_str("x").as_str()`): bind the `String` to a `val` first.
+  (`String.from_str("x").as_str()`): bind the `String` to a `val` first. A
+  chained call is the same temporary one step out (`fmt.int(n).as_str()`), and a
+  field of a call's result is the same case one projection deeper
+  (`mkName().name.as_str()`): bind the call, then borrow from the binding.
 - **A `String` argument where a `str` parameter is expected** needs
   `.as_str()`: the error message names the argument.
 

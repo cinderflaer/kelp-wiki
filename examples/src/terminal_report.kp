@@ -21,8 +21,8 @@
 // why it may touch `env` directly.
 
 impl "std/env"
-impl "deps/term/lib" as term with caps(env = ["NO_COLOR"])
-impl "deps/log/lib" as log with caps(time = [])
+impl "deps/term/lib" as term caps(env = ["NO_COLOR"])
+impl "deps/log/lib" as log caps(time = [])
 impl "deps/table/lib" as table
 
 fun main() {

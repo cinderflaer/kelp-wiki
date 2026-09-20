@@ -16,7 +16,7 @@ fsx = "Juniper/fpl/fsx"
 ```
 
 ```kelp
-impl "deps/fsx/lib" as fsx with caps(fs = ["/var/lib/myapp/**"])
+impl "deps/fsx/lib" caps(fs = ["/var/lib/myapp/**"])
 ```
 
 `fs` patterns are absolute paths, normalized lexically and resolved through
@@ -46,7 +46,7 @@ that is not what you want.
 ## Example
 
 ```kelp
-impl "deps/fsx/lib" as fsx with caps(fs = ["/tmp/fplverify/**"])
+impl "deps/fsx/lib" caps(fs = ["/tmp/fplverify/**"])
 
 fun main() {
     fsx.write_atomic("/tmp/fplverify/fsxtest/a.txt", Bytes.from_str("line1\nline2\nline3\n"))

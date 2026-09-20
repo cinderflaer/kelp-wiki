@@ -15,7 +15,7 @@ testkit = "Juniper/fpl/testkit"
 ```
 
 ```kelp
-impl "deps/testkit/lib" as testkit
+impl "deps/testkit/lib"
 ```
 
 ## Type
@@ -57,7 +57,7 @@ a difference against a tolerance with `check`.
 ## Example
 
 ```kelp
-impl "deps/testkit/lib" as testkit
+impl "deps/testkit/lib"
 
 fun main() {
     var r = testkit.new_report()

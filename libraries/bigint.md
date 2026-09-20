@@ -15,7 +15,7 @@ bigint = "Juniper/fpl/bigint"
 ```
 
 ```kelp
-impl "deps/bigint/lib" as bigint
+impl "deps/bigint/lib"
 ```
 
 ## Representation
@@ -64,7 +64,7 @@ scope. Add it separately if a caller needs it.
 ## Example
 
 ```kelp
-impl "deps/bigint/lib" as bigint
+impl "deps/bigint/lib"
 
 fun main() {
     val a = bigint.from_i64(123456789012345678)

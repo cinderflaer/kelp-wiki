@@ -16,7 +16,7 @@ condition that must end a loop early goes in the `while` header.
 ```kelp
 if n > 0 {
     print("positive")
-} else if n < 0 {
+} elif n < 0 {
     print("negative")
 } else {
     print("zero")
@@ -29,6 +29,29 @@ type:
 ```kelp
 val label: String = if n > 0 { "pos" } else { "not pos" }
 ```
+
+### `elif` and `else if`
+
+The link between one condition and the next has two spellings, and they mean the
+same thing:
+
+```kelp
+if n > 2 {
+    print("big")
+} elif n > 1 {
+    print("medium")
+} elif n > 0 {
+    print("small")
+} else {
+    print("none")
+}
+```
+
+- **`elif` is the preferred spelling.** `else if` is the same link, stays legal
+  and compiles identically, and `kelpc fmt` never rewrites one into the other;
+  `kelpc lint` warns about `else if` and says which spelling to write.
+- A chain may mix the two, and `elif` takes the same grammar as `if`: a
+  condition and a block, or a pattern and a block (`elif let`).
 
 ## `if let`
 
@@ -47,7 +70,7 @@ if let Word(text) = token {
 
 if let Rect(w, h) = shape {
     print(w * h)
-} else if let Circle(r) = shape {
+} elif let Circle(r) = shape {
     print(3.14159 * r * r)
 } else {
     print(0.0)
@@ -60,6 +83,11 @@ if let Rect(w, h) = shape {
 - The scrutinee may be **any expression**, temporary or place. A *place* is
   matched directly with nothing moved; a *temporary* is bound to a hidden local
   first, which is how `if let Ok(v) = json.parse(text)` is legal at all.
+- The one expression that is not a scrutinee is a **field of a temporary**.
+  `if let Word(w) = mk().t` names the owned field it would have to read out of a
+  value that has no storage of its own, and `when` refuses a temporary outright
+  (`when mk()` itself is "the scrutinee of a pattern 'when' must be a place").
+  Bind the call first: `val h = mk()`, then match `h.t`.
 - A payload binds as a **copy** when it is `Copy` and as a **shared borrow**
   otherwise. So in `if let Ok(x) = parsed` where `parsed: Result<Civil, _>`, `x`
   is already a `&Civil`: pass `x`, not `&x`.

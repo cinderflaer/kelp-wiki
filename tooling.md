@@ -15,7 +15,7 @@ anything itself.
 | Lighthouse | editor support: a language server plus a VS Code extension and an IntelliJ plugin | [Juniper/lighthouse](https://homelabone.xenoo.dev/gittea/Juniper/lighthouse) |
 
 The versions these pages were written against, as observed on the machine that
-built them, are `kelpc 0.1.4` and Coral `v0.5.4`. They are not part of the
+built them, are `kelpc 26.09.0` and Coral `v26.09.0`. They are not part of the
 language's contract; a checkout builds its own.
 
 ## How they divide the work
@@ -49,6 +49,7 @@ one of the three that runs while you type.
 | a project that must build with one specific compiler version | Coral, with a `[toolchain]` pin |
 | CI that must assert "this build did no I/O" | Coral, with `sync` then `build --offline` |
 | formatting one file, or checking formatting in CI | `kelpc fmt` |
+| the style rules a formatter cannot enforce, reported as warnings | `kelpc lint` |
 | a task list (`report`, `bench`, `release`) that the project owns | Coral, with `[tasks]` |
 
 ## What you need for what

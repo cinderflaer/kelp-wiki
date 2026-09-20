@@ -60,13 +60,55 @@ their checksums.
 - **A commit message that says why**, not which lines moved. The plan documents
   use the same voice.
 
+## Version numbers
+
+Releases are numbered `YY.MM.N`: the two-digit year, the two-digit month, and
+the release number *within that month*, starting at `0`. The first release under
+the scheme is `26.09.0` in each repository, and it applies to all of them
+(`kelp`, `coral`, `lighthouse`).
+
+- The **release name is the padded one**: the tag is `v26.09.0`, an asset is
+  `kelpc-26.09.0-linux-x86_64`, and `kelpc version` prints `kelpc 26.09.0`. Those
+  strings are compared as text (Coral refuses a release asset whose name spells a
+  different version), so the padding has to be the same everywhere.
+- **Cargo and npm refuse a leading zero** in a version component, so a
+  `Cargo.toml` and the VS Code `package.json` carry `26.9.0` while everything a
+  person reads is padded back to `26.09.0`. Gradle takes the padded name as
+  written.
+- **Nothing released before the scheme is renumbered.** A tag, its asset and its
+  changelog entry keep the number they were cut with.
+- The release that first carries the scheme says so in one line of its changelog
+  entry; the pending file carries that line from the moment the scheme is
+  decided.
+
 ## Style
 
 The formatter owns whitespace: `kelpc fmt -w <path>` and `kelpc fmt --check` are
 the two commands. `fmt` is idempotent, token-faithful and comment-preserving:
 it never rewrites a token, so a formatted file is the same program. See
 [Style](/language/style) for the rules it cannot enforce (the 100-column
-limit, declaration order inside a group, naming).
+limit and declaration order inside a group) and for `kelpc lint`, which reports
+the case rule and the two style findings a formatter cannot make.
+
+## Retiring a spelling
+
+When a spelling is replaced or deleted it goes through the register rather than
+straight out (`syntax.md` 23, `kelpc/src/deprecated.rs`):
+
+1. Migrate the compiler's own sources first. A deprecation in the shipped stdlib
+   would warn every program that imports that module about a file its reader
+   cannot edit, and the unit test in `deprecated.rs` fails if one is left behind.
+2. Add the entry: an id, what is outdated, and what to write instead. The
+   deadline is that file's shared sentence, and it is the next development cycle
+   for every entry.
+3. Raise the finding where the construct is read (an `impl` clause is read by
+   `resolve.rs`) and pin it with a test: `kelpc/tests/outdated.rs` covers the
+   build contract, and the entry's own wording is a unit test.
+4. **Leave the fixtures that exercise the old spelling on it.** They are the
+   coverage for the deprecation path itself, and they are what the removal has to
+   migrate.
+5. Remove it in the next cycle: the parser, the register entry, and every source
+   that still writes it.
 
 ## Reporting a defect
 
@@ -104,6 +146,19 @@ The MkDocs layout this repository used before 2026-09-19 — `docs/`,
 kept at branch `mkdocs-archive` and tag `mkdocs-final`, not in the current tree.
 The `hooks/`, `site/` and `node_modules/` directories here are untracked
 leftovers from it.
+
+**Unreleased work goes on the `unreleased` branch, not on `main`.** `main` is
+what Wiki.js reads, so it has to describe released versions: a new construct, a
+new rule, a changed diagnostic, and any page text that depends on one, is
+committed on `unreleased` and pushed there. At a release the changelog entry is
+committed on that same branch first, and then the branch is merged into `main`:
+that one merge is what puts the pages and the entry in front of a reader. Never
+rewrite `main` and never force push it, because the sync job pulls it.
+
+**Keep the pages current as you go, in the same turn as the code.** A change
+lands with the page edit that describes it, on `unreleased`, and that includes the
+pages a change makes stale, not only the page about the feature. A page that lags
+the compiler is a defect the next reader pays for.
 
 Two pages are **generated**, not written by hand, and re-derived when their
 source moves. The generators are part of that archived layout, so re-deriving one

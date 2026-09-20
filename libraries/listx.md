@@ -15,7 +15,7 @@ listx = "Juniper/fpl/listx"
 ```
 
 ```kelp
-impl "deps/listx/lib" as listx
+impl "deps/listx/lib"
 ```
 
 ## Types
@@ -62,7 +62,7 @@ per numeric type, this library spells the type into the name:
 ## Example
 
 ```kelp
-impl "deps/listx/lib" as listx
+impl "deps/listx/lib"
 impl "std/option"
 
 fun main() {

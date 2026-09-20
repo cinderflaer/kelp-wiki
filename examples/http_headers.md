@@ -29,7 +29,7 @@ folder you named is fetched.
 
 ```kelp
 impl "std/http"
-impl "deps/httpx/lib" as httpx
+impl "deps/httpx/lib"
 impl "std/str"
 
 fun main() {

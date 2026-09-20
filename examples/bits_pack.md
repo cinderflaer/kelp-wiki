@@ -27,8 +27,8 @@ Neither needs a capability. `prng` is arithmetic on a `u64`, which is why a
 ## The program
 
 ```kelp
-impl "deps/bits/lib" as bits
-impl "deps/prng/lib" as prng
+impl "deps/bits/lib"
+impl "deps/prng/lib"
 
 fun main() {
     // One flag, then a 4-bit value, then a 3-bit value: eight bits, one byte.

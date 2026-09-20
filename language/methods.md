@@ -74,6 +74,14 @@ val u = set.union(a, b)     // bind it first
 print(u.len())
 ```
 
+The same case appears one projection deeper, and there it is not an error: a field
+of a call's result (`mkName().name`) has no storage of its own either, but the
+compiler stages the temporary for the length of one call, so reading it or
+passing it as a borrow works (`print(mkName().name.len())`, `take(mkName().name)`).
+What it cannot do is hand the borrow back (`mkName().name.as_str()` needs the same
+binding) or have its address taken (`val r = &mkName().name` is `cannot borrow a
+temporary value`).
+
 ## Builtin methods
 
 `String`, `Bytes`, `View`, `List`, `Map` and `Box` have compiler-provided

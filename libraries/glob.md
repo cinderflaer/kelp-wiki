@@ -18,7 +18,7 @@ glob = "Juniper/fpl/glob"
 ```
 
 ```kelp
-impl "deps/glob/lib" as glob
+impl "deps/glob/lib"
 ```
 
 ## Functions
@@ -46,7 +46,7 @@ The classic O(len(pattern) × len(text)) DP table, flattened to one
 ## Example
 
 ```kelp
-impl "deps/glob/lib" as glob
+impl "deps/glob/lib"
 
 fun main() {
     print(glob.glob_match("*.kp", "main.kp"))

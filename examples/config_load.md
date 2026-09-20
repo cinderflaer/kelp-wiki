@@ -31,7 +31,7 @@ val parsed = config.parse(text.as_str())
 ## The program
 
 ```kelp
-impl "deps/config/lib" as config
+impl "deps/config/lib"
 impl "std/str"
 
 // The owned locals live here rather than in `main`; these are `String`s.

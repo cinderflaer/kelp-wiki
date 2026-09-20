@@ -12,7 +12,7 @@ process or read the clock unless the module making the call was granted that
 resource**, and the grant is written in the source.
 
 ```kelp
-impl "std/http" with caps(net = ["127.0.0.1:*"])
+impl "std/http" caps(net = ["127.0.0.1:*"])
 impl "std/fs"
 ```
 
@@ -38,14 +38,18 @@ instead of by auditing it.
 
 ```kelp
 impl "std/fs"
-impl "std/http" with caps(net = ["api.example.com:443", "127.0.0.1:*"])
-impl "logger" with caps(fs = ["/var/log/myapp/**"], env = ["LOG_*"])
+impl "std/http" caps(net = ["api.example.com:443", "127.0.0.1:*"])
+impl "logger" caps(fs = ["/var/log/myapp/**"], env = ["LOG_*"])
 ```
 
 A grant is `domain = [pattern, ...]`. Two domains in one line are fine. An **empty
-pattern list denies everything**: `with caps(process = [])` is a grant that
+pattern list denies everything**: `caps(process = [])` is a grant that
 permits no program, which is also the smallest grant a consumer can write to
 satisfy the compiler for a module it does not actually want to let out.
+
+The `with` that used to introduce the clause (`impl "std/fs" with caps(...)`) is
+**outdated**: it still compiles, and a build prints an `outdated:` finding naming
+it. Drop it and the grant is unchanged.
 
 ### Patterns
 
@@ -73,9 +77,9 @@ A library declares the grant it needs, and the *consumer* decides the pattern at
 its own `impl` line:
 
 ```kelp
-impl "deps/fsx/lib" as fsx with caps(fs = ["/var/lib/myapp/**"])
-impl "deps/log/lib" as log with caps(time = [])
-impl "deps/lineproto/lib" as lineproto with caps(net = ["127.0.0.1:*"])
+impl "deps/fsx/lib" caps(fs = ["/var/lib/myapp/**"])
+impl "deps/log/lib" caps(time = [])
+impl "deps/lineproto/lib" caps(net = ["127.0.0.1:*"])
 ```
 
 `fsx` needs `fs`, `log` and `benchkit` need `time`, `term` needs `env` for
@@ -86,8 +90,13 @@ check by reading one line.
 There is a subtle case worth knowing: a module can hold a domain *without using
 it*, purely to satisfy the compiler on behalf of its own imports. `httpx` is the
 example: it only builds and reads plain data, but importing `std/http` needs
-`net` delegated, so `httpx` writes `with caps(net = [])` internally: the smallest
+`net` delegated, so `httpx` writes `caps(net = [])` internally: the smallest
 grant that compiles, and it never dials.
+
+When that delegation is missing and the failing module is **not** the one you
+wrote the call in, the diagnostic points at the link that broke: it names the
+`impl` line that imported the module with no `caps(...)` clause, and that line is
+the one to change.
 
 ## Why this is checkable
 
@@ -103,7 +112,7 @@ The entry module holds everything, so the interesting module sits one level down
 
 ```kelp
 // sandbox.kp — a module with exactly one directory
-impl "std/fs" with caps(fs = ["/srv/data/**"])
+impl "std/fs" caps(fs = ["/srv/data/**"])
 impl "std/str"
 
 fun read(name: &str).R: String = fs.read_text(str.concat("/srv/data/", name))

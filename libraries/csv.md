@@ -17,7 +17,7 @@ csv = "Juniper/fpl/csv"
 ```
 
 ```kelp
-impl "deps/csv/lib" as csv
+impl "deps/csv/lib"
 ```
 
 ## Types
@@ -77,7 +77,7 @@ fun field_needs_quote(s: &str).R: bool
 ## Example
 
 ```kelp
-impl "deps/csv/lib" as csv
+impl "deps/csv/lib"
 
 fun main() {
     val parsed = csv.parse("name,note\nalice,\"hello, world\"\nbob,\"said \"\"hi\"\"\"\n")

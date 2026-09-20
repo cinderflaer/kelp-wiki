@@ -5,8 +5,8 @@
 //
 // Two grants are in play, and both are written where the call is:
 //
-//   impl "std/http" with caps(net = ["127.0.0.1:*"])
-//   impl "deps/fsx/lib" as fsx with caps(fs = ["/tmp/**"])
+//   impl "std/http" caps(net = ["127.0.0.1:*"])
+//   impl "deps/fsx/lib" as fsx caps(fs = ["/tmp/**"])
 //
 // `fsx` is a dependency:
 //
@@ -17,9 +17,9 @@
 // reading a response's status, and `write_atomic` instead of a truncate-in-place
 // write (a reader never sees half a file).
 
-impl "std/http" with caps(net = ["127.0.0.1:*"])
+impl "std/http" caps(net = ["127.0.0.1:*"])
 impl "std/str"
-impl "deps/fsx/lib" as fsx with caps(fs = ["/tmp/**"])
+impl "deps/fsx/lib" as fsx caps(fs = ["/tmp/**"])
 
 fun main() {
     val client = http.default_client()

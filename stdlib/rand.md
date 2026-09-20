@@ -7,7 +7,7 @@ tags: "stdlib, math"
 An unseeded system random source. **Gated on `rand`.**
 
 ```kelp
-impl "std/rand" with caps(rand = [])
+impl "std/rand" caps(rand = [])
 ```
 
 | Function | Returns | Notes |

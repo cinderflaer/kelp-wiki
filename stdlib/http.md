@@ -9,7 +9,7 @@ delegating `net` on the `impl` line, and the grant the consumer writes is what
 governs every connection it makes.
 
 ```kelp
-impl "std/http" with caps(net = ["api.example.com:443"])
+impl "std/http" caps(net = ["api.example.com:443"])
 ```
 
 Naming `net.connect` needs the `net` domain, so a project that imports this module
@@ -80,7 +80,7 @@ compile error: the ownership check is free.
 ## Example
 
 ```kelp
-impl "std/http" with caps(net = ["127.0.0.1:*"])
+impl "std/http" caps(net = ["127.0.0.1:*"])
 impl "std/str"
 
 fun main() {

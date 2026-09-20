@@ -31,12 +31,12 @@ Six libraries, six manifest lines, and none of them fetches another.
 ## The program
 
 ```kelp
-impl "deps/bigint/lib" as bigint
-impl "deps/decimal/lib" as decimal
-impl "deps/complex/lib" as complex
-impl "deps/mathx/lib" as mathx
-impl "deps/stats/lib" as stats
-impl "deps/prng/lib" as prng
+impl "deps/bigint/lib"
+impl "deps/decimal/lib"
+impl "deps/complex/lib"
+impl "deps/mathx/lib"
+impl "deps/stats/lib"
+impl "deps/prng/lib"
 impl "std/option"
 impl "std/str"
 

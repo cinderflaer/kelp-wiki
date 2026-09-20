@@ -7,14 +7,13 @@ tags: "language"
 Source section:
 [`syntax.md` §13](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
 
-A module **is** a file. `impl` names it, optionally aliases it, and optionally
-grants it authority.
+A module **is** a file. `impl` names it, and optionally grants it authority.
 
 ```kelp
 impl "std/fs"                                        // the standard library
-impl "std/net" with caps(net = ["api.example.com:443"])
-impl "shapes/circle" as circle                       // a file in this project
-impl "deps/json/lib" as json                         // a dependency
+impl "std/net" caps(net = ["api.example.com:443"])
+impl "shapes/circle"                                 // a file in this project
+impl "deps/json/lib"                                 // a dependency
 ```
 
 ```kelp
@@ -29,9 +28,16 @@ fun main() {
 
 - **Nothing is imported by default**, not even the standard library. A module's
   own top-level names are visible without qualification; everything else is
-  `alias.name`.
-- **The alias is the name.** Two imports of the same file under different aliases
-  are the same module under two names.
+  `module.name`.
+- **The module's name is its own name**: the last path segment, so `impl
+  "shapes/circle"` is `circle` and `impl "std/fs"` is `fs`. A **dependency's
+  entry module**, a path ending in `/lib` under `deps/`, is named after the
+  directory Coral fetched it into: `impl "deps/json/lib"` is `json`, whichever
+  repository or folder it came from.
+- **`impl "path" as name` is outdated.** It still compiles and still names the
+  module, and `kelpc build` prints an `outdated:` finding saying it is removed in
+  the next development cycle. Drop the clause, and where the name you wanted is
+  not the module's own name, rename the call sites instead.
 - **Only the entry module has unprefixed access to the whole program.** Every
   other module sees exactly what it imported.
 - **Authority is declared at the import**, and it is the only place it can be

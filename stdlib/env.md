@@ -7,9 +7,9 @@ tags: "stdlib"
 Environment variables. **Gated on `env`.**
 
 ```kelp
-impl "std/env" with caps(env = ["NO_COLOR"])   // one name
-impl "std/env" with caps(env = ["APP_*"])      // a prefix
-impl "std/env" with caps(env = ["*"])          // anything
+impl "std/env" caps(env = ["NO_COLOR"])   // one name
+impl "std/env" caps(env = ["APP_*"])      // a prefix
+impl "std/env" caps(env = ["*"])          // anything
 ```
 
 | Function | Returns | Notes |

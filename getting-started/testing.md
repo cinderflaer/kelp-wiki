@@ -47,8 +47,8 @@ Then `src/tasks/test.kp`:
 ```kelp
 // src/tasks/test.kp -- `coral task test`
 
-impl "shapes/calc" as calc
-impl "deps/testkit/lib" as testkit
+impl "shapes/calc"
+impl "deps/testkit/lib"
 impl "std/process"
 
 fun main() {
@@ -163,7 +163,7 @@ is usually easier than a fixture on disk, because a path passed to `fs` has to b
 absolute.
 
 Ideas at this size: keep `count_from` from [A first real tool](/getting-started/first-tool)
-where it is and import that file as a module from the test (`impl "head" as head`,
+where it is and import that file as a module from the test (`impl "head"`,
 because a module's own `main` is just a function when it is not the entry point),
 then check `"7"`, `"0"`, `"-1"` and `"seven"`; test a cipher's round trip; test
 that a sorted list is in order by walking it and comparing neighbours.

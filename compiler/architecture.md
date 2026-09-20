@@ -59,14 +59,18 @@ the AST, for the reasons `fmt.rs`'s header gives.
 
 Multi-file loading and name resolution:
 
-- `impl "shapes/circle"` loads `src/shapes/circle.kp`; the last path segment is the
-  default alias, and `impl "time" as t` picks another.
+- `impl "shapes/circle"` loads `src/shapes/circle.kp`, which is reached as `circle`:
+  the last path segment, except that a module whose path ends in `/lib` under `deps/`
+  takes the name of the directory Coral fetched it into
+  (`impl "deps/argparse/lib"` is `argparse`). The `as name` clause that used to
+  choose the name is outdated, and a build warns about it; so is the `with` that
+  used to introduce a capability grant, whose clause is `caps(...)` on its own.
 - Paths are relative to `src/`, may not contain `..`, and may not reach outside the
   project.
 - Names are strictly module-qualified: module `m`'s items are reachable elsewhere
   only as `m.Item`, and bare inside `m` itself.
 - **Capability gating happens here.** Each module has a capability-domain set
-  computed from its incoming `with caps(...)` grant; resolving `net.connect` in a
+  computed from its incoming `caps(...)` grant; resolving `net.connect` in a
   module whose set lacks `net` is an undefined-name error, not a runtime check that
   could be forgotten. See [Capabilities](/language/capabilities).
 
@@ -106,7 +110,7 @@ this block" and "which die before this return" as it writes each one.
 
 | Module | Emits | Notes |
 | --- | --- | --- |
-| `codegen_c.rs` | C source text | value-position blocks use the GNU statement-expression extension `({ ...; expr; })`, which both `gcc` and `clang` accept; the `Bytes`/`String` runtime (allocation, bounds checks, `free`) is a fixed C preamble; output is `#line`-annotated back to `.kp` |
+| `codegen_c.rs` | C source text | value-position blocks use the GNU statement-expression extension `({ ...; expr; })`, which both `gcc` and `clang` accept; the `Bytes`/`String` runtime (allocation, bounds checks, `free`) is a fixed C preamble; the generated C carries a `#line` directive before every statement, so a `cc` failure names the `.kp` file and the line the statement is written on (plan item 20, closed) |
 | `codegen_asm.rs` | x86-64 assembly text | a stack machine (every expression evaluates into `rax`) with a linear-scan register allocator pinning integer/`bool`/`char` locals to five callee-saved registers |
 
 Details, and what each backend refuses, are in [Backends](/compiler/backends).
@@ -159,7 +163,7 @@ fun main() {
 | `infer.rs` | `area(p)`: the parameter is a `datac`, so it becomes a shared borrow and the call site gets a synthesized `&` the author never wrote |
 | `tir.rs` | the same tree, every node carrying `Ty` and `Span` |
 | `borrowck.rs` | `p` is borrowed by `area` and still owned afterwards; a drop plan for the `Point` and for the `List` |
-| `codegen_c.rs` | C with `#line` markers back into the `.kp`, plus the heap preamble the drop plan asked for |
+| `codegen_c.rs` | C, with a `#line` marker before every statement back into the `.kp`, plus the heap preamble the drop plan asked for |
 | `driver.rs` | `<out>.c` written beside the binary, `cc -O2 -fwrapv -lm` invoked |
 
 ## What is *not* in the pipeline

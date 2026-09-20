@@ -22,8 +22,8 @@ benchkit = "Juniper/fpl/benchkit"
 ```
 
 ```kelp
-impl "deps/testkit/lib" as testkit
-impl "deps/benchkit/lib" as benchkit with caps(time = [])
+impl "deps/testkit/lib"
+impl "deps/benchkit/lib" caps(time = [])
 ```
 
 `benchkit` reads the monotonic clock, so the consumer delegates `time` to it.
@@ -32,8 +32,8 @@ impl "deps/benchkit/lib" as benchkit with caps(time = [])
 ## The program
 
 ```kelp
-impl "deps/testkit/lib" as testkit
-impl "deps/benchkit/lib" as benchkit with caps(time = [])
+impl "deps/testkit/lib"
+impl "deps/benchkit/lib" caps(time = [])
 impl "std/str"
 
 fun sum_to(n: i64).R: i64 {

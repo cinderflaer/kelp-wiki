@@ -17,8 +17,14 @@ encoding = "Juniper/fpl/encoding"
 ```
 
 ```kelp
-impl "deps/encoding/lib" as encoding
+impl "deps/encoding/lib"
 ```
+
+> **`std/encoding` ships now.** The same codecs are part of the standard
+> library from the current development cycle on, so a program on a current
+> `kelpc` imports [`std/encoding`](/stdlib/encoding) instead of this folder. This
+> library stays for a project pinned to an older compiler, and it is the version
+> that works as a fetched dependency.
 
 ```kelp
 enum DecodeErr {
@@ -135,7 +141,7 @@ library's `query_pairs` leaves `+` alone for the same reason.
 ## Example
 
 ```kelp
-impl "deps/encoding/lib" as encoding
+impl "deps/encoding/lib"
 impl "std/result"
 
 fun main() {

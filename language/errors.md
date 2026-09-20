@@ -70,7 +70,13 @@ fun quarter(n: i64).R: result.Result<i64, str.ParseErr> {
 ## `panic` and `assert`
 
 `panic(message)` ends the program with a non-zero status; `assert(cond)` is the
-checked form (`panic: assertion failed`).
+checked form (`panic: assertion failed`). The message is a `str` or an **owned
+`String`**, so a message built in the failing branch needs no binding and no
+`.as_str()`:
+
+```kelp
+panic(fmt.int(n))          // `fmt.int` returns a `String`; it goes straight in
+```
 
 ```
 panic: assertion failed
@@ -83,6 +89,12 @@ Almost everything that can fail with no value to return panics: out-of-range
 indices, popping an empty list, `option.unwrap` on `None`, a failing syscall, a
 division by zero in [`complex.div`](/libraries/complex), a scale mismatch in
 [`decimal`](/libraries/decimal).
+
+The one kind of failure that ships *both* ways is a narrowing number
+conversion: `n.to_u8()` panics on a value that does not fit, and `n.try_to_u8()`
+hands back an [`Option`](/stdlib/option) instead, so a value that may be out of
+range is something the caller branches on rather than something the process
+dies of.
 
 **The divergence rule.** A block whose *last statement* is a `panic(...)`
 diverges, so it satisfies any declared return type, including a borrowed one.

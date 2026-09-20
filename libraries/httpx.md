@@ -12,7 +12,7 @@ Basic-Auth header, the method helpers past `GET`/`POST`, and a minimal
 (`Request`, `Response`, `String`) and never calls a net-touching function, but
 merely *importing* `std/http` requires delegating it a `net` grant (the module
 holds `net` as a whole, not per function), so this library declares
-`impl "std/http" with caps(net = [])`: the smallest grant that satisfies the
+`impl "std/http" caps(net = [])`: the smallest grant that satisfies the
 compiler without asking the consumer for anything. The consumer holds the real
 `net` grant and calls `http.Client.send` with what this library built.
 
@@ -23,15 +23,15 @@ httpx = "Juniper/fpl/httpx"
 
 ```kelp
 impl "std/http"
-impl "deps/httpx/lib" as httpx
+impl "deps/httpx/lib"
 ```
 
 A consumer that both builds and sends still writes its own net grant on
 `std/http`:
 
 ```kelp
-impl "std/http" with caps(net = ["api.example.com:443"])
-impl "deps/httpx/lib" as httpx
+impl "std/http" caps(net = ["api.example.com:443"])
+impl "deps/httpx/lib"
 ```
 
 ## Query strings
@@ -87,7 +87,7 @@ when the header has no `=`.
 
 ```kelp
 impl "std/http"
-impl "deps/httpx/lib" as httpx
+impl "deps/httpx/lib"
 
 fun main() {
     var pairs: List<http.Header> = List.empty()

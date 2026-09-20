@@ -1,20 +1,24 @@
 ---
 title: "`kelpc` CLI"
-description: "The compiler's command line. Everything on this page was run against a release build of kelpc 0.1.4 on the machine that wrote it, and the outputs are quoted from those runs."
+description: "The compiler's command line. Everything on this page was run against a release build on the machine that wrote it, and the outputs are quoted from those runs: the bulk of it against the build tagged `v0.1.4`, and the `lint` section, the `--deny-outdated` flag and the outdated-syntax register against `kelpc 26.09.0`."
 isPublished: true
 tags: "tooling, cli"
 ---
-The compiler's command line. Everything on this page was run against the release
-build tagged `v0.1.4` on the machine that wrote it, and the outputs are quoted
-from those runs. That binary was not rebuilt for the rename, so `kelpc version`
-still reports `kelpc 0.2.2`.
+The compiler's command line. Everything on this page was run against a release
+build on the machine that wrote it, and the outputs are quoted from those runs.
+The bulk of it is the build tagged `v0.1.4`, whose binary was not rebuilt during
+the rename, so `kelpc version` reported `kelpc 0.2.2` from that one. What shipped
+after it (`kelpc lint` below, the comment-run and naming-case findings, the
+`--deny-outdated` flag and the outdated-syntax section further down) comes from
+`kelpc 26.09.0`.
 
 ```text
-usage: kelpc build <file.kp> [-o <out>] [--backend=<name>]
-       kelpc run <file.kp>
+usage: kelpc build <file.kp> [-o <out>] [--backend=<name>] [--deny-outdated]
+       kelpc run <file.kp> [--deny-outdated]
        kelpc fmt <file.kp>
        kelpc fmt -w <path>...
        kelpc fmt --check <path>...
+       kelpc lint <path>...
        kelpc version
 ```
 
@@ -28,10 +32,12 @@ prints the usage block above, and `kelpc version` is the version query.
 | `kelpc build <file.kp>` | compiles to a binary and keeps the artifact | 0 on success, 1 on a diagnostic |
 | `kelpc build <file.kp> -o <out>` | the same, naming the artifact | as above, 1 if `<out>.c` cannot be written |
 | `kelpc run <file.kp>` | compiles and executes, forwarding stdout, stderr and the program's exit code | the program's own status |
+| `kelpc build <file.kp> --deny-outdated` | the same build, with a deprecation turned into an error | 1 if the program uses outdated syntax |
 | `kelpc fmt <file.kp>` | prints the formatted source to stdout | 0, or 1 on a parse error |
 | `kelpc fmt -w <path>...` | rewrites files in place | 1 if any input fails to parse |
 | `kelpc fmt --check <path>...` | writes nothing, exits 1 if anything is not already formatted | 0 or 1 |
-| `kelpc version` | prints the build-time version string of the binary: `kelpc 0.2.2` for the release tagged `v0.1.4` | 0 |
+| `kelpc lint <path>...` | writes warnings to stderr for the style rules a formatter cannot enforce, and writes no file | 0 even when it warns; 1 only for a path it cannot read or a file it cannot lex |
+| `kelpc version` | prints the release name the binary was built from: `kelpc 0.2.2` for the release tagged `v0.1.4`, and `kelpc 26.09.0` for the first release under the `YY.MM.N` scheme (`26.09.0`; the crate carries the semver-legal `26.9.0` and this command pads the month back) | 0 |
 
 Two behaviours worth knowing:
 
@@ -167,7 +173,9 @@ Four invariants, which are the reason it is safe to run on any file:
 
 What it does **not** enforce: the 100 column limit, the order of declarations
 inside the final group, and the naming and case rules. Those are review
-conventions that need a lint, and `kelpc` has no `lint` command.
+conventions that need a lint, and `kelpc lint` is that command. It is
+warning-only, and it reports the comment run, the `else if` link and the naming
+case below.
 
 Path handling, as `--help` documents it:
 
@@ -205,6 +213,122 @@ error: expected identifier, found LBrace
 
 That last run changed nothing. `--check` is the CI shape: it writes nothing and
 fails on the first file that differs.
+
+## `lint`
+
+`kelpc lint` is the other half of the style section: what a formatter cannot
+enforce. It is **warning-only by design**, so it is not a gate and it never
+rewrites anything:
+
+```sh
+kelpc lint <path>...   # a .kp file, or a directory walked recursively
+```
+
+- Findings go to stderr as `warning: ...` with a `file:line:col` location, and
+the exit status is **0** even when there are findings. A script tells "clean"
+from "has findings" by the output, and "could not check" by the exit status:
+only a path it cannot read or a file it cannot lex exits 1, reported with the
+same shape `kelpc build` uses for the same file.
+- It writes no file, so there is no `-w` and no `--check`.
+- Paths are collected the way `fmt` collects them (a `.kp` file, or a directory
+recursing `.kp` files, with a link inside a directory skipped and reported), so a
+tree is named once.
+
+The rules are the ones a formatter cannot enforce: the comment run, the `else if`
+link, and the naming case, all three from [Style](/language/style).
+
+### The comment run
+
+Two or more consecutive `//` lines with no blank line and no code between them
+suggest one `/* ... */` comment:
+
+```text
+$ kelpc lint notes.kp
+warning: 3 consecutive '//' lines suggest one '/* ... */' comment
+  --> /tmp/lintdemo/notes.kp:2:5
+$ echo $?
+0
+```
+
+What does **not** count as a run, each for a reason the rule would otherwise get
+wrong: a blank line between the comments (two thoughts, which is how the author
+separated them), any code between them, a block comment between them, a comment
+that follows code on its own line (a run is *lines* of comments), and a doc
+comment (`///` and `//!` are documentation the tooling reads as documentation,
+so the block-comment suggestion does not apply). A `//` inside a string or a
+block comment is not a comment either, because the rule reads tokens rather than
+text.
+
+### The `else if` link
+
+`elif` is the preferred spelling of a chain link, so the longer one is reported:
+
+```text
+$ kelpc lint server.kp
+warning: 'else if' compiles, but 'elif' is the preferred spelling
+  --> /tmp/lintdemo/server.kp:14:7
+$ echo $?
+0
+```
+
+Both spellings stay legal and compile identically, and `kelpc fmt` never rewrites
+one into the other.
+
+### The naming case
+
+The project's case is `coral.toml`'s `naming_case` (`0` = `camelCase`, the
+default; `1` = `snake_case`), and a declared name in the other case is reported:
+
+```text
+$ kelpc lint io.kp
+warning: function 'read_text' is snake_case, and this project asks for camelCase (coral.toml 'naming_case = 0'); write 'readText'
+  --> /tmp/lintdemo/io.kp:7:5
+$ echo $?
+0
+```
+
+The setting is the project's, not the invocation's, so there is no `kelpc lint`
+flag for it. The rule reads the names a file **declares** (a `fun` name, a
+parameter, a `val`/`var`/`pd` binding, a `datac` or payload field, a loop binding,
+a pattern binding), which is why a call into the standard library's locked
+`snake_case` is never reported under either setting: a call is a use. A file with
+no `coral.toml` to read gets the option's default, and a file under the
+project's `src/deps/` gets no case rule at all.
+
+## Outdated syntax
+
+A spelling that is on its way out still compiles. The compiler keeps a register
+of them (`kelpc/src/deprecated.rs`, and `syntax.md` 23), and `kelpc build` and
+`kelpc run` print one finding per construct a program uses:
+
+```text
+$ kelpc build src/main.kp
+outdated: `impl "..." as name` is outdated and will be removed in the next development cycle: a module is reached by its own name (`std/path` is `path`, `shapes/circle` is `circle`, and a dependency's entry module `deps/argparse/lib` is `argparse`), so drop the clause and use that name
+  --> src/main.kp:1:16
+outdated: `impl "..." with caps(...)` is outdated and will be removed in the next development cycle: drop the `with`: the grant is `impl "std/fs" caps(fs = ["/var/log/**"])`, and the patterns, the domains and the no-escalation rule are exactly the same
+  --> src/main.kp:2:13
+$ echo $?
+0
+```
+
+- The label is **`outdated: `**, which is neither `error:` nor `warning: `. A
+  lint's `warning: ` is a style opinion; this is a promise about a later version.
+- The old spelling **keeps working**, and the exit status is unchanged. Nothing
+  is removed on the day its warning first appears: every entry goes on the next
+  development cycle.
+- **`--deny-outdated`** turns the findings into errors and stops before anything
+  is generated. That is the gate for a project or a CI run that wants to hear
+  about its own code. A program with nothing on the list builds as it always did.
+- **`kelpc fmt`** never rewrites an old spelling into a new one: it copies tokens.
+  **`kelpc lint`** does not report deprecations either, because a deprecation is a
+  build's finding rather than a style pass's.
+- The register has two entries: the `impl` clause above, and the `with` in front
+  of a capability grant (`impl "std/fs" with caps(fs = [...])`, where the grant
+  itself is `impl "std/fs" caps(fs = [...])`). The migration each asks for is
+  usually a deletion: a module is reached by its own name, which for a
+  dependency's entry module is the directory Coral fetched it into
+  (see [Modules and imports](/language/modules)), and the `with` says nothing
+  the `impl` line does not.
 
 ## Environment variables
 

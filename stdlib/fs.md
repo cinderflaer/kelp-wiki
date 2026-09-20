@@ -8,7 +8,7 @@ Files and directories. **Gated on `fs`.**
 
 ```kelp
 impl "std/fs"                                    // the entry module holds the wildcard
-impl "std/fs" with caps(fs = ["/srv/data/**"])   // a library, granted a pattern
+impl "std/fs" caps(fs = ["/srv/data/**"])   // a library, granted a pattern
 ```
 
 `fs` patterns are **absolute paths**, normalized lexically and resolved through

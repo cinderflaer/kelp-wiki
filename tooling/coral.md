@@ -125,7 +125,8 @@ kelp = "v0.1.4"
 | `name` | `kelpc`, Coral | used in build messages and artifact names |
 | `version` | `kelpc`, Coral | the project's own version |
 | `entry` | `kelpc`, Coral | the file that must hold `main` |
-| `http_pool` | `kelpc` (spliced into `std/http`) | see the warning below |
+| `http_pool` | `kelpc` (spliced into `std/http`) | a bare whole number (`http_pool = 4`), the one value in the manifest that is not a quoted string |
+| `naming_case` | `kelpc` (`kelpc lint`) | a bare whole number, `0` for `camelCase` (the default) or `1` for `snake_case`: the case the lint asks your names to be written in ([Style](/language/style#the-naming-case)). Coral accepts the key with the compiler's own checks and does not read the value |
 
 The flat key set is **closed**. An unknown one is refused by name:
 
@@ -288,7 +289,7 @@ The whole repository lands under `src/deps/fpl/`, so the import names the folder
 inside it:
 
 ```kelp
-impl "deps/fpl/json/lib" as json
+impl "deps/fpl/json/lib"
 ```
 
 `impl` paths are resolved against the project's `src/`, which is why fetched code
@@ -413,8 +414,11 @@ fetching something new.
 A version means a git tag on the kelp or coral repository. `install` prefers the
 tag's own Gitea release: when the release carries an asset named for this platform
 (`kelpc-0.1.4-linux-x86_64`), that binary is downloaded, marked executable and put
-at `~/.coral/toolchains/kelp/<ver>/kelpc`, with no cargo involved. A tag with no
-release, no asset for this platform, or nothing but a `.zip` falls back to
+at `~/.coral/toolchains/kelp/<ver>/kelpc`, with no cargo involved. An asset whose
+name carries a *different* version is ignored, so a mislabelled asset cannot
+install the wrong compiler; a name that carries no version at all is accepted (a
+generic single-binary release). A tag with no release, no usable asset for this
+platform, or nothing but a `.zip` falls back to
 `git clone --branch <ver> --depth 1` plus `cargo build --release`, and the fallback
 is announced with its reason
 ([Coral's README](https://homelabone.xenoo.dev/gittea/Juniper/coral/src/branch/main/README.md)).

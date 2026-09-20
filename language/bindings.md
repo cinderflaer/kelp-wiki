@@ -60,6 +60,10 @@ c.id = 5                 // error: the field `id` is declared val
   determines it ([Lexical structure](/language/lexical)). There is no implicit
   numeric conversion afterwards, so the annotation is a real decision and not a
   formatting choice.
+- A **character** literal follows the same rule (and is `char` when nothing asks
+  for an integer), while a **byte** literal is a `u8` whatever the context asks
+  for: `val nl = b'\n'` needs no annotation, and `val n: i64 = b'x'` is refused
+  rather than widened ([Lexical structure](/language/lexical)).
 
 ## Assignment
 

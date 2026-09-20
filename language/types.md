@@ -56,7 +56,9 @@ Nothing converts back: `String` → `str` is a borrow, written `.as_str()`.
 `to_<T>()` exists on every integer type for every integer type, and
 `to_f64()`/`to_f32()` widen to a float. Widening is exact; **narrowing panics
 when the value does not fit**; a float has no `to_<int>` at all, because that
-would silently drop the fraction.
+would silently drop the fraction. Every conversion that can lose a value also
+has a **fallible twin**, `try_to_<T>()`, which hands back `Option<T>` instead of
+panicking:
 
 ```kelp
 val n: i64 = 7
@@ -64,7 +66,16 @@ val x: f64 = n.to_f64()        // 7.0, exact for every i64
 val b: u8 = 200
 val idx: usize = b.to_usize()  // a byte used as an index
 val back: u8 = idx.to_u8()     // panics if it does not fit
+val small = idx.try_to_u8()    // Option<u8>: None where to_u8 would panic
 ```
+
+`try_to_<T>` exists exactly where the plain conversion can fail: a widening is
+already exact, so `b.try_to_usize()` is not a method (write `b.to_usize()`), and
+the diagnostic names that rule. The `Option` it hands back is
+[`std/option`](/stdlib/option)'s, so `if let Some(v) = idx.try_to_u8()` needs no
+type written anywhere. That module has to be somewhere in the program's import
+graph; a program that imports `std/str` has it already, since `std/str` imports
+it, and one that imports nothing at all is told to add the `impl` line.
 
 `n * 1.0` is a **type error**, not a conversion (syntax.md §5.0).
 

@@ -31,13 +31,13 @@ coral sync       # fetch (the only command that moves a dependency forward)
 That is why the import names the file and nothing else about where it came from:
 
 ```kelp
-impl "deps/json/lib" as json
+impl "deps/json/lib"
 ```
 
 ## The program
 
 ```kelp
-impl "deps/json/lib" as json
+impl "deps/json/lib"
 
 // A helper, so the walk owns the list it builds.
 fun keep_high_scores(doc: &json.Json).R: String {

@@ -17,7 +17,7 @@ url = "Juniper/fpl/url"
 ```
 
 ```kelp
-impl "deps/url/lib" as url
+impl "deps/url/lib"
 ```
 
 ```kelp
@@ -180,7 +180,7 @@ The sub-delimiters RFC 3986 §2.2 allows in a path include `!$&'()*+,;=`, so
 ## Example
 
 ```kelp
-impl "deps/url/lib" as url
+impl "deps/url/lib"
 impl "std/str"
 
 fun main() {

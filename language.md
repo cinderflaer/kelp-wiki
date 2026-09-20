@@ -13,7 +13,7 @@ and each page cites the section it came from.
 
 ```kelp
 impl "std/fs"                     // 1. imports
-impl "std/http" with caps(net = ["api.example.com:443"])
+impl "std/http" caps(net = ["api.example.com:443"])
 
 const LIMIT: i32 = 10             // 2. constants
 pd val app_name = "shapes"        //    and passdowns, in any mix
