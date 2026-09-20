@@ -60,6 +60,27 @@ their checksums.
 - **A commit message that says why**, not which lines moved. The plan documents
   use the same voice.
 
+## Version numbers
+
+Releases are numbered `YY.MM.N`: the two-digit year, the two-digit month, and
+the release number *within that month*, starting at `0`. The first release under
+the scheme is `26.09.0` in each repository, and it applies to all of them
+(`kelp`, `coral`, `lighthouse`).
+
+- The **release name is the padded one**: the tag is `v26.09.0`, an asset is
+  `kelpc-26.09.0-linux-x86_64`, and `kelpc version` prints `kelpc 26.09.0`. Those
+  strings are compared as text (Coral refuses a release asset whose name spells a
+  different version), so the padding has to be the same everywhere.
+- **Cargo and npm refuse a leading zero** in a version component, so a
+  `Cargo.toml` and the VS Code `package.json` carry `26.9.0` while everything a
+  person reads is padded back to `26.09.0`. Gradle takes the padded name as
+  written.
+- **Nothing released before the scheme is renumbered.** A tag, its asset and its
+  changelog entry keep the number they were cut with.
+- The release that first carries the scheme says so in one line of its changelog
+  entry; the pending file carries that line from the moment the scheme is
+  decided.
+
 ## Style
 
 The formatter owns whitespace: `kelpc fmt -w <path>` and `kelpc fmt --check` are
