@@ -158,7 +158,8 @@ float field (the float-in-aggregate slice lowered both), and a fixed-size array
 (the A-18 slice, whose `[T; N]` is a synthesized by-value layout on this backend
 now, so both its literals and the type itself lower).
 
-One refusal per non-empty row, as the backend names them:
+One refusal per non-empty row, and the heap row's two shapes with it, as the
+backend names them:
 
 ```
 error: the 'asm' backend does not support the `extern fun std.io.is_open_raw` yet
