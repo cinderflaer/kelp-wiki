@@ -194,7 +194,11 @@ print(grid.get(i = 2).get(i = 1))
 - There is no `[T; 0]`, no `a[i]` subscript (use `.get`/`.set`) and no growth. A
   sequence that grows is a `List<T>`.
 - A `datac` field may be one, and so may a parameter, a return value or a
-  `Box` element.
+  `Box` element. A plain parameter follows the rule every other type follows
+  ([Ownership and borrowing](/language/ownership)): an array whose element owns
+  something is borrowed, so the caller keeps its array, a `Copy` array is passed
+  by value as a scalar is, `mut [T; N]` writes through a borrow and
+  `move [T; N]` takes the value over.
 
 ## Iterating
 
