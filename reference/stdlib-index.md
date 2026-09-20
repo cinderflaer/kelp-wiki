@@ -20,8 +20,11 @@ the page used to be pinned to, and `std/encoding` is new, and the script's own
 prints the MkDocs layout (an H1 title, `docs/`-relative links, no front matter),
 so the front matter and the absolute links on this page are the hand-kept part.
 
-`std/rt` has no section: it ships inside the binary but is compiler-internal and
-is not importable, so it is not part of the surface a program can name. Behaviour,
+`std/rt` has no section: it ships inside the binary but is the compiler's own
+runtime module rather than part of the stdlib surface. `impl "std/rt"` resolves
+(the resolver injects the module for a program that imports a gated module or
+`std/path`, and the differential corpus imports it by name), but nothing should
+be told it is a library to reach for. Behaviour,
 panics and examples live in the [Standard library](/stdlib) chapter.
 
 A module marked with a domain needs that capability delegated on the `impl` line, e.g.
@@ -493,10 +496,12 @@ Functions:
 | `std/option` | 9 | 1 | — |
 | `std/result` | 12 | 1 | — |
 
-## Not importable
+## Not part of the stdlib surface
 
 `std/rt` holds the capability matcher the compiler uses internally and is excluded from
-the shipped list, so `impl "std/rt"` is refused. The importable glob matcher is
+the shipped list. Its source still ships, and `impl "std/rt"` resolves, because
+the differential corpus imports it to compare the matcher with its C reference,
+but it is not a library to reach for. The importable glob matcher is
 [`glob`](/libraries/glob).
 
 ## See also

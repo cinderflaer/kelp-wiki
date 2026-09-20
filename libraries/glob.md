@@ -8,9 +8,9 @@ A public glob matcher over `*` and `?`: `*` matches any run of characters
 (including none), `?` matches exactly one, everything else matches itself
 literally.
 
-No capability. (The compiler's own capability matcher in `std/rt` implements the
-same shape, but that module is compiler-internal and cannot be imported; this is
-the importable version.)
+No capability. (The compiler's own capability matcher lives in `std/rt` and
+implements the same shape; it is the compiler's runtime module rather than a
+library to reach for, and this is the importable version.)
 
 ```toml
 [dependencies]

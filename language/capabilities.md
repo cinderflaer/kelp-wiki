@@ -26,13 +26,25 @@ instead of by auditing it.
   **`rand`**.
 - Each has a corresponding bare built-in namespace, and the *only* way to reach
   the outside is through a stdlib module that holds it (`kelpc/src/stdlib.rs`).
+- **Every item a gated module declares is gated**, not only the wrapper
+  functions a program normally calls: the `extern fun` primitives behind them
+  and the module's receiver methods are gated names too, so `fs.read_raw` and
+  `process.Child.kill` are refused in a module that does not hold the domain.
+  The module that declares an item is the one module exempt from the gate, which
+  is what lets a wrapper call its own primitive.
+- A gated item is gated **wherever it is named**: a direct call, a receiver
+  method call, a name used as a function value, a closure body and a `pd`
+  initializer all go through the same gate.
 - **The entry module holds the wildcard for every domain**, so a single-file
   program needs no grant for its own calls.
 - **Every other module holds exactly what its importer granted it, and nothing
   else.** A module can delegate less than it holds, never more: granting a pattern
   the importer does not hold is an error.
-- Referencing a gated function without holding the domain is a **compile error
+- Referencing a gated item without holding the domain is a **compile error
   naming the missing domain and the grant to write**: not a runtime refusal.
+  Holding the domain is the whole check for an item that names no resource
+  (`fs.cwd`, `time.now_mono_ns`, a receiver method); an item that does name one
+  is additionally checked against the patterns at the call.
 
 ## Grants
 
@@ -104,11 +116,21 @@ the one to change.
 
 ## Why this is checkable
 
-The capability matcher exists twice on purpose: in Kelp (`std/rt`, which is
-compiler-internal and not importable) and in C in `kelpc/runtime/`, with
-differential tests comparing the two on a corpus. A grant is checked statically
-*and* enforced at runtime against the pattern list, so neither a compiler bug nor
-a library trick widens authority.
+The capability matcher exists twice on purpose: in Kelp (the compiler's own
+runtime module, `std/rt`) and in C in `kelpc/runtime/`, with differential tests
+comparing the two on a corpus. A grant is checked statically *and* enforced at
+runtime against the pattern list, at every call site that names a resource: a
+wrapper, the primitive behind it, a receiver method, a closure body and a `pd`
+initializer are each checked against the grant of the module they are written
+in.
+
+One shape is not covered yet: a gated item named as a *function value*
+(`val f = fs.read`) and called through the pointer. Holding the domain is needed
+to name it, but the pattern check is emitted from the call's own callee, and an
+indirect call has no callee in the source, so a narrowed grant does not reach
+that call. `--backend=asm` refuses the construct by name rather than emitting it
+unchecked; the C backend builds it. Nothing in the shipped stdlib or in the
+examples uses a gated item as a value.
 
 ## Testing a restriction
 

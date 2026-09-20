@@ -86,9 +86,13 @@ so no program reaches the parser yet.
 | The allocator | still C; blocked on raw pointers, which the language does not expose |
 | The `Bytes`/`String` heap routines and drop calls | emitted as a fixed C preamble by `codegen_c.rs` |
 
-`std/rt` is compiler-internal: it is not in `stdlib.rs::shipped()`, so a program
-cannot import it, and the resolver injects it for a program that imports a gated
-module.
+`std/rt` is the compiler's own runtime module. Its source ships inside the
+binary like a stdlib module's, and `impl "std/rt"` resolves, but it is not part
+of the stdlib surface: `stdlib.rs::shipped()` does not list it, and the resolver
+injects it for a program that imports a gated module or `std/path`. The one
+program that imports it on purpose is the differential corpus itself
+(`kelpc/tests/cap_matcher.rs`, `kelpc/tests/path_normalize.rs`), which calls the
+matcher and the normalizer directly to compare them with their C references.
 
 ## See also
 

@@ -92,14 +92,19 @@ impl "std/rand" caps(rand = [])
   `caps(net = [])` internally only because importing `std/http` requires
   `net` to be delegated somewhere. The smallest grant that compiles is the
   idiomatic way to say "this module does not dial".
-- Referencing a gated function without holding the domain is a compile error
-  naming the missing domain and the grant to spell.
+- Referencing a gated item without holding the domain is a compile error
+  naming the missing domain and the grant to spell. Every item the gated module
+  declares is covered, its `extern fun` primitives and its receiver methods
+  included, and every place the item is named (a call, a receiver method call, a
+  function value, a `pd` initializer).
 
 ## Where the patterns are enforced
 
-The matcher exists twice on purpose: in Kelp (`std/rt`, compiler-internal, not
-importable) and in C in `kelpc/runtime/`. A grant is checked statically and
-enforced at runtime against the same pattern list, and the two implementations are
+The matcher exists twice on purpose: in Kelp (the compiler's own runtime module,
+`std/rt`) and in C in `kelpc/runtime/`. A grant is checked statically and
+enforced at runtime against the same pattern list, at the call sites that name a
+resource (a wrapper, the primitive behind it, a receiver method, a closure body,
+a `pd` initializer), and the two implementations are
 compared by a differential test corpus. See [Compiler](/compiler).
 
 ## See also

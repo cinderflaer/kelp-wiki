@@ -37,7 +37,7 @@ The domain each module needs comes from the compiler's own table
 | `std/list` | — | `map`, `filter`, `each`, `find_index`, `any`, `all` |
 | `std/option` | — | `Option<T>` and its combinators |
 | `std/result` | — | `Result<T, E>` and its combinators |
-| `std/rt` | — | **compiler-internal** (the capability matcher). Not importable |
+| `std/rt` | — | the compiler's own runtime module (the capability matcher), injected for a program that imports a gated module; not part of the stdlib surface |
 
 ## Compiler builtins
 
