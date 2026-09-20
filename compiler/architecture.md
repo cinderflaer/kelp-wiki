@@ -106,7 +106,7 @@ this block" and "which die before this return" as it writes each one.
 
 | Module | Emits | Notes |
 | --- | --- | --- |
-| `codegen_c.rs` | C source text | value-position blocks use the GNU statement-expression extension `({ ...; expr; })`, which both `gcc` and `clang` accept; the `Bytes`/`String` runtime (allocation, bounds checks, `free`) is a fixed C preamble; the generated C carries **no `#line` directive** back to the `.kp` source yet (plan open item 20), so a `cc` failure names a line of the generated file |
+| `codegen_c.rs` | C source text | value-position blocks use the GNU statement-expression extension `({ ...; expr; })`, which both `gcc` and `clang` accept; the `Bytes`/`String` runtime (allocation, bounds checks, `free`) is a fixed C preamble; the generated C carries a `#line` directive before every statement, so a `cc` failure names the `.kp` file and the line the statement is written on (plan item 20, closed) |
 | `codegen_asm.rs` | x86-64 assembly text | a stack machine (every expression evaluates into `rax`) with a linear-scan register allocator pinning integer/`bool`/`char` locals to five callee-saved registers |
 
 Details, and what each backend refuses, are in [Backends](/compiler/backends).
@@ -159,7 +159,7 @@ fun main() {
 | `infer.rs` | `area(p)`: the parameter is a `datac`, so it becomes a shared borrow and the call site gets a synthesized `&` the author never wrote |
 | `tir.rs` | the same tree, every node carrying `Ty` and `Span` |
 | `borrowck.rs` | `p` is borrowed by `area` and still owned afterwards; a drop plan for the `Point` and for the `List` |
-| `codegen_c.rs` | C, with no `#line` markers back into the `.kp` yet, plus the heap preamble the drop plan asked for |
+| `codegen_c.rs` | C, with a `#line` marker before every statement back into the `.kp`, plus the heap preamble the drop plan asked for |
 | `driver.rs` | `<out>.c` written beside the binary, `cc -O2 -fwrapv -lm` invoked |
 
 ## What is *not* in the pipeline

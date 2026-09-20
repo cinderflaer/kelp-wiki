@@ -99,9 +99,11 @@ The default `c` backend compiles both of those. Switch back with
 `--backend=c` or by unsetting `KELPC_BACKEND`.
 
 `error: cc failed:` is different: `kelpc` generated C that the C compiler would
-not accept, which is a `kelpc` bug. The generated file is in `build/`
-(`build/<name>.c`) and the `cc` error names a line in it. That file, the source,
-and the command are exactly what a report needs.
+not accept, which is a `kelpc` bug. The generated C carries a `#line` directive
+before every statement, so the `cc` message already names the `.kp` file and line
+the failing C came from; the generated file itself is in `build/`
+(`build/<name>.c`) when you need to see it. That file, the source, and the
+command are exactly what a report needs.
 
 ## Make a refusal happen on purpose
 

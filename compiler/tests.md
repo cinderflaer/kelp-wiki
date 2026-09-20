@@ -5,9 +5,13 @@ isPublished: true
 tags: "compiler, testing"
 ---
 The suite is built on one idea: **compile a program, run it, compare what it
-printed**. Nothing asserts on generated C, so a test says what the language does
-rather than how a backend does it, and that is what lets the same suite validate
-a second backend.
+printed**. Nothing in the language suite asserts on generated C, so a test says
+what the language does rather than how a backend does it, and that is what lets
+the same suite validate a second backend. Two tests read the generated file on
+purpose, because the property under test *is* the generated C: the capability
+check has to call the Kelp matcher (`cap_matcher.rs`), and every statement has to
+be mapped back to its `.kp` line (`compile_and_run.rs`'s
+`the_generated_c_maps_statements_back_to_their_kp_lines`).
 
 ```sh
 cargo test                                   # unit tests + the fixture suite
