@@ -13,9 +13,9 @@
 // for a URL, and a civil date printed from a Unix seconds count. Nothing here
 // needs a capability, not even the clock: the seconds count is supplied.
 
-impl "deps/hash/lib" as hash
-impl "deps/encoding/lib" as encoding
-impl "deps/datetime/lib" as datetime
+impl "deps/hash/lib"
+impl "deps/encoding/lib"
+impl "deps/datetime/lib"
 impl "std/result"
 impl "std/str"
 fun main() {

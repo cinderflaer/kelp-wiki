@@ -15,8 +15,8 @@
 // there is one per type), a summary line, and `time_many`'s warmup-then-measure
 // shape over a closure.
 
-impl "deps/testkit/lib" as testkit
-impl "deps/benchkit/lib" as benchkit caps(time = [])
+impl "deps/testkit/lib"
+impl "deps/benchkit/lib" caps(time = [])
 impl "std/str"
 
 fun sum_to(n: i64).R: i64 {

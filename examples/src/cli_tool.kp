@@ -12,12 +12,12 @@
 // `--name=value` and `--name value` both do), a declared default, positionals,
 // rendered help text, and reporting a parse failure with a non-zero exit code.
 
-impl "deps/argparse/lib" as argparse
+impl "deps/argparse/lib"
 impl "std/fs"
 impl "std/str"
 impl "std/fmt"
 impl "std/process"
-impl "std/path" as p
+impl "std/path"
 
 fun is_space(c: u8).R: bool = c == ' ' || c == '\t' || c == '\n' || c == '\r'
 
@@ -54,13 +54,13 @@ fun count_words(s: &str).R: i64 {
     return words
 }
 
-fun measure(path: &str, label: &str, want_lines: bool, want_words: bool, want_bytes: bool) {
-    val text = fs.read_text(path)
+fun measure(file: &str, label: &str, want_lines: bool, want_words: bool, want_bytes: bool) {
+    val text = fs.read_text(file)
     val s = text.as_str()
     val prefix = str.concat(label, " ")
     // The file name, not the full path: the output is a report, and the caller
     // already knows which path it passed.
-    val line = str.concat(prefix.as_str(), p.file_name(path))
+    val line = str.concat(prefix.as_str(), path.file_name(file))
 
     var out = String.empty()
     out.push_str(line.as_str())
@@ -108,7 +108,7 @@ fun run(parser: &argparse.Parser, pa: &argparse.ParsedArgs) {
     var i: usize = 0
     while i < names.len() {
         val name = names.get(i)
-        if !p.is_absolute(name.as_str()) {
+        if !path.is_absolute(name.as_str()) {
             print("error: cli_tool takes absolute paths (this language has no cwd accessor)")
             process.exit(2)
         }

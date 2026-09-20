@@ -12,7 +12,7 @@
 // string. The text is in the program so the example runs with no file, and the
 // same call would read `fs.read_text(path)` in a real tool.
 
-impl "deps/config/lib" as config
+impl "deps/config/lib"
 impl "std/str"
 
 // The owned locals live here rather than in `main`; these are `String`s.

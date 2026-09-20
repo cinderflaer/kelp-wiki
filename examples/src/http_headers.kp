@@ -13,7 +13,7 @@
 // sending the request is the caller's job, and the caller holds the net grant.
 
 impl "std/http"
-impl "deps/httpx/lib" as httpx
+impl "deps/httpx/lib"
 impl "std/str"
 
 fun main() {

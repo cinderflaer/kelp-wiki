@@ -6,7 +6,7 @@
 // Two grants are in play, and both are written where the call is:
 //
 //   impl "std/http" caps(net = ["127.0.0.1:*"])
-//   impl "deps/fsx/lib" as fsx caps(fs = ["/tmp/**"])
+//   impl "deps/fsx/lib" caps(fs = ["/tmp/**"])
 //
 // `fsx` is a dependency:
 //
@@ -19,7 +19,7 @@
 
 impl "std/http" caps(net = ["127.0.0.1:*"])
 impl "std/str"
-impl "deps/fsx/lib" as fsx caps(fs = ["/tmp/**"])
+impl "deps/fsx/lib" caps(fs = ["/tmp/**"])
 
 fun main() {
     val client = http.default_client()

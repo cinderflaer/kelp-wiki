@@ -16,15 +16,15 @@
 // process exits non-zero: a refusal in Kelp is not a catchable error.
 
 impl "std/fs"
-impl "sandbox_vault" as vault caps(fs = ["/tmp/kelp-sandbox/vault/**"])
+impl "sandbox_vault" caps(fs = ["/tmp/kelp-sandbox/vault/**"])
 
 fun main() {
-    print(vault.read("ok.txt"))
+    print(sandbox_vault.read("ok.txt"))
 
     // Inside the grant, straight from the entry module: fine, because the entry
     // module holds everything.
     print(fs.read_text("/tmp/kelp-sandbox/vault/ok.txt"))
 
     // Outside the grant, through the gated module: refused.
-    print(vault.read("../secret.txt"))
+    print(sandbox_vault.read("../secret.txt"))
 }
