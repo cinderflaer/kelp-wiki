@@ -91,7 +91,7 @@ Distinguish a refusal from a failure. The `asm` backend refusing a construct by
 name is documented behaviour, and the message is specific:
 
 ```text
-error: the 'asm' backend does not support the `extern fun std.net.connect_raw` yet
+error: the 'asm' backend does not support the `extern fun std.process.arg_count_raw` yet
 error: the 'asm' backend does not support a borrow of anything but a named local (a scalar, a `datac` or a heap type), a `datac` temporary, or a field of one yet
 ```
 
