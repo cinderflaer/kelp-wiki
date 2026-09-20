@@ -134,6 +134,11 @@ fun as_str(v: &Json).R: &str {
   print(u.len())
   ```
 
+  A field of a call's result is the same case one projection deeper, except that
+  the compiler stages that temporary for the length of one call: reading the field
+  or passing it as a borrow is fine, while handing the borrow back
+  (`mkName().name.as_str()`) needs the binding.
+
 ## See also
 
 - [Functions](/language/functions)

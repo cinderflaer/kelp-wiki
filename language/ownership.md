@@ -122,10 +122,18 @@ no way to leak deliberately.
 ## The two rules that explain most borrow errors
 
 1. **An owned value is moved once.** If the compiler says "use of moved value",
-   either borrow instead of moving, make a second owned copy
-   (`String.from_str(a.as_str())`), or reorder so the last use really is last.
+   either borrow instead of moving, make a second owned copy (`xs.clone()`,
+   `s.clone()`), or reorder so the last use really is last.
 2. **A borrow outlives its use.** If the compiler says a temporary would be freed
-   before the borrow could be used, bind the value to a `val` first.
+   before the borrow could be used, bind the value to a `val` first. A call's
+   result and a **field of a call's result** are the same case: `mkName().name`
+   has no storage of its own, so it can be borrowed for the length of one call
+   (`print(mkName().name.len())`, `take(mkName().name)`) and the compiler stages
+   the temporary until that call returns. Binding the borrow is refused instead
+   (`val r = &mkName().name` is `cannot borrow a temporary value`), and so is
+   handing it back (`mkName().name.as_str()` names the returned borrow). A chain
+   that steps through a borrow (`headers.get(i).name`) is not a temporary case at
+   all: the storage belongs to whatever `get` pointed at.
 
 [Pitfalls](/language/pitfalls) lists the exact error messages and their fixes.
 

@@ -69,8 +69,10 @@ generated per-`enum` drop that switches on the runtime tag (`when`, `if let`
 and `?` all lower on top of them), the three `str` parsers
 (`strtoll`/`strtoull`/`strtod` behind `externs.rs`'s own whitespace,
 whole-string and `errno` checks), `List`'s comparison-and-clone methods
-(`sort`, `contains`, `slice`), an owned `String`/`Bytes`/`View` interpolated
-into a `print` template (a piece costs two integer arguments, not one), a `pd`'s
+(`sort`, `contains`, `slice`, `clone`), an owned `String`/`Bytes`/`View` interpolated
+into a `print` template (a piece costs two integer arguments, not one, and the five
+non-float argument registers are the ceiling: a template with three owned pieces is
+refused as `a print with more than five non-float interpolation arguments`), a `pd`'s
 generated storage, and calls to the
 `extern fun`s whose bodies this backend owns or can forward to libc through the
 PLT.
@@ -110,10 +112,10 @@ in [`plan/mk7-own-backend.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/
 
 | | Count |
 | --- | --- |
-| Fixture files under `kelpc/tests/fixtures/*.kp` | 309 |
-| Rejected by the compiler itself (the `should fail` fixtures) | 135 |
-| Accepted by the compiler | 174 |
-| of those, built by the `asm` backend | 154 |
+| Fixture files under `kelpc/tests/fixtures/*.kp` | 327 |
+| Rejected by the compiler itself (the `should fail` fixtures) | 146 |
+| Accepted by the compiler | 181 |
+| of those, built by the `asm` backend | 161 |
 | of those, refused by the `asm` backend with the documented prefix | 20 |
 | of those, failed for any other reason | 0 |
 
@@ -160,15 +162,17 @@ it, are in
 [`plan/mk7-own-backend.md` §5](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-own-backend.md),
 with the measured brief for the next slice in `plan/mk7-next-slice.md`.
 
-Re-measured 2026-09-19, item 4 is closed outright: the container set is closed
-(`Box`, `List`, `Map` all lower) and so is the aggregate set — the per-eightbyte
+Re-measured 2026-09-20, item 4 is closed outright: the container set is closed
+(`Box`, `List`, `Map` all lower) and so is the aggregate set: the per-eightbyte
 classifier admits a `datac` field or an `enum` payload holding a float exactly as
 it admits an integer one, and an aggregate over sixteen bytes goes `MEMORY`-class.
 The six heap types free themselves at every drop point, an owned passdown frees
 itself at process exit (the generated `kelp_drop_pds`, registered with `atexit`
 exactly as the C backend's handler is), and what is left is one construct family
-at a time — closures, the comparison-and-clone `List` methods, the heap-bodied
-`fs`/`io`/`net`/`path`/`process` externs, and a gated call.
+at a time: closures, the heap-bodied `fs`/`io`/`net`/`path`/`process` externs,
+and a gated call. The most recent slices closed the `List` comparison-and-clone
+methods and an owned piece in a `print` template, which is why this
+implementation now builds 161 of the 181 fixtures the C backend accepts.
 
 ## Stages beyond tier 1
 
@@ -183,11 +187,11 @@ The plan splits the work into tiers, and only the first is in progress:
 | 8: runtime decoupling (parallel track) | in progress; see [Runtime](/compiler/runtime) |
 
 The memory gate is a test rather than an argument: `kelpc/tests/memory_gate.rs`
-runs `valgrind` over both backends' binaries, and the plan's recorded count is
-174 built by the C backend and 155 by the `asm` one, with zero findings, so it
-asserts
-no findings, because the AddressSanitizer gate instruments generated C and cannot
-see this backend. See [Tests](/compiler/tests).
+runs `valgrind` over both backends' binaries, and its last run (2026-09-20) checked
+181 binaries from the C backend and 161 from the `asm` one, which skipped the 20
+fixtures it refuses, with zero findings from any of them. So it asserts no
+findings, because the AddressSanitizer gate instruments generated C and cannot see
+this backend. See [Tests](/compiler/tests).
 
 ## See also
 

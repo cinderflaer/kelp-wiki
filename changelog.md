@@ -269,7 +269,10 @@ gitignored and never committed: add a line there when a user-visible change
 lands, grouped under language, compiler, stdlib, fixes and limits.
 
 When a version drops, write its entry here from that file plus the tag's commits
-and the Gitea release body, then wipe the pending file back to its header. Cut it
+and the Gitea release body, then wipe the pending file back to its header. Commit
+the entry on the `unreleased` branch and merge that branch into `main`: the merge
+is what publishes the entry together with the pages that changed for the release
+([Working on this site](/meta/contributing#working-on-this-site)). Cut it
 the way `0.1.5` above is cut: the version and date, a link to the Gitea release,
 the numbers (unit tests, end-to-end tests per backend), then what changed,
 grouped so a reader can skip what they do not care about.

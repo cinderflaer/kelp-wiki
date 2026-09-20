@@ -105,6 +105,14 @@ kept at branch `mkdocs-archive` and tag `mkdocs-final`, not in the current tree.
 The `hooks/`, `site/` and `node_modules/` directories here are untracked
 leftovers from it.
 
+**Unreleased work goes on the `unreleased` branch, not on `main`.** `main` is
+what Wiki.js reads, so it has to describe released versions: a new construct, a
+new rule, a changed diagnostic, and any page text that depends on one, is
+committed on `unreleased` and pushed there. At a release the changelog entry is
+committed on that same branch first, and then the branch is merged into `main`:
+that one merge is what puts the pages and the entry in front of a reader. Never
+rewrite `main` and never force push it, because the sync job pulls it.
+
 Two pages are **generated**, not written by hand, and re-derived when their
 source moves. The generators are part of that archived layout, so re-deriving one
 needs a checkout of it:

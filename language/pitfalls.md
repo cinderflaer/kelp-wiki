@@ -14,7 +14,10 @@ the fix. Source: [`syntax.md` §18 and §22](https://homelabone.xenoo.dev/gittea
 | `use of moved value 'a'` | an owned value was assigned, returned or passed with `move` | borrow instead (a plain parameter borrows), make a second owned copy, or reorder so the last use is last |
 | `cannot move out of a borrow` | a `move` parameter was handed a value that belongs to the caller | take a `move T` parameter yourself, or borrow |
 | `cannot read the owned field 'name' by value: v1 has no partial moves` | reading an owned field out of a borrowed struct | pass a borrow, call a method on it, or hold it in a `Box` and `take()` |
-| `this call returns a borrow of its parameter 'self', so that argument has to be a variable or a field` | a method that returns a borrow of its receiver was called on a temporary | bind the receiver first: `val u = set.union(a, b)` then `u.len()` |
+| `this call returns a borrow of its parameter 'self', so that argument has to be a variable or a field` | a method that returns a borrow of its receiver was called on a temporary | bind the receiver first: `val u = set.union(a, b)` then `u.len()`; a field of a returned `datac` (`mkName().name.as_str()`) is the same case one projection deeper |
+| `this is a borrow of a borrow` (with the operand named) | `&o` where `o` is already a borrow, which a parameter always is | pass the parameter itself: `o`, not `&o` |
+| `cannot borrow a temporary value` | `&expr` needs a place, and a call's result is not one, nor is a field of one | bind the call to a `val` and borrow the field of that: `val h = mk()` then `&h.name` |
+| `operator requires matching numeric operands, found 'mut i64' and 'i32'` (with the `write '*sink'` note) | a `mut T` parameter is an exclusive borrow, so it is read and written through `*` | write `*sink`, not `sink`, wherever the value is used |
 
 ## Text
 
@@ -22,7 +25,8 @@ the fix. Source: [`syntax.md` §18 and §22](https://homelabone.xenoo.dev/gittea
 | --- | --- |
 | `argument 'b' has type 'String', expected 'str'` | the parameter takes a view: add `.as_str()` |
 | `argument 'x' has type 'View', expected 'str'` | a slice has no NUL after it: `v.to_string()` |
-| `.as_str()` on a temporary is refused | bind the `String` to a `val` first (same for `.view()`) |
+| `.as_str()` on a temporary is refused | bind the `String` to a `val` first (same for `.view()`); a chained call is the same temporary one step out (`fmt.int(n).as_str()`) |
+| a template is refused as a value | `a string template can only be printed`: build the text with `str.concat`, `fmt.*` or a `String`, or print it where it is written |
 | `field 'text' is a borrowed type ('View')` | a view cannot be stored: store a `String` |
 | `cannot compare 'View' values with '=='` | use `v.eq(other)`, which compares bytes and lengths |
 | `field 'text' is a borrowed type (str)` | same as the `View` case: a field must be owned |
@@ -62,6 +66,7 @@ the fix. Source: [`syntax.md` §18 and §22](https://homelabone.xenoo.dev/gittea
 | --- | --- |
 | `cannot find module` / a name resolves nowhere | `impl` the file, and note that paths are relative to the project's `src/` |
 | a gated call is refused and names a domain | write the grant on the `impl` line: `with caps(fs = ["/srv/data/**"])` |
+| `... needs the 'fs' capability, which module 'x' was not granted` and `x` is not the module you wrote the call in | the module that holds nothing is the middle one; the message names the `impl` line that imported it without a `caps(...)` clause, and that line is the one to change |
 | a path with `..` or a relative path is refused | `fs`/`process` patterns match absolute, normalized paths |
 | `127.0.0.1` is not covered by `localhost` | `net` matches the host **string you wrote**, not a resolved address |
 | an `impl` after a declaration is a parse error | imports go first, then `const`/`pd`, then types and functions |

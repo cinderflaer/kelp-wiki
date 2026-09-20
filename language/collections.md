@@ -41,6 +41,7 @@ while !xs.is_empty() {
 | `pop()` | exclusive | the last element, moved out |
 | `insert(i, v)` / `remove(i)` | exclusive | `Unit` / the removed element |
 | `clear()` | exclusive | `Unit` |
+| `clone()` | shared | a second owned list: the elements are copied, and every owned element with them |
 | `sort()` | exclusive | `Unit`, for sortable elements |
 | `reverse()` | exclusive | `Unit` |
 | `contains(v)` | shared | `bool`, for comparable elements |
@@ -49,6 +50,11 @@ while !xs.is_empty() {
 `get` and `pop` move an owned element out and return a copy for a `Copy` element,
 so `List<i32>.get(i)` is an `i32` while `List<String>.get(i)` is a `&String`.
 Out-of-range indices and popping an empty list panic.
+
+`clone()` is what a caller reaches for when the callee takes a list by value:
+`str.join` consumes its list, so `str.join(sep = ",", parts = xs.clone())` leaves
+`xs` usable. Every owned element is copied too, so the element type has to be
+clonable.
 
 `f64` is **not** sortable (`nan` breaks the order), which is why
 [`stats`](/libraries/stats) and [`benchkit`](/libraries/benchkit) carry

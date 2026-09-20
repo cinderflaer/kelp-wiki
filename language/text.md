@@ -63,6 +63,13 @@ print("name\tvalue")     // tabs, too — see the escape set in §2.4
 arguments. A template (`"$x"`) is the only way to print a mixture, and a template
 is not a value.
 
+A template interpolates **any** scalar or text value, owned or borrowed, so
+`print("w = ${s}")` works with `s` a `String`, a `Bytes` or a `View` as well as
+with a `str` or a number. An owned piece is freed once the line is printed; a
+borrow and a `View` are not freed at all. Under `--backend=asm` a template is
+limited to five non-float slots for now, and an owned piece takes two of them
+([Backends](/compiler/backends)).
+
 `std/io` adds `print_bare`, `eprint` and `eprint_bare` for control over the
 newline and the stream, plus `File` writes. See
 [`std/io`](/stdlib/io).
@@ -152,7 +159,10 @@ val x: f64 = big.to_f64()            // 3.0 — the only integer->float widening
 ## Two traps
 
 - **`.as_str()` or `.view()` on a temporary is refused**
-  (`String.from_str("x").as_str()`): bind the `String` to a `val` first.
+  (`String.from_str("x").as_str()`): bind the `String` to a `val` first. A
+  chained call is the same temporary one step out (`fmt.int(n).as_str()`), and a
+  field of a call's result is the same case one projection deeper
+  (`mkName().name.as_str()`): bind the call, then borrow from the binding.
 - **A `String` argument where a `str` parameter is expected** needs
   `.as_str()`: the error message names the argument.
 

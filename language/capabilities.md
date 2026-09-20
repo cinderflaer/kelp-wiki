@@ -89,6 +89,11 @@ example: it only builds and reads plain data, but importing `std/http` needs
 `net` delegated, so `httpx` writes `with caps(net = [])` internally: the smallest
 grant that compiles, and it never dials.
 
+When that delegation is missing and the failing module is **not** the one you
+wrote the call in, the diagnostic points at the link that broke: it names the
+`impl` line that imported the module with no `caps(...)` clause, and that line is
+the one to change.
+
 ## Why this is checkable
 
 The capability matcher exists twice on purpose: in Kelp (`std/rt`, which is

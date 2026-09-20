@@ -151,6 +151,7 @@ The complete operator set (§2.6):
 | separators and access | `.` `,` `:` `(` `)` `{` `}` |
 | `when` arms only | `->` |
 | character literal | `'` |
+| byte literal | `b'` |
 
 Two things are worth knowing up front:
 

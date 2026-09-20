@@ -70,7 +70,13 @@ fun quarter(n: i64).R: result.Result<i64, str.ParseErr> {
 ## `panic` and `assert`
 
 `panic(message)` ends the program with a non-zero status; `assert(cond)` is the
-checked form (`panic: assertion failed`).
+checked form (`panic: assertion failed`). The message is a `str` or an **owned
+`String`**, so a message built in the failing branch needs no binding and no
+`.as_str()`:
+
+```kelp
+panic(fmt.int(n))          // `fmt.int` returns a `String`; it goes straight in
+```
 
 ```
 panic: assertion failed

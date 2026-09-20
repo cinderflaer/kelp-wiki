@@ -60,6 +60,11 @@ if let Rect(w, h) = shape {
 - The scrutinee may be **any expression**, temporary or place. A *place* is
   matched directly with nothing moved; a *temporary* is bound to a hidden local
   first, which is how `if let Ok(v) = json.parse(text)` is legal at all.
+- The one expression that is not a scrutinee is a **field of a temporary**.
+  `if let Word(w) = mk().t` names the owned field it would have to read out of a
+  value that has no storage of its own, and `when` refuses a temporary outright
+  (`when mk()` itself is "the scrutinee of a pattern 'when' must be a place").
+  Bind the call first: `val h = mk()`, then match `h.t`.
 - A payload binds as a **copy** when it is `Copy` and as a **shared borrow**
   otherwise. So in `if let Ok(x) = parsed` where `parsed: Result<Civil, _>`, `x`
   is already a `&Civil`: pass `x`, not `&x`.
