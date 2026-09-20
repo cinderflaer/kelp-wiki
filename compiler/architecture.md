@@ -68,8 +68,9 @@ Multi-file loading and name resolution:
   the last path segment, except that a module whose path ends in `/lib` under `deps/`
   takes the name of the directory Coral fetched it into
   (`impl "deps/argparse/lib"` is `argparse`). The `as name` clause that used to
-  choose the name is outdated, and a build warns about it; so is the `with` that
-  used to introduce a capability grant, whose clause is `caps(...)` on its own.
+  choose the name is gone, and the parser refuses it by name; the `with` that
+  used to introduce a capability grant is outdated, and a build warns about it,
+  with the clause now written `caps(...)` on its own.
 - Paths are relative to `src/`, may not contain `..`, and may not reach outside the
   project.
 - Names are strictly module-qualified: module `m`'s items are reachable elsewhere

@@ -13,7 +13,8 @@ builtin type name like `str` or `String`, not a keyword.
 program      := line* EOF
 line         := impl | const | pd | datac | enum | fun
 
-impl         := "impl" string [ "as" ident ] [ "with" "caps" "(" grant ("," grant)* ")" ]
+impl         := "impl" string [ "with" "caps" "(" grant ("," grant)* ")" ]
+                // `as name` was removed: the parser refuses the clause by name
 grant        := ident "=" "[" string ("," string)* "]"
 const        := "const" ident ":" type "=" expr
 pd           := "pd" ("val" | "var") ident [ ":" type ] "=" expr

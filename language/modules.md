@@ -34,10 +34,10 @@ fun main() {
   entry module**, a path ending in `/lib` under `deps/`, is named after the
   directory Coral fetched it into: `impl "deps/json/lib"` is `json`, whichever
   repository or folder it came from.
-- **`impl "path" as name` is outdated.** It still compiles and still names the
-  module, and `kelpc build` prints an `outdated:` finding saying it is removed in
-  the next development cycle. Drop the clause, and where the name you wanted is
-  not the module's own name, rename the call sites instead.
+- **`impl "path" as name` is removed.** The clause used to name the module;
+  now the module's own name is the only name, and a program that still writes the
+  clause gets a parse error that names the fix. Where the name you wanted is not
+  the module's own name, rename the call sites instead.
 - **Only the entry module has unprefixed access to the whole program.** Every
   other module sees exactly what it imported.
 - **Authority is declared at the import**, and it is the only place it can be
