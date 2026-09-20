@@ -68,7 +68,7 @@ binaries' stdout is compared, so a construct the `asm` backend does not lower ye
 is **refused by name** rather than silently miscompiled:
 
 ```
-error: the 'asm' backend does not support the `extern fun std.fs.exists_raw` yet
+error: the 'asm' backend does not support the `extern fun std.net.connect_raw` yet
 ```
 
 `kelpc version` prints the compiler version. `kelpc check` answers whether a

@@ -7,11 +7,15 @@ tags: "compiler, testing"
 The suite is built on one idea: **compile a program, run it, compare what it
 printed**. Nothing in the language suite asserts on generated C, so a test says
 what the language does rather than how a backend does it, and that is what lets
-the same suite validate a second backend. Two tests read the generated file on
+the same suite validate a second backend. Three tests read the generated file on
 purpose, because the property under test *is* the generated C: the capability
-check has to call the Kelp matcher (`cap_matcher.rs`), and every statement has to
-be mapped back to its `.kp` line (`compile_and_run.rs`'s
-`the_generated_c_maps_statements_back_to_their_kp_lines`).
+check has to call the Kelp matcher (`cap_matcher.rs`), every statement has to be
+mapped back to its `.kp` line (`compile_and_run.rs`'s
+`the_generated_c_maps_statements_back_to_their_kp_lines`), and a build with no
+`-o` has to leave the generated C beside the artifact
+(`a_build_with_no_output_path_lands_in_build`). That last one is C-only by
+construction, so it is the one failing test under `--backend=asm` that is not a
+refused construct.
 
 ```sh
 cargo test                                   # unit tests + the fixture suite
@@ -21,12 +25,18 @@ BACKENDS="c asm" ./kelpc/tests/run-all-backends.sh
 
 ## The fixture suite (`kelpc/tests/compile_and_run.rs`)
 
-336 tests (measured 2026-09-20), driving the real `kelpc` binary over two corpora:
+357 tests (measured 2026-09-20 at compiler commit `2593e3e`), driving the real
+`kelpc` binary over two corpora:
 
 | Corpus | Count | Shape |
 | --- | --- | --- |
-| `kelpc/tests/fixtures/*.kp` | 358 files | one loose file per single-file test |
-| `kelpc/tests/projects/<name>/` | 47 directories | multi-file: a module graph needs a directory, and a granted module needs an importer |
+| `kelpc/tests/fixtures/*.kp` | 364 files | one loose file per single-file test |
+| `kelpc/tests/projects/<name>/` | 62 directories | multi-file: a module graph needs a directory, and a granted module needs an importer |
+
+The C backend passes every one of them; `KELPC_BACKEND=asm cargo test --test
+compile_and_run` passes 332 and fails 25, and the 25 are the tests that compile a
+fixture or project the `asm` backend refuses, plus
+`a_build_with_no_output_path_lands_in_build`, which asserts on the generated C.
 
 Every fixture lands in exactly one of three groups, because the harness does three
 different things with them:
@@ -43,7 +53,12 @@ capability cases: a granted path, a path outside the grant, a symlink escape, an
 over-delegation that must be refused, a `..` pattern refused at the `impl` line,
 the `net` host as written, a program path under `process`, and the HTTP projects
 that exercise pooling and redirects against a loopback server the harness binds on
-port 0 and passes to the program through argv.
+port 0 and passes to the program through argv. The four capability-gate bypasses
+the compiler closed this round each have a project of their own: a gated module's
+`extern fun` primitive, a gated item named as a function value, a receiver method
+and a `pd` initializer, each refused in a module that holds no grant and exercised
+in one that does (`caps_raw_*`, `caps_value_ungranted`, `caps_raw_value_*`,
+`caps_method_*`, `pd_gated_*`).
 
 Two gates run inside this file:
 

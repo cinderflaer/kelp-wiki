@@ -45,7 +45,7 @@ Two consequences worth knowing:
    sweep asserts that every refusal begins with it:
 
    ```
-   error: the 'asm' backend does not support the `extern fun std.time.now_unix_raw` yet
+   error: the 'asm' backend does not support the `extern fun std.net.connect_raw` yet
    ```
 
 2. **A refusal is a feature.** The backend earns coverage by agreeing with the C
@@ -71,7 +71,7 @@ and `?` all lower on top of them), the three `str` parsers
 whole-string and `errno` checks), `List`'s comparison-and-clone methods
 (`sort`, `contains`, `slice`, `clone`, for an element that is a number, `bool`,
 `String` or `Bytes`; a `datac`/`enum` element's derived copy and order is a C-backend
-surface as of the newest compiler commit, see the refusal list below), an owned
+surface as of `c3a8759`, see the refusal list below), an owned
 `String`/`Bytes`/`View` interpolated
 into a `print` template (a piece costs two integer arguments, not one, and the five
 non-float argument registers are the ceiling: a template with three owned pieces is
@@ -81,7 +81,11 @@ type and length, so one is an ordinary by-value aggregate: `len()`/`is_empty()`
 are the type's own constants, `get`/`set` are bounds-checked over the element's
 stride, and an element that owns memory is dropped per element), a function that
 returns a borrow of anything (`&str` was the only shape whose pointer-in-register
-return this backend classified), and calls to the
+return this backend classified), a closure (a 24-byte fat pointer whose
+environment is malloc'd per capture and dropped by a generated routine) and a
+plain function value (one code pointer, read as an ordinary dereference), the
+capability check itself (the emitted path and name checks, the deny path and the
+compiled-in allowlists), and calls to the
 `extern fun`s whose bodies this backend owns or can forward to libc through the
 PLT.
 
@@ -99,11 +103,11 @@ number — so the ABI is pinned by a `.s`-level test
 `kelpc/tests/compile_and_run.rs`) that reads the emitted assembly and asserts the
 register each eightbyte shape uses.
 
-What it does not cover yet is the refusal list below: closures and function
-values; the heap-bodied `fs`/`io`/`net`/`path`/`process` externs; a
-gated call; a `List.clone`/`sort`/`slice` over a `datac` or `enum` element, whose
-derived copy and order the newest compiler commit added to the frontend and to the
-C backend; and a borrow of a field chain (`&xs.get(i).v`).
+What it does not cover yet is the refusal list below: `std.fs`'s fallible read and
+open bodies, the `std.net` socket and resolver bodies and `std.process`'s argv and
+spawn bodies; a `List.clone`/`sort`/`slice` over a `datac` or `enum` element,
+whose derived copy and order the frontend and the C backend gained in `c3a8759`;
+and a borrow of a field chain (`&xs.get(i).v`).
 
 Its layout:
 
@@ -116,73 +120,87 @@ Its layout:
 
 ## How much of it works today
 
-Measured at compiler commit `8d86d8e` by building each fixture with both
-backends, and recorded
-in [`plan/mk7-own-backend.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-own-backend.md)
-§0 and §5. Those two sections own these numbers; this page quotes them.
+Re-measured 2026-09-20 at compiler commit `2593e3e` by building each fixture with
+both backends, in a detached worktree of the compiler checkout because other
+lanes had the shared checkout dirty and were committing through the measurement
+(the shared checkout was clean and at `2593e3e` when the measurement began, and
+carried uncommitted edits to `codegen_asm.rs`, `codegen_c.rs` and `diag.rs` plus
+an untracked test file when it ended), which is why the commit is named at every
+number on this page. The same
+measurement is recorded at `9c89b70` in
+[`plan/mk7-own-backend.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-own-backend.md)
+§0 and §5, and the two agree fixture for fixture.
 
 | | Count |
 | --- | --- |
-| Fixture files under `kelpc/tests/fixtures/*.kp` | 358 |
+| Fixture files under `kelpc/tests/fixtures/*.kp` | 364 |
 | Rejected by the compiler itself (the `should fail` fixtures) | 156 |
-| Accepted by the compiler | 202 |
-| of those, built by the `asm` backend | 178 |
-| of those, refused by the `asm` backend with the documented prefix | 24 |
+| Accepted by the compiler | 208 |
+| of those, built by the `asm` backend | 200 |
+| of those, refused by the `asm` backend with the documented prefix | 8 |
 | of those, failed for any other reason | 0 |
 
-The plan's own status table records the *suite* number: **288 of 336** integration
-tests passing under `--backend=asm`, with the C backend passing all 336, which
-counts multi-file projects and subprocess cases too, and so is not the same
-denominator as the fixture count above. Re-measure either before quoting it: both
-move with every slice, and the plan's header says it is updated as work lands.
+The *suite* number, measured the same way, counts multi-file projects and
+subprocess cases too, and so is not the same denominator as the fixture count
+above: **332 of 357** integration tests pass under `--backend=asm`, with the C
+backend passing all **357**. Re-measure either before quoting it: both move with
+every slice.
 
-### What the 24 refusals are
+### What the 8 refusals are
 
 The differential sweep groups the refusals into the categories the plan's ranking
 table uses (`cargo test --test backend_coverage -- --ignored --nocapture` prints
 it verbatim, and it is the number the ratchet keeps honest). Six rows are printed
-and three of them are empty:
+and five of them are empty:
 
 | Category | Fixtures |
 | --- | --- |
-| a heap type | 13 |
+| a heap type | 8 |
 | a fixed-size array (A-18) | 0 |
 | an `enum` | 0 |
 | a `datac` holding a float or heap field | 0 |
-| a closure or a function value | 10 |
-| a gated `extern` | 1 |
+| a closure or a function value | 0 |
+| a gated `extern` | 0 |
 
 Rows a previous version of this page carried are empty now, which is what the
 slices in between did: an `enum` whose payload is a float and a `datac` holding a
-float field (the float-in-aggregate slice lowered both), and a fixed-size array
-(the A-18 slice, whose `[T; N]` is a synthesized by-value layout on this backend
-now, so both its literals and the type itself lower).
+float field (the float-in-aggregate slice lowered both), a fixed-size array (the
+A-18 slice, whose `[T; N]` is a synthesized by-value layout on this backend now,
+so both its literals and the type itself lower), a closure or a function value
+(the closures slice, ten fixtures), and a gated `extern` (the clock and entropy
+externs, which emptied it).
 
-One refusal per non-empty row, and the heap row's two shapes with it, as the
-backend names them:
+The heap row is the catch-all, and at this commit it is three mechanisms rather
+than one: six of its eight name an `extern fun` whose body this backend has no
+routine for, one names the `List.clone` a `datac`/`enum` element's derived copy
+needs, and one names a borrow of a field chain. All eight build under the C
+backend. As the backend names them:
 
 ```
-error: the 'asm' backend does not support the `extern fun std.io.is_open_raw` yet
+error: the 'asm' backend does not support the `extern fun std.fs.try_read_raw` yet
+error: the 'asm' backend does not support the `extern fun std.net.connect_raw` yet
+error: the 'asm' backend does not support the `extern fun std.net.resolve_raw` yet
+error: the 'asm' backend does not support the `extern fun std.process.arg_count_raw` yet
 error: the 'asm' backend does not support the method `List.clone` on a `List` yet
-error: the 'asm' backend does not support the parameter `f: &closure(i32).R: i32` of `apply` yet
-error: the 'asm' backend does not support the `extern fun std.time.now_unix_raw` yet
+error: the 'asm' backend does not support a borrow of anything but a named local (a scalar, a `datac` or a heap type), a `datac` temporary, or a field of one yet
 ```
 
-The heap-type row is the largest one and it is the catch-all, not one gap: 11 of
-its 13 name an `extern fun` whose body this backend has no routine for, one names
-the `List.clone` a `datac` element's derived copy needs, and one names a borrow of
-a field chain. A build stops at the first refusal it hits, so a fixture that would
-also meet a closure or a `List` method later is counted here when the first thing
-in its way is a heap type, a standard-library call over `net`/`io`/`process`/`fs`,
-or the `extern fun` behind one of those (the ranking treats an `extern fun` whose
-body this backend has no routine for as part of the heap row, because the
-allocator is what unblocks almost all of it). The category is recovered from each
-fixture's first refusal message, so a fixture can move rows when a message's
-wording changes. That is also why the gated-`extern` row is one fixture rather
-than ten: ten fixtures the C backend builds import a gated module, and every one
-of them names an extern body first, so the capability check is still masked
-behind the extern bodies and is the first refusal of none of them. The ranking
-table this page summarizes, and the per-fixture lists behind it, are in
+The six extern bodies are `std.fs`'s fallible read, the `std.net` socket and
+resolver bodies, and `std.process`'s argv and spawn bodies; the `fs` path family,
+the `io` descriptor family and the clock and entropy externs all lowered in the
+slices since. A build stops at the first refusal it hits, so a fixture that would
+also meet a `List` method later is counted here when the first thing in its way is
+a standard-library call over `net`/`process`/`fs`, or the `extern fun` behind one
+of those (the ranking treats an `extern fun` whose body this backend has no
+routine for as part of the heap row, because the allocator is what unblocks
+almost all of it). The category is recovered from each fixture's first refusal
+message, so a fixture can move rows when a message's wording changes. The
+gated-`extern` row is empty for the same reason: no fixture's first refusal names
+the gate at this commit, because the gate sits behind an extern body in each of
+the six that is still refused. The gate's two positions are pinned by unit tests
+in the backend instead. The one fixture the row held, `caps_time_rand`, built when
+the clock and entropy externs lowered. The ranking table this page summarizes, and the
+per-fixture lists behind it, are in
 [`plan/mk7-own-backend.md` §5](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-own-backend.md),
 with the measured brief for the next slice in `plan/mk7-next-slice.md`.
 
@@ -192,13 +210,13 @@ classifier admits a `datac` field or an `enum` payload holding a float exactly a
 it admits an integer one, and an aggregate over sixteen bytes goes `MEMORY`-class.
 The six heap types free themselves at every drop point, an owned passdown frees
 itself at process exit (the generated `kelp_drop_pds`, registered with `atexit`
-exactly as the C backend's handler is), and what is left is one construct family
-at a time: closures, the heap-bodied `fs`/`io`/`net`/`path`/`process` externs, a
-gated call, the derived copy and order for a `datac`/`enum` list element, and a
-borrow of a field chain. The most recent slices closed the `List`
-comparison-and-clone methods for a numeric, `bool`, `String` or `Bytes` element
-and an owned piece in a `print` template, which is why this implementation now
-builds 178 of the 202 fixtures the C backend accepts.
+exactly as the C backend's handler is), and the closures slice closed the last
+construct family that refused outright: a capturing closure is a fat pointer with
+a malloc'd environment and a generated drop, and a plain function value is one
+code pointer. What is left is one mechanism at a time: the `std.fs` fallible and
+`std.net`/`std.process` extern bodies, the derived copy and order for a
+`datac`/`enum` list element, and a borrow of a field chain, which is why this
+implementation now builds 200 of the 208 fixtures the C backend accepts.
 
 ## Stages beyond tier 1
 
@@ -213,9 +231,9 @@ The plan splits the work into tiers, and only the first is in progress:
 | 8: runtime decoupling (parallel track) | in progress; see [Runtime](/compiler/runtime) |
 
 The memory gate is a test rather than an argument: `kelpc/tests/memory_gate.rs`
-runs `valgrind` over both backends' binaries, and its last run checked
-202 binaries from the C backend and 178 from the `asm` one, out of the 358
-fixtures in the directory, which skipped the 24 this backend refuses and the 156
+runs `valgrind` over both backends' binaries, and its last run (at `2593e3e`) was
+408 runs over the 364 fixtures in the directory: 208 binaries from the C backend
+and 200 from the `asm` one, which skipped the 8 this backend refuses and the 156
 the compiler itself rejects, with zero findings from any of them. So it asserts no
 findings, because the AddressSanitizer gate instruments generated C and cannot see
 this backend. See [Tests](/compiler/tests).

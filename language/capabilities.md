@@ -128,8 +128,11 @@ One shape is not covered yet: a gated item named as a *function value*
 (`val f = fs.read`) and called through the pointer. Holding the domain is needed
 to name it, but the pattern check is emitted from the call's own callee, and an
 indirect call has no callee in the source, so a narrowed grant does not reach
-that call. `--backend=asm` refuses the construct by name rather than emitting it
-unchecked; the C backend builds it. Nothing in the shipped stdlib or in the
+that call: the wrapper spelling builds under *both* backends and reads outside the
+grant (measured at compiler commit `2593e3e`). Only the `extern fun` spelling
+(`val f = fs.read_raw`) is refused by name, and only by `--backend=asm`, which has
+no symbol to take the address of; the C backend builds that one too. `BUG-k2Qv7`
+is the open report for the C side. Nothing in the shipped stdlib or in the
 examples uses a gated item as a value.
 
 ## Testing a restriction

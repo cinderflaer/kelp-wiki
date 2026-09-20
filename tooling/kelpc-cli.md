@@ -128,6 +128,9 @@ resolution, which is the compiler's own answer to keep or to publish.
 | `kelpc build src/main.kp -o app` | `app` | `app.c` |
 | `kelpc build .` | `build/a.out` | `build/a.c` |
 
+Under `--backend=asm` the generated file is the assembly text in place of the C:
+`build/main.s` and `build/main.o`, or `<out>.s` and `<out>.o` with `-o`.
+
 - `build/` is relative to the **current working directory**, and the compiler
   creates it if it is missing.
 - The name comes from the last path segment you passed, which is why a directory
@@ -176,34 +179,33 @@ error: unknown backend 'llvm'; expected one of: c, asm
 **The C backend is the reference.** Every fixture in the test suite is built by
 both backends and the two binaries' stdout is compared, so a construct the `asm`
 backend cannot lower is **refused by name** rather than silently miscompiled.
-Three real refusals:
+Four real refusals, measured at compiler commit `2593e3e`:
 
 ```text
-error: the 'asm' backend does not support the `extern fun std.fs.exists_raw` yet
-error: the 'asm' backend does not support the parameter `f: &closure(&Item)` of `each` yet
-error: the 'asm' backend does not support the `extern fun std.time.now_unix_raw` yet
+error: the 'asm' backend does not support the `extern fun std.fs.try_read_raw` yet
+error: the 'asm' backend does not support the `extern fun std.net.connect_raw` yet
+error: the 'asm' backend does not support the method `List.clone` on a `List` yet
+error: the 'asm' backend does not support a borrow of anything but a named local (a scalar, a `datac` or a heap type), a `datac` temporary, or a field of one yet
 ```
 
-Those are three different categories: an `extern` whose body this backend has no
-routine for, which is the `std/fs` call here and which the plan counts in its
-catch-all heap row; a closure or a function value; and an `extern` refused for
-its capability gate rather than for the symbol (`time.now_unix_raw`). Scalars,
-`while`, `print!`, arithmetic and an aggregate holding a float all lower, so a
+They are four lines and three mechanisms: an `extern` whose body this backend has
+no routine for (`fs.try_read_text` and any `net` client reach one), which the plan
+counts in its catch-all heap row; a `List` method over a `datac` or `enum` element;
+and a borrow of a field chain. Scalars, `while`, `print!`, arithmetic, an aggregate
+holding a float, a closure, a function value and a gated call all lower, so a
 program made of those builds and runs under `asm` today.
 
-`plan/mk7-own-backend.md` §0 and §5 own the current count. **178 of the 202
-fixtures the C backend accepts build under `asm`, and 24 are refused**, measured
-at compiler commit `8d86d8e`, and the
-plan's status table records a suite figure measured the same way: **288 of 336**
-integration tests passing under `--backend=asm`, with the C backend passing all
-336, a larger denominator,
-because the suite counts multi-file projects and subprocess cases as well
-([mk7-own-backend.md](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-own-backend.md)).
-Both were measured at that commit rather than quoted
-from an earlier run. Re-measure both before quoting them, because each moves with
-every slice.
-What the `asm` backend lowers today, and
-the 24 refusals it still has, are on the [Backends](/compiler/backends) page.
+[`plan/mk7-own-backend.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-own-backend.md)
+§0 and §5 hold the measured history, and the [Backends](/compiler/backends) page
+carries the current table. **200 of the 208 fixtures the C backend accepts build
+under `asm`, and 8 are refused**, measured at compiler commit `2593e3e`; the
+suite figure measured the same way is **332 of 357** integration tests passing
+under `--backend=asm`, with the C backend passing all 357, a larger denominator
+because the suite counts multi-file projects and subprocess cases as well. Both
+were measured at that commit rather than quoted from an earlier run. Re-measure
+both before quoting them, because each moves with every slice. What the `asm`
+backend lowers today, and the 8 refusals it still has, are on the
+[Backends](/compiler/backends) page.
 
 If the `asm` backend cannot find the library directory it links against, point
 `KELPC_GLIBC_DIR` at the directory holding `crt1.o` and `libc.so`.
