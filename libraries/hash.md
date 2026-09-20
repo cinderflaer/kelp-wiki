@@ -16,7 +16,7 @@ hash = "Juniper/fpl/hash"
 ```
 
 ```kelp
-impl "deps/hash/lib" as hash
+impl "deps/hash/lib"
 ```
 
 ## Functions
@@ -47,7 +47,7 @@ bit-by-bit and is callable on its own; the `crc32` loop calls it per byte.
 ## Example
 
 ```kelp
-impl "deps/hash/lib" as hash
+impl "deps/hash/lib"
 
 fun main() {
     print(hash.crc32_str("hello"))

@@ -19,7 +19,7 @@ json = "Juniper/fpl/json"
 ```
 
 ```kelp
-impl "deps/json/lib" as json
+impl "deps/json/lib"
 ```
 
 ## The tree
@@ -286,7 +286,7 @@ Limits and rules:
 ## Example
 
 ```kelp
-impl "deps/json/lib" as json
+impl "deps/json/lib"
 
 fun main() {
     val parsed = json.parse("{\"name\":\"kelp\",\"tags\":[\"lang\",\"caps\"],\"stars\":42}")

@@ -17,7 +17,7 @@ encoding = "Juniper/fpl/encoding"
 ```
 
 ```kelp
-impl "deps/encoding/lib" as encoding
+impl "deps/encoding/lib"
 ```
 
 ```kelp
@@ -135,7 +135,7 @@ library's `query_pairs` leaves `+` alone for the same reason.
 ## Example
 
 ```kelp
-impl "deps/encoding/lib" as encoding
+impl "deps/encoding/lib"
 impl "std/result"
 
 fun main() {

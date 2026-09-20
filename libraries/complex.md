@@ -15,7 +15,7 @@ complex = "Juniper/fpl/complex"
 ```
 
 ```kelp
-impl "deps/complex/lib" as complex
+impl "deps/complex/lib"
 ```
 
 ## Type
@@ -43,7 +43,7 @@ Both fields are public and immutable; every operation returns a new `Complex`.
 ## Example
 
 ```kelp
-impl "deps/complex/lib" as complex
+impl "deps/complex/lib"
 
 fun main() {
     val a = complex.Complex(re = 1.0, im = 2.0)

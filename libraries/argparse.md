@@ -15,7 +15,7 @@ argparse = "Juniper/fpl/argparse"
 ```
 
 ```kelp
-impl "deps/argparse/lib" as argparse
+impl "deps/argparse/lib"
 ```
 
 ## The one convention
@@ -93,7 +93,7 @@ Sections with no entries are omitted. A trailing newline is included.
 ## Example
 
 ```kelp
-impl "deps/argparse/lib" as argparse
+impl "deps/argparse/lib"
 
 fun main() {
     var p = argparse.new("demo")

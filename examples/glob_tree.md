@@ -24,17 +24,17 @@ glob = "Juniper/fpl/glob"
 ## The program
 
 ```kelp
-impl "deps/glob/lib" as glob
+impl "deps/glob/lib"
 impl "std/fs"
 impl "std/str"
 impl "std/fmt"
 impl "std/process"
-impl "std/path" as p
+impl "std/path"
 
 // Printing the file name keeps the output short; the walk returns full paths,
 // and they are absolute because a gated call needs one.
-fun report(path: &str, lines: usize) {
-    val name = p.file_name(path)
+fun report(file: &str, lines: usize) {
+    val name = path.file_name(file)
     val number = fmt.int(lines.to_i64())
     val count = fmt.pad_left(number.as_str(), 6, ' ')
     val line = str.concat(count.as_str(), "  ")
@@ -49,7 +49,7 @@ fun main() {
     if argv.len() >= 2 {
         root = argv.get(1).clone()
     }
-    if !p.is_absolute(root.as_str()) {
+    if !path.is_absolute(root.as_str()) {
         print("error: glob_tree takes an absolute directory (this language has no cwd accessor)")
         process.exit(2)
     }
@@ -61,10 +61,10 @@ fun main() {
     var counted: i64 = 0
     var i: usize = 0
     while i < candidates.len() {
-        val path = candidates.get(i)
-        if fs.is_file(path.as_str()) {
-            val lines = fs.read_lines(path.as_str())
-            report(path.as_str(), lines.len())
+        val entry = candidates.get(i)
+        if fs.is_file(entry.as_str()) {
+            val lines = fs.read_lines(entry.as_str())
+            report(entry.as_str(), lines.len())
             total += lines.len().to_i64()
             counted += 1
         }
@@ -120,7 +120,7 @@ when the examples do.
 - **A gated call takes an absolute path.** `fs.read_text("notes.txt")` panics with
   "is outside the fs capability granted to module ..." even under a `/**` grant,
   because there is no `cwd` accessor in v1 and the matcher compares absolute
-  patterns. The example checks with `p.is_absolute` and exits 2 with a sentence
+  patterns. The example checks with `path.is_absolute` and exits 2 with a sentence
   instead of panicking. See the trap list in the
   [chapter index](/examples#what-the-examples-deliberately-do-not-hide).
 - **`glob_filter` clones what it keeps,** because a `List` only lends its elements

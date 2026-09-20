@@ -69,6 +69,26 @@ it never rewrites a token, so a formatted file is the same program. See
 limit and declaration order inside a group) and for `kelpc lint`, which reports
 the case rule and the two style findings a formatter cannot make.
 
+## Retiring a spelling
+
+When a spelling is replaced or deleted it goes through the register rather than
+straight out (`syntax.md` 23, `kelpc/src/deprecated.rs`):
+
+1. Migrate the compiler's own sources first. A deprecation in the shipped stdlib
+   would warn every program that imports that module about a file its reader
+   cannot edit, and the unit test in `deprecated.rs` fails if one is left behind.
+2. Add the entry: an id, what is outdated, and what to write instead. The
+   deadline is that file's shared sentence, and it is the next development cycle
+   for every entry.
+3. Raise the finding where the construct is read (an `impl` clause is read by
+   `resolve.rs`) and pin it with a test: `kelpc/tests/outdated.rs` covers the
+   build contract, and the entry's own wording is a unit test.
+4. **Leave the fixtures that exercise the old spelling on it.** They are the
+   coverage for the deprecation path itself, and they are what the removal has to
+   migrate.
+5. Remove it in the next cycle: the parser, the register entry, and every source
+   that still writes it.
+
 ## Reporting a defect
 
 A useful defect report has:

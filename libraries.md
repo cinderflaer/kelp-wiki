@@ -19,8 +19,8 @@ hash = "Juniper/fpl/hash"
 ```
 
 ```kelp
-impl "deps/json/lib" as json
-impl "deps/hash/lib" as hash
+impl "deps/json/lib"
+impl "deps/hash/lib"
 ```
 
 ## The four rules that shape the catalogue
@@ -50,9 +50,9 @@ Some libraries are **gated** exactly like a `std/*` module, because they wrap on
 the consumer delegates the capability at the `impl` line.
 
 ```kelp
-impl "deps/fsx/lib" as fsx with caps(fs = ["/var/lib/myapp/**"])
-impl "deps/log/lib" as log with caps(time = [])
-impl "deps/lineproto/lib" as lineproto with caps(net = ["127.0.0.1:*"])
+impl "deps/fsx/lib" with caps(fs = ["/var/lib/myapp/**"])
+impl "deps/log/lib" with caps(time = [])
+impl "deps/lineproto/lib" with caps(net = ["127.0.0.1:*"])
 ```
 
 | Library | Needs |

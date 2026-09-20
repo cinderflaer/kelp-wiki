@@ -23,7 +23,7 @@ httpx = "Juniper/fpl/httpx"
 
 ```kelp
 impl "std/http"
-impl "deps/httpx/lib" as httpx
+impl "deps/httpx/lib"
 ```
 
 A consumer that both builds and sends still writes its own net grant on
@@ -31,7 +31,7 @@ A consumer that both builds and sends still writes its own net grant on
 
 ```kelp
 impl "std/http" with caps(net = ["api.example.com:443"])
-impl "deps/httpx/lib" as httpx
+impl "deps/httpx/lib"
 ```
 
 ## Query strings
@@ -87,7 +87,7 @@ when the header has no `=`.
 
 ```kelp
 impl "std/http"
-impl "deps/httpx/lib" as httpx
+impl "deps/httpx/lib"
 
 fun main() {
     var pairs: List<http.Header> = List.empty()

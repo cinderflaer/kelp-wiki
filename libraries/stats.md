@@ -15,7 +15,7 @@ stats = "Juniper/fpl/stats"
 ```
 
 ```kelp
-impl "deps/stats/lib" as stats
+impl "deps/stats/lib"
 ```
 
 ## Type
@@ -61,7 +61,7 @@ odd-length list; on an even one both interpolate the two middle ranks.
 ## Example
 
 ```kelp
-impl "deps/stats/lib" as stats
+impl "deps/stats/lib"
 
 fun main() {
     var xs: List<f64> = List.empty()

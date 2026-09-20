@@ -289,7 +289,7 @@ The whole repository lands under `src/deps/fpl/`, so the import names the folder
 inside it:
 
 ```kelp
-impl "deps/fpl/json/lib" as json
+impl "deps/fpl/json/lib"
 ```
 
 `impl` paths are resolved against the project's `src/`, which is why fetched code

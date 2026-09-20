@@ -20,7 +20,7 @@ lineproto = "Juniper/fpl/lineproto"
 ```
 
 ```kelp
-impl "deps/lineproto/lib" as lineproto with caps(net = ["example.com:25"])
+impl "deps/lineproto/lib" with caps(net = ["example.com:25"])
 ```
 
 The pattern must cover whatever host the consumer already connected
@@ -62,7 +62,7 @@ Constants: `CR` (13), `LF` (10).
 
 ```kelp
 impl "std/net"
-impl "deps/lineproto/lib" as lineproto with caps(net = ["127.0.0.1:*"])
+impl "deps/lineproto/lib" with caps(net = ["127.0.0.1:*"])
 
 fun main() {
     val l = net.listen(45678)
@@ -86,7 +86,7 @@ A client that connects and sends two lines:
 
 ```kelp
 impl "std/net"
-impl "deps/lineproto/lib" as lineproto with caps(net = ["127.0.0.1:*"])
+impl "deps/lineproto/lib" with caps(net = ["127.0.0.1:*"])
 
 fun main() {
     val s = net.connect("127.0.0.1", 45678)

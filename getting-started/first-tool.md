@@ -23,7 +23,7 @@ impl "std/fs"
 impl "std/option"
 impl "std/process"
 impl "std/str"
-impl "std/path" as p
+impl "std/path"
 
 fun usage() {
     print("usage: head [--lines N] <absolute-path>")
@@ -61,13 +61,13 @@ fun main() {
         at = 3
     }
 
-    val path = argv.get(at)
-    if !p.is_absolute(path.as_str()) {
+    val target = argv.get(at)
+    if !path.is_absolute(target.as_str()) {
         print("error: head takes an absolute path (this language has no cwd accessor)")
         process.exit(2)
     }
 
-    val lines = fs.read_lines(path.as_str())
+    val lines = fs.read_lines(target.as_str())
     var i: usize = 0
     while i < lines.len() && i.to_i64() < count {
         print(lines.get(i).as_str())
@@ -149,7 +149,7 @@ panic: fs.read: cannot open file
   errno 2: No such file or directory
 ```
 
-The exit code is 1. If you want a sentence instead, check `fs.exists(path)` first
+The exit code is 1. If you want a sentence instead, check `fs.exists(target)` first
 or use `fs.open` and handle it yourself; [`std/fs`](/stdlib/fs) has the list.
 
 **Exit codes are the interface.** 0 is success, 2 is a usage error, 1 is a

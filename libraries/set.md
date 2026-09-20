@@ -16,7 +16,7 @@ set = "Juniper/fpl/set"
 ```
 
 ```kelp
-impl "deps/set/lib" as set
+impl "deps/set/lib"
 ```
 
 ## Why two types
@@ -81,7 +81,7 @@ datac StrSet(var entries: Map<String, bool>)
 ## Example
 
 ```kelp
-impl "deps/set/lib" as set
+impl "deps/set/lib"
 
 fun main() {
     var a: set.Set<i32> = set.new()

@@ -15,7 +15,7 @@ table = "Juniper/fpl/table"
 ```
 
 ```kelp
-impl "deps/table/lib" as table
+impl "deps/table/lib"
 ```
 
 ## Types
@@ -59,7 +59,7 @@ length and the column will be visually short.
 ## Example
 
 ```kelp
-impl "deps/table/lib" as table
+impl "deps/table/lib"
 
 fun main() {
     var headers: List<String> = List.empty()

@@ -68,7 +68,7 @@ SSH; anything containing `://` or `@` is taken as a full URL and used as written
 `json/` at `src/deps/json/`, so the import is
 
 ```kelp
-impl "deps/json/lib" as json
+impl "deps/json/lib"
 ```
 
 no matter which repo or folder it came from. A sibling library in the same repo is

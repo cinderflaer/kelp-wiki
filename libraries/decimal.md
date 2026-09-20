@@ -17,7 +17,7 @@ decimal = "Juniper/fpl/decimal"
 ```
 
 ```kelp
-impl "deps/decimal/lib" as decimal
+impl "deps/decimal/lib"
 ```
 
 ## Types
@@ -65,7 +65,7 @@ when a narrower scale is wanted.
 ## Example
 
 ```kelp
-impl "deps/decimal/lib" as decimal
+impl "deps/decimal/lib"
 impl "std/result"
 
 fun main() {

@@ -16,7 +16,7 @@ config = "Juniper/fpl/config"
 ```
 
 ```kelp
-impl "deps/config/lib" as config
+impl "deps/config/lib"
 ```
 
 ## Values
@@ -102,7 +102,7 @@ file:
 ## Example
 
 ```kelp
-impl "deps/config/lib" as config
+impl "deps/config/lib"
 
 fun main() {
     val text = "# a comment\nname = \"demo\"\ncount = 7\nratio = 1.5\n\n[server]\nhost = \"127.0.0.1\"\nfeatures = [\"a\", \"b\"]  # trailing\n"

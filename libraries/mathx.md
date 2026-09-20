@@ -15,7 +15,7 @@ mathx = "Juniper/fpl/mathx"
 ```
 
 ```kelp
-impl "deps/mathx/lib" as mathx
+impl "deps/mathx/lib"
 ```
 
 ## Functions
@@ -52,7 +52,7 @@ dividing the product back out (mul).
 ## Example
 
 ```kelp
-impl "deps/mathx/lib" as mathx
+impl "deps/mathx/lib"
 impl "std/option"
 
 fun main() {

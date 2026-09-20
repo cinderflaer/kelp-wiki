@@ -1,19 +1,20 @@
 ---
 title: "`kelpc` CLI"
-description: "The compiler's command line. Everything on this page was run against a release build of kelpc 0.1.4 on the machine that wrote it, and the outputs are quoted from those runs, except the `lint` section and its usage line, which are from the build on `main` after that release."
+description: "The compiler's command line. Everything on this page was run against a release build of kelpc 0.1.4 on the machine that wrote it, and the outputs are quoted from those runs, except the `lint` section and its usage line, and the `--deny-outdated` flag and the outdated-syntax section, which are from the unreleased build on `main`."
 isPublished: true
 tags: "tooling, cli"
 ---
 The compiler's command line. Everything on this page was run against the release
 build tagged `v0.1.4` on the machine that wrote it, and the outputs are quoted
 from those runs. That binary was not rebuilt for the rename, so `kelpc version`
-still reports `kelpc 0.2.2`. The one exception is `kelpc lint` below, which
-shipped after that release: its usage line and its quoted run come from the
-unreleased build on `main`.
+still reports `kelpc 0.2.2`. The exception is what shipped after that release:
+`kelpc lint` below, and the `--deny-outdated` flag and the outdated-syntax
+section further down. Their usage lines and quoted runs come from the unreleased
+build on `main`.
 
 ```text
-usage: kelpc build <file.kp> [-o <out>] [--backend=<name>]
-       kelpc run <file.kp>
+usage: kelpc build <file.kp> [-o <out>] [--backend=<name>] [--deny-outdated]
+       kelpc run <file.kp> [--deny-outdated]
        kelpc fmt <file.kp>
        kelpc fmt -w <path>...
        kelpc fmt --check <path>...
@@ -31,6 +32,7 @@ prints the usage block above, and `kelpc version` is the version query.
 | `kelpc build <file.kp>` | compiles to a binary and keeps the artifact | 0 on success, 1 on a diagnostic |
 | `kelpc build <file.kp> -o <out>` | the same, naming the artifact | as above, 1 if `<out>.c` cannot be written |
 | `kelpc run <file.kp>` | compiles and executes, forwarding stdout, stderr and the program's exit code | the program's own status |
+| `kelpc build <file.kp> --deny-outdated` | the same build, with a deprecation turned into an error | 1 if the program uses outdated syntax |
 | `kelpc fmt <file.kp>` | prints the formatted source to stdout | 0, or 1 on a parse error |
 | `kelpc fmt -w <path>...` | rewrites files in place | 1 if any input fails to parse |
 | `kelpc fmt --check <path>...` | writes nothing, exits 1 if anything is not already formatted | 0 or 1 |
@@ -292,6 +294,36 @@ a pattern binding), which is why a call into the standard library's locked
 `snake_case` is never reported under either setting: a call is a use. A file with
 no `coral.toml` to read gets the option's default, and a file under the
 project's `src/deps/` gets no case rule at all.
+
+## Outdated syntax
+
+A spelling that is on its way out still compiles. The compiler keeps a register
+of them (`kelpc/src/deprecated.rs`, and `syntax.md` 23), and `kelpc build` and
+`kelpc run` print one finding per construct a program uses:
+
+```text
+$ kelpc build src/main.kp
+outdated: `impl "..." as name` is outdated and will be removed in the next development cycle: a module is reached by its own name (`std/path` is `path`, `shapes/circle` is `circle`, and a dependency's entry module `deps/argparse/lib` is `argparse`), so drop the clause and use that name
+  --> src/main.kp:1:16
+$ echo $?
+0
+```
+
+- The label is **`outdated: `**, which is neither `error:` nor `warning: `. A
+  lint's `warning: ` is a style opinion; this is a promise about a later version.
+- The old spelling **keeps working**, and the exit status is unchanged. Nothing
+  is removed on the day its warning first appears: every entry goes on the next
+  development cycle.
+- **`--deny-outdated`** turns the findings into errors and stops before anything
+  is generated. That is the gate for a project or a CI run that wants to hear
+  about its own code. A program with nothing on the list builds as it always did.
+- **`kelpc fmt`** never rewrites an old spelling into a new one: it copies tokens.
+  **`kelpc lint`** does not report deprecations either, because a deprecation is a
+  build's finding rather than a style pass's.
+- The register has one entry so far, the `impl` clause above, and the migration
+  it asks for is usually a deletion: a module is reached by its own name, which
+  for a dependency's entry module is the directory Coral fetched it into
+  (see [Modules and imports](/language/modules)).
 
 ## Environment variables
 

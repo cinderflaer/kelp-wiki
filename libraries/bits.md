@@ -17,7 +17,7 @@ bits = "Juniper/fpl/bits"
 ```
 
 ```kelp
-impl "deps/bits/lib" as bits
+impl "deps/bits/lib"
 ```
 
 ## Bit order
@@ -83,7 +83,7 @@ datac BitReader(val data: Bytes, var pos: usize)
 ## Example
 
 ```kelp
-impl "deps/bits/lib" as bits
+impl "deps/bits/lib"
 
 fun main() {
     var bs = bits.new(10)

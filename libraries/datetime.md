@@ -17,7 +17,7 @@ datetime = "Juniper/fpl/datetime"
 ```
 
 ```kelp
-impl "deps/datetime/lib" as datetime
+impl "deps/datetime/lib"
 ```
 
 ## Types
@@ -75,7 +75,7 @@ Helpers `pad2(n: i32)` and `pad4(n: i64)` return a zero-padded `String`;
 ## Example
 
 ```kelp
-impl "deps/datetime/lib" as datetime
+impl "deps/datetime/lib"
 
 fun main() {
     val c = datetime.from_unix(1700000000)

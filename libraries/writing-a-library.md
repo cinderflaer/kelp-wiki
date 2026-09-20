@@ -34,7 +34,7 @@ local = "file:///srv/git/fpl#third" # a full URL, folder after '#'
 ```
 
 ```kelp
-impl "deps/mylib/lib" as mylib
+impl "deps/mylib/lib"
 ```
 
 The consumer's `impl` path is always `deps/<manifest-name>/<entry-file>`, because

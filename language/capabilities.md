@@ -73,9 +73,9 @@ A library declares the grant it needs, and the *consumer* decides the pattern at
 its own `impl` line:
 
 ```kelp
-impl "deps/fsx/lib" as fsx with caps(fs = ["/var/lib/myapp/**"])
-impl "deps/log/lib" as log with caps(time = [])
-impl "deps/lineproto/lib" as lineproto with caps(net = ["127.0.0.1:*"])
+impl "deps/fsx/lib" with caps(fs = ["/var/lib/myapp/**"])
+impl "deps/log/lib" with caps(time = [])
+impl "deps/lineproto/lib" with caps(net = ["127.0.0.1:*"])
 ```
 
 `fsx` needs `fs`, `log` and `benchkit` need `time`, `term` needs `env` for

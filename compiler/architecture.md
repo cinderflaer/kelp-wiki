@@ -59,8 +59,11 @@ the AST, for the reasons `fmt.rs`'s header gives.
 
 Multi-file loading and name resolution:
 
-- `impl "shapes/circle"` loads `src/shapes/circle.kp`; the last path segment is the
-  default alias, and `impl "time" as t` picks another.
+- `impl "shapes/circle"` loads `src/shapes/circle.kp`, which is reached as `circle`:
+  the last path segment, except that a module whose path ends in `/lib` under `deps/`
+  takes the name of the directory Coral fetched it into
+  (`impl "deps/argparse/lib"` is `argparse`). The `as name` clause that used to
+  choose the name is outdated, and a build warns about it.
 - Paths are relative to `src/`, may not contain `..`, and may not reach outside the
   project.
 - Names are strictly module-qualified: module `m`'s items are reachable elsewhere

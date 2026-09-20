@@ -24,7 +24,7 @@ fsx = "Juniper/fpl/fsx"
 ```kelp
 impl "std/http" with caps(net = ["127.0.0.1:*"])
 impl "std/str"
-impl "deps/fsx/lib" as fsx with caps(fs = ["/tmp/**"])
+impl "deps/fsx/lib" with caps(fs = ["/tmp/**"])
 ```
 
 `std/http` is ungated itself but it holds `net`, so importing it means delegating
@@ -36,7 +36,7 @@ separate domain, and the pattern is the directory the write may land in.
 ```kelp
 impl "std/http" with caps(net = ["127.0.0.1:*"])
 impl "std/str"
-impl "deps/fsx/lib" as fsx with caps(fs = ["/tmp/**"])
+impl "deps/fsx/lib" with caps(fs = ["/tmp/**"])
 
 fun main() {
     val client = http.default_client()

@@ -23,8 +23,8 @@ table = "Juniper/fpl/table"
 ```
 
 ```kelp
-impl "deps/csv/lib" as csv
-impl "deps/table/lib" as table
+impl "deps/csv/lib"
+impl "deps/table/lib"
 ```
 
 Each folder lands flat at `src/deps/<name>/`, so the import names the entry file
@@ -33,8 +33,8 @@ and nothing about which repository it came from.
 ## The program
 
 ```kelp
-impl "deps/csv/lib" as csv
-impl "deps/table/lib" as table
+impl "deps/csv/lib"
+impl "deps/table/lib"
 impl "std/str"
 impl "std/fmt"
 

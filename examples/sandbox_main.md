@@ -40,21 +40,21 @@ import line is the ceiling for everything the imported module can do.
 
 ```kelp
 impl "std/fs"
-impl "sandbox_vault" as vault with caps(fs = ["/tmp/kelp-sandbox/vault/**"])
+impl "sandbox_vault" with caps(fs = ["/tmp/kelp-sandbox/vault/**"])
 
 fun main() {
-    print(vault.read("ok.txt"))
+    print(sandbox_vault.read("ok.txt"))
 
     // Inside the grant, straight from the entry module: fine, because the entry
     // module holds everything.
     print(fs.read_text("/tmp/kelp-sandbox/vault/ok.txt"))
 
     // Outside the grant, through the gated module: refused.
-    print(vault.read("../secret.txt"))
+    print(sandbox_vault.read("../secret.txt"))
 }
 ```
 
-Note the path resolution in `vault.read("../secret.txt")`: the joined path is
+Note the path resolution in `sandbox_vault.read("../secret.txt")`: the joined path is
 `/tmp/kelp-sandbox/vault/../secret.txt`, which normalizes to
 `/tmp/kelp-sandbox/secret.txt`, and that is what the refusal names. Lexical
 normalization happens before matching, so no spelling of the path gets around it.
@@ -112,7 +112,7 @@ and the empty line each `print` of a trailing newline leaves.
 - **The entry module is not a sandbox.** The second read succeeds because the
   program's own module holds everything. Authority matters at module boundaries,
   which is where a library lives.
-- **The `.as_str()` bind in `vault.read` is not decoration.** Writing
+- **The `.as_str()` bind in `sandbox_vault.read` is not decoration.** Writing
   `fs.read_text(str.concat(...).as_str())` does not build: `.as_str()` on a
   temporary is refused.
 

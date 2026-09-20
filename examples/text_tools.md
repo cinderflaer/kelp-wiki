@@ -29,9 +29,9 @@ prints a fixed date instead of today's.
 ## The program
 
 ```kelp
-impl "deps/hash/lib" as hash
-impl "deps/encoding/lib" as encoding
-impl "deps/datetime/lib" as datetime
+impl "deps/hash/lib"
+impl "deps/encoding/lib"
+impl "deps/datetime/lib"
 impl "std/result"
 impl "std/str"
 
