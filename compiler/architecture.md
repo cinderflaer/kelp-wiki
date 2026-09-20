@@ -43,7 +43,7 @@ alias-induced type error still points somewhere useful.
 ## Parsing (`parser.rs`)
 
 Recursive descent for declarations and statements, with a Pratt parser for
-expression precedence. Two constructs do not survive parsing as themselves:
+expression precedence. Three constructs do not survive parsing as themselves:
 
 - `if let` is desugared into a match with a synthesized scrutinee binding
   (the parser names it under `IF_LET_PREFIX`), which is what lets `if let Ok(v) =
@@ -51,6 +51,11 @@ expression precedence. Two constructs do not survive parsing as themselves:
 - `for x in xs` is desugared into the index-and-`while` walk (under `FOR_PREFIX`),
   so no later pass knows the loop kind exists and there is no iterator protocol to
   implement.
+- A `when` whose scrutinee is not a place is desugared in `infer.rs`
+  (`check_when_scrutinee`, under `WHEN_TEMP_PREFIX`) into the same block a
+  hand-written `val h = ...` would give, because the arms borrow a payload and
+  the borrow has to outlive them. Both desugarings stage the *root* of a field
+  chain (`ast::temporary_root`), so the whole temporary is freed once.
 
 `pretty.rs` is an AST printer and is dead code: a formatter cannot be built on
 the AST, for the reasons `fmt.rs`'s header gives.

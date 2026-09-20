@@ -82,12 +82,11 @@ if let Rect(w, h) = shape {
   payload, and `_` ignores one.
 - The scrutinee may be **any expression**, temporary or place. A *place* is
   matched directly with nothing moved; a *temporary* is bound to a hidden local
-  first, which is how `if let Ok(v) = json.parse(text)` is legal at all.
-- The one expression that is not a scrutinee is a **field of a temporary**.
-  `if let Word(w) = mk().t` names the owned field it would have to read out of a
-  value that has no storage of its own, and `when` refuses a temporary outright
-  (`when mk()` itself is "the scrutinee of a pattern 'when' must be a place").
-  Bind the call first: `val h = mk()`, then match `h.t`.
+  first, which is how `if let Ok(v) = json.parse(text)` is legal at all. A field
+  chain over a temporary stages its **root**: `if let Word(w) = mk().t` binds
+  `mk()` and matches its `t`, so the whole `mk()` result is freed when the block
+  ends rather than the field being read out of a value that has no storage of its
+  own.
 - A payload binds as a **copy** when it is `Copy` and as a **shared borrow**
   otherwise. So in `if let Ok(x) = parsed` where `parsed: Result<Civil, _>`, `x`
   is already a `&Civil`: pass `x`, not `&x`.
@@ -124,8 +123,11 @@ for x in xs {
   `name.as_str()`.
 - The iterable is *borrowed* when it is a place, so the body cannot `push` to
   what it walks.
-- Anything else (a call, a literal) is bound to a temporary the loop owns and
-  frees, and is evaluated **once**.
+- Anything else (a call, a literal, or a field of one) is bound to a temporary
+  the loop owns and frees, and is evaluated **once**. A field chain over a
+  temporary stages its *root*: `for x in mk().items` binds `mk()` once and walks
+  its `items`, so the call does not run again for the condition and for every
+  element.
 - The loop variable is a `val`; copy it into a `var` to mutate it.
 
 ## `when`
@@ -154,9 +156,13 @@ fun area(s: &Shape).R: f64 = when s {
 }
 ```
 
-- The scrutinee must be a **place** (a name, a `.field` chain, `*expr`), never a
-  temporary: a payload borrow has to outlive the arm it is bound in. Use `if let`
-  when you have an expression.
+- The scrutinee is matched where it is when it is a **place** (a name, a
+  `.field` chain, `*expr`): nothing moves, and only the matched field is copied
+  or borrowed. A **temporary** (a call's result, a literal) is bound to a hidden
+  local first, because a payload borrow has to outlive the arm it is bound in;
+  the local is freed once the match ends. A chain over a temporary stages its
+  **root**: `when mk().t { ... }` binds `mk()` and matches its `t`, so the whole
+  temporary is freed exactly once, never the field alone.
 - Matching must be exhaustive: either every variant has an arm, or an `else ->`
   arm is present.
 - There are no guards, no literal patterns and no nested patterns in v1. An arm

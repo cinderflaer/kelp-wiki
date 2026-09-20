@@ -88,18 +88,20 @@ fun label(s: &Shape).R: &str = when s {
 
 - The number of bindings must equal the number of payload fields; `_` ignores
   one.
-- The scrutinee must be a **place** (a binding, a field path, or a dereference),
-  not a call's result, because a non-`Copy` payload binds as a borrow of it and
-  that borrow has to outlive the arm's body. Bind the value to a `val` first when
-  you have an expression.
+- The scrutinee is matched where it is when it is a **place** (a binding, a
+  field path, or a dereference): nothing moves, and only the matched field is
+  copied or borrowed. A **temporary** is bound to a hidden local first, because a
+  non-`Copy` payload binds as a borrow of it and that borrow has to outlive the
+  arm's body. A chain over a temporary stages its **root**, so
+  `when mk().t { ... }` binds `mk()` and frees the whole value once.
 - A payload binds as a **copy** when it is `Copy` and as a **shared borrow**
   otherwise, so matching never partially moves the scrutinee: `r` above is an
   `f64`, while a `Word(val text: String)` payload binds as `&String`.
 - There is no `else` requirement when every variant has an arm; an `else ->` arm
   covers the variants not named above it.
 
-`if let` is the single-arm form, and unlike `when` it accepts a temporary
-scrutinee by binding it to a hidden local first. See
+`if let` is the single-arm form, and it accepts the same scrutinees `when`
+does, temporary ones included, by binding them to a hidden local first. See
 [Control flow](/language/control-flow).
 
 ## Generics
