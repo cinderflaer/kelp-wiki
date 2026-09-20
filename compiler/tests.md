@@ -17,11 +17,11 @@ BACKENDS="c asm" ./kelpc/tests/run-all-backends.sh
 
 ## The fixture suite (`kelpc/tests/compile_and_run.rs`)
 
-289 tests (measured 2026-09-19), driving the real `kelpc` binary over two corpora:
+295 tests (measured 2026-09-20), driving the real `kelpc` binary over two corpora:
 
 | Corpus | Count | Shape |
 | --- | --- | --- |
-| `kelpc/tests/fixtures/*.kp` | 302 files | one loose file per single-file test |
+| `kelpc/tests/fixtures/*.kp` | 309 files | one loose file per single-file test |
 | `kelpc/tests/projects/<name>/` | 45 directories | multi-file: a module graph needs a directory, and a granted module needs an importer |
 
 Every fixture lands in exactly one of three groups, because the harness does three

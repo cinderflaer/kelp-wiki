@@ -68,7 +68,10 @@ at every drop point, `enum` tagged unions with `f32`/`f64` payloads and a
 generated per-`enum` drop that switches on the runtime tag (`when`, `if let`
 and `?` all lower on top of them), the three `str` parsers
 (`strtoll`/`strtoull`/`strtod` behind `externs.rs`'s own whitespace,
-whole-string and `errno` checks), a `pd`'s generated storage, and calls to the
+whole-string and `errno` checks), `List`'s comparison-and-clone methods
+(`sort`, `contains`, `slice`), an owned `String`/`Bytes`/`View` interpolated
+into a `print` template (a piece costs two integer arguments, not one), a `pd`'s
+generated storage, and calls to the
 `extern fun`s whose bodies this backend owns or can forward to libc through the
 PLT.
 
@@ -87,10 +90,8 @@ number — so the ABI is pinned by a `.s`-level test
 register each eightbyte shape uses.
 
 What it does not cover yet is the refusal list below: closures and function
-values; the `List` methods that need an element comparison or a clone (`sort`,
-`contains`, `slice`); the heap-bodied `fs`/`io`/`net`/`path`/`process` externs; a
-capability-gated call; and an owned `String`/`View` printed as a value or
-interpolated into a template.
+values; the heap-bodied `fs`/`io`/`net`/`path`/`process` externs; and a
+capability-gated call.
 
 Its layout:
 
@@ -103,26 +104,26 @@ Its layout:
 
 ## How much of it works today
 
-Measured on 2026-09-19 by building each fixture with both backends, and recorded
+Measured on 2026-09-20 by building each fixture with both backends, and recorded
 in [`plan/mk7-own-backend.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-own-backend.md)
 §0 and §5. Those two sections own these numbers; this page quotes them.
 
 | | Count |
 | --- | --- |
-| Fixture files under `kelpc/tests/fixtures/*.kp` | 302 |
-| Rejected by the compiler itself (the `should fail` fixtures) | 134 |
-| Accepted by the compiler | 168 |
-| of those, built by the `asm` backend | 144 |
-| of those, refused by the `asm` backend with the documented prefix | 24 |
+| Fixture files under `kelpc/tests/fixtures/*.kp` | 309 |
+| Rejected by the compiler itself (the `should fail` fixtures) | 135 |
+| Accepted by the compiler | 174 |
+| of those, built by the `asm` backend | 154 |
+| of those, refused by the `asm` backend with the documented prefix | 20 |
 | of those, failed for any other reason | 0 |
 
-The plan's own status table records the *suite* number: `240 of 289` integration
-tests passing under `--backend=asm`, with the C backend passing all 289, which
+The plan's own status table records the *suite* number: `250 of 295` integration
+tests passing under `--backend=asm`, with the C backend passing all 295, which
 counts multi-file projects and subprocess cases too, and so is not the same
 denominator as the fixture count above. Re-measure either before quoting it: both
 move with every slice, and the plan's header says it is updated as work lands.
 
-### What the 24 refusals are
+### What the 20 refusals are
 
 The differential sweep groups the refusals into the categories the plan's ranking
 table uses (`cargo test --test backend_coverage -- --ignored --nocapture` prints
@@ -130,7 +131,7 @@ it verbatim, and it is the number the ratchet keeps honest):
 
 | Category | Fixtures |
 | --- | --- |
-| a heap type | 13 |
+| a heap type | 9 |
 | a closure or a function value | 10 |
 | a gated `extern` | 1 |
 
@@ -182,8 +183,9 @@ The plan splits the work into tiers, and only the first is in progress:
 | 8: runtime decoupling (parallel track) | in progress; see [Runtime](/compiler/runtime) |
 
 The memory gate is a test rather than an argument: `kelpc/tests/memory_gate.rs`
-runs `valgrind` over both backends' binaries — the plan's recorded count is 168
-built by the C backend and 144 by the `asm` one, with zero findings — and asserts
+runs `valgrind` over both backends' binaries, and the plan's recorded count is
+174 built by the C backend and 155 by the `asm` one, with zero findings, so it
+asserts
 no findings, because the AddressSanitizer gate instruments generated C and cannot
 see this backend. See [Tests](/compiler/tests).
 
