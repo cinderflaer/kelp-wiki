@@ -19,7 +19,7 @@ refused construct.
 
 ```sh
 cargo test                                   # unit tests + the fixture suite
-KELPC_BACKEND=asm cargo test --test compile_and_run
+KELPC_BACKEND=asm cargo test --test compile_and_run   # until `asm` is removed
 BACKENDS="c asm" ./kelpc/tests/run-all-backends.sh
 ```
 
@@ -33,10 +33,13 @@ BACKENDS="c asm" ./kelpc/tests/run-all-backends.sh
 | `kelpc/tests/fixtures/*.kp` | 364 files | one loose file per single-file test |
 | `kelpc/tests/projects/<name>/` | 61 directories | multi-file: a module graph needs a directory, and a granted module needs an importer |
 
-The C backend passes every one of them; `KELPC_BACKEND=asm cargo test --test
-compile_and_run` passes 341 and fails 17, and the 17 are the tests that compile a
-fixture or project the `asm` backend refuses, plus
+The C backend passes every one of them. The `asm` backend passes all but the tests
+that compile a fixture or project it refuses, plus
 `a_build_with_no_output_path_lands_in_build`, which asserts on the generated C.
+Re-measure the pair before quoting it: it moves with every slice, and
+[`plan/asm-backend/plan.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/asm-backend/plan.md)
+§0 is the source of truth. The `asm` track is retired, so the numbers it owns are
+frozen rather than moving.
 One of them,
 `the_host_port_denial_names_the_host_as_written_and_its_own_port`, is a loopback
 test that fails intermittently in a full run: a run that includes it reads 340 and
@@ -86,7 +89,7 @@ Two gates run inside this file:
 | Test file | What it does | Default run |
 | --- | --- | --- |
 | `kelpc/tests/run-all-backends.sh` | runs the fixture suite once per backend (`BACKENDS`, default `c`) | a shell script, not a cargo test |
-| `backend_coverage.rs` | the differential sweep: builds every fixture the C backend builds with `--backend=asm` too, runs both, and requires byte-identical stdout and exit status; a refusal must begin with the documented prefix; also records the refusal ranking so coverage numbers cannot drift silently | the sweep is ignored; one cheap baseline check runs |
+| `backend_coverage.rs` | the differential sweep: builds every fixture the C backend builds with the second backend too, runs both, and requires byte-identical stdout and exit status; a refusal must begin with the documented prefix; also records the refusal ranking so coverage numbers cannot drift silently. Today the second backend is `asm`; the sweep and its baseline are repurposed for `llvm` (`plan/mk7-llvm-backend.md` §6) | the sweep is ignored; one cheap baseline check runs |
 | `memory_gate.rs` | valgrind (`--leak-check=full --show-leak-kinds=all`, diagnostics to `--log-file`) over both backends' binaries, asserting no findings in any process; a spawned child inherits valgrind, so it writes into the same log | ignored; the default run only checks that valgrind is discoverable |
 
 ```sh
@@ -154,10 +157,13 @@ to 87x slower depending on the workload, with one caveat the README records: an
 unconstrained naive `fib` is rewritten into a loop by LLVM at 0.5 ns/op, so the
 call-cost workload needs a side-effecting counter to measure anything at all.
 
-The `bench/speed` gate is also where the assembly backend's numbers are measured,
-and the plan's annex records the caveats: the asm backend compiled a subset of the
-kernels at that measurement, and the follow-up list of what must be true before
-the number is trustworthy is longer than the number itself.
+The `bench/speed` gate is also where the second backend's numbers were measured,
+and the plan's annex records the caveats: the `asm` backend compiled a subset of
+the kernels at that measurement, and the follow-up list of what must be true
+before the number is trustworthy is longer than the number itself. The retired
+track's call-cost measurement is
+[`plan/asm-backend/call-overhead.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/asm-backend/call-overhead.md),
+and it is the measurement the LLVM decision rests on.
 
 ## See also
 

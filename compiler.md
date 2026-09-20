@@ -27,9 +27,9 @@ cargo build --release -p kelpc
 | Type checking | `infer.rs` | types, generics, stdlib overload resolution; fills in implicit borrows |
 | Typed IR | `tir.rs` | every node carries its resolved type and span |
 | Move/borrow checking | `borrowck.rs` | moves, borrows, and the drop plan the code generators read |
-| Code generation | `codegen_c.rs`, `codegen_asm.rs` | typed IR to C source text, or to x86-64 assembly |
+| Code generation | `codegen_c.rs` (and the retired `codegen_asm.rs`) | typed IR to C source text; the next backend is LLVM IR (`codegen_llvm.rs`) |
 | Backend selection | `backend.rs` | `--backend=` / `KELPC_BACKEND` |
-| Finishing | `driver.rs` | writes the artifact and invokes `cc`, or `as` and `ld` |
+| Finishing | `driver.rs` | writes the artifact and invokes the C compiler, or `as` and `ld` |
 | Diagnostics | `diag.rs` | a span is one file's byte range; this maps a module id back to `file:line:col` |
 | Stdlib sources | `stdlib.rs` | the `std/*.kp` text, embedded with `include_str!`, and the capability domains |
 | C bodies for `extern fun` | `externs.rs` | the operations that cannot be written in Kelp at all |
@@ -37,13 +37,15 @@ cargo build --release -p kelpc
 
 The design authority for this chapter is
 [`plan/architecture.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/architecture.md),
-with the backend's working plan in
-[`plan/mk7-own-backend.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-own-backend.md).
+with the backend's plan of record in
+[`plan/mk7-llvm-backend.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-llvm-backend.md),
+and the retired hand-written track in
+[`plan/asm-backend/`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/asm-backend/).
 
 ## Pages
 
 - [Pipeline](/compiler/architecture): each stage, and what it is responsible for
-- [Backends](/compiler/backends): C and assembly, and why a refusal is a feature
+- [Backends](/compiler/backends): C now, LLVM IR next, and why a refusal is a feature
 - [Runtime](/compiler/runtime): the C that is still C, and the capability matcher
 - [Tests](/compiler/tests): the fixture suite, the differential sweeps, the memory gate
 

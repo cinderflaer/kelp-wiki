@@ -129,7 +129,10 @@ resolution, which is the compiler's own answer to keep or to publish.
 | `kelpc build .` | `build/a.out` | `build/a.c` |
 
 Under `--backend=asm` the generated file is the assembly text in place of the C:
-`build/main.s` and `build/main.o`, or `<out>.s` and `<out>.o` with `-o`.
+`build/main.s` and `build/main.o`, or `<out>.s` and `<out>.o` with `-o`. That
+backend is retired as a direction and goes when the LLVM backend lands; the planned
+artifact then is LLVM IR (`.ll`) or an object, with a `libLLVM` requirement on
+`kelpc` itself.
 
 - `build/` is relative to the **current working directory**, and the compiler
   creates it if it is missing.
@@ -165,15 +168,15 @@ Two code generators, selected with `--backend=` or `KELPC_BACKEND`; an explicit
 | `asm` | emits x86-64 assembly itself | `as`, `ld` (no C compiler in the chain) |
 
 ```sh
-kelpc build examples/hello.kp --backend=asm
-KELPC_BACKEND=asm kelpc run examples/hello.kp
+kelpc build examples/hello.kp --backend=asm   # until `asm` is removed
+KELPC_BACKEND=c kelpc run examples/hello.kp   # the oracle, and the default
 ```
 
 A backend that does not exist is named in the error, so a typo is not a mystery:
 
 ```text
-$ kelpc build src/main.kp --backend=llvm
-error: unknown backend 'llvm'; expected one of: c, asm
+$ kelpc build src/main.kp --backend=asm2
+error: unknown backend 'asm2'; expected one of: c, asm
 ```
 
 **The C backend is the reference.** Every fixture in the test suite is built by
@@ -197,10 +200,18 @@ function value is not lowered at all: the compiler refuses it, in both backends
 and whether or not the naming module holds the domain, because the pattern check
 is emitted from the call's own callee and an indirect call has none.
 
-[`plan/mk7-own-backend.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-own-backend.md)
-§0 and §5 hold the measured history, and the [Backends](/compiler/backends) page
-carries the current table. **205 of the 208 fixtures the C backend accepts build
-under `asm`, and 3 are refused**, measured at compiler commit `926e33f`; the
+The next backend is **LLVM IR**, and it is not a project: everything up to the
+typed IR is reused, so only the emission layer is new, and LLVM supplies the
+optimizer, the encoder, the ELF writer, the debug-info format, sanitizers and the
+targets. It is roughly feature-complete with the fixture suite green in about 3 to
+6 weeks of work. See
+[`plan/mk7-llvm-backend.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-llvm-backend.md).
+
+[`plan/asm-backend/plan.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/asm-backend/plan.md)
+§0 and §5 hold the measured history of the retired `asm` track, and the
+[Backends](/compiler/backends) page carries the current table. **205 of the 208
+fixtures the C backend accepts build under `asm`, and 3 are refused**, measured at
+compiler commit `926e33f`; the
 suite figure measured the same way is **341 of 358** integration tests passing
 under `--backend=asm`, with the C backend passing all 358, a larger denominator
 because the suite counts multi-file projects and subprocess cases as well. Both

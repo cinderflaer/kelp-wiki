@@ -56,11 +56,19 @@ environment variable:
 | Backend | What it does | Chain |
 | --- | --- | --- |
 | `c` (default) | transpiles to C | `cc -O2 -fwrapv -lm` |
-| `asm` | emits x86-64 assembly itself | `as`, `ld`: no C compiler |
+| `asm` | emits x86-64 assembly itself | `as`, `ld`: no C compiler. Selectable, but **retired as a direction** |
+
+The next backend is **LLVM IR**
+([`plan/mk7-llvm-backend.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-llvm-backend.md)):
+`kelpc` will emit LLVM IR and let LLVM optimize and generate the object, the way
+`rustc` does. Everything up to the typed IR is reused, so it is weeks of
+emission-layer work rather than a project, and LLVM supplies the optimizer, the
+encoder, the ELF writer, the debug-info format, sanitizers and the targets. `asm`
+is removed once that backend passes the fixture corpus.
 
 ```sh
-./target/release/kelpc build examples/hello.kp --backend=asm
-KELPC_BACKEND=asm ./target/release/kelpc run examples/hello.kp
+./target/release/kelpc build examples/hello.kp --backend=asm   # until `asm` is removed
+KELPC_BACKEND=c ./target/release/kelpc run examples/hello.kp   # the oracle, and the default
 ```
 
 The C backend is the reference: every fixture is built by both and the two
@@ -83,15 +91,16 @@ If the `asm` backend cannot find the library directory it needs, point
 
 | Variable | Effect |
 | --- | --- |
-| `KELPC_BACKEND` | default backend (`c` or `asm`); an explicit `--backend=` wins |
+| `KELPC_BACKEND` | default backend (`c` or `asm` today, `llvm` once it lands); an explicit `--backend=` wins |
 | `KELPC_GLIBC_DIR` | where the `asm` backend finds `crt1.o` and `libc.so` |
+| `LLVM_SYS_211_PREFIX` (planned) | where the LLVM backend finds its `libLLVM`; the plan's §1 is the decision |
 
 ## Tests
 
 ```sh
 cargo test                                   # unit tests + the fixture suite
 cargo test --test fmt                        # the formatter's corpus and properties
-KELPC_BACKEND=asm cargo test --test compile_and_run
+KELPC_BACKEND=asm cargo test --test compile_and_run   # until `asm` is removed
 BACKENDS="c asm" ./kelpc/tests/run-all-backends.sh
 ```
 

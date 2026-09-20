@@ -25,7 +25,7 @@ across the language, the stdlib and the libraries is one `rg`.
 ```sh
 cargo build --release -p kelpc
 cargo test                                   # unit tests + the fixture suite
-KELPC_BACKEND=asm cargo test --test compile_and_run
+KELPC_BACKEND=asm cargo test --test compile_and_run   # until `asm` is removed
 BACKENDS="c asm" ./kelpc/tests/run-all-backends.sh
 ```
 
@@ -45,8 +45,10 @@ their checksums.
 ## What a change should carry
 
 - **A fixture** for a language change: a `.kp` program under `kelpc/tests/fixtures`
-  whose stdout is the expected output. Both backends run it, so a construct the
-  `asm` backend cannot lower yet fails loudly with its name rather than silently.
+  whose stdout is the expected output. Every backend runs it, so a construct a
+  backend cannot lower yet fails loudly with its name rather than silently. The
+  `asm` backend is retired and removed once the LLVM backend passes the corpus, so
+  a new fixture needs the C backend and the LLVM backend, not `asm`.
 - **A test in the corpus** for a capability-matcher or path-normalizer change:
   those two are implemented twice (Kelp and C) and compared.
 - **A citation** for a documentation change: every page in this wiki names the

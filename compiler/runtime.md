@@ -16,7 +16,7 @@ a parser written in Kelp with its C reference beside it.
 | `cap_glue.c` | emitted into every program that contains a gated call | the non-matching half of the capability check |
 | `cap_matcher_ref.c` | not emitted | the C capability matcher, kept as the differential oracle |
 | `path_normalize_ref.c` | not emitted | the C path normalizer, kept as the differential oracle |
-| `dns_parse.kp` | not emitted, not a std module | the stub resolver's DNS message parser, in Kelp (MK7 §7 item 6) |
+| `dns_parse.kp` | not emitted, not a std module | the stub resolver's DNS message parser, in Kelp (`plan/asm-backend/plan.md` §7 item 6) |
 | `dns_parse_ref.c` | not emitted | the same parser in C, kept as the differential oracle |
 
 ## `cap_glue.c`: what the capability runtime still is in C
@@ -37,7 +37,8 @@ runtime.
 
 ## Why the matcher exists twice
 
-MK7's §8 track moves the runtime from C text into Kelp one piece at a time. The
+The retired hand-written track's §8 (`plan/asm-backend/plan.md`) planned to move the runtime
+from C text into Kelp one piece at a time. It is happening anyway, for its own reasons. The
 matcher and the normalizer have now moved, and **the C versions were kept rather
 than deleted**, because a port of a security check has no other oracle:
 
@@ -81,7 +82,7 @@ so no program reaches the parser yet.
 | --- | --- |
 | Capability matcher | Kelp (`std/rt.kp`), with the C oracle kept |
 | Path normalizer | Kelp (`std/rt.kp`), with the C oracle kept |
-| DNS message parser (MK7 §7 item 6) | Kelp (`dns_parse.kp`), not shipped yet, with the C oracle kept |
+| DNS message parser (`plan/asm-backend/plan.md` §7 item 6) | Kelp (`dns_parse.kp`), not shipped yet, with the C oracle kept |
 | Symlink resolution (`kelp_resolve_path`) | still C |
 | The allocator | still C; blocked on raw pointers, which the language does not expose |
 | The `Bytes`/`String` heap routines and drop calls | emitted as a fixed C preamble by `codegen_c.rs` |

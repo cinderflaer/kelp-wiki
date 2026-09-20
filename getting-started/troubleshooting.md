@@ -64,7 +64,7 @@ impl "std/option"
 | `argument 's' has type 'String', expected 'str'` | an owned string where a view is wanted | add `.as_str()` |
 | `List.empty()` or `Map.new()` has no element type | nothing said what is inside | write it on the binding (`var xs: List<i32> = List.empty()`), or let the first `push`/`insert` decide it |
 | `unexpected argument 'extra'` | `kelpc run` was given arguments | it takes none: `kelpc build` then run the binary, or `coral run -- <args>` |
-| `unknown backend 'llvm'` | a backend that does not exist | `c` or `asm` |
+| `unknown backend 'asm2'` | a backend that does not exist | `c` or `asm` today; `llvm` is planned ([Backends](/compiler/backends)) |
 | `could not write generated C to '/path/app.c': No such file or directory` | `-o` named a directory that does not exist | create it first, or build without `-o` and take the artifact from `build/` |
 | `panic: fs.read: cannot open file` / `errno 2` | the call ran and the file was not there | `fs` fails by panicking; check `fs.exists(path)` first, or use `fs.open` |
 | `panic: '<path>' is outside the fs capability granted to module '<m>'` | the pattern on the `impl` line does not cover the path | widen the grant, or note that the **entry module holds the wildcard** and only an imported module is restricted |
@@ -87,7 +87,7 @@ worth reading once on purpose rather than once per error.
 
 ## When it is not your code
 
-Distinguish a refusal from a failure. The `asm` backend refusing a construct by
+Distinguish a refusal from a failure. A second backend refusing a construct by
 name is documented behaviour, and the message is specific:
 
 ```text
@@ -96,7 +96,9 @@ error: the 'asm' backend does not support a borrow of anything but a named local
 ```
 
 The default `c` backend compiles both of those. Switch back with
-`--backend=c` or by unsetting `KELPC_BACKEND`.
+`--backend=c` or by unsetting `KELPC_BACKEND`. The `asm` backend is retired as a
+direction and is removed once the LLVM backend passes the fixture corpus, so a
+refusal here is a known gap rather than a bug in your program.
 
 `error: cc failed:` is different: `kelpc` generated C that the C compiler would
 not accept, which is a `kelpc` bug. The generated C carries a `#line` directive

@@ -9,8 +9,8 @@ Coral is the build tool and package manager for Kelp. The division is the point:
 cache, dependencies, toolchains) and calls `kelpc` as a subprocess.
 
 It is a plain Rust CLI with no external crates, kept simple enough to port to Kelp
-part by part once the language covers what it needs; self-hosting is a project
-goal (`kelp/plan/roadmap.md`, MK8). This page follows
+part by part once the language covers what it needs; a port is a long-term want
+rather than a scheduled milestone (`kelp/plan/roadmap.md`, open item 72). This page follows
 [Coral's README](https://homelabone.xenoo.dev/gittea/Juniper/coral/src/branch/main/README.md),
 which is the authority, and it marks the places where the binary on this machine
 does something the README does not describe. Those are listed again in
