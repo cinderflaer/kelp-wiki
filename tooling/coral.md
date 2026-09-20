@@ -47,23 +47,26 @@ commands:
   init [name] [--no-git] [--no-sample] [--version <v>] [--kelp <ver>]
                             scaffold a new project (coral.toml, src/main.kp, tests/, src/tasks/)
                             --kelp writes the project's [toolchain] pin
-  build [--release] [--offline] [--locked]
-                            compile the project's entry point with kelpc
-  run [--release] [--offline] [--locked] [-- args...]
-                            build, then run the result, forwarding argv and the exit code
-  check [--offline] [--locked]
-                            build without keeping the artifact
-  sync [--dry-run] [--offline] [--locked]
+  sync [--dry-run] [--offline]
                             install the pinned toolchain and fetch dependencies, without building
                             --dry-run prints the plan and changes nothing
                             --offline refuses instead of fetching (or installing) anything
-                            --locked refuses if coral.toml and coral.lock disagree
+                            this is also what moves a dependency forward: a library has no
+                            version, so a sync takes each remote's tip
+  build [--release] [--offline]
+                            compile the project's entry point with kelpc
+  run [--release] [--offline] [-- args...]
+                            build, then run the result, forwarding argv and the exit code
+  check [--offline]         build without keeping the artifact
   clean                     remove build/
+  docs get <file>.kp        one file's documentation comments, each with the
+                            declaration it documents, and no code bodies
+  docs list                 every documented thing in this project: where it is,
+                            what it is called, and the first line of its prose
+  docs search <query>       the entries whose key or prose match, prose included
+                            ('fun:test' asks about that function and nothing else)
   task <name> [-- args...]  run a [tasks] entry
   task                      list the tasks declared in coral.toml
-  add <owner/repo> [--as <name>]
-                            fetch a dependency from your Gitea and record it in coral.toml
-  update [name]             re-fetch one dependency, or all of them
   toolchain kelp|coral list           list versions (git tags) available on your Gitea
   toolchain kelp|coral installed      list the versions under ~/.coral/toolchains/ (at most one)
   toolchain kelp|coral install <ver>  fetch and build one (a release binary, if it has one)
@@ -82,8 +85,9 @@ commands:
 | `coral run [-- args...]` | build, then run, forwarding argv and the exit code |
 | `coral check` | build into `build/check/` without producing something to ship |
 | `coral sync` | materialise declared inputs: the pinned compiler and every dependency |
-| `coral add <owner/repo> [--as <name>]` | fetch a dependency and record it in the manifest |
-| `coral update [name]` | re-fetch one dependency, or all of them, to the remote tip |
+| `coral docs get <file>.kp` | print one file's documentation comments and the declarations they document |
+| `coral docs list` | print every documented thing in the project, one line each |
+| `coral docs search <query>` | print the entries whose key or prose match, prose included |
 | `coral task` | list the `[tasks]` entries |
 | `coral task <name>` | build and run one task |
 | `coral clean` | remove `build/` |
@@ -93,6 +97,117 @@ There is **no `coral --version`**: it is not a command, and the binary answers
 `unknown command '--version'`. Ask the toolchain subcommand instead. `coral fmt`,
 `coral lint`, `coral bench` and `coral publish` are also unknown commands today,
 which is the "not here yet" list further down.
+
+## `coral docs`
+
+Three actions over one model: the documentation comments a project carries. The
+language-side rules are [`syntax.md` §2.1](/language/lexical): `//!` and `///`
+document the declaration below them, a `//!` that does not start a line is a
+compiler error, and a block that documents something else names it with a
+`[docs(<kind>: <name>)]` head.
+
+| Command | What it does |
+| --- | --- |
+| `coral docs get <file>.kp` | one file's documentation, each block with the declaration it documents |
+| `coral docs list` | every documented thing in this project, one line each |
+| `coral docs search <query>` | the entries whose key or prose match, prose included |
+
+### `coral docs get`
+
+`coral docs get <file>.kp` needs no project, no manifest and no `kelpc`, so it
+works on one file that is not part of a project yet:
+
+```text
+$ coral docs get std/str.kp
+/// How many characters a `&str` has: bytes that do not continue a UTF-8
+/// sequence.
+fun char_count(s: &str).R: usize
+```
+
+The point is shape rather than content: a reader (or an agent) facing a
+six-thousand-line module runs one command and sees what the file documents
+instead of reading the source. What the render does, precisely:
+
+- **A documentation block is printed verbatim**, marker and head included, so the
+  output is the file's own words.
+- **A headless block is followed by the declaration it documents**, with the body
+  cut: a `{ ... }` body and an `= ...` expression body are both dropped, and a
+  signature the author wrapped inside its own parentheses is joined onto one line.
+- **A block with a head gets no signature printed under it**, because the head
+  already names what the block is about.
+- **A documented field or variant keeps its indentation**, so the render shows
+  that the declaration is nested inside its `datac` or `enum` rather than
+  pretending it is top level.
+- **Only documented declarations appear.** A declaration with no documentation
+  above it is left out, because the render is the documentation, not an outline.
+- **A block with no declaration under it is printed alone** rather than dropped:
+  `get` returns the file's documentation, it does not filter it.
+
+```text
+$ coral docs get buffer.kp
+//! The buffer itself.
+datac Buffer(val bytes: Bytes, val len: i32)
+
+    /// The owned bytes.
+    val bytes: Bytes
+
+//! Appends one byte, growing the buffer if it is full.
+fun push(b: &Buffer, v: u8)
+```
+
+It takes exactly one path, refuses a directory, and refuses anything that is not
+a `.kp` file, so a mistyped argument is an error rather than an empty render.
+
+### `coral docs list`
+
+`coral docs list` walks the project's own sources, `src/` and `tests/`,
+skipping a fetched `deps/` tree and a build directory, and prints one line per
+documented thing: where it is, its key, and the first line of its prose. Paths
+are relative to the project root.
+
+```text
+$ coral docs list
+src/main.kp:1  module:main  A demo of documentation comments, which `coral docs` reads.
+src/main.kp:6  title:"Error handling"  Every fallible call in this project returns a Result: there is no panic
+src/main.kp:10  fun:test  The test function checks that a truncated frame is refused.
+src/main.kp:16  const:HEADER  The frame we send first.
+src/main.kp:19  fun:bump  Adds one to a count.
+src/main.kp:23  field:len  How many bytes the frame carries.
+```
+
+An entry's key is what a reader searches for. A block below a declaration is
+keyed by it (`fun:test`, `field:len`); a block at the top of a file is keyed
+`module:<file stem>`; a `title:` head keys prose that belongs to no declaration.
+
+### `coral docs search`
+
+`coral docs search <query>` prints every matching entry with its prose, which is
+the one command to reach for when the question is "what does this project say
+about X". Both the key and the prose are searched, case-insensitively:
+
+```text
+$ coral docs search truncated
+src/main.kp:10  fun:test
+    The test function checks that a truncated frame is refused.
+    It is kept next to the docs on purpose: a head can name a function that is
+    declared somewhere else.
+
+$ coral docs search fun:bump
+src/main.kp:19  fun:bump
+    Adds one to a count.
+```
+
+The first query matches prose, the second a restricted key: a query written
+`<kind>:<text>` searches entries of that kind whose key or prose match, so
+`fun:bump` asks about that function and nothing else, however many other blocks
+mention it.
+
+No match is an error rather than an empty success, so a script can ask whether
+the project documents something (`coral docs search fun:parse` exits 1 when
+nothing does). A head that cannot be read, or a block that documents no
+declaration, is a warning on stderr naming the file and line; it does not stop
+the rest of the index, because a reader should still get the documentation that
+is well-formed.
 
 ## The manifest
 
@@ -264,69 +379,62 @@ local = "file:///srv/git/fpl#other"  # a full URL, folder after '#'
 
 ### A whole-repo dependency
 
-This is the form that works end to end on this build. `coral add` fetches it and
-records the line:
+The line is written by hand, and `coral sync` is what fetches it:
 
-```text
-$ coral add Juniper/fpl
-coral: fetching 'fpl' from ssh://gitea@thinkbox:2222/Juniper/fpl.git
-coral: added 'fpl' (Juniper/fpl) at c0977b86eab836b69b28c55ac977b31f1ea67770
-
-$ cat coral.toml
-name = "adddemo"
-version = "0.1.0"
-entry = "src/main.kp"
-
+```toml
 [dependencies]
-fpl = "Juniper/fpl"
-
-$ find src/deps -maxdepth 1
-src/deps
-src/deps/fpl
+fpl = "Juniper/fpl"           # the whole repo
+url = "Juniper/fpl/url"       # one folder inside it
 ```
 
-The whole repository lands under `src/deps/fpl/`, so the import names the folder
-inside it:
+`Juniper/fpl` is the whole repository, so its checkout lands at `src/deps/fpl/` and
+the import names the folder inside it:
 
 ```kelp
 impl "deps/fpl/json/lib"
 ```
 
 `impl` paths are resolved against the project's `src/`, which is why fetched code
-lands under `src/deps/` rather than a top-level `deps/`. `coral update` moves it
-forward:
+lands under `src/deps/` rather than a top-level `deps/`. A build fetches a
+dependency that is missing; only `coral sync` refreshes one that is already there.
 
-```text
-$ coral update
-coral: updating 'fpl'
-coral: 'fpl' is now at c0977b86eab836b69b28c55ac977b31f1ea67770
-```
+### A folder dependency lands flat
 
-### A folder dependency is broken on this build
-
-The intended behaviour is documented in
+`owner/repo/folder` names one library inside a repository, and only that folder's
+*contents* are downloaded. They land at `src/deps/<name>/` either way, so the
+import is `impl "deps/<name>/lib"` no matter which repository or folder it came
+from:
 [Coral's README](https://homelabone.xenoo.dev/gittea/Juniper/coral/src/branch/main/README.md):
 a folder dependency lands **flat**, so `Juniper/fpl/json` puts the contents of
 `json/` at `src/deps/json/`, and the import is `impl "deps/json/lib"` no matter
-which repository it came from. The clone behind it is supposed to use
-`--filter=blob:none --sparse` so only the named folder comes down.
-
-This build appends the folder to the repository path and tries to clone that:
+which repository it came from. The clone behind it uses
+`--filter=blob:none --sparse` so only the named folder comes down, and a server
+that ignores the filter still works: git says so and does the slower thing.
 
 ```text
+$ cat coral.toml
+name = "coraldemo"
+version = "0.26.9"
+entry = "src/main.kp"
+
+[dependencies]
+url = "Juniper/fpl/url"
+
 $ coral sync
-coral: no [toolchain] pin — builds use kelpc v0.1.4 (from ~/.coral/bin)
-coral: fetching 'json' at the remote tip
-error: cloning 'ssh://gitea@thinkbox:2222/Juniper/fpl/json.git' failed:
-...
-error: Invalid repo name
+coral: refreshing 'url' from ssh://gitea@thinkbox:2222/Juniper/fpl.git (url)
+coral: 'url' is at 61f0b8b54c262eeee785038770d1a86a4509ac02
+coral: 'coraldemo' synced (installed 0, fetched 1)
+
+$ find src/deps -maxdepth 2
+src/deps
+src/deps/url
+src/deps/url/lib.kp
 ```
 
-`coral add Juniper/fpl/json` fails the same way, because `add` takes an
-`owner/repo` and reads `fpl/json` as a repository name. **Workaround: depend on the
-whole repository and import the folder inside it**, as in the previous section.
-That is a different tree on disk and a different `impl` path, so it is worth
-knowing before the folder form works again.
+A folder that is not in the repository is refused by name, with the list of
+folders that are there, and a folder that names nothing useful cannot be written:
+a `..` segment, a leading `/` or an empty name is an error in the manifest rather
+than a path git is asked to check out.
 
 ### What the model promises, beyond those mechanics
 
@@ -334,9 +442,9 @@ knowing before the folder form works again.
   registry index, and no lockfile that pins a version. A dependency is a git
   remote, and what makes a build reproducible is that `src/deps/<name>/` **is** the
   tree it built with and stays that way until something refreshes it.
-- **Only `sync`, `add` and `update` move a dependency forward.** `coral build`
-  fetches a dependency that is missing and leaves one that is present alone, which
-  is why a warm tree builds offline and identically.
+- **Only `coral sync` moves a dependency forward.** `coral build` fetches a
+  dependency that is missing and leaves one that is present alone, which is why a
+  warm tree builds offline and identically.
 - **A folder must stand alone.** Only the folder you named is downloaded, so a
   library cannot import a sibling library in the same repository: the sibling was
   never fetched and there is no path to name it by. Two libraries that share code
@@ -387,27 +495,16 @@ The offline refusal names what is missing rather than failing later. A dependenc
 that is already present is left at the commit it is at, so `coral build --offline`
 runs the same checks and cannot slip past what a sync would have refused.
 
-## `coral.lock` and `--locked`
+## There is no lockfile
 
-A successful sync, `add` or `update` writes `coral.lock`, one line per dependency:
-
-```text
-# coral.lock — generated by `coral add`/`coral update`; do not edit by hand.
-name = "fpl" source = "Juniper/fpl" commit = "c0977b86eab836b69b28c55ac977b31f1ea67770"
-```
-
-`--locked` refuses to build when the manifest and the lock disagree, and says which
-entry is the problem:
-
-```text
-$ coral build --locked
-error: --locked: the manifest and the lock disagree:
-  - 'argparse' is in coral.toml but has no coral.lock entry — run 'coral sync' to pin it
-```
-
-That is the CI shape: `coral sync --locked` after checkout, then `coral build
---locked`, and a manifest edit that was never synced fails instead of silently
-fetching something new.
+A Kelp library has no version, so there is nothing for a lockfile to pin: a
+dependency is a git remote, and what makes a build reproducible is that
+`src/deps/<name>/` **is** the tree it built with and stays that way until a
+`coral sync` refreshes it. `coral add` and `coral update` were removed, and so
+were `coral.lock` and `--locked`: the binary refuses both of the commands by name
+and `--locked` by name as well, rather than pretending to know them. A sync in CI
+is `coral sync` after checkout, and a build that must not reach the network is
+`coral build --offline`.
 
 ## Toolchains
 
@@ -482,16 +579,16 @@ dependencies, and a whole-repo dependency that carries its own `[dependencies]` 
 not followed, so **nothing fetches a dependency of a dependency**. A per-target
 cache to warm is still a sketch.
 
-## Where the README and the binary disagree
+## Where this page and the README could disagree
 
-| Claim in the README | What this binary does |
+This page is written from the binary. The README is Coral's design sketch, and
+wherever the two describe different versions the binary wins for command output
+and the README wins for what a feature is meant to become. Two claims to watch:
+
+| Claim | State |
 | --- | --- |
-| "There is no `coral add` and no `coral update`" | both exist, both work, and both are in the command list above; `add` writes the manifest line and `update` re-fetches |
-| "there was a `coral.lock`; both are gone" | `coral.lock` exists, is written by `add`/`update`/`sync`, and `--locked` reads it |
-| a folder dependency lands flat, via a sparse clone | the folder is appended to the repository path and the clone fails; see [the folder section](#a-folder-dependency-is-broken-on-this-build) |
-
-The rest of this page agrees with the README, and the README wins wherever the two
-describe different versions.
+| a folder dependency lands flat, via a sparse clone | shipped: `owner/repo/folder` lands the folder's contents at `src/deps/<name>/` |
+| a library has no version, so there is no lockfile | shipped: `coral add`, `coral update`, `coral.lock` and `--locked` are gone |
 
 ## See also
 

@@ -96,7 +96,8 @@ warning: 3 consecutive '//' lines suggest one '/* ... */' comment
   --> notes.kp:2:5
 ```
 
-A blank line, code, a block comment, or a `///` doc comment between two `//`
+A blank line, code, a block comment, or a doc comment (`///`, `//!`, see
+[Lexical structure](/language/lexical#documentation-comments)) between two `//`
 lines ends the run; so does a line where the comment follows code, because a run
 is *lines* of comments. The finding is a warning and the exit status stays 0:
 the author may have meant every line, and a style finding is not a build

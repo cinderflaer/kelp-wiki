@@ -29,6 +29,80 @@ Neither form is a token: both are trivia, so a comment may sit wherever
 whitespace may, and `kelpc fmt` copies it verbatim. Delimiters inside a string or
 character literal are ordinary text, so `"a/*b*/c"` is the bytes `a/*b*/c`.
 
+### Documentation comments
+
+`//!` and `///` are **documentation comments**: they document the declaration
+that follows them, and they are the text `coral docs` reads. To the compiler
+they are comments like any other, so nothing about them changes what a program
+does:
+
+```kelp
+//! The buffer owns its bytes and frees them once, at the end of the owning
+//! scope. Nothing here is a view: every getter copies.
+datac Buffer(val bytes: Bytes)
+
+/// How many characters a `&str` has, continuation bytes counted once.
+fun char_count(s: &str).R: usize
+```
+
+`//!` is read as the header of a block, so it has to start a line: consecutive
+`//!` lines are one foldable unit above the declaration they document, and a `//!`
+with code before it on the same line documents nothing and is a **compiler
+error**:
+
+```kelp
+val n = 1   //! error: a '//!' is a documentation comment and must start a line
+```
+
+A documentation comment is exempt from the [comment-run rule](/language/style): a
+run of doc lines is already one block, and a `//!` line does not count toward a
+plain `//` run either.
+
+#### Naming what a block documents
+
+A block documents the declaration below it, which is what most blocks need. To
+document something else, open the block with a **head**: one line,
+`[docs(<kind>: <name>)]`, where `<kind>` is `module`, `fun`, `datac`, `enum`,
+`const`, `field`, `variant` or `title`:
+
+```kelp
+//! [docs(title: "Error handling")]
+//! Every fallible call returns a Result: there is no panic path here.
+
+//! [docs(fun: Frame.decode)]
+//! The frame decoder is what refuses a truncated frame.
+```
+
+`title` takes a quoted string, and is the kind for prose that belongs to no
+declaration at all; every other kind takes a name as written in the source. The
+closing `]` is what ends the head, so a head written open across lines is closed
+by a `]` line of its own, which carries nothing and is dropped:
+
+```kelp
+//! [docs(fun: test)
+//! The test function checks that a truncated frame is refused.
+//! ]
+```
+
+A head is read by the tooling and never by the compiler, which does not see
+inside a comment. A head the tool cannot read, an unknown kind or a `title:`
+without quotes, is a warning from `coral docs` naming the file and line, not a
+compile error.
+
+#### Where the key comes from without a head
+
+| Block sits above | Key |
+| --- | --- |
+| a `fun`, or an `extern fun` | `fun:name` |
+| a `datac` or an `enum` | `datac:name`, `enum:name` |
+| a `const` | `const:NAME` |
+| a field, written `val` or `var` | `field:name` |
+| a variant | `variant:Name` |
+| the first declaration of a file, or its `impl` lines | `module:<file stem>` |
+
+Those keys are what [Coral's docs commands](/tooling/coral#coral-docs) list,
+search and print.
+
 ## Statements and whitespace
 
 There are no semicolons. A newline ends a statement, and a statement must fit on
