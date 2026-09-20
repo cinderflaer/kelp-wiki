@@ -15,8 +15,7 @@
 impl "deps/config/lib" as config
 impl "std/str"
 
-// Every owned local lives here rather than in `main`: one declared inside an
-// `if let` arm does not build yet (see Known issues), and these are `String`s.
+// The owned locals live here rather than in `main`; these are `String`s.
 fun show(cfg: &config.Config) {
     val name = config.get_str(cfg, "", "name")
     print(str.concat("config     name = ", name))

@@ -39,8 +39,7 @@ impl "deps/json/lib" as json
 ```kelp
 impl "deps/json/lib" as json
 
-// A helper, not because the work is long, but because an owned local declared
-// inside an `if let` arm does not build yet, see the wiki's Known issues.
+// A helper, so the walk owns the list it builds.
 fun keep_high_scores(doc: &json.Json).R: String {
     var kept: List<json.Json> = List.empty()
     var i: usize = 0
@@ -88,11 +87,6 @@ kelpc build json_filter.kp -o json_filter && ./json_filter
   `json.as_i64_or`, or checks `json.is_int` first.
 - **`json.write_sorted` is canonical**: keys sorted, so one document has one text,
   which is what makes it useful as a key or a diff.
-- **The helper function is a workaround, not a style choice.** An owned local
-  (here `var kept: List<Json>`) declared inside an `if let` arm fails to codegen on
-  the current compiler: [Known issues](/meta/known-issues) BUG-1 has the
-  repro. The comment stays in the source so the next reader does not "simplify" it
-  back into the bug.
 - **`json.clone` is a deep copy**; `array_get` lends a borrow, so the tree must be
   copied to outlive the walk.
 
@@ -100,4 +94,3 @@ kelpc build json_filter.kp -o json_filter && ./json_filter
 
 - [`json`](/libraries/json): the whole library, including JSON Pointer
 - [Libraries (fpl)](/libraries) for the dependency model
-- [Known issues](/meta/known-issues)

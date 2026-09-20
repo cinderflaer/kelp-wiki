@@ -103,11 +103,6 @@ not accept, which is a `kelpc` bug. The generated file is in `build/`
 (`build/<name>.c`) and the `cc` error names a line in it. That file, the source,
 and the command are exactly what a report needs.
 
-Known defects that look like your mistake are collected on
-[Known issues](/meta/known-issues), and one of them is a manifest key:
-`http_pool` cannot be set at all in this build, because Coral and `kelpc` disagree
-about its type. Leaving it out is the only working choice.
-
 ## Make a refusal happen on purpose
 
 The capability model is easier to trust after watching it refuse something. Two
@@ -144,13 +139,11 @@ attached.
   on [Limits in v1](/language/limits), not in a report.
 - Include `kelpc version`, the backend, the source, the command, and the output
   verbatim. For `cc failed:`, include the generated C.
-- [Contributing](/meta/contributing) has the workflow, and
-  [Known issues](/meta/known-issues) is where a confirmed defect ends up.
+- [Contributing](/meta/contributing) has the workflow.
 
 ## See also
 
 - [Pitfalls](/language/pitfalls): every rule that produces a compile error
-- [Known issues](/meta/known-issues): defects that affect valid programs
 - [Capabilities](/language/capabilities) and [Capability patterns](/reference/capability-patterns)
 - [Coral](/tooling/coral): what each manifest key means
 - [Install and build](/getting-started/install): backends and environment variables

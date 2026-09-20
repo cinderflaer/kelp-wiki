@@ -40,8 +40,7 @@ impl "deps/prng/lib" as prng
 impl "std/option"
 impl "std/str"
 
-// A separate function because several owned locals here would otherwise sit
-// inside `main`'s `if let` arms, which does not build yet (see Known issues).
+// A separate function, so the arithmetic stays out of `main`.
 fun power_of_two(exponent: u32).R: bigint.BigInt {
     val two = bigint.from_i64(2)
     var result = bigint.from_i64(1)

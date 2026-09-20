@@ -52,7 +52,6 @@ the fix. Source: [`syntax.md` §18 and §22](https://homelabone.xenoo.dev/gittea
 | --- | --- |
 | a borrowed binding cannot be captured | pass it as a parameter of the literal instead |
 | `*x` on a closure parameter fails | a `Copy` parameter is used directly: `acc + x`, not `acc + *x` |
-| a closure parameter over a module-declared type fails to compile | a compiler bug, not a language rule: see [Known issues](/meta/known-issues) |
 
 ## Modules and capabilities
 
@@ -80,6 +79,5 @@ matters, use [`mathx`](/libraries/mathx)'s checked or saturating forms.
 
 ## See also
 
-- [Known issues](/meta/known-issues): the defects that affect valid programs
 - [Ownership and borrowing](/language/ownership), [Text](/language/text), [Collections](/language/collections)
 - [Capabilities](/language/capabilities)

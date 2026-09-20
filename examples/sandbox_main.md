@@ -120,4 +120,3 @@ and the empty line each `print` of a trailing newline leaves.
 
 - [Capabilities](/language/capabilities) for the model and the grant syntax
 - [Capability patterns](/reference/capability-patterns) for what a pattern may look like
-- [Known issues](/meta/known-issues) for the defects that affect valid programs

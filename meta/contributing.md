@@ -70,7 +70,7 @@ limit, declaration order inside a group, naming).
 
 ## Reporting a defect
 
-[Known issues](/meta/known-issues) lists what is already known. A useful report has:
+A useful defect report has:
 
 1. the smallest program that shows it: three lines beats a paragraph;
 2. the exact command and the exact error, including the failing generated-C line

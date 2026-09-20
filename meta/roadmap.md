@@ -100,5 +100,4 @@ Real work that is not next: nothing here is a question (those are the open items
 ## See also
 
 - [Source documents](/meta/source-documents): which file is the authority for what
-- [Known issues](/meta/known-issues): what is broken today, with repros
 - [Compiler](/compiler): the pipeline the milestones extend

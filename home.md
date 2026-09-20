@@ -64,13 +64,6 @@ by the first few lines of a file instead of by auditing it.
     JSON, CSV, TOML, base64, dates, sets, bit packing, big integers, decimals,
     HTTP helpers and more.
 
--   **Known issues**
-
-    ---
-
-    [Known issues](/meta/known-issues) lists the defects that affect valid
-    programs today, with repros.
-
 -   **Release history**
 
     ---

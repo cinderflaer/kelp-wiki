@@ -138,27 +138,6 @@ Sections are not closed: an unrecognised section such as `[bogus]` is accepted a
 ignored, which is how Coral stays compatible with a manifest carrying sections it
 does not know yet.
 
-> **`http_pool` cannot be set in this build**
->
-> Coral requires a double-quoted string and `kelpc`, which does the actual
-> splicing, requires a number. Both forms are refused, so a project cannot set
-> the key at all:
->
-> ```text
-> $ printf '...\nhttp_pool = 8\n' > coral.toml && coral build
-> error: coral.toml value for 'http_pool' must be a double-quoted string, found '8'
->
-> $ printf '...\nhttp_pool = "8"\n' > coral.toml && coral build
-> coral: building 'p' (dev)
-> error: coral.toml value for 'http_pool' must be a non-negative whole number, found '"8"'
-> error: 'p' failed to build
-> ```
->
-> The first message is Coral's validator; the second comes from `kelpc` after
-> Coral has accepted the manifest. Leaving the key out is the only working
-> choice, and `std/http` then uses its default pool size. Reported here because
-> it was observed on this build, not because it is intended.
-
 ### Sections
 
 | Section | Shape | Notes |

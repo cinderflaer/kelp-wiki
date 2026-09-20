@@ -34,8 +34,7 @@ val parsed = config.parse(text.as_str())
 impl "deps/config/lib" as config
 impl "std/str"
 
-// Every owned local lives here rather than in `main`: one declared inside an
-// `if let` arm does not build yet (see Known issues), and these are `String`s.
+// The owned locals live here rather than in `main`; these are `String`s.
 fun show(cfg: &config.Config) {
     val name = config.get_str(cfg, "", "name")
     print(str.concat("config     name = ", name))
@@ -112,12 +111,7 @@ config     entries = 5
   survives.
 - **`cfg.entries` is the flat list of everything parsed,** which is how a tool
   reports what it read without knowing the keys in advance.
-- **The helper function is the `if let` workaround again.** Owned locals belong
-  outside the arm, and this is the third example in the chapter that has to say so
-  (see [Known issues](/meta/known-issues) BUG-1).
-
 ## See also
 
 - [`config`](/libraries/config) for the reader in full, including the lower-level entry points
 - [Projects and coral.toml](/getting-started/projects) for the manifest this format comes from
-- [Known issues](/meta/known-issues)

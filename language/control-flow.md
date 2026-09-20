@@ -64,11 +64,6 @@ if let Rect(w, h) = shape {
   otherwise. So in `if let Ok(x) = parsed` where `parsed: Result<Civil, _>`, `x`
   is already a `&Civil`: pass `x`, not `&x`.
 
-> **Declare owned locals outside the arm**
->
-> On the current compiler an owned local declared inside an `if let` arm (or a
-> `for` body) fails to build. See [Known issues](/meta/known-issues).
-
 ## `while`
 
 ```kelp

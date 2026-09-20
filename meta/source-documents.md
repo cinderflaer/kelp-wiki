@@ -71,5 +71,4 @@ layout.
 ## See also
 
 - [Contributing](/meta/contributing)
-- [Known issues](/meta/known-issues)
 

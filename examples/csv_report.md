@@ -38,9 +38,7 @@ impl "deps/table/lib" as table
 impl "std/str"
 impl "std/fmt"
 
-// Totals the `units` column per region. A separate function because several
-// owned locals here would otherwise sit inside an `if let` arm, which does not
-// build yet (see Known issues).
+// Totals the `units` column per region, in a function of its own.
 fun totals_by_region(rows: &List<csv.Row>).R: Map<String, i64> {
     var totals: Map<String, i64> = Map.new()
     var i: usize = 1          // row 0 is the header
@@ -84,9 +82,8 @@ fun main() {
     val text = "region,units\nnorth,12\nsouth,7\nnorth,5\n"
     val parsed = csv.parse(text)
     if let Ok(rows) = parsed {
-        // No owned local in this arm: an owned local declared inside an `if let`
-        // arm does not build yet (see Known issues). A `&`-expression on a
-        // temporary is refused too, but a parameter borrows one for free.
+        // No owned local in this arm. A `&`-expression on a temporary is
+        // refused, but a parameter borrows one for free.
         render(totals_by_region(rows))
     }
 }
@@ -125,10 +122,8 @@ line after it: `print!("{render}")` then `print("")`.
   one would report them.
 - **`Row.get(i)` hands back a `&str`,** so no allocation happens while reading a
   file's worth of fields.
-- **The helper functions are also the workaround** for the `if let` codegen defect
-  and for the rule that a parameter may borrow a temporary while an explicit `&`
-  may not. Both are documented in
-  [Pitfalls](/language/pitfalls) and [Known issues](/meta/known-issues).
+- **A parameter may borrow a temporary while an explicit `&` may not**, which
+  [Pitfalls](/language/pitfalls) documents.
 
 ## See also
 

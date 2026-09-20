@@ -99,5 +99,4 @@ and not to `result`; `when` is a keyword and cannot be a binding, so the parsed
 date is named `moment`; and `str.concat` takes `&str`, so a `String` argument
 needs `.as_str()`.
 
-All of them are documented in [Pitfalls](/language/pitfalls) and
-[Known issues](/meta/known-issues).
+All of them are documented in [Pitfalls](/language/pitfalls).

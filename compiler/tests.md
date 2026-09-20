@@ -133,4 +133,3 @@ the number is trustworthy is longer than the number itself.
 - [Backends](/compiler/backends)
 - [Runtime](/compiler/runtime)
 - [Install and build](/getting-started/install): the commands, quoted from here
-- [Known issues](/meta/known-issues): defects the suite does not cover

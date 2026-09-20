@@ -103,7 +103,7 @@ The nanoseconds differ run to run; the shape of the line does not.
   tolerance comparison, which is `check(report, diff < 0.0001, "name")`.
 - **The report is passed as a `mut` parameter,** not held in a module-level
   variable: a passdown is module-scoped, so a library could not keep the
-  caller's tally in one. See [Known issues](/meta/known-issues).
+  caller's tally in one.
 - **`time_many` runs warmup iterations first,** untimed, and then one timed
   iteration per sample. Two warmup runs and five samples is a reasonable default
   for a fast function; a slower one wants fewer samples.

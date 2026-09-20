@@ -67,11 +67,9 @@ below is a rule.
   (`Set<T>` and `StrSet`) where the standard library would overload one.
 - **`List` and `Map` cannot nest directly**, so a nested container is wrapped in a
   one-field `datac`: `csv.Row`, `listx.Chunk` and `table.Row` are exactly that.
-- **A closure parameter that borrows a module-declared type codegens as of
-  `kelpc 0.2.3`**, so a library may take a callback over its own type: `json`
-  ships `each_value`/`filter_array`, which were callback-free helpers before the
-  fix. An older compiler still refuses it (BUG-2 in [Known
-  issues](/meta/known-issues)).
+- **A closure parameter that borrows a module-declared type codegens**, so a
+  library may take a callback over its own type: `json` ships
+  `each_value`/`filter_array`.
 - **`Option`/`Result` payloads cannot be moved out of a `Copy`-less enum**, which
   is why a library's "unpack" helpers take an `out` parameter and return `bool`
   (the shape `std/io`'s `read_line_into` uses) rather than returning

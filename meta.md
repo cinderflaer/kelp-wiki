@@ -10,7 +10,6 @@ work on the project.
 | Page | What it is |
 | --- | --- |
 | [Source documents](/meta/source-documents) | which file in which repository is the authority for what |
-| [Known issues](/meta/known-issues) | the defects that affect valid Kelp programs today, with repros |
 | [Contributing](/meta/contributing) | repository layout, tests, gates, and how this site is built and served |
 
 ## The one-paragraph version

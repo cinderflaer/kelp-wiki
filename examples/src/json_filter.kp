@@ -17,8 +17,7 @@
 
 impl "deps/json/lib" as json
 
-// A helper, not because the work is long, but because an owned local declared
-// inside an `if let` arm does not build yet, see the wiki's Known issues.
+// A helper, so the walk owns the list it builds.
 fun keep_high_scores(doc: &json.Json).R: String {
     var kept: List<json.Json> = List.empty()
     var i: usize = 0

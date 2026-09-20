@@ -76,7 +76,11 @@ with a pending operand that fell into the stack, fixed by rebuilding `rsp` from
 emission; chained `if let` re-moving its own scrutinee; `%` below 64 bits; a
 zero-capacity `String`; a literal wider than its type; a `pd var` borrow is
 shared unless the function writes it; a wrong-width aggregate load in the
-assembly backend.
+assembly backend; the drop plan keyed by a block's identity instead of its
+source span, so an owned local in a desugared `if let` or `for` block is no
+longer dropped out of scope; a closure typedef that named a module type's
+typedef before that type existed; and the C backend's warning noise, a doubled
+parenthesis on every comparison and a tautological conversion bound.
 
 **Stdlib.** `str.less` and `str.is_digit`: the byte ordering and decimal digit
 predicate the libraries in the catalogue had each written by hand.
@@ -268,7 +272,6 @@ semicolon or a full stop between clauses, and a plain hyphen in a range.
 ## See also
 
 - [Roadmap](/meta/roadmap): what is planned, and what is in progress
-- [Known issues](/meta/known-issues): defects that affect valid programs today
 - [Compiler](/compiler): the pipeline each entry changed
 - [Coral changelog](/tooling/coral-changelog) and
   [Lighthouse changelog](/tooling/lighthouse-changelog): the other two repositories
