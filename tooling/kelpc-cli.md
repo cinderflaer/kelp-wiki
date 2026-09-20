@@ -179,32 +179,34 @@ error: unknown backend 'llvm'; expected one of: c, asm
 **The C backend is the reference.** Every fixture in the test suite is built by
 both backends and the two binaries' stdout is compared, so a construct the `asm`
 backend cannot lower is **refused by name** rather than silently miscompiled.
-Four real refusals, measured at compiler commit `2593e3e`:
+Three real refusals, measured at compiler commit `926e33f`:
 
 ```text
-error: the 'asm' backend does not support the `extern fun std.fs.try_read_raw` yet
-error: the 'asm' backend does not support the `extern fun std.net.connect_raw` yet
+error: the 'asm' backend does not support the `extern fun std.process.arg_count_raw` yet
 error: the 'asm' backend does not support the method `List.clone` on a `List` yet
 error: the 'asm' backend does not support a borrow of anything but a named local (a scalar, a `datac` or a heap type), a `datac` temporary, or a field of one yet
 ```
 
-They are four lines and three mechanisms: an `extern` whose body this backend has
-no routine for (`fs.try_read_text` and any `net` client reach one), which the plan
+They are three lines and three mechanisms, measured at compiler commit `926e33f`: an `extern` whose body this backend has
+no routine for (`std.process`'s argv and spawn family is the one left), which the plan
 counts in its catch-all heap row; a `List` method over a `datac` or `enum` element;
 and a borrow of a field chain. Scalars, `while`, `print!`, arithmetic, an aggregate
-holding a float, a closure, a function value and a gated call all lower, so a
-program made of those builds and runs under `asm` today.
+holding a float, a closure, a plain function value and a gated call all lower, so a
+program made of those builds and runs under `asm` today. A *gated* item named as a
+function value is not lowered at all: the compiler refuses it, in both backends
+and whether or not the naming module holds the domain, because the pattern check
+is emitted from the call's own callee and an indirect call has none.
 
 [`plan/mk7-own-backend.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-own-backend.md)
 §0 and §5 hold the measured history, and the [Backends](/compiler/backends) page
-carries the current table. **200 of the 208 fixtures the C backend accepts build
-under `asm`, and 8 are refused**, measured at compiler commit `2593e3e`; the
-suite figure measured the same way is **332 of 357** integration tests passing
-under `--backend=asm`, with the C backend passing all 357, a larger denominator
+carries the current table. **205 of the 208 fixtures the C backend accepts build
+under `asm`, and 3 are refused**, measured at compiler commit `926e33f`; the
+suite figure measured the same way is **341 of 358** integration tests passing
+under `--backend=asm`, with the C backend passing all 358, a larger denominator
 because the suite counts multi-file projects and subprocess cases as well. Both
 were measured at that commit rather than quoted from an earlier run. Re-measure
 both before quoting them, because each moves with every slice. What the `asm`
-backend lowers today, and the 8 refusals it still has, are on the
+backend lowers today, and the 3 refusals it still has, are on the
 [Backends](/compiler/backends) page.
 
 If the `asm` backend cannot find the library directory it links against, point

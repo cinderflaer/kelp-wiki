@@ -33,8 +33,10 @@ instead of by auditing it.
   The module that declares an item is the one module exempt from the gate, which
   is what lets a wrapper call its own primitive.
 - A gated item is gated **wherever it is named**: a direct call, a receiver
-  method call, a name used as a function value, a closure body and a `pd`
-  initializer all go through the same gate.
+  method call, a closure body and a `pd` initializer all go through the same
+  gate, and a gated item **cannot be named as a function value at all**: the
+  compiler refuses `val f = fs.read` and `val f = fs.read_raw` by name, whether
+  the naming module holds the domain or not.
 - **The entry module holds the wildcard for every domain**, so a single-file
   program needs no grant for its own calls.
 - **Every other module holds exactly what its importer granted it, and nothing
@@ -124,16 +126,19 @@ wrapper, the primitive behind it, a receiver method, a closure body and a `pd`
 initializer are each checked against the grant of the module they are written
 in.
 
-One shape is not covered yet: a gated item named as a *function value*
-(`val f = fs.read`) and called through the pointer. Holding the domain is needed
-to name it, but the pattern check is emitted from the call's own callee, and an
-indirect call has no callee in the source, so a narrowed grant does not reach
-that call: the wrapper spelling builds under *both* backends and reads outside the
-grant (measured at compiler commit `2593e3e`). Only the `extern fun` spelling
-(`val f = fs.read_raw`) is refused by name, and only by `--backend=asm`, which has
-no symbol to take the address of; the C backend builds that one too. `BUG-k2Qv7`
-is the open report for the C side. Nothing in the shipped stdlib or in the
-examples uses a gated item as a value.
+One shape is refused instead of checked, and the refusal is a language rule
+rather than a backend gap: a gated item named as a *function value*
+(`val f = fs.read`). The pattern check is emitted from the call's own callee key,
+and which argument position holds the resource is a property of that signature, so
+a call through the pointer has no check to emit and no place to put one. The
+compiler therefore refuses the value by name, in both backends, for the wrapper
+spelling and the `extern fun` one alike, and whether or not the naming module
+holds the domain (`kelpc/src/infer.rs::function_value_at`, commit `fccb578`;
+`BUG-k2Qv7` was the report). A function *literal* over a gated call
+(`val f = fun(p: &str).R: Bytes = fs.read(p)`) is a different shape: its body is a
+direct call in the module that wrote it, so it is checked at run time like any
+other. Nothing in the shipped stdlib or in the examples uses a gated item as a
+value.
 
 ## Testing a restriction
 

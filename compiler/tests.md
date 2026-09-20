@@ -25,18 +25,22 @@ BACKENDS="c asm" ./kelpc/tests/run-all-backends.sh
 
 ## The fixture suite (`kelpc/tests/compile_and_run.rs`)
 
-357 tests (measured 2026-09-20 at compiler commit `2593e3e`), driving the real
+358 tests (measured 2026-09-20 at compiler commit `926e33f`), driving the real
 `kelpc` binary over two corpora:
 
 | Corpus | Count | Shape |
 | --- | --- | --- |
 | `kelpc/tests/fixtures/*.kp` | 364 files | one loose file per single-file test |
-| `kelpc/tests/projects/<name>/` | 62 directories | multi-file: a module graph needs a directory, and a granted module needs an importer |
+| `kelpc/tests/projects/<name>/` | 61 directories | multi-file: a module graph needs a directory, and a granted module needs an importer |
 
 The C backend passes every one of them; `KELPC_BACKEND=asm cargo test --test
-compile_and_run` passes 332 and fails 25, and the 25 are the tests that compile a
+compile_and_run` passes 341 and fails 17, and the 17 are the tests that compile a
 fixture or project the `asm` backend refuses, plus
 `a_build_with_no_output_path_lands_in_build`, which asserts on the generated C.
+One of them,
+`the_host_port_denial_names_the_host_as_written_and_its_own_port`, is a loopback
+test that fails intermittently in a full run: a run that includes it reads 340 and
+18, and it passes in isolation and on a re-run.
 
 Every fixture lands in exactly one of three groups, because the harness does three
 different things with them:
@@ -57,8 +61,12 @@ port 0 and passes to the program through argv. The four capability-gate bypasses
 the compiler closed this round each have a project of their own: a gated module's
 `extern fun` primitive, a gated item named as a function value, a receiver method
 and a `pd` initializer, each refused in a module that holds no grant and exercised
-in one that does (`caps_raw_*`, `caps_value_ungranted`, `caps_raw_value_*`,
-`caps_method_*`, `pd_gated_*`).
+in one that does (`caps_raw_ungranted`, `caps_raw_granted`, `caps_raw_positions`,
+`caps_raw_denied`, `caps_value_ungranted`, `caps_raw_value_ungranted`,
+`caps_method_*`, `pd_gated_*`). The granted-function-value route is a test file of
+its own (`cap_function_value.rs`, four tests, because the construct is refused at
+inference in both backends) and the project it replaced,
+`caps_raw_value_granted`, went with it.
 
 Two gates run inside this file:
 
@@ -93,15 +101,16 @@ other.
 
 ## Differential corpora for the runtime
 
-Two corpora pin the behaviour of the runtime pieces that moved from C to Kelp,
-and a third pins a piece that arrived with its C reference beside it. Each
+Four corpora pin the behaviour of the runtime pieces that moved from C to Kelp,
+and each one
 compares one implementation against another over generated cases:
 
 | Test file | Compares | Assertion |
 | --- | --- | --- |
 | `cap_matcher.rs` | `kelpc/runtime/cap_matcher_ref.c` against `std/rt.kp`'s matcher | identical verdict for every case, both drivers generated from one case list |
 | `path_normalize.rs` | `kelpc/runtime/path_normalize_ref.c` against `std/rt.kp`'s `path_normalize` | identical bytes in the buffer *and* identical verdict, case by case |
-| `dns_parse.rs` | `kelpc/runtime/dns_parse_ref.c` against `kelpc/runtime/dns_parse.kp` | identical verdict for every case, one line per case, both drivers generated from one case list |
+| `dns_parse.rs` | `kelpc/runtime/dns_parse_ref.c` against `kelpc/runtime/dns_parse.kp` | identical verdict for every case, one line per case, both drivers generated from one case list (1990 cases) |
+| `resolver_conf.rs` | `kelpc/runtime/resolver_conf_ref.c` against `kelpc/runtime/resolver_conf.kp` | identical verdict for every case, one line per case, both drivers generated from one case list (2612 cases) |
 
 The C files are kept as files rather than as `const`s inside the compiler so the
 tests can compile them directly. See [Runtime](/compiler/runtime) for why the duplication
@@ -111,6 +120,7 @@ is deliberate.
 cargo test --test cap_matcher   -- --ignored
 cargo test --test path_normalize
 cargo test --test dns_parse
+cargo test --test resolver_conf
 ```
 
 ## The formatter's corpus (`kelpc/tests/fmt.rs`)
