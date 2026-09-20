@@ -76,7 +76,26 @@ fun main() { ... }
 - It does not rename anything.
 
 So the column limit, the order inside the last group and the naming rules need a
-review, not a formatter: `kelpc` has no `lint` command.
+review, not a formatter. `kelpc lint` is where those live: it is warning-only,
+so it never fails a build, and it reports one rule so far, the comment run.
+
+## The comment run
+
+Two or more consecutive `//` lines with no blank line and no code between them
+suggest one `/* ... */` comment, and `kelpc lint` warns about each run it finds:
+
+```text
+warning: 3 consecutive '//' lines suggest one '/* ... */' comment
+  --> notes.kp:2:5
+```
+
+A blank line, code, a block comment, or a `///` doc comment between two `//`
+lines ends the run; so does a line where the comment follows code, because a run
+is *lines* of comments. The finding is a warning and the exit status stays 0:
+the author may have meant every line, and a style finding is not a build
+failure. Running `kelpc lint` over this repository's own standard library prints
+findings for its explanatory comment blocks, which is the suggestion rather than
+a defect.
 
 ## See also
 

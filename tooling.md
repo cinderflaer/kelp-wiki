@@ -49,6 +49,7 @@ one of the three that runs while you type.
 | a project that must build with one specific compiler version | Coral, with a `[toolchain]` pin |
 | CI that must assert "this build did no I/O" | Coral, with `sync` then `build --offline` |
 | formatting one file, or checking formatting in CI | `kelpc fmt` |
+| the style rules a formatter cannot enforce, reported as warnings | `kelpc lint` |
 | a task list (`report`, `bench`, `release`) that the project owns | Coral, with `[tasks]` |
 
 ## What you need for what

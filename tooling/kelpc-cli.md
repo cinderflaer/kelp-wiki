@@ -1,13 +1,15 @@
 ---
 title: "`kelpc` CLI"
-description: "The compiler's command line. Everything on this page was run against a release build of kelpc 0.1.4 on the machine that wrote it, and the outputs are quoted from those runs."
+description: "The compiler's command line. Everything on this page was run against a release build of kelpc 0.1.4 on the machine that wrote it, and the outputs are quoted from those runs, except the `lint` section and its usage line, which are from the build on `main` after that release."
 isPublished: true
 tags: "tooling, cli"
 ---
 The compiler's command line. Everything on this page was run against the release
 build tagged `v0.1.4` on the machine that wrote it, and the outputs are quoted
 from those runs. That binary was not rebuilt for the rename, so `kelpc version`
-still reports `kelpc 0.2.2`.
+still reports `kelpc 0.2.2`. The one exception is `kelpc lint` below, which
+shipped after that release: its usage line and its quoted run come from the
+unreleased build on `main`.
 
 ```text
 usage: kelpc build <file.kp> [-o <out>] [--backend=<name>]
@@ -15,6 +17,7 @@ usage: kelpc build <file.kp> [-o <out>] [--backend=<name>]
        kelpc fmt <file.kp>
        kelpc fmt -w <path>...
        kelpc fmt --check <path>...
+       kelpc lint <path>...
        kelpc version
 ```
 
@@ -31,6 +34,7 @@ prints the usage block above, and `kelpc version` is the version query.
 | `kelpc fmt <file.kp>` | prints the formatted source to stdout | 0, or 1 on a parse error |
 | `kelpc fmt -w <path>...` | rewrites files in place | 1 if any input fails to parse |
 | `kelpc fmt --check <path>...` | writes nothing, exits 1 if anything is not already formatted | 0 or 1 |
+| `kelpc lint <path>...` | writes warnings to stderr for the style rules a formatter cannot enforce, and writes no file | 0 even when it warns; 1 only for a path it cannot read or a file it cannot lex |
 | `kelpc version` | prints the build-time version string of the binary: `kelpc 0.2.2` for the release tagged `v0.1.4` | 0 |
 
 Two behaviours worth knowing:
@@ -167,7 +171,8 @@ Four invariants, which are the reason it is safe to run on any file:
 
 What it does **not** enforce: the 100 column limit, the order of declarations
 inside the final group, and the naming and case rules. Those are review
-conventions that need a lint, and `kelpc` has no `lint` command.
+conventions that need a lint, and `kelpc lint` is that command. It is
+warning-only, and it implements one rule so far: the comment run below.
 
 Path handling, as `--help` documents it:
 
@@ -205,6 +210,51 @@ error: expected identifier, found LBrace
 
 That last run changed nothing. `--check` is the CI shape: it writes nothing and
 fails on the first file that differs.
+
+## `lint`
+
+`kelpc lint` is the other half of the style section: what a formatter cannot
+enforce. It is **warning-only by design**, so it is not a gate and it never
+rewrites anything:
+
+```sh
+kelpc lint <path>...   # a .kp file, or a directory walked recursively
+```
+
+- Findings go to stderr as `warning: ...` with a `file:line:col` location, and
+the exit status is **0** even when there are findings. A script tells "clean"
+from "has findings" by the output, and "could not check" by the exit status:
+only a path it cannot read or a file it cannot lex exits 1, reported with the
+same shape `kelpc build` uses for the same file.
+- It writes no file, so there is no `-w` and no `--check`.
+- Paths are collected the way `fmt` collects them (a `.kp` file, or a directory
+recursing `.kp` files, with a link inside a directory skipped and reported), so a
+tree is named once.
+
+The one rule so far is the comment run from [Style](/language/style): two or more
+consecutive `//` lines with no blank line and no code between them suggest one
+`/* ... */` comment.
+
+```text
+$ kelpc lint notes.kp
+warning: 3 consecutive '//' lines suggest one '/* ... */' comment
+  --> /tmp/lintdemo/notes.kp:2:5
+$ echo $?
+0
+```
+
+What does **not** count as a run, each for a reason the rule would otherwise get
+wrong: a blank line between the comments (two thoughts, which is how the author
+separated them), any code between them, a block comment between them, a comment
+that follows code on its own line (a run is *lines* of comments), and a doc
+comment (`///` and `//!` are documentation the tooling reads as documentation,
+so the block-comment suggestion does not apply). A `//` inside a string or a
+block comment is not a comment either, because the rule reads tokens rather than
+text.
+
+This one rule is what it does, not the whole of the style section: the naming
+and case rules are review conventions with no option yet, so a repository that is
+all `snake_case` or all `camelCase` lints clean either way.
 
 ## Environment variables
 
