@@ -1,16 +1,16 @@
 ---
 title: "`kelpc` CLI"
-description: "The compiler's command line. Everything on this page was run against a release build of kelpc 0.1.4 on the machine that wrote it, and the outputs are quoted from those runs, except the `lint` section and its usage line, and the `--deny-outdated` flag and the outdated-syntax section, which are from the unreleased build on `main`."
+description: "The compiler's command line. Everything on this page was run against a release build on the machine that wrote it, and the outputs are quoted from those runs: the bulk of it against the build tagged `v0.1.4`, and the `lint` section, the `--deny-outdated` flag and the outdated-syntax register against `kelpc 26.09.0`."
 isPublished: true
 tags: "tooling, cli"
 ---
-The compiler's command line. Everything on this page was run against the release
-build tagged `v0.1.4` on the machine that wrote it, and the outputs are quoted
-from those runs. That binary was not rebuilt for the rename, so `kelpc version`
-still reports `kelpc 0.2.2`. The exception is what shipped after that release:
-`kelpc lint` below, and the `--deny-outdated` flag and the outdated-syntax
-section further down. Their usage lines and quoted runs come from the unreleased
-build on `main`.
+The compiler's command line. Everything on this page was run against a release
+build on the machine that wrote it, and the outputs are quoted from those runs.
+The bulk of it is the build tagged `v0.1.4`, whose binary was not rebuilt during
+the rename, so `kelpc version` reported `kelpc 0.2.2` from that one. What shipped
+after it (`kelpc lint` below, the comment-run and naming-case findings, the
+`--deny-outdated` flag and the outdated-syntax section further down) comes from
+`kelpc 26.09.0`.
 
 ```text
 usage: kelpc build <file.kp> [-o <out>] [--backend=<name>] [--deny-outdated]

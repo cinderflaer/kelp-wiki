@@ -9,20 +9,53 @@ pieces move at their own speed, so each entry says which one it is.
 
 | Piece | Where it is | Version today | How it is published |
 | --- | --- | --- | --- |
-| IntelliJ plugin | `intellij/` | 0.2.1 | Gitea releases, tag `intellij-v<version>`, plus a self-hosted update site |
-| VS Code extension | `vscode/` | 0.2.0 | a `.vsix` built locally with `@vscode/vsce`; not on the Marketplace |
-| Language server | `server/` | 0.2.0 | `cargo build --release -p lighthouse`; no release assets |
+| IntelliJ plugin | `intellij/` | 26.09.0 | Gitea releases, tag `intellij-v<version>`, plus a self-hosted update site |
+| VS Code extension | `vscode/` | 26.9.0 | a `.vsix` built locally with `@vscode/vsce`; not on the Marketplace |
+| Language server | `server/` | 26.9.0 (`26.09.0` in `serverInfo`) | `cargo build --release -p lighthouse`; no release assets |
 
 Only the IntelliJ plugin has releases and tags. The other two carry their
 version in `package.json` and `Cargo.toml`, and an entry here records the
 version they were at when a release was cut.
 
+**Numbering.** All three pieces are numbered `YY.MM.N`, and the first under the
+scheme is `26.09.0`. Gradle takes the padded name as written, so the plugin's
+version, the tag (`intellij-v26.09.0`) and the asset
+(`lighthouse-intellij-26.09.0.zip`) are the same text. Cargo and npm both
+refuse a leading zero in a version component, so the server's `Cargo.toml` and
+the extension's `package.json` carry `26.9.0`; the server's `serverInfo`
+reports the padded `26.09.0`, so the string an editor shows matches the tag.
+
 | Release | Date | Headline |
 | --- | --- | --- |
+| [IntelliJ 26.09.0](#intellij-plugin-26090-2026-09-20) | 2026-09-20 | the `YY.MM.N` scheme, for all three pieces |
 | [IntelliJ 0.2.1](#intellij-plugin-021-2026-09-19) | 2026-09-19 | the whole IDE arrives over LSP; `closure` and `'x'` in the highlighter |
 | [IntelliJ 0.2.0](#intellij-plugin-020-2026-09-19) | 2026-09-19 | the project's kelp version, from the project |
 | [IntelliJ 0.1.1](#intellij-plugin-011-2026-09-19) | 2026-09-19 | the auto-update feed, and the New Project entry |
 | [Lighthouse v1 (0.1.0)](#lighthouse-v1-no-release) | 2026-09-19 | first version: LSP diagnostics, VS Code extension, IntelliJ plugin |
+
+## IntelliJ plugin 26.09.0 (2026-09-20)
+
+[Release](https://homelabone.xenoo.dev/gittea/Juniper/lighthouse/releases/tag/intellij-v26.09.0)
+· the language server is unchanged since 0.2.0 apart from its version fields, so
+nothing here needs a newer `lighthouse` than that: `PATH` or `~/.local/bin`.
+
+**The first release under `YY.MM.N`**, for all three pieces at once. The plugin
+takes the padded name as written, so `26.09.0` is its version, its tag is
+`intellij-v26.09.0` and its asset is `lighthouse-intellij-26.09.0.zip`; the
+server and the extension carry `26.9.0`, because Cargo and npm both refuse a
+leading zero, and the server reports the padded `26.09.0` in `serverInfo` so the
+string an editor shows matches the tag.
+
+The self-hosted update feed (`intellij/updatePlugins.xml`) points at this
+release's zip, so an installed plugin updates itself from Settings > Plugins >
+Updates, with no restart and no file picker. The VS Code extension is still
+built locally and is not on the Marketplace, so the version move is all this
+release says about it.
+
+**Fixed.** The README no longer claims that no formatter exists. `kelpc fmt`
+(with `--check` and `-w`) shipped in the previous compiler release; what is
+missing is the document-formatting provider in each extension, which is what the
+README now says.
 
 ## IntelliJ plugin 0.2.1 (2026-09-19)
 

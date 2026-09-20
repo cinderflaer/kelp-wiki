@@ -9,7 +9,7 @@ on your `PATH`: `head`, which prints the first lines of a file. It is under sixt
 lines, needs no dependency, and it is where `argv`, a capability, an error path and
 an exit code all show up at once.
 
-Every output below was produced by the program on this page, against `kelpc 0.1.4`.
+Every output below was produced by the program on this page, against `kelpc 26.09.0`.
 
 ## The program
 

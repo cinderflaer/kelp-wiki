@@ -15,7 +15,7 @@ anything itself.
 | Lighthouse | editor support: a language server plus a VS Code extension and an IntelliJ plugin | [Juniper/lighthouse](https://homelabone.xenoo.dev/gittea/Juniper/lighthouse) |
 
 The versions these pages were written against, as observed on the machine that
-built them, are `kelpc 0.1.4` and Coral `v0.5.4`. They are not part of the
+built them, are `kelpc 26.09.0` and Coral `v26.09.0`. They are not part of the
 language's contract; a checkout builds its own.
 
 ## How they divide the work

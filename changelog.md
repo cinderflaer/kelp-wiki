@@ -16,15 +16,20 @@ checker and a backend change at once. Tooling releases have their own pages:
 [Coral changelog](/tooling/coral-changelog) and
 [Lighthouse changelog](/tooling/lighthouse-changelog).
 
-**Numbering, 2026-09-20.** The tags `v0.2.0` to `v0.2.3` were renamed to
-`v0.1.2` to `v0.1.5`, and the Gitea releases with them: the first scheme counted
-milestones rather than shipped versions, so six releases carried two minor
-numbers. Each renamed tag keeps its commit and its release asset, so the files
-are the original builds, not rebuilt ones. The build-time version string inside
-them therefore still carries the old number: running
-`kelpc-0.1.5-linux-x86_64 version` prints `kelpc 0.2.3`. A source checkout of
-`main` reports `0.1.6`, and every release cut from here on reports its own
-number.
+**Numbering.** Releases are numbered `YY.MM.N`: the two-digit year, the
+two-digit month, and the release number *within that month*, starting at `0`.
+The first under the scheme is [26.09.0](#26090-2026-09-20), and every release
+from it on reports its own number: `kelpc version`, the tag and the release
+asset are the same text. Cargo refuses a leading zero in a version component,
+so `Cargo.toml` carries the semver-legal `26.9.0` and the printed name pads the
+month back.
+
+Nothing released before the scheme is renumbered. The tags `v0.2.0` to `v0.2.3`
+were renamed to `v0.1.2` to `v0.1.5` in the pass that introduced it, and each one
+keeps the commit and the release asset it was cut with, so those four assets are
+still the original builds: running `kelpc-0.1.5-linux-x86_64 version` prints
+`kelpc 0.2.3`. The renamed tags stay exactly as they are, and `26.09.0` and every
+later release build their own asset from their own tag.
 
 These entries are deliberately short. The authority for what a milestone
 actually contained is
@@ -33,12 +38,65 @@ this page is the index to it.
 
 | Version | Date | Headline |
 | --- | --- | --- |
+| [26.09.0](#26090-2026-09-20) | 2026-09-20 | the `YY.MM.N` scheme; `try_to_<T>`; `std/encoding`; the outdated-syntax register |
 | [0.1.5](#015-2026-09-20) | 2026-09-20 | the compiler emits its own x86-64 assembly; `kelpc fmt`; block comments |
 | [0.1.4](#014-2026-09-19) | 2026-09-19 | five checker bugs found by a real 807-line program |
 | [0.1.3](#013-2026-09-19) | 2026-09-19 | a literal takes its sibling operand's type on either side |
 | [0.1.2](#012-2026-09-19) | 2026-09-19 | `View`, `char` literals, bitwise operators, `str` to `String` coercion |
 | [0.1.1](#011-2026-09-19) | 2026-09-19 | the `for` loop, `spawn_in`/`run_in`, fallible `try_run`, `fs.symlink` |
 | [0.1.0](#010-no-release) | 2026-09-19 | first tag: the core language, modules, containers, capabilities, stdlib |
+
+## 26.09.0 (2026-09-20)
+
+[Release](https://homelabone.xenoo.dev/gittea/Juniper/kelp/releases/tag/v26.09.0)
+· 26 commits · 165 unit tests, 312 end-to-end green on the C backend, 267 of
+them on the assembly backend.
+
+**The first release under `YY.MM.N`**, the scheme this project and its tooling
+now share: the two-digit year, the two-digit month, and the release number
+within that month starting at `0`. The version is one text everywhere it
+appears, so `kelpc version` prints `kelpc 26.09.0`, the tag is `v26.09.0`, and
+the asset is `kelpc-26.09.0-linux-x86_64`.
+
+**A module's namespace is the module's own name**: `impl "deps/argparse/lib"` is
+`argparse.parse(...)` and `impl "shapes/circle"` is `circle`. The
+`impl "path" as name` clause still compiles and still names the module, and it
+is now **outdated**. **`n.try_to_u64()`** is the fallible twin of `n.to_u64()`: it
+hands back `Option<T>` for every conversion that can lose a value, where the
+plain conversion panics. **Radix literals** (`0xff`, `0b1010`), **byte
+literals** (`b'\n'`, a `u8` by construction), the two-digit **`\xNN`** escape,
+and **`elif`** beside `else if`. The capability grant is
+`impl "std/fs" caps(fs = ["/var/log/myapp/*"])`, and the `with` it replaces is
+outdated. `List<T>.clone()` copies a list and its elements, and `panic` takes an
+owned `String`.
+
+**Outdated syntax is a register, not a break** (`kelpc/src/deprecated.rs`): a
+retired spelling warns under an `outdated:` label and still builds,
+`--deny-outdated` turns those findings into errors, and every entry is removed on
+the next development cycle. **`kelpc lint <path>...`** reports the comment run,
+an `else if` link that `elif` spells better, and a name that does not match the
+project's `naming_case`. The generated C carries a **`#line` directive** before
+every statement, so `cc`'s own diagnostic names the `.kp` line that caused it.
+An owned value can be **interpolated into a template** (`print("w = ${s}")`),
+the assembly backend lowers **`List.sort`/`contains`/`slice`** for the element
+kinds the C backend allows, and a local that shadows a module name is now
+reported as the shadowing it is.
+
+**Stdlib.** [`std/encoding`](/stdlib/encoding): base64, base32, base58, hex and
+percent, ungated, with one failure case across every decoder and both percent
+forms kept apart on purpose.
+
+**Fixed.** `isize` compiles on the C backend: it is `ptrdiff_t`, and the
+generated C never included `<stddef.h>`, so every shape of it died in `cc` while
+the assembly backend built all of them. An `outdated:` finding is printed once,
+not once per load pass. An owned local bound in a loop body and moved on one
+path is no longer leaked, and an `else if let` behind a plain `if` compiles. A
+field of a `datac`-returning call stages its temporary instead of reaching `cc`
+as `&(rvalue).field`, and the borrow that really does outlive the call is
+refused in the compiler's own voice. Five diagnostics now name the thing the
+reader has to change: a bare `mut T` operand, `&o` where `o` is already a
+borrow, a capability delegated but never granted, the rejected-template message
+(a `String` is not the problem), and a chained call that reuses one temporary.
 
 ## 0.1.5 (2026-09-20)
 

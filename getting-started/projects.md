@@ -39,7 +39,7 @@ json      = "Juniper/fpl/json"           # one folder inside a repo
 local     = "file:///srv/git/fpl#other"  # a full URL, folder after '#'
 
 [toolchain]
-kelp = "v0.1.1"
+kelp = "v26.09.0"
 ```
 
 `kelpc` reads only the flat part (`name`, `version`, `entry`) and stops at the
@@ -96,12 +96,12 @@ tree it built with until something refreshes it.
 
 ```toml
 [toolchain]
-kelp = "v0.1.1"
+kelp = "v26.09.0"
 ```
 
 A pin makes the project build with the compiler it was written against instead of
 whatever `coral toolchain kelp use` last set machine-wide. `coral toolchain kelp
-pin v0.1.1` writes it; `pin --clear` removes it. The store holds **one** version at
+pin v26.09.0` writes it; `pin --clear` removes it. The store holds **one** version at
 a time, so two projects pinned to different versions cost one reinstall per
 switch.
 

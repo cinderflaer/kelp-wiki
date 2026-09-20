@@ -15,8 +15,18 @@ its own tag. Not every tag has a release: `v0.1.0`, `v0.2.0`, `v0.2.1`,
 [its README](https://homelabone.xenoo.dev/gittea/Juniper/coral/src/branch/main/README.md),
 which the [Coral page](/tooling/coral) follows.
 
+**Numbering.** Releases are numbered `YY.MM.N`: the two-digit year, the
+two-digit month, and the release number within that month starting at `0`. The
+first under the scheme is [`v26.09.0`](#v26090-2026-09-20), and every release
+from it on reports its own number. Cargo refuses a leading zero in a version
+component, so `Cargo.toml` carries the semver-legal `26.9.0` while the tag and
+the asset are written padded: `v26.09.0` and `coral-26.09.0-linux-x86_64`.
+`toolchain install` compares an asset name against the tag as text, so the two
+spellings have to be the same one.
+
 | Version | Date | Headline |
 | --- | --- | --- |
+| [v26.09.0](#v26090-2026-09-20) | 2026-09-20 | the `YY.MM.N` scheme; `naming_case` and `http_pool`; an asset named for another version is refused |
 | [v0.5.4](#v054-2026-09-19) | 2026-09-19 | a dependency can name one folder inside a repo |
 | [v0.5.3](#v053-2026-09-19) | 2026-09-19 | a missing release is not an unreadable one; refuse a sign-in page |
 | [v0.5.2](#v052-2026-09-19) | 2026-09-19 | refuse a removed command before anything needs a manifest |
@@ -27,6 +37,31 @@ which the [Coral page](/tooling/coral) follows.
 | [v0.2.1](#v021-2026-09-19) | 2026-09-19 | `find_kelpc` checks `~/.coral/bin/kelpc` before `PATH` |
 | [v0.2.0](#v020-2026-09-19) | 2026-09-19 | toolchain management: install and switch a kelp and a coral |
 | [v0.1.0](#v010-2026-09-19) | 2026-09-19 | Coral v1: init, build, run, check, clean, tasks, cache, deps |
+
+## v26.09.0 (2026-09-20)
+
+[Release](https://homelabone.xenoo.dev/gittea/Juniper/coral/releases/tag/v26.09.0)
+
+- The first release under `YY.MM.N`, and the first whose asset name carries it:
+  `coral-26.09.0-linux-x86_64` beside the `v26.09.0` tag. `toolchain install`
+  reads that name against the tag as text, so the padded month is the one
+  spelling used for both.
+- `naming_case` is accepted in `coral.toml`'s compiler section with `kelpc`'s
+  own checks and wording: `0` is `camelCase` (the default), `1` is `snake_case`,
+  anything else is refused. Coral does not read the value; it only has to accept
+  what `kelpc` accepts, so a project cannot write a setting one tool ignores.
+- `http_pool` is read as a bare whole number, which is how `kelpc` splices it
+  into `std/http`. Coral used to demand a quoted string and then refuse the
+  number, so the key could not be set at all.
+- `toolchain kelp|coral install <ver>` **refuses a release asset whose name
+  carries a different version**, where it used to take the first asset that
+  matched the binary name and the platform. An asset attached under the wrong
+  name can no longer install the wrong compiler; a name with no version at all
+  is still accepted, and the tag is built from source instead.
+- The README's dependency example drops the `as` clause (outdated), and the
+  library flow is written end to end: what Coral needs from a library, what a
+  folder has to carry, and how the manifest line and the `impl` line fit
+  together.
 
 ## v0.5.4 (2026-09-19)
 
