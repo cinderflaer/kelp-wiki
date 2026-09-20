@@ -76,7 +76,8 @@ file's own `fun` declarations plus the free-standing builtins (`print`, `print!`
 ## The standard library is a snapshot
 
 `kelpc` embeds its standard library in the binary rather than shipping `.kp` files,
-so the server carries its own copy: `server/stdlib/`, 17 files, regenerated from a
+so the server carries its own copy: `server/stdlib/`, one `.kp` per shipped
+module except `std/rt` (17 modules today), regenerated from a
 kelp checkout by `server/tools/sync-stdlib.sh`. That copy is what go-to-definition
 into the standard library and completion of `str.*` are answered from.
 
