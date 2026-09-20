@@ -7,14 +7,17 @@ tags: "compiler"
 Most of what a program needs at run time is emitted by the code generator rather
 than linked: the `Bytes`/`String` heap routines, bounds checks, drop calls and the
 capability plumbing are C text that `codegen_c.rs` splices into the generated
-program. Three files in `kelpc/runtime/` are what stayed C on purpose, and one of
-them is no longer emitted at all.
+program. `kelpc/runtime/` holds the runtime pieces that are not spliced in as
+text: the C that stayed, the C references kept as oracles, and the newest pair,
+a parser written in Kelp with its C reference beside it.
 
 | File | Status | Role |
 | --- | --- | --- |
 | `cap_glue.c` | emitted into every program that contains a gated call | the non-matching half of the capability check |
 | `cap_matcher_ref.c` | not emitted | the C capability matcher, kept as the differential oracle |
 | `path_normalize_ref.c` | not emitted | the C path normalizer, kept as the differential oracle |
+| `dns_parse.kp` | not emitted, not a std module | the stub resolver's DNS message parser, in Kelp (MK7 §7 item 6) |
+| `dns_parse_ref.c` | not emitted | the same parser in C, kept as the differential oracle |
 
 ## `cap_glue.c`: what the capability runtime still is in C
 
@@ -63,12 +66,22 @@ Comparing bytes and not only verdicts is deliberate for the normalizer: a path
 that normalizes to something *inside* the grant while resolving outside it is
 exactly the escape being rejected.
 
+The same discipline covers the stub resolver's message parser, which is a §7 item
+rather than a §8 one and is not a security check: `dns_parse.kp` and
+`dns_parse_ref.c` are fed the same 1990-case corpus by `kelpc/tests/dns_parse.rs`,
+one printed verdict per case, and the two have to agree line for line. A parser
+that agrees only on a well-formed reply is the one that comes apart on a
+compressed name, a truncated message or a count the message cannot hold, which is
+what the corpus is made of. Neither file is emitted and neither is a std module,
+so no program reaches the parser yet.
+
 ## What is still C in the runtime, and what that costs
 
 | Item | State |
 | --- | --- |
 | Capability matcher | Kelp (`std/rt.kp`), with the C oracle kept |
 | Path normalizer | Kelp (`std/rt.kp`), with the C oracle kept |
+| DNS message parser (MK7 §7 item 6) | Kelp (`dns_parse.kp`), not shipped yet, with the C oracle kept |
 | Symlink resolution (`kelp_resolve_path`) | still C |
 | The allocator | still C; blocked on raw pointers, which the language does not expose |
 | The `Bytes`/`String` heap routines and drop calls | emitted as a fixed C preamble by `codegen_c.rs` |

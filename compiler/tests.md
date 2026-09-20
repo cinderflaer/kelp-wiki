@@ -79,12 +79,14 @@ other.
 ## Differential corpora for the runtime
 
 Two corpora pin the behaviour of the runtime pieces that moved from C to Kelp,
-each comparing an old implementation against the new one over generated cases:
+and a third pins a piece that arrived with its C reference beside it. Each
+compares one implementation against another over generated cases:
 
 | Test file | Compares | Assertion |
 | --- | --- | --- |
 | `cap_matcher.rs` | `kelpc/runtime/cap_matcher_ref.c` against `std/rt.kp`'s matcher | identical verdict for every case, both drivers generated from one case list |
 | `path_normalize.rs` | `kelpc/runtime/path_normalize_ref.c` against `std/rt.kp`'s `path_normalize` | identical bytes in the buffer *and* identical verdict, case by case |
+| `dns_parse.rs` | `kelpc/runtime/dns_parse_ref.c` against `kelpc/runtime/dns_parse.kp` | identical verdict for every case, one line per case, both drivers generated from one case list |
 
 The C files are kept as files rather than as `const`s inside the compiler so the
 tests can compile them directly. See [Runtime](/compiler/runtime) for why the duplication
@@ -93,6 +95,7 @@ is deliberate.
 ```sh
 cargo test --test cap_matcher   -- --ignored
 cargo test --test path_normalize
+cargo test --test dns_parse
 ```
 
 ## The formatter's corpus (`kelpc/tests/fmt.rs`)
