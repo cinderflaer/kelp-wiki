@@ -16,7 +16,7 @@ condition that must end a loop early goes in the `while` header.
 ```kelp
 if n > 0 {
     print("positive")
-} else if n < 0 {
+} elif n < 0 {
     print("negative")
 } else {
     print("zero")
@@ -29,6 +29,29 @@ type:
 ```kelp
 val label: String = if n > 0 { "pos" } else { "not pos" }
 ```
+
+### `elif` and `else if`
+
+The link between one condition and the next has two spellings, and they mean the
+same thing:
+
+```kelp
+if n > 2 {
+    print("big")
+} elif n > 1 {
+    print("medium")
+} elif n > 0 {
+    print("small")
+} else {
+    print("none")
+}
+```
+
+- **`elif` is the preferred spelling.** `else if` is the same link, stays legal
+  and compiles identically, and `kelpc fmt` never rewrites one into the other;
+  `kelpc lint` warns about `else if` and says which spelling to write.
+- A chain may mix the two, and `elif` takes the same grammar as `if`: a
+  condition and a block, or a pattern and a block (`elif let`).
 
 ## `if let`
 
@@ -47,7 +70,7 @@ if let Word(text) = token {
 
 if let Rect(w, h) = shape {
     print(w * h)
-} else if let Circle(r) = shape {
+} elif let Circle(r) = shape {
     print(3.14159 * r * r)
 } else {
     print(0.0)

@@ -172,7 +172,8 @@ Four invariants, which are the reason it is safe to run on any file:
 What it does **not** enforce: the 100 column limit, the order of declarations
 inside the final group, and the naming and case rules. Those are review
 conventions that need a lint, and `kelpc lint` is that command. It is
-warning-only, and it implements one rule so far: the comment run below.
+warning-only, and it reports the comment run, the `else if` link and the naming
+case below.
 
 Path handling, as `--help` documents it:
 
@@ -231,9 +232,13 @@ same shape `kelpc build` uses for the same file.
 recursing `.kp` files, with a link inside a directory skipped and reported), so a
 tree is named once.
 
-The one rule so far is the comment run from [Style](/language/style): two or more
-consecutive `//` lines with no blank line and no code between them suggest one
-`/* ... */` comment.
+The rules are the ones a formatter cannot enforce: the comment run, the `else if`
+link, and the naming case, all three from [Style](/language/style).
+
+### The comment run
+
+Two or more consecutive `//` lines with no blank line and no code between them
+suggest one `/* ... */` comment:
 
 ```text
 $ kelpc lint notes.kp
@@ -252,9 +257,41 @@ so the block-comment suggestion does not apply). A `//` inside a string or a
 block comment is not a comment either, because the rule reads tokens rather than
 text.
 
-This one rule is what it does, not the whole of the style section: the naming
-and case rules are review conventions with no option yet, so a repository that is
-all `snake_case` or all `camelCase` lints clean either way.
+### The `else if` link
+
+`elif` is the preferred spelling of a chain link, so the longer one is reported:
+
+```text
+$ kelpc lint server.kp
+warning: 'else if' compiles, but 'elif' is the preferred spelling
+  --> /tmp/lintdemo/server.kp:14:7
+$ echo $?
+0
+```
+
+Both spellings stay legal and compile identically, and `kelpc fmt` never rewrites
+one into the other.
+
+### The naming case
+
+The project's case is `coral.toml`'s `naming_case` (`0` = `camelCase`, the
+default; `1` = `snake_case`), and a declared name in the other case is reported:
+
+```text
+$ kelpc lint io.kp
+warning: function 'read_text' is snake_case, and this project asks for camelCase (coral.toml 'naming_case = 0'); write 'readText'
+  --> /tmp/lintdemo/io.kp:7:5
+$ echo $?
+0
+```
+
+The setting is the project's, not the invocation's, so there is no `kelpc lint`
+flag for it. The rule reads the names a file **declares** (a `fun` name, a
+parameter, a `val`/`var`/`pd` binding, a `datac` or payload field, a loop binding,
+a pattern binding), which is why a call into the standard library's locked
+`snake_case` is never reported under either setting: a call is a use. A file with
+no `coral.toml` to read gets the option's default, and a file under the
+project's `src/deps/` gets no case rule at all.
 
 ## Environment variables
 

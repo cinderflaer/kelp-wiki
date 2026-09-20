@@ -66,7 +66,8 @@ The formatter owns whitespace: `kelpc fmt -w <path>` and `kelpc fmt --check` are
 the two commands. `fmt` is idempotent, token-faithful and comment-preserving:
 it never rewrites a token, so a formatted file is the same program. See
 [Style](/language/style) for the rules it cannot enforce (the 100-column
-limit, declaration order inside a group, naming).
+limit and declaration order inside a group) and for `kelpc lint`, which reports
+the case rule and the two style findings a formatter cannot make.
 
 ## Reporting a defect
 

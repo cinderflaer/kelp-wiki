@@ -53,15 +53,21 @@ primary      := int | float | string | char | template | "true" | "false"
               | "fun" "(" [ param ("," param)* ] ")" [ ".R" ":" type ]
                 ( "=" expr | block )
               | ident [ typeargs ] [ "(" args ")" ] | "(" expr ")" | block
-              | "if" expr block [ "else" ( block | if ) ]
+              | "if" expr block chain
               | "if" "let" ident [ "(" (ident | "_") ("," (ident | "_"))* ")" ] "=" expr
-                block [ "else" ( block | if ) ]
+                block chain
               | "when" "{" ( expr "->" expr )* "else" "->" expr "}"
 char         := "'" ( <any Unicode scalar value except ' and newline>
                     | "\n" | "\t" | "\r" | "\0" | "\'" | "\"" | "\\"
                     | "\u{" hexdigit+ "}" ) "'"
 args         := [ arg ("," arg)* ]
 arg          := [ ident "=" ] expr
+chain        := [ "elif" expr block chain
+                | "elif" "let" ident [ "(" (ident | "_") ("," (ident | "_"))* ")" ] "=" expr
+                  block chain
+                | "else" ( block | "if" expr block chain
+                         | "if" "let" ident [ "(" (ident | "_") ("," (ident | "_"))* ")" ] "=" expr
+                           block chain ) ]
 ```
 
 ## Reading it
@@ -72,6 +78,10 @@ arg          := [ ident "=" ] expr
   is why `f(x)?` and `a.b.c(1)` both parse.
 - `primary` includes `block` and `if`/`when` as expressions, which is how
   `val label: String = if flag { "yes" } else { "no" }` works.
+- `chain` is what follows the first block of an `if` or an `if let`: nothing, an
+  `else` block, or another link. A link is written `elif` (the preferred
+  spelling) or `else if`, so a chain may mix the two; a chain that produces a
+  value needs the `else` block at its end.
 - `typeargs` is written **adjacent** to the name and to the `(`:
   `Pair<i32, String>(…)`. Write a space before `<` when you mean a comparison.
 

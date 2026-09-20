@@ -126,6 +126,7 @@ kelp = "v0.1.4"
 | `version` | `kelpc`, Coral | the project's own version |
 | `entry` | `kelpc`, Coral | the file that must hold `main` |
 | `http_pool` | `kelpc` (spliced into `std/http`) | a bare whole number (`http_pool = 4`), the one value in the manifest that is not a quoted string |
+| `naming_case` | `kelpc` (`kelpc lint`) | a bare whole number, `0` for `camelCase` (the default) or `1` for `snake_case`: the case the lint asks your names to be written in ([Style](/language/style#the-naming-case)). Coral accepts the key with the compiler's own checks and does not read the value |
 
 The flat key set is **closed**. An unknown one is refused by name:
 

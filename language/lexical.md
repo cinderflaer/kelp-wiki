@@ -50,8 +50,8 @@ with no separator is an error.
 An identifier starts with a letter or `_`. These are the keywords (§2.3):
 
 ```
-as  closure  const  datac  else  enum  extern  false  for  fun  impl  move
-mut  pd  return  true  val  var  when  while
+as  closure  const  datac  elif  else  enum  extern  false  for  fun  if  impl
+move  mut  pd  return  true  val  var  when  while
 ```
 
 `fn`, `let`, `struct`, `use`, `loop`, `break`, `continue`, `match`, `trait` and
