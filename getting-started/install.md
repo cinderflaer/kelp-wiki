@@ -71,7 +71,9 @@ is **refused by name** rather than silently miscompiled:
 error: the 'asm' backend does not support the `extern fun std.fs.exists_raw` yet
 ```
 
-`kelpc version` prints the compiler version. `kelpc fmt` formats sources (see
+`kelpc version` prints the compiler version. `kelpc check` answers whether a
+program compiles without writing an artifact (`kelpc check --json` answers with a
+document instead of prose). `kelpc fmt` formats sources (see
 [`kelpc` CLI](/tooling/kelpc-cli)).
 
 If the `asm` backend cannot find the library directory it needs, point

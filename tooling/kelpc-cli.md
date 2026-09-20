@@ -1,6 +1,6 @@
 ---
 title: "`kelpc` CLI"
-description: "The compiler's command line. Everything on this page was run against a release build on the machine that wrote it, and the outputs are quoted from those runs: the bulk of it against the build tagged `v0.1.4`, and the `lint` section, the `--deny-outdated` flag and the outdated-syntax register against `kelpc 26.09.0`."
+description: "The compiler's command line. Everything on this page was run against a release build on the machine that wrote it, and the outputs are quoted from those runs: the bulk of it against the build tagged `v0.1.4`, the `lint` section, the `--deny-outdated` flag, the outdated-syntax register and the `check` section against `kelpc 26.09.0` and the unreleased work after it."
 isPublished: true
 tags: "tooling, cli"
 ---
@@ -15,6 +15,7 @@ after it (`kelpc lint` below, the comment-run and naming-case findings, the
 ```text
 usage: kelpc build <file.kp> [-o <out>] [--backend=<name>] [--deny-outdated]
        kelpc run <file.kp> [--deny-outdated]
+       kelpc check <file.kp> [--json] [--deny-outdated]
        kelpc fmt <file.kp>
        kelpc fmt -w <path>...
        kelpc fmt --check <path>...
@@ -22,8 +23,8 @@ usage: kelpc build <file.kp> [-o <out>] [--backend=<name>] [--deny-outdated]
        kelpc version
 ```
 
-There is no `--help`, no `--version` and no `check` subcommand: each of those
-prints the usage block above, and `kelpc version` is the version query.
+There is no `--help` and no `--version`: each of those prints the usage block
+above, and `kelpc version` is the version query.
 
 ## Subcommands
 
@@ -32,6 +33,8 @@ prints the usage block above, and `kelpc version` is the version query.
 | `kelpc build <file.kp>` | compiles to a binary and keeps the artifact | 0 on success, 1 on a diagnostic |
 | `kelpc build <file.kp> -o <out>` | the same, naming the artifact | as above, 1 if `<out>.c` cannot be written |
 | `kelpc run <file.kp>` | compiles and executes, forwarding stdout, stderr and the program's exit code | the program's own status |
+| `kelpc check <file.kp>` | runs the front end (load, type check, borrow check) with no code generation and writes no artifact; takes a project directory too | 0 on success, 1 on a diagnostic; an outdated finding on its own stays 0 |
+| `kelpc check <file.kp> --json` | the same, with the findings as one JSON document on stdout | as above |
 | `kelpc build <file.kp> --deny-outdated` | the same build, with a deprecation turned into an error | 1 if the program uses outdated syntax |
 | `kelpc fmt <file.kp>` | prints the formatted source to stdout | 0, or 1 on a parse error |
 | `kelpc fmt -w <path>...` | rewrites files in place | 1 if any input fails to parse |
@@ -61,6 +64,59 @@ Two behaviours worth knowing:
 
   Build first and run the binary, or use Coral, which does forward them
   (`coral run -- <args>`, see [Coral](/tooling/coral)).
+
+## `check`
+
+`kelpc check` runs everything a build runs except code generation: the same
+modules, the same type check, the same borrow check. It answers whether a program
+compiles without writing an artifact, and a project directory is one of the two
+things it accepts, exactly as `build` accepts it.
+
+```text
+$ kelpc check /tmp/check/good.kp; echo $?
+0
+$ ls /tmp/check
+ good.kp  main.kp
+$ kelpc check /tmp/check/main.kp
+error: the element type of 'ys' is still open: nothing said what 'List.empty()' holds, and 'xs.push(v)' is what decides it. Write it on the binding instead ('var xs: List<i32> = List.empty()')
+  --> /tmp/check/main.kp:3:11
+$ echo $?
+1
+```
+
+The exit status is nonzero only for an error. An outdated-syntax finding exits
+zero on its own, which is the rule `build` follows without `--deny-outdated`, and
+`--deny-outdated` makes that finding an error exactly as it does there.
+
+### `--json`
+
+`kelpc check --json` writes the findings to stdout as one JSON document instead
+of prose to stderr, so a program reads the answer instead of parsing a message.
+Nothing else is written to either stream.
+
+```json
+{"schema":1,"ok":false,"diagnostics":[{"severity":"error","message":"the element type of 'ys' is still open: nothing said what 'List.empty()' holds, and 'xs.push(v)' is what decides it. Write it on the binding instead ('var xs: List<i32> = List.empty()')","module":"main","file":"/tmp/check/main.kp","line":3,"column":11,"end_line":3,"end_column":19,"notes":[]}]}
+```
+
+| Key | What it is |
+| --- | --- |
+| `schema` | `1` today, so a consumer can refuse a document it does not understand |
+| `ok` | whether the program compiles: the same question the exit status answers |
+| `severity` | `error`, `warning` or `outdated` |
+| `module` | the module's canonical id: `main` for a loose file, `shapes/circle` for a module |
+| `file` | the path as the compiler read it. Absent when there is no file to point at, which is a path the compiler could not read |
+| `line`, `column` | 1-based, the first byte of the finding's span |
+| `end_line`, `end_column` | exclusive, the byte after its last, so a reader can underline what the message is about |
+| `notes` | secondary locations, each with `message`, `module` and the same location keys |
+
+The front end stops at the first error, so `diagnostics` carries one `error` plus
+whatever findings came before it: a `check` reports the first mistake, not every
+mistake.
+
+This is the interface [Lighthouse](/tooling/lighthouse)'s server was blocked on,
+and the one Coral's design names as what a build tool reads instead of scraping
+stderr. What Lighthouse also wants and does not have yet is whole-program
+resolution, which is the compiler's own answer to keep or to publish.
 
 ## Where the artifacts land
 

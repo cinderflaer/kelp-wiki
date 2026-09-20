@@ -31,7 +31,7 @@ through `$KELPC` first (`server/src/diagnostics.rs`), which is what makes a
 development build of the compiler usable with a release build of the server.
 
 **Everything else comes from an index the server builds itself.** `kelpc` has no
-machine-readable output and no way to ask it about a symbol, so `server/src/index.rs`
+way to be asked about a symbol, so `server/src/index.rs`
 reads the project's `.kp` files and the standard library, and answers from the text.
 The index has a scanner and no type checker.
 
@@ -182,10 +182,11 @@ not end the session.
 
 ## Deliberate gaps
 
-- **Diagnostics are prose, not data.** The server parses what `kelpc` prints,
-  because there is no machine-readable `kelpc check --json` to ask for spans,
-  categories and warnings. `server/src/diagnostics.rs` is the parser that would go
-  away.
+- **Diagnostics are prose, not data.** The server parses what `kelpc` prints on
+  stderr. `kelpc check --json` exists now and hands back a severity, a message and
+  a 1-based range per finding, so the spans and the categories are reachable; the
+  parser is what would go away once the server reads the JSON instead.
+  `server/src/diagnostics.rs` is that parser.
 - **No whole-program resolution.** The index reads one file at a time and has no
   type checker, so a generic receiver (`fun Pair<A, B>.first`) resolves only when
   the call site spells the argument types, and a receiver reached through a chain

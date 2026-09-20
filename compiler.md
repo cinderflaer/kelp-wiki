@@ -19,7 +19,7 @@ cargo build --release -p kelpc
 
 | Stage | File | Job |
 | --- | --- | --- |
-| CLI | `main.rs` | `build`, `run`, `fmt`, `version`; picks the backend |
+| CLI | `main.rs` | `build`, `run`, `check`, `fmt`, `lint`, `version`; picks the backend |
 | Lexing | `lexer.rs` | source to span-carrying tokens; newline-sensitive; UTF-8 in literals |
 | Preprocessing | `preprocess.rs` | `%*alias*%` text substitution, before the parser |
 | Parsing | `parser.rs` | recursive descent plus a Pratt expression parser; `if let` and `for` are desugared here |

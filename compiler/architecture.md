@@ -183,7 +183,7 @@ fun main() {
 | Missing | Consequence |
 | --- | --- |
 | A library or object target | "Using a library" means copying or fetching a folder of `.kp` sources: see [Libraries](/libraries) |
-| Machine-readable diagnostics | There is no `kelpc check --json`, which is why editor tooling parses prose |
+| A module dependency list | `kelpc check --json` answers with diagnostics; which module depends on which is still not askable outside the compiler, which is the other half of the interface a build cache wants |
 | An optimiser | Optimisation is whatever `cc -O2` does to the generated C; the assembly backend's allocator exists to keep it in the same league, not to optimise |
 | Incremental compilation and a build cache | [Coral](/getting-started/install) owns the project-level cache |
 
