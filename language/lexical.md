@@ -68,12 +68,18 @@ val c = true            // bool literal
 val d = "text\n"        // string literal
 val e = 'x'             // character literal
 val f = "n = $a, sum = ${a + 1}"   // string template
+val g = 0xff            // integer literal, hexadecimal
+val h = 0b1010          // integer literal, binary
 ```
 
-- **Integer literals are decimal digits only**: no suffix, no hex, no digit
-  separators. A literal has no width of its own: it takes the integer type its
-  context requires, and `i32` when nothing determines it. To write a bit pattern
-  you write the decimal value (`192`, `128`) or compute it.
+- **Integer literals** are decimal, or hexadecimal after `0x` and binary after
+  `0b`: `0xff`, `0b1010`. A radix literal is the same value as its decimal
+  spelling (`0xff` is `255`), and like any literal it has no width of its own:
+  it takes the integer type its context requires, and `i32` when nothing
+  determines it, so `val mask: u8 = 0xff` and `val mask: u64 = 0xff` both work.
+  There is no suffix (`5u8` is an error: the width comes from where the literal
+  sits) and no digit separator, and there is no octal form. A malformed one is
+  refused by name: `0b12` is "invalid digit '2' in a binary literal".
 - **Float literals** are `digits.digits`, and are `f64` unless the context
   requires `f32`.
 - A **character literal** is one Unicode scalar value in single quotes: `'x'`,
