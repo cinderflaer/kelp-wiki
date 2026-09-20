@@ -35,7 +35,7 @@ datac Fit(val slope: f64, val intercept: f64, val r_squared: f64)
 | `percentile(xs: &List<f64>, p: f64)` | `f64` | `p` in `[0, 100]`, linear interpolation between ranks. **panics** on empty |
 | `histogram(xs: &List<f64>, buckets: usize)` | `List<i64>` | equal-width buckets between min and max |
 | `linear_regression(xs: &List<f64>, ys: &List<f64>)` | `Fit` | OLS plus `r²`; **panics** if the lists differ in length, either is empty, or every `x` is identical |
-| `sorted_copy(xs: &List<f64>)` | `List<f64>` | insertion sort, the sort the builtin does not offer for `f64` |
+| `sorted_copy(xs: &List<f64>)` | `List<f64>` | insertion sort, and a copy: `List.sort` sorts in place |
 | `floor_to_usize(x: f64)` | `usize` | count whole units below `x`; `f64` has no `to_<int>` |
 
 ## Population vs sample

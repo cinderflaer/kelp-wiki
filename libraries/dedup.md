@@ -179,15 +179,15 @@ false
   hash the length, a tool can hash the bytes, and a cache can hash nothing.
 - `hash` is called once per candidate, `equal` only for the groups `verify`
   covers. A caller passing an expensive checksum pays for it once per file.
-- `group_digests` groups without sorting, because a `List` of owned elements
-  cannot be sorted (`List.sort` is `Copy`-only) and the sort a library offers in
-  its place moves every element through `remove`/`insert`. It counts hashes in a
-  `Map` and scans for the ones that repeat, which is linear in practice because
-  few hashes repeat.
-- There are no `copy_*` derivations in the language, so `copy_entry`,
-  `copy_digest` and `copy_group` are written out field by field. A `datac` is
-  copied with them (or moved) rather than with `.clone()`, which `List` offers
-  for scalar, `String` and `Bytes` elements only.
+- `group_digests` groups without sorting. `List.sort` on the owned element
+  exists now (the order is `Digest`'s fields, so path first), but grouping wants
+  equality of hashes rather than an order, and the two-pass version counts hashes
+  in a `Map` and scans for the ones that repeat, which is linear in practice
+  because few hashes repeat.
+- `copy_group` is `Group.members.clone()`, the derived `List<Digest>` copy.
+  `copy_entry` and `copy_digest` are written out field by field: the derived copy
+  is reached through a `List`, so a bare `datac` value has no `.clone()` of its
+  own.
 - `duplicates` applies the size window itself; `record`/`snapshot` do not, so a
   caller that wants the same window over a snapshot calls `filter` first.
 

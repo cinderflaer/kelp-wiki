@@ -53,9 +53,11 @@ per numeric type, this library spells the type into the name:
 
 ## Cost
 
-- `sort_by` is an insertion-selection hybrid over `remove`/`insert`, which is
-  what makes it work for owned elements, but it is O(n²) comparisons and O(n²)
-  element moves.
+- `sort_by` is an insertion-selection hybrid over `remove`/`insert`, so it
+  works for any element type, owned included, but it is O(n²) comparisons and
+  O(n²) element moves. It is for an order the type does not define; `List.sort`
+  is the builtin one and uses the element's own order (a scalar, or a `datac`'s
+  fields).
 - `unique_*` is O(n²) membership testing against the list built so far.
 - `fold`, `zip` and `chunks` are single passes.
 
@@ -119,5 +121,6 @@ true
 - `listx.fold(xs, 0, ...)` takes `init` by `move`; a `Copy` accumulator is
   copied, an owned one is moved in and moved through each step.
 - There is no `sort`, `filter`, `map`, `any`, `all` or `find_index` here: those
-  are builtin `List` methods or `std/list` free functions. `sort_by` exists only
-  because the builtin `List.sort` needs a sortable scalar.
+  are builtin `List` methods or `std/list` free functions. `sort_by` exists
+  because the builtin `List.sort` orders by the element's own order (a scalar,
+  or a `datac`'s fields) and cannot take a comparator.

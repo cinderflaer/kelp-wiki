@@ -62,9 +62,30 @@ Out-of-range indices and popping an empty list panic.
 `xs` usable. Every owned element is copied too, so the element type has to be
 clonable.
 
-`f64` is **not** sortable (`nan` breaks the order), which is why
-[`stats`](/libraries/stats) and [`benchkit`](/libraries/benchkit) carry
-their own sorts.
+A **`datac`/`enum` element gets a derived deep copy and a derived order from its
+fields.** It is clonable (so `clone` and `slice` work) when every field it holds
+is, and sortable when every field has an order. The order is field by field in
+declaration order, a `String`/`Bytes` byte-wise, an `enum` by tag and then by the
+live variant's payload:
+
+```kelp
+datac Digest(val path: String, val size: u64)
+
+var xs: List<Digest> = List.empty()
+xs.push(Digest(path = "b", size = 2))
+val copy = xs.clone()     // a second list, with its own strings
+xs.sort()                 // by path, then by size
+```
+
+A `List`, `Box`, `Map` or owned-array field has neither, so a record holding one
+is refused for both, and the diagnostic says which. `contains` still needs
+equality, which a `datac` does not have, and `Map`'s `get_or`/`values` are still
+scalar-only.
+
+Scalars sort too, and so do `f32`/`f64`: a float list with a `nan` in it has no
+meaningful order, which is why [`stats`](/libraries/stats) and
+[`benchkit`](/libraries/benchkit) carry their own sorts for data that may
+contain one.
 
 ### Restriction: no nested containers
 
