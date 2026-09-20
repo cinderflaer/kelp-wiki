@@ -53,9 +53,13 @@ c.id = 5                 // error: the field `id` is declared val
 ## Where the type comes from
 
 - The type is inferred from the initializer, or written after `:`.
-- Nothing infers through an empty container. `List.empty()` and `Map.new()` need
-  the element or key type on the binding:
-  `var xs: List<i32> = List.empty()` ([Collections](/language/collections)).
+- An empty container takes its element type from the first operation that has to
+  know it: `var xs = List.empty()` followed by `xs.push(1)` is a `List<i32>`, a
+  `Map` takes its key and its value from the first `insert`, and a `Box` its
+  element from `set`. Write the type on the binding
+  (`var xs: List<i32> = List.empty()`) when nothing decides it, which is what a
+  container that is only ever measured (`xs.len()`) hits
+  ([Collections](/language/collections)).
 - An integer literal takes the type its context requires, and `i32` when nothing
   determines it ([Lexical structure](/language/lexical)). There is no implicit
   numeric conversion afterwards, so the annotation is a real decision and not a

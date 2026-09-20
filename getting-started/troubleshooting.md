@@ -62,7 +62,7 @@ impl "std/option"
 | `cannot find module 'shapes/circle': expected '/proj/src/shapes/circle.kp'` | the `impl` path does not resolve | in a project, paths are relative to `src/`, never to the importing file |
 | `use of moved value 'a'` | an owned value was consumed and then used | a plain parameter borrows; check whether the call needed `move` at all |
 | `argument 's' has type 'String', expected 'str'` | an owned string where a view is wanted | add `.as_str()` |
-| `List.empty()` or `Map.new()` has no element type | nothing said what is inside | write it on the binding: `var xs: List<i32> = List.empty()` |
+| `List.empty()` or `Map.new()` has no element type | nothing said what is inside | write it on the binding (`var xs: List<i32> = List.empty()`), or let the first `push`/`insert` decide it |
 | `unexpected argument 'extra'` | `kelpc run` was given arguments | it takes none: `kelpc build` then run the binary, or `coral run -- <args>` |
 | `unknown backend 'llvm'` | a backend that does not exist | `c` or `asm` |
 | `could not write generated C to '/path/app.c': No such file or directory` | `-o` named a directory that does not exist | create it first, or build without `-o` and take the artifact from `build/` |

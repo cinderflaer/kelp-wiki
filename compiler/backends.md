@@ -117,15 +117,15 @@ in [`plan/mk7-own-backend.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/
 
 | | Count |
 | --- | --- |
-| Fixture files under `kelpc/tests/fixtures/*.kp` | 349 |
+| Fixture files under `kelpc/tests/fixtures/*.kp` | 350 |
 | Rejected by the compiler itself (the `should fail` fixtures) | 154 |
-| Accepted by the compiler | 195 |
-| of those, built by the `asm` backend | 174 |
+| Accepted by the compiler | 196 |
+| of those, built by the `asm` backend | 175 |
 | of those, refused by the `asm` backend with the documented prefix | 21 |
 | of those, failed for any other reason | 0 |
 
-The plan's own status table records the *suite* number: **282 of 328** integration
-tests passing under `--backend=asm`, with the C backend passing all 328, which
+The plan's own status table records the *suite* number: **283 of 329** integration
+tests passing under `--backend=asm`, with the C backend passing all 329, which
 counts multi-file projects and subprocess cases too, and so is not the same
 denominator as the fixture count above. Re-measure either before quoting it: both
 move with every slice, and the plan's header says it is updated as work lands.
@@ -179,7 +179,7 @@ exactly as the C backend's handler is), and what is left is one construct family
 at a time: closures, the heap-bodied `fs`/`io`/`net`/`path`/`process` externs,
 and a gated call. The most recent slices closed the `List` comparison-and-clone
 methods and an owned piece in a `print` template, which is why this
-implementation now builds 174 of the 195 fixtures the C backend accepts.
+implementation now builds 175 of the 196 fixtures the C backend accepts.
 
 ## Stages beyond tier 1
 
@@ -195,7 +195,7 @@ The plan splits the work into tiers, and only the first is in progress:
 
 The memory gate is a test rather than an argument: `kelpc/tests/memory_gate.rs`
 runs `valgrind` over both backends' binaries, and its last run checked
-195 binaries from the C backend and 174 from the `asm` one, out of the 349
+196 binaries from the C backend and 175 from the `asm` one, out of the 350
 fixtures in the directory, which skipped the 21 this backend refuses and the 154
 the compiler itself rejects, with zero findings from any of them. So it asserts no
 findings, because the AddressSanitizer gate instruments generated C and cannot see

@@ -19,6 +19,8 @@ fixed-size buffer is written as (`[T; N]` below).
 
 ```kelp
 var xs: List<i32> = List.empty()      // element type from the annotation
+var zs = List.empty()                 // element type from the first `push`
+zs.push(1)                            // ... which is this one
 var ys = List.of(String.from_str("a"))   // element type from the argument
 
 xs.push(3)
@@ -36,7 +38,7 @@ while !xs.is_empty() {
 
 | Method | Takes | Returns |
 | --- | --- | --- |
-| `List.empty()` | nothing | empty list; element type from the context |
+| `List.empty()` | nothing | empty list; element type from the context, or from the first `push`/`insert`/`set` |
 | `List.of(x)` | one value | a list holding it |
 | `len()` / `is_empty()` | shared | `usize` / `bool` |
 | `get(i)` | shared, `usize` | the element, or a borrow of it |
@@ -114,7 +116,7 @@ print(runs.get(key = 7))
 
 | Method | Returns |
 | --- | --- |
-| `Map.new()` / `Map.empty()` | an empty map; key and value types from the binding |
+| `Map.new()` / `Map.empty()` | an empty map; key and value types from the binding, or from the first `insert` |
 | `len()` / `is_empty()` | `usize` / `bool` |
 | `insert(key, v)` | `Unit`; stores `true`-style upsert |
 | `get(key)` | the value, or a borrow of it; panics when absent |
