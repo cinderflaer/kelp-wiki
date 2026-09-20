@@ -221,7 +221,7 @@ decimal index; the empty pointer names the whole document.
 | `collect_strings(v)` | every string leaf, document order, copied out NUL-safe |
 
 The two callback-shaped helpers take a closure that borrows `Json`, which is
-legal since `kelpc 0.2.3` fixed the C typedef a module-declared borrow in a
+legal since `kelpc 0.1.5` fixed the C typedef a module-declared borrow in a
 closure parameter emits. `each_value` is for looking at every node;
 `filter_array` is the predicate form of `filter_array_by_kind`:
 

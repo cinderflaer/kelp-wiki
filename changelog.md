@@ -16,6 +16,16 @@ checker and a backend change at once. Tooling releases have their own pages:
 [Coral changelog](/tooling/coral-changelog) and
 [Lighthouse changelog](/tooling/lighthouse-changelog).
 
+**Numbering, 2026-09-20.** The tags `v0.2.0` to `v0.2.3` were renamed to
+`v0.1.2` to `v0.1.5`, and the Gitea releases with them: the first scheme counted
+milestones rather than shipped versions, so six releases carried two minor
+numbers. Each renamed tag keeps its commit and its release asset, so the files
+are the original builds, not rebuilt ones. The build-time version string inside
+them therefore still carries the old number: running
+`kelpc-0.1.5-linux-x86_64 version` prints `kelpc 0.2.3`. A source checkout of
+`main` reports `0.1.6`, and every release cut from here on reports its own
+number.
+
 These entries are deliberately short. The authority for what a milestone
 actually contained is
 [`plan/done.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/done.md);
@@ -23,16 +33,16 @@ this page is the index to it.
 
 | Version | Date | Headline |
 | --- | --- | --- |
-| [0.2.3](#023-2026-09-20) | 2026-09-20 | the compiler emits its own x86-64 assembly; `kelpc fmt`; block comments |
-| [0.2.2](#022-2026-09-19) | 2026-09-19 | five checker bugs found by a real 807-line program |
-| [0.2.1](#021-2026-09-19) | 2026-09-19 | a literal takes its sibling operand's type on either side |
-| [0.2.0](#020-2026-09-19) | 2026-09-19 | `View`, `char` literals, bitwise operators, `str` to `String` coercion |
+| [0.1.5](#015-2026-09-20) | 2026-09-20 | the compiler emits its own x86-64 assembly; `kelpc fmt`; block comments |
+| [0.1.4](#014-2026-09-19) | 2026-09-19 | five checker bugs found by a real 807-line program |
+| [0.1.3](#013-2026-09-19) | 2026-09-19 | a literal takes its sibling operand's type on either side |
+| [0.1.2](#012-2026-09-19) | 2026-09-19 | `View`, `char` literals, bitwise operators, `str` to `String` coercion |
 | [0.1.1](#011-2026-09-19) | 2026-09-19 | the `for` loop, `spawn_in`/`run_in`, fallible `try_run`, `fs.symlink` |
 | [0.1.0](#010-no-release) | 2026-09-19 | first tag: the core language, modules, containers, capabilities, stdlib |
 
-## 0.2.3 (2026-09-20)
+## 0.1.5 (2026-09-20)
 
-[Release](https://homelabone.xenoo.dev/gittea/Juniper/kelp/releases/tag/v0.2.3)
+[Release](https://homelabone.xenoo.dev/gittea/Juniper/kelp/releases/tag/v0.1.5)
 · 84 commits · 112 unit tests, 291 end-to-end green on the C backend, 242 of
 them on the assembly backend.
 
@@ -92,14 +102,14 @@ working directory. The crate moved to the 2024 edition.
 on a path that does not move it, so a program that rebinds one leaks. It
 predates this release and reproduces on the C backend at `-O0`.
 
-## 0.2.2 (2026-09-19)
+## 0.1.4 (2026-09-19)
 
-[Release](https://homelabone.xenoo.dev/gittea/Juniper/kelp/releases/tag/v0.2.2)
+[Release](https://homelabone.xenoo.dev/gittea/Juniper/kelp/releases/tag/v0.1.4)
 · 2 commits · 80 unit tests, 230 end-to-end green.
 
 Five checker bugs, all found by compiling a real program: an 807-line JSON
-library written with no access to the compiler source, built against 0.2.0 and
-0.2.1. Every error it hit was the checker refusing ordinary code.
+library written with no access to the compiler source, built against 0.1.2 and
+0.1.3. Every error it hit was the checker refusing ordinary code.
 
 - **A view through a pattern binding keeps its provenance.** `if let Str(s) = v
   { return s.as_str() }` returns a view of `v`; the borrow root used to be the
@@ -126,9 +136,9 @@ reproduction. An owned local in an `if let` block whose body holds a nested
 and a `pd var` written in a function called transitively from another non-`main`
 function passes a value where the callee's hidden parameter is a pointer.
 
-## 0.2.1 (2026-09-19)
+## 0.1.3 (2026-09-19)
 
-[Release](https://homelabone.xenoo.dev/gittea/Juniper/kelp/releases/tag/v0.2.1)
+[Release](https://homelabone.xenoo.dev/gittea/Juniper/kelp/releases/tag/v0.1.3)
 · 3 commits · 80 unit tests, 229 end-to-end green.
 
 **A bare literal takes its sibling operand's type on either side.** The same
@@ -145,9 +155,9 @@ so `BASE + wide` stays a real mismatch.
 `literal_operand_typing.kp` covers every width in both directions;
 `literal_const_is_not_a_literal.kp` pins the rejection.
 
-## 0.2.0 (2026-09-19)
+## 0.1.2 (2026-09-19)
 
-[Release](https://homelabone.xenoo.dev/gittea/Juniper/kelp/releases/tag/v0.2.0)
+[Release](https://homelabone.xenoo.dev/gittea/Juniper/kelp/releases/tag/v0.1.2)
 · 10 commits · 80 unit tests, 227 end-to-end green.
 
 The five gaps a real program found, plus the reference section that was
@@ -260,7 +270,7 @@ lands, grouped under language, compiler, stdlib, fixes and limits.
 
 When a version drops, write its entry here from that file plus the tag's commits
 and the Gitea release body, then wipe the pending file back to its header. Cut it
-the way `0.2.3` above is cut: the version and date, a link to the Gitea release,
+the way `0.1.5` above is cut: the version and date, a link to the Gitea release,
 the numbers (unit tests, end-to-end tests per backend), then what changed,
 grouped so a reader can skip what they do not care about.
 

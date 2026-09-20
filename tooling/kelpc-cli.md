@@ -1,12 +1,13 @@
 ---
 title: "`kelpc` CLI"
-description: "The compiler's command line. Everything on this page was run against a release build of kelpc 0.2.2 on the machine that wrote it, and the outputs are quoted from those runs."
+description: "The compiler's command line. Everything on this page was run against a release build of kelpc 0.1.4 on the machine that wrote it, and the outputs are quoted from those runs."
 isPublished: true
 tags: "tooling, cli"
 ---
-The compiler's command line. Everything on this page was run against a release
-build of `kelpc 0.2.2` on the machine that wrote it, and the outputs are quoted
-from those runs.
+The compiler's command line. Everything on this page was run against the release
+build tagged `v0.1.4` on the machine that wrote it, and the outputs are quoted
+from those runs. That binary was not rebuilt for the rename, so `kelpc version`
+still reports `kelpc 0.2.2`.
 
 ```text
 usage: kelpc build <file.kp> [-o <out>] [--backend=<name>]
@@ -30,7 +31,7 @@ prints the usage block above, and `kelpc version` is the version query.
 | `kelpc fmt <file.kp>` | prints the formatted source to stdout | 0, or 1 on a parse error |
 | `kelpc fmt -w <path>...` | rewrites files in place | 1 if any input fails to parse |
 | `kelpc fmt --check <path>...` | writes nothing, exits 1 if anything is not already formatted | 0 or 1 |
-| `kelpc version` | prints the compiler version (`kelpc 0.2.2`) | 0 |
+| `kelpc version` | prints the build-time version string of the binary: `kelpc 0.2.2` for the release tagged `v0.1.4` | 0 |
 
 Two behaviours worth knowing:
 

@@ -28,8 +28,8 @@ versions on disk live under `~/.coral/toolchains/`, and `~/.coral/bin` is what
 ```sh
 coral toolchain coral install v0.5.4
 coral toolchain coral use v0.5.4        # ~/.coral/bin/coral -> that build
-coral toolchain kelp install v0.2.2
-coral toolchain kelp use v0.2.2         # ~/.coral/bin/kelpc -> that build
+coral toolchain kelp install v0.1.4
+coral toolchain kelp use v0.1.4         # ~/.coral/bin/kelpc -> that build
 ```
 
 `~/.coral/bin` is not put on `PATH` for you. `use` prints a one-time reminder if
@@ -115,7 +115,7 @@ json = "Juniper/fpl/json"            # one folder inside a repo
 local = "file:///srv/git/fpl#other"  # a full URL, folder after '#'
 
 [toolchain]
-kelp = "v0.2.2"
+kelp = "v0.1.4"
 ```
 
 ### Flat keys
@@ -144,13 +144,13 @@ does not know yet.
 | --- | --- | --- |
 | `[tasks]` | `name = "path/to/file.kp"` | each task compiles as its own unit, and `src/tasks/` is where `init` puts them |
 | `[dependencies]` | `name = "owner/repo[/folder]"` | see [Dependencies](#dependencies) |
-| `[toolchain]` | `kelp = "v0.2.2"` | written by `coral toolchain kelp pin`, a line edit that leaves comments and section order alone |
+| `[toolchain]` | `kelp = "v0.1.4"` | written by `coral toolchain kelp pin`, a line edit that leaves comments and section order alone |
 
 Pinning is how a project builds with the compiler it was written against instead
 of whatever `coral toolchain kelp use` last set machine-wide:
 
 ```sh
-coral toolchain kelp pin v0.2.2    # write it into coral.toml
+coral toolchain kelp pin v0.1.4    # write it into coral.toml
 coral toolchain kelp pin           # print it
 coral toolchain kelp pin --clear   # drop it, back to the global default
 ```
@@ -314,7 +314,7 @@ This build appends the folder to the repository path and tries to clone that:
 
 ```text
 $ coral sync
-coral: no [toolchain] pin — builds use kelpc v0.2.2 (from ~/.coral/bin)
+coral: no [toolchain] pin — builds use kelpc v0.1.4 (from ~/.coral/bin)
 coral: fetching 'json' at the remote tip
 error: cloning 'ssh://gitea@thinkbox:2222/Juniper/fpl/json.git' failed:
 ...
@@ -369,12 +369,12 @@ that is a machine-wide decision a per-project command should not make:
 
 ```text
 $ coral sync --dry-run
-coral: no [toolchain] pin — builds use kelpc v0.2.2 (from ~/.coral/bin)
+coral: no [toolchain] pin — builds use kelpc v0.1.4 (from ~/.coral/bin)
 coral: would fetch 'json' at the remote tip
 coral: 'depdemo' would install 0 and fetch 1 (nothing changed)
 
 $ coral sync --offline
-coral: no [toolchain] pin — builds use kelpc v0.2.2 (from ~/.coral/bin)
+coral: no [toolchain] pin — builds use kelpc v0.1.4 (from ~/.coral/bin)
 error: dependency 'json' is not present at the remote tip, and --offline forbids fetching it — run 'coral sync' where the network is available
 
 $ coral build
@@ -412,7 +412,7 @@ fetching something new.
 
 A version means a git tag on the kelp or coral repository. `install` prefers the
 tag's own Gitea release: when the release carries an asset named for this platform
-(`kelpc-0.2.2-linux-x86_64`), that binary is downloaded, marked executable and put
+(`kelpc-0.1.4-linux-x86_64`), that binary is downloaded, marked executable and put
 at `~/.coral/toolchains/kelp/<ver>/kelpc`, with no cargo involved. A tag with no
 release, no asset for this platform, or nothing but a `.zip` falls back to
 `git clone --branch <ver> --depth 1` plus `cargo build --release`, and the fallback
@@ -438,7 +438,7 @@ different versions.
 
 ```text
 $ coral toolchain kelp installed
-v0.2.2
+v0.1.4
 $ coral toolchain coral installed
 v0.5.4
 ```

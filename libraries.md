@@ -41,7 +41,7 @@ impl "deps/hash/lib" as hash
 4. **Publishing is pushing.** A library has no version, so there is nothing to
    tag: the next `coral sync` on any consumer takes the branch tip.
 
-Every library targets `kelpc 0.2.3` or newer. `json` uses `str.less` and a
+Every library targets `kelpc 0.1.5` or newer. `json` uses `str.less` and a
 closure over its own `Json` type; `decimal`, `encoding`, `httpx` and `url` use
 `str.is_digit`. Both helpers and the closure codegen landed in that release, so
 an older compiler refuses those files at codegen rather than at the manifest.
