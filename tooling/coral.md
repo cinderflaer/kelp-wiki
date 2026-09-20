@@ -572,6 +572,11 @@ Workspaces, `coral fmt`, `coral lint`, `coral bench`, and publishing. The last f
 answer `unknown command`, which was checked; workspaces and publishing are absent
 from the command list rather than refused by name.
 
+`coral docs` reads text and nothing else, so it resolves no name: a
+`[docs(fun: nosuch)]` head is listed as written, and nothing reports that no such
+function exists. It also lists documentation rather than the program, so a
+function with no doc comment above it does not appear in `docs list` at all.
+
 Two consequences of the dependency model, both from
 [Coral's README](https://homelabone.xenoo.dev/gittea/Juniper/coral/src/branch/main/README.md):
 a folder dependency carries no manifest at all, so nothing can declare its own
