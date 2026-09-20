@@ -40,6 +40,19 @@ print(c.total())
   Calling it on a `val` binding fails with `cannot borrow 'c' as exclusive`.
 - Passing a receiver to a method does not move it: the receiver is always
   borrowed, which is why there is no `fun move Type.name()`.
+- An **exclusive receiver's borrow starts after its own arguments are checked**,
+  so an argument may read the same container:
+
+  ```kelp
+  counts.insert(key = k, v = counts.get_or(key = k, fallback = 0) + 1)
+  xs.insert(0, xs.get(0) + 1)
+  ```
+
+  Both were two statements with a temporary before. The deferral permits reading
+  and shared-borrowing the receiver; moving it or borrowing it exclusively again
+  inside the argument list is still a conflict, and a shared borrow of the
+  receiver that is still live when its own borrow begins (`p.copy_from(p)`) is
+  refused with `cannot borrow 'p' as exclusive: already borrowed as shared`.
 - `self` inside `fun mut T.m()` is a `&mut T`: a pointer, and `Copy`, so naming a
   field and then calling another method on `self` is legal.
 
