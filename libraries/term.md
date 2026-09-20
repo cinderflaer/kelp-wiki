@@ -32,6 +32,7 @@ impl "deps/term/lib" caps(env = ["NO_COLOR"])
 | `bold(s: &str)` | `String` | `1` |
 | `dim(s: &str)` | `String` | `2` |
 | `wrap(s: &str, code: &str)` | `String` | any code, wrapped as `ESC[<code>m…ESC[0m` |
+| `wrap_if(cond: bool, s: &str, code: &str)` | `String` | `wrap` only when `cond` holds |
 | `reset_code()` | `String` | the bare `ESC[0m` |
 | `no_color()` | `bool` | whether `NO_COLOR` is set |
 
@@ -39,7 +40,9 @@ With `NO_COLOR` set, every color function returns its argument unchanged (no
 escapes at all). Without it, the text is wrapped as
 `ESC[<code>m` + `s` + `ESC[0m`.
 
-`wrap` is the general form: pass `"1;31"` to mix bold and red.
+`wrap` is the general form: pass `"1;31"` to mix bold and red. `wrap_if` is for
+colour that is a decision rather than a constant ("is this line an error?"), so a
+caller does not write the conditional and the escape and the reset by hand.
 
 ## Cursor and clearing
 
@@ -58,8 +61,8 @@ actually moving.
 ## Returned, not printed
 
 Every function returns an owned `String`; nothing writes. The escape sequences
-are built from a dynamic byte (`ESC`, 27) that no string literal can spell.
-`syntax.md`'s string escape set is closed and has no `\x1b`, so nothing here has
+are built from a dynamic byte (`ESC`, 27) that no string literal can spell —
+`syntax.md`'s string escape set is closed and has no `\x1b` — so nothing here has
 static storage to borrow from.
 
 ## Example

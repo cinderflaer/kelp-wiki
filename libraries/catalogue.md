@@ -1,10 +1,10 @@
 ---
 title: "Catalogue"
-description: "All twenty-six first-party libraries, grouped by what they do. Every one is a folder in the fpl repository and every one is a single manifest line."
+description: "All twenty-seven first-party libraries, grouped by what they do. Every one is a folder in the fpl repository and every one is a single manifest line."
 isPublished: true
 tags: "library"
 ---
-All twenty-six first-party libraries, grouped by what they do. Every one is a
+All twenty-seven first-party libraries, grouped by what they do. Every one is a
 folder in the [fpl repository](https://homelabone.xenoo.dev/gittea/Juniper/fpl)
 and every one is a single manifest line.
 
@@ -50,7 +50,8 @@ and every one is a single manifest line.
 
 | Library | What it does | Needs |
 | --- | --- | --- |
-| [`fsx`](/libraries/fsx) | Atomic writes, recursive `copy_dir`, `tail`, `files_equal` | `fs` |
+| [`fsx`](/libraries/fsx) | Atomic writes, recursive `copy_dir`, `tail`, `files_equal`, a depth-capped `survey` | `fs` |
+| [`dedup`](/libraries/dedup) | Duplicate-file grouping and tree snapshot/drift over `List<Entry>` | — |
 | [`httpx`](/libraries/httpx) | Query strings, Basic Auth, PUT/DELETE/PATCH, `Set-Cookie` | — |
 | [`lineproto`](/libraries/lineproto) | CRLF line protocols over a socket | `net` |
 

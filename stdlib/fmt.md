@@ -1,10 +1,11 @@
 ---
 title: "`std/fmt`"
-description: "Formatting into String - numbers, bytes, padding. Ungated."
+description: "Formatting into String: numbers, bytes, padding, digit grouping and byte sizes. Ungated."
 isPublished: true
 tags: "stdlib, text"
 ---
-Formatting into `String`: numbers, bytes, padding. Ungated.
+Formatting into `String`: numbers, bytes, padding, digit grouping and byte
+sizes. Ungated.
 
 ```kelp
 impl "std/fmt"
@@ -19,6 +20,9 @@ impl "std/fmt"
 | `fmt.bytes(b: Bytes)` | `String` | hex-ish view of a buffer |
 | `fmt.pad_left(s: &str, width: usize, fill: u8)` | `String` | pads on the left to `width`; a longer `s` is returned unchanged |
 | `fmt.pad_right(s: &str, width: usize, fill: u8)` | `String` | pads on the right |
+| `fmt.commas_u64(n: u64)` | `String` | a comma every three digits: `1234567` is `1,234,567` |
+| `fmt.commas_i64(n: i64)` | `String` | likewise, with the sign kept |
+| `fmt.human_size(bytes: u64)` | `String` | binary units, two decimals: `585.94 KiB`, `0 B` |
 
 All the number functions wrap `str.from_*`, so `fmt.int(n)` is `str.from_i64(n)`
 with a name that reads well inside a call. `print` itself formats floats with six
@@ -35,6 +39,8 @@ fun main() {
     print(fmt.hex(255))
     print(fmt.pad_left("7", 3, '0'))
     print(fmt.pad_right("ab", 5, '.'))
+    print(fmt.commas_u64(1234567))
+    print(fmt.human_size(1536))
 }
 ```
 
@@ -46,6 +52,8 @@ fun main() {
 ff
 007
 ab...
+1,234,567
+1.50 KiB
 ```
 
 ## Notes
@@ -54,9 +62,14 @@ ab...
 - The fill character is a **byte**, not a `char`: pass `'0'` (which is a `u8` in
   that position) rather than a string.
 - Padding counts bytes, so a multi-byte character pads short.
-- There is no grouping/separator option, no sign control, no scientific
-  notation, and no width/precision mini-language: `fmt.float(x, d)` is the whole
-  float API.
+- `commas_u64` and `commas_i64` exist as two names because a user module cannot
+  overload a name, which is why `fmt` already spells `int` and `uint` apart.
+- `human_size` is **binary** (1024) and not decimal, two decimals, one space
+  before the unit: `"585.94 KiB"`. Binary is what a byte-count command-line
+  option like `4k` means, so a tool that prints a size and takes one agrees with
+  itself.
+- There is no sign control, no scientific notation, and no width/precision
+  mini-language: `fmt.float(x, d)` is the whole float API.
 
 ## See also
 

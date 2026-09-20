@@ -1,11 +1,11 @@
 ---
 title: "`fsx`: composition over `std/fs`"
-description: "Atomic writes, a recursive directory copy, a text tail, and a byte-for-byte file comparison."
+description: "Atomic writes, a recursive directory copy, a text tail, a byte-for-byte file comparison, and a depth-capped walk that skips what nobody may read."
 isPublished: true
 tags: "library, filesystem"
 ---
-Atomic writes, a recursive directory copy, a text `tail`, and a byte-for-byte
-file comparison.
+Atomic writes, a recursive directory copy, a text `tail`, a byte-for-byte file
+comparison, and a depth-capped walk with a skip for what nobody may read.
 
 **Gated on `fs`**, exactly like `std/fs`: the module itself touches the
 filesystem, so the importer must grant it a pattern.
@@ -32,9 +32,40 @@ needs the module holding the `impl` to have been granted it.
 | `copy_dir(from: &str, to: &str)` | `Unit` | recursively copies `from` onto `to`, creating directories as needed. `from` should not have a trailing `/`. **Panics** under the same conditions `fs.list`/`fs.mkdir_all`/`fs.copy` do |
 | `tail(path: &str, n: usize)` | `List<String>` | the last `n` lines of a text file |
 | `files_equal(a: &str, b: &str)` | `bool` | byte-for-byte; **panics** if either file cannot be read |
+| `survey(root: &str, max_depth: usize, keep: closure(&PathInfo).R: bool)` | `Survey` | walks `root` depth-first to `max_depth` levels, keeping the files `keep` accepts. `keep` is a callback, so this module needs no glob: the caller writes the match |
+| `walk_files(root: &str, max_depth: usize)` | `List<String>` | the paths of every readable file under `root`, and nothing else about them |
+| `any_path(p: &PathInfo)` | `bool` | always true, for a walk with no filter |
+| `file_readable(mode: u32)` / `dir_listable(mode: u32)` | `bool` | the mode-bit tests `survey` uses |
 
 `write_atomic` leaves a `<path>.fsx-tmp` behind if the rename fails. `copy_dir`
 replaces a same-named file, but does not delete extra files already in `to`.
+
+### The walk
+
+`Survey` is the walk's result, and the two counts in it are what make a walk over
+a tree you do not own honest:
+
+```kelp
+datac PathInfo(val path: String, val name: String, val size: u64, val mtime: i64, val mode: u32)
+datac Survey(val dirs: usize, val files: List<PathInfo>, val unreadable: usize, val too_deep: usize)
+```
+
+- `dirs` counts the directories it descended into, `files` is what `keep`
+  accepted.
+- `unreadable` counts the paths it skipped because no read bit was set on a file,
+  or no read and search bit was set on a directory. `std/fs.list` **panics** on a
+directory it may not read, so this is the difference between surveying a tree and
+dying on it. The test is the mode bits only, so a file that is mode-readable but
+  unreadable in practice (owned by someone else, mode `0400`) still panics inside
+  `fs.read`; there is no fallible read in v1 to catch it with.
+- `too_deep` counts the directories at the ceiling that were not descended into.
+
+That ceiling is not only a safety valve for huge trees. **v1 cannot tell a
+symlink from the directory it points at**: there is no `lstat`, no `read_link`,
+and `mode` carries permission bits only. `std/fs.walk` follows such a link, so a
+link back up the tree walks until the kernel refuses the path length and the run
+dies on an `ELOOP` panic. A ceiling turns the cycle into a counted skip, which is
+why the default a caller should pass is in the tens and not `usize` max.
 
 ### `tail` and trailing newlines
 
@@ -70,8 +101,11 @@ line3
 
 - `write_atomic` is the point of the library: `std/fs.write` truncates in place,
   so a crash mid-write leaves a half-written file.
-- `copy_dir` is the walk `std/fs` stops short of: `fs.copy` copies one file
-  only. `fsx` itself is a folder and cannot import another folder in this repo,
-  so anything more (a filtered copy, a size cap) belongs in the caller.
+- `copy_dir` is the walk `std/fs` stops short of: `fs.copy` copies one file only.
+  `fsx` itself is a folder and cannot import another folder in this repo, so
+  anything more (a filtered copy, a size cap) belongs in the caller.
 - `tail` reads the whole file and splits it; it is not a seek-from-end.
 - `files_equal` compares by reading both files whole.
+- `survey` calls `fs.metadata` once per entry. A `Metadata` is five `stat` calls
+  (one per field, because an `extern` returns one value), so a walk of a large
+  tree is syscall-bound before it is I/O-bound.

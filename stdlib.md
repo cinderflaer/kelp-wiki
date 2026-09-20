@@ -24,7 +24,7 @@ The domain each module needs comes from the compiler's own table
 | `std/str` | — | text: search, slice, split, parse, format |
 | `std/path` | — | lexical path handling |
 | `std/math` | — | `sqrt`, `pow`, trig, `abs`/`min`/`max`/`clamp` |
-| `std/fmt` | — | number and padding formatting into `String` |
+| `std/fmt` | — | number, grouping, byte-size and padding formatting into `String` |
 | `std/encoding` | — | base64, base32, base58, hex and percent encoding |
 | `std/io` | — | `File`, `BufReader`, `print`/`eprint` |
 | `std/fs` | `fs` | read, write, walk, metadata |

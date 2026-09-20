@@ -82,6 +82,28 @@ below is a rule.
 3. Add a page to this chapter.
 4. Push. That *is* publishing: there is no version to bump.
 
+## Releases, and when a library goes on a branch
+
+The `main` of `fpl` is what a consumer gets, and it has to build against the
+**released** compiler: `coral sync` fetches a dependency from the remote's tip,
+and `coral.toml` cannot name a branch (`coral/src/deps.rs` parses a dependency
+into a URL and a folder, and nothing else). There is no way for a consumer to opt
+out of `main`, so a `main` that needs an unreleased compiler breaks every one of
+them.
+
+That is why a release pulls its libraries with it, on a branch:
+
+- When a new language version is being worked on, a library the change touches is
+  updated for it **at once**, on `fpl`'s `unreleased` branch, in the same session
+  as the language change. `kelp-wiki` already works this way, and so do `coral`
+  and `lighthouse` when a change reaches them.
+- `main` keeps building against the released compiler until the release lands.
+- At the release, each `unreleased` branch merges into `main` and both are pushed.
+  One merge per repository.
+- A change that needs **no** unreleased compiler is not release-coupled: a new
+  library, a new function, a documentation fix. Those go straight to `main`,
+  because they are what a consumer can use today.
+
 ## See also
 
 - [Libraries (fpl)](/libraries)

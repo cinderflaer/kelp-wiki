@@ -1,11 +1,11 @@
 ---
 title: "Libraries (fpl)"
-description: "fpl is the first-party Kelp library catalogue - one folder per library in a single repository, twenty-six of them at the time of writing."
+description: "fpl is the first-party Kelp library catalogue - one folder per library in a single repository, twenty-seven of them at the time of writing."
 isPublished: true
 tags: "library"
 ---
 `fpl` is the first-party Kelp library catalogue: one folder per library in a
-single repository, twenty-six of them at the time of writing.
+single repository, twenty-seven of them at the time of writing.
 
 Unlike the standard library, which is compiled into `kelpc` and imported as
 `std/…`, every fpl library is a **dependency you fetch**: a folder from a git
@@ -39,7 +39,10 @@ impl "deps/hash/lib"
    and `url` a percent codec, because neither may import `encoding`) or they stop
    being two libraries.
 4. **Publishing is pushing.** A library has no version, so there is nothing to
-   tag: the next `coral sync` on any consumer takes the branch tip.
+   tag: the next `coral sync` on any consumer takes the branch tip. A change that
+   needs an *unreleased* compiler is the one exception: it waits on `fpl`'s
+   `unreleased` branch, because `main` has to keep building against the released
+   one. [Writing a library](/libraries/writing-a-library) has the rule in full.
 
 Every library targets `kelpc 0.1.5` or newer. `json` uses `str.less` and a
 closure over its own `Json` type; `decimal`, `encoding`, `httpx` and `url` use
@@ -73,7 +76,7 @@ example whose output was checked against `kelpc`, and what it deliberately does
 
 ## Pages
 
-- [Catalogue](/libraries/catalogue): all twenty-six, grouped by what they do
+- [Catalogue](/libraries/catalogue): all twenty-seven, grouped by what they do
 - [Writing a library](/libraries/writing-a-library): what a library has to be
 
 ## See also

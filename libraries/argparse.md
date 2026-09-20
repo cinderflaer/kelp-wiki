@@ -1,6 +1,6 @@
 ---
 title: "`argparse`: flags, options, positionals and `--help` text"
-description: "Parses a plain List<String> (typically process.args(), but the list is a parameter, so the library stays ungated and works standalone too)."
+description: "Parses a plain List<String> (typically process.args(), but the list is a parameter, so the library stays ungated and works standalone too), plus one typed value: a byte count with a k/m/g/t suffix."
 isPublished: true
 tags: "library, cli"
 ---
@@ -50,12 +50,12 @@ enum ParseErr {
 
 | Function | Returns | Notes |
 | --- | --- | --- |
-| `new(prog: &str)` | `Parser` | bind with `var`: `add_*` mutates it |
+| `new(prog: &str)` | `Parser` | bind with `var` — `add_*` mutates it |
 | `add_flag(p: mut Parser, name: &str, help: &str)` | `Unit` | |
 | `add_option(p: mut Parser, name: &str, default: &str, help: &str)` | `Unit` | `default` is what `get_option` returns when unset |
 | `parse(p: &Parser, args: &List<String>)` | `result.Result<ParsedArgs, ParseErr>` | unknown `--name`, or a `--name` option with no following token, is an error |
 | `has_flag(pa: &ParsedArgs, name: &str)` | `bool` | |
-| `get_option(p: &Parser, pa: &ParsedArgs, name: &str)` | `String` | explicitly set value, else the declared default. **Panics** `argparse.get_option: 'name' was never declared with add_option`, that is a caller bug, not user input |
+| `get_option(p: &Parser, pa: &ParsedArgs, name: &str)` | `String` | explicitly set value, else the declared default. **Panics** `argparse.get_option: 'name' was never declared with add_option` — that is a caller bug, not user input |
 | `positionals(pa: &ParsedArgs)` | `&List<String>` | every token that was not `--…` |
 | `help_text(p: &Parser)` | `String` | rendered usage, flags and options |
 | `err_name(e: &ParseErr)` | `&str` | the offending name |
@@ -63,7 +63,7 @@ enum ParseErr {
 
 `get_option` returns an owned `String`, not a `&str`: the value may come from
 `pa` or from `p`'s default, and a borrow-returning function can only return
-something derived from its *first* reference parameter ([syntax.md](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md) §10.2).
+something derived from its *first* reference parameter (syntax.md §10.2).
 
 Inspection helpers: `is_known_flag(p: &Parser, name: &str) -> bool` and
 `is_known_option(p: &Parser, name: &str) -> bool`, for checking a name before
@@ -163,10 +163,40 @@ output
 --output needs a value
 ```
 
+## Typed values
+
+`get_option` hands back a `String`, which is the convention this library states.
+A byte count is the one conversion almost every command line needs, so it lives
+here rather than in every consumer.
+
+| Function | Returns | Notes |
+| --- | --- | --- |
+| `parse_bytes(text: &str)` | `result.Result<u64, str.ParseErr>` | a byte count with an optional binary suffix: `512`, `4k`, `4kb`, `1m`, `2g`, `1t`. Case is ignored, a trailing `b` means bytes. `Err(Empty)` when there are no digits at all, `Err(Invalid)` otherwise |
+| `get_bytes(p, pa, name, default: u64)` | `result.Result<u64, str.ParseErr>` | `parse_bytes` on a declared option, with `default` standing in when the option was not given at all |
+
+A value that *was* given and does not parse is still an `Err`, so a caller can
+tell "unset" from "bad":
+
+```kelp
+val limit = argparse.get_bytes(p = &p, pa = pa, name = "min-size", default = 0)
+if let Err(_) = limit {
+    print("--min-size wants a byte count like 4k")
+    process.exit(2)
+}
+if let Ok(n) = limit {
+    print(n)
+}
+```
+
+`str.ParseErr` carries no detail (it is `Empty` or `Invalid`), so the message is
+the caller's: the two cases are worth one line each, and a library cannot know
+what the flag was called.
+
 ## Notes
 
-- Everything is a `String`: options have no typed parsing, so a numeric option is
-  `str.parse_i64` on the `get_option` result.
+- Everything else is a `String`: a flag or option outside `get_bytes` has no
+  typed parsing here, so a numeric option is `str.parse_i64` on the
+  `get_option` result.
 - A flag given twice stays once in `set_flags` per occurrence (`has_flag` is a
   scan); an option given twice keeps both `SetOption` entries and `get_option`
   returns the first.

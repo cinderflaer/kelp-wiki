@@ -9,13 +9,14 @@ Every public name in the shipped standard library, one line each, generated from
 MkDocs-era layout and is kept at branch `mkdocs-archive` and tag `mkdocs-final`,
 not in the current tree.
 
-The page was last re-derived with that script at `kelp` commit `54b6ba8`. Two
-names and one module make that worth saying: `str.less` and `str.is_digit` landed
-after the `940c524` revision the page used to be pinned to, and `std/encoding` is
-new, and the script's own `ORDER` list has to carry `encoding` before it writes
-that section. The script prints the MkDocs layout (an H1 title, `docs/`-relative
-links, no front matter), so the front matter and the absolute links on this page
-are the hand-kept part.
+The page was last re-derived with that script at `kelp` commit `54b6ba8`, plus
+the three names that landed after it (`fmt.commas_u64`, `fmt.commas_i64` and
+`fmt.human_size`, from `kelp` `a75deb6`). Three names and one module make that
+worth saying: `str.less` and `str.is_digit` landed after the `940c524` revision
+the page used to be pinned to, and `std/encoding` is new, and the script's own
+`ORDER` list has to carry `encoding` before it writes that section. The script
+prints the MkDocs layout (an H1 title, `docs/`-relative links, no front matter),
+so the front matter and the absolute links on this page are the hand-kept part.
 
 `std/rt` has no section: it ships inside the binary but is compiler-internal and
 is not importable, so it is not part of the surface a program can name. Behaviour,
@@ -143,6 +144,9 @@ Functions:
 - `fun bytes(b: Bytes).R: String`
 - `fun pad_left(s: &str, width: usize, fill: u8).R: String`
 - `fun pad_right(s: &str, width: usize, fill: u8).R: String`
+- `fun commas_u64(n: u64).R: String`
+- `fun commas_i64(n: i64).R: String`
+- `fun human_size(bytes: u64).R: String`
 
 ## `std/encoding`
 
@@ -464,7 +468,7 @@ Functions:
 | `std/str` | 37 | 1 | — |
 | `std/path` | 11 | 0 | — |
 | `std/math` | 29 | 3 | — |
-| `std/fmt` | 7 | 0 | — |
+| `std/fmt` | 10 | 0 | — |
 | `std/encoding` | 23 | 4 | — |
 | `std/io` | 26 | 2 | — |
 | `std/fs` | 24 | 1 | fs |

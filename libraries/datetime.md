@@ -37,12 +37,12 @@ All values are UTC; there is no timezone or offset handling.
 
 | Function | Returns |
 | --- | --- |
-| `from_unix(seconds: i64)` | `Civil`: the UTC civil time of that instant |
-| `to_unix(c: &Civil)` | `i64`: the inverse |
-| `civil_from_days(z: i64)` | `Ymd`: days since 1970-01-01 to a date |
-| `days_from_civil(year: i64, month: i32, day: i32)` | `i64`: the inverse |
+| `from_unix(seconds: i64)` | `Civil` — the UTC civil time of that instant |
+| `to_unix(c: &Civil)` | `i64` — the inverse |
+| `civil_from_days(z: i64)` | `Ymd` — days since 1970-01-01 to a date |
+| `days_from_civil(year: i64, month: i32, day: i32)` | `i64` — the inverse |
 | `add_seconds(c: &Civil, delta: i64)` | `Civil` |
-| `diff_seconds(a: &Civil, b: &Civil)` | `i64`: `a - b`, in seconds |
+| `diff_seconds(a: &Civil, b: &Civil)` | `i64` — `a - b`, in seconds |
 | `day_of_week(c: &Civil)` | `i32`: 0 = Sunday ... 6 = Saturday |
 | `is_leap_year(year: i64)` | `bool` |
 
@@ -59,12 +59,19 @@ C's truncating integer division, which Kelp's `/` matches.
 | --- | --- |
 | `format_iso8601(c: &Civil)` | `String`: `YYYY-MM-DDTHH:MM:SSZ` |
 | `parse_iso8601(s: &str)` | `result.Result<Civil, ParseErr>` |
+| `parse_stamp(s: &str)` | `result.Result<Civil, ParseErr>`: a bare `YYYY-MM-DD` is read as midnight UTC of that day |
+| `parse_stamp_unix(s: &str)` | `result.Result<i64, ParseErr>`: the same input as a seconds count, ready to compare against `std/time.now_unix()` |
 
 `parse_iso8601` is strict: exactly `YYYY-MM-DDTHH:MM:SS` (or the same with a
 space instead of `T`), and an optional trailing `Z`. No fractional seconds, no
 `+HH:MM` offset. It accepts a leap second (`:60`) and validates the field
 ranges: month 1..12, day 1..31 (not days-per-month), hour 0..23, minute 0..59,
 second 0..60.
+
+`parse_stamp` is the lenient door for a command-line flag: a value ten
+characters long is a date and gets `T00:00:00` appended, anything else goes to
+the strict parser unchanged, and `parse_stamp_unix` is that same value as the
+`i64` a comparison wants.
 
 `format_iso8601` zero-pads to four year digits; a year outside `[0, 9999]`
 prints with more or fewer digits rather than being clamped or refused.
@@ -117,7 +124,7 @@ true
 ## Notes
 
 - The example passes `x` rather than `&x` because an `if let` payload binds by
-  shared borrow, so `x` is already a `&Civil` ([syntax.md](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md) §6.1, §10.2).
+  shared borrow, so `x` is already a `&Civil` (syntax.md §6.1, §10.2).
 - `parse_iso8601` does not reject an impossible date: `2024-02-31` parses, and
   `to_unix` then gives the same instant as 2024-03-02. Validate day-of-month
   yourself if that matters.

@@ -38,7 +38,7 @@ enum Json {
 
 `Json` is owned and read-only in practice: v1 matches an enum payload through a
 shared borrow, so a payload cannot be pushed to in place. A document is built
-bottom-up: collect `List`s of children, then wrap them with `array` or
+bottom-up — collect `List`s of children, then wrap them with `array` or
 `object`. The constructors exist so a program never spells a variant name.
 
 `Object` is a pair of parallel lists, so key order is document order and
@@ -54,6 +54,11 @@ duplicate keys are preserved by the parser (`get` finds the first).
 
 `as_f64` widens an `Int` exactly. `equals` compares two numbers by value, so
 `Int(1)` equals `Float(1.0)`.
+
+A `u64` above `i64` max has no number to ride in: the writer emits `i64` and a
+float would lose the low bits. `uint(n)` writes such a value as its decimal
+string instead, and `try_uint`/`get_uint` read either spelling back, so a hash
+or a byte count survives a round trip exactly.
 
 ## Dependency
 
@@ -72,6 +77,7 @@ impl "std/result"
 | `null()` | `Json.Null` |
 | `boolean(b: bool)` | `Json.Bool` |
 | `int(n: i64)` | `Json.Int` |
+| `uint(n: u64)` | `Json.Int` when it fits an `i64`, otherwise `Json.Str` with the decimal text |
 | `float(x: f64)` | `Json.Float` |
 | `text(s: &str)` | `Json.Str`, copied |
 | `string(s: move String)` | `Json.Str`, moving `s` in |
@@ -83,12 +89,12 @@ impl "std/result"
 ## Predicates
 
 `is_null(v)`, `is_bool(v)`, `is_int(v)`, `is_float(v)`, `is_number(v)` (int or
-float), `is_str(v)`, `is_array(v)`, `is_object(v)`: all `(&Json) -> bool`.
+float), `is_str(v)`, `is_array(v)`, `is_object(v)` — all `(&Json) -> bool`.
 
-`is_integral(v)`: true for every `Int`, and for a finite `Float` that is its
+`is_integral(v)` — true for every `Int`, and for a finite `Float` that is its
 own truncation (`1.0`, `-2.0`; not `1.5`, `inf`, `nan`).
 
-`kind(v)` returns the JSON word for the type as an owned `String`: `"null"`,
+`kind(v)` — the JSON word for the type, as an owned `String`: `"null"`,
 `"boolean"`, `"number"`, `"string"`, `"array"`, `"object"`.
 
 ## Readers
@@ -120,9 +126,11 @@ at the first NUL, a `String` carries its own length.
 | --- | --- |
 | `try_bool(v)` | `option.Option<bool>` |
 | `try_i64(v)` | `option.Option<i64>` |
+| `try_uint(v)` | `option.Option<u64>`: an `Int` that is not negative, or a decimal string |
 | `try_f64(v)` | `option.Option<f64>` (an `Int` widens) |
 | `as_bool_or(v, fallback: bool)` | `bool` |
 | `as_i64_or(v, fallback: i64)` | `i64` |
+| `as_uint_or(v, fallback: u64)` | `u64` |
 | `as_f64_or(v, fallback: f64)` | `f64` |
 | `text_or(v, fallback: &str)` | `String` |
 
@@ -139,23 +147,24 @@ and applies the fallback.
 | `find(v, key)` | `option.Option<usize>` |
 | `get(v, key)` | `&Json`; panics `json.get: key not found` |
 | `keys(v)` | `List<String>` of every key, document order; empty list for a non-object |
-| `index(v)` | `Map<String, usize>`: key to position, for repeated lookups. First occurrence wins |
+| `index(v)` | `Map<String, usize>` — key to position, for repeated lookups. First occurrence wins |
 
 ### Keyed lookup with a default
 
-`get` panics on an absent key and the safe readers take a *value* rather than a
-key, so "this field, or a default" had no direct spelling: a caller wrote
-`if json.has(doc, key) { … json.get(doc, key) … }` by hand, and the
+`get` panics on an absent key and the safe readers above take a *value* rather
+than a key, so "this field, or a default" had no direct spelling: a caller wrote
+`if json.has(doc, key) { ... json.get(doc, key) ... }` by hand, and the
 natural-looking `json.text_or(v = json.get(doc, "body"), fallback = "")` panics on
-the record that leaves the field out — which is exactly the record a default
+the record that leaves the field out: which is exactly the record a default
 exists for.
 
 | Function | Returns |
 | --- | --- |
 | `get_text(v, key, fallback: &str)` | `String`: the field, or the fallback when it is absent or not a string |
-| `get_int(v, key, fallback: i64)` | `i64`, likewise |
+| `get_int(v, key, fallback: i64)` | `i64`: likewise, and likewise for a number |
 | `get_float(v, key, fallback: f64)` | `f64`; an `Int` widens, as `as_f64_or` does |
 | `get_bool(v, key, fallback: bool)` | `bool` |
+| `get_uint(v, key, fallback: u64)` | `u64`: an `Int` that is not negative, or the decimal string `uint` writes above `i64` max |
 | `get_strings(v, key)` | `List<String>`: an array of strings as an owned list |
 
 Each is a presence check followed by the matching value-level accessor, so they
@@ -166,13 +175,13 @@ answers the fallback for a **wrongly typed** field as well as for an absent one:
 `get_strings` skips a non-string element rather than turning it into an empty
 string, so `["bug", 7, "ui"]` reads as two labels and not three: a caller that
 gets two cannot mistake the hole for a value, while a caller that got `""` would
-store a label nobody typed. An absent key, a `null` and a non-array all read as an
-empty list.
+store a label nobody typed. An absent key, a `null` and a non-array all read as
+an empty list.
 
 ```kelp
 // A record with a required field and three optional ones, read the way a codec
-// reads one: the required field through `get` (which panics when it is absent),
-// the optional ones through the keyed accessors.
+// reads one: the required field goes through `get` (and panics when it is not
+// there), the optional ones through the keyed accessors.
 val parsed = json.parse("{\"id\":7,\"title\":\"a ticket\",\"tags\":[\"bug\",7,\"ui\"]}")
 if let Ok(doc) = parsed {
     print(json.get_int(doc, "id", 0))            // 7
@@ -253,7 +262,7 @@ Pointer helpers beyond `has_ptr`/`at`/`ptr_segments`: `is_pointer_index(s)`,
 overflow) and `segment_end`/`segment_end_at`.
 
 Numbers round-trip: `write` picks the shortest spelling that `parse` reads back
-as the same value. A non-finite float (`inf`, `nan`, unreachable from `parse`)
+as the same value. A non-finite float (`inf`, `nan` — unreachable from `parse`)
 is written as `null`. `-0.0` is written `-0.0`. A float is always given a
 fraction or an exponent, so `1.0` never reads back as the integer `1`.
 
@@ -267,7 +276,7 @@ datac ParseError(val message: String, val offset: usize)
 | --- | --- |
 | `parse(text: &str)` | `result.Result<Json, ParseError>`; trailing whitespace allowed, anything else after the value is an error |
 | `parse_ok(text)` | `bool` |
-| `parse_many(text)` | `result.Result<List<Json>, ParseError>`: every value in the text, however separated (NDJSON, a stream). Empty text yields an empty list |
+| `parse_many(text)` | `result.Result<List<Json>, ParseError>` — every value in the text, however separated (NDJSON, a stream). Empty text yields an empty list |
 | `line_of(e, text)` | 1-based line the offset falls on |
 | `column_of(e, text)` | 1-based byte column within that line |
 | `describe(e, text)` | one line: `line 1 column 6 (byte 5): unexpected end of input` |
