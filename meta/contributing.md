@@ -113,6 +113,11 @@ committed on that same branch first, and then the branch is merged into `main`:
 that one merge is what puts the pages and the entry in front of a reader. Never
 rewrite `main` and never force push it, because the sync job pulls it.
 
+**Keep the pages current as you go, in the same turn as the code.** A change
+lands with the page edit that describes it, on `unreleased`, and that includes the
+pages a change makes stale, not only the page about the feature. A page that lags
+the compiler is a defect the next reader pays for.
+
 Two pages are **generated**, not written by hand, and re-derived when their
 source moves. The generators are part of that archived layout, so re-deriving one
 needs a checkout of it:
