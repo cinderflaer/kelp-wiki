@@ -160,6 +160,17 @@ lands with the page edit that describes it, on `unreleased`, and that includes t
 pages a change makes stale, not only the page about the feature. A page that lags
 the compiler is a defect the next reader pays for.
 
+**A release pulls its dependents with it, on a branch.** `fpl`, `coral` and
+`lighthouse` each carry an `unreleased` branch of their own. When a language
+version is being worked on, a dependent the change touches is updated for it at
+once, on that branch and in the same session as the language change. The reason
+is mechanical: `coral sync` takes a remote's tip and `coral.toml` cannot name a
+branch, so a `main` that needs an unreleased compiler breaks every consumer. At
+the release, each `unreleased` branch merges into `main` and both are pushed. A
+change that needs **no** unreleased compiler is not release-coupled, and lands on
+`main` directly. [Writing a library](/libraries/writing-a-library) has the rule
+for `fpl` in full.
+
 Two pages are **generated**, not written by hand, and re-derived when their
 source moves. The generators are part of that archived layout, so re-deriving one
 needs a checkout of it:
