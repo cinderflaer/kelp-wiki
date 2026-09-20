@@ -69,7 +69,10 @@ generated per-`enum` drop that switches on the runtime tag (`when`, `if let`
 and `?` all lower on top of them), the three `str` parsers
 (`strtoll`/`strtoull`/`strtod` behind `externs.rs`'s own whitespace,
 whole-string and `errno` checks), `List`'s comparison-and-clone methods
-(`sort`, `contains`, `slice`, `clone`), an owned `String`/`Bytes`/`View` interpolated
+(`sort`, `contains`, `slice`, `clone`, for an element that is a number, `bool`,
+`String` or `Bytes`; a `datac`/`enum` element's derived copy and order is a C-backend
+surface as of the newest compiler commit, see the refusal list below), an owned
+`String`/`Bytes`/`View` interpolated
 into a `print` template (a piece costs two integer arguments, not one, and the five
 non-float argument registers are the ceiling: a template with three owned pieces is
 refused as `a print with more than five non-float interpolation arguments`), a `pd`'s
@@ -97,8 +100,10 @@ number — so the ABI is pinned by a `.s`-level test
 register each eightbyte shape uses.
 
 What it does not cover yet is the refusal list below: closures and function
-values; the heap-bodied `fs`/`io`/`net`/`path`/`process` externs; and a
-capability-gated call.
+values; the heap-bodied `fs`/`io`/`net`/`path`/`process` externs; a
+gated call; a `List.clone`/`sort`/`slice` over a `datac` or `enum` element, whose
+derived copy and order the newest compiler commit added to the frontend and to the
+C backend; and a borrow of a field chain (`&xs.get(i).v`).
 
 Its layout:
 
@@ -111,75 +116,88 @@ Its layout:
 
 ## How much of it works today
 
-Measured on 2026-09-20 by building each fixture with both backends, and recorded
+Measured at compiler commit `c3a8759` by building each fixture with both
+backends, and recorded
 in [`plan/mk7-own-backend.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-own-backend.md)
 §0 and §5. Those two sections own these numbers; this page quotes them.
 
 | | Count |
 | --- | --- |
-| Fixture files under `kelpc/tests/fixtures/*.kp` | 350 |
-| Rejected by the compiler itself (the `should fail` fixtures) | 154 |
-| Accepted by the compiler | 196 |
-| of those, built by the `asm` backend | 175 |
-| of those, refused by the `asm` backend with the documented prefix | 21 |
+| Fixture files under `kelpc/tests/fixtures/*.kp` | 357 |
+| Rejected by the compiler itself (the `should fail` fixtures) | 156 |
+| Accepted by the compiler | 201 |
+| of those, built by the `asm` backend | 176 |
+| of those, refused by the `asm` backend with the documented prefix | 25 |
 | of those, failed for any other reason | 0 |
 
-The plan's own status table records the *suite* number: **283 of 329** integration
-tests passing under `--backend=asm`, with the C backend passing all 329, which
+The plan's own status table records the *suite* number: **285 of 336** integration
+tests passing under `--backend=asm`, with the C backend passing all 336, which
 counts multi-file projects and subprocess cases too, and so is not the same
 denominator as the fixture count above. Re-measure either before quoting it: both
 move with every slice, and the plan's header says it is updated as work lands.
 
-### What the 21 refusals are
+### What the 25 refusals are
 
 The differential sweep groups the refusals into the categories the plan's ranking
 table uses (`cargo test --test backend_coverage -- --ignored --nocapture` prints
-it verbatim, and it is the number the ratchet keeps honest):
+it verbatim, and it is the number the ratchet keeps honest). Six rows are printed
+and three of them are empty:
 
 | Category | Fixtures |
 | --- | --- |
-| a heap type | 10 |
+| a heap type | 14 |
+| a fixed-size array (A-18) | 0 |
+| an `enum` | 0 |
+| a `datac` holding a float or heap field | 0 |
 | a closure or a function value | 10 |
 | a gated `extern` | 1 |
 
-Two rows the previous version of this page carried are now empty and are gone: an
-`enum` whose payload is a float, and a `datac` holding a float field. The
-float-in-aggregate slice lowered both. A third, a fixed-size array (A-18), is
-gone here too: `[T; N]` is a synthesized by-value layout on this backend now, so
-both of its literals and the type itself lower.
+Rows a previous version of this page carried are empty now, which is what the
+slices in between did: an `enum` whose payload is a float and a `datac` holding a
+float field (the float-in-aggregate slice lowered both), and a fixed-size array
+(the A-18 slice, whose `[T; N]` is a synthesized by-value layout on this backend
+now, so both its literals and the type itself lower).
 
-One refusal per category, as the backend names them:
+One refusal per non-empty row, as the backend names them:
 
 ```
 error: the 'asm' backend does not support the `extern fun std.io.is_open_raw` yet
+error: the 'asm' backend does not support the method `List.clone` on a `List` yet
 error: the 'asm' backend does not support the parameter `f: &closure(i32).R: i32` of `apply` yet
 error: the 'asm' backend does not support the `extern fun std.time.now_unix_raw` yet
 ```
 
-The heap-type row is the largest one and it is the catch-all, not one gap: a
-build stops at the first refusal it hits, so a fixture that would also meet a
-closure or a `List` method later is counted here when the first thing in its way
-is a heap type, a standard-library call over `net`/`io`/`process`/`fs`, or the
-`extern fun` behind one of those (the ranking treats an `extern fun` whose body
-this backend has no routine for as part of the heap row, because the allocator is
-what unblocks almost all of it). The category is recovered from each fixture's
-first refusal message, so a fixture can move rows when a message's wording
-changes. The ranking table this page summarizes, and the per-fixture lists behind
-it, are in
+The heap-type row is the largest one and it is the catch-all, not one gap: 12 of
+its 14 name an `extern fun` whose body this backend has no routine for, one names
+the `List.clone` a `datac` element's derived copy needs, and one names a borrow of
+a field chain. A build stops at the first refusal it hits, so a fixture that would
+also meet a closure or a `List` method later is counted here when the first thing
+in its way is a heap type, a standard-library call over `net`/`io`/`process`/`fs`,
+or the `extern fun` behind one of those (the ranking treats an `extern fun` whose
+body this backend has no routine for as part of the heap row, because the
+allocator is what unblocks almost all of it). The category is recovered from each
+fixture's first refusal message, so a fixture can move rows when a message's
+wording changes. That is also why the gated-`extern` row is one fixture rather
+than ten: ten fixtures the C backend builds import a gated module, and every one
+of them names an extern body first, so the capability check is still masked
+behind the extern bodies and is the first refusal of none of them. The ranking
+table this page summarizes, and the per-fixture lists behind it, are in
 [`plan/mk7-own-backend.md` §5](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-own-backend.md),
 with the measured brief for the next slice in `plan/mk7-next-slice.md`.
 
-Re-measured 2026-09-20, item 4 is closed outright: the container set is closed
+Re-measured at that commit, item 4 is closed outright: the container set is closed
 (`Box`, `List`, `Map` all lower) and so is the aggregate set: the per-eightbyte
 classifier admits a `datac` field or an `enum` payload holding a float exactly as
 it admits an integer one, and an aggregate over sixteen bytes goes `MEMORY`-class.
 The six heap types free themselves at every drop point, an owned passdown frees
 itself at process exit (the generated `kelp_drop_pds`, registered with `atexit`
 exactly as the C backend's handler is), and what is left is one construct family
-at a time: closures, the heap-bodied `fs`/`io`/`net`/`path`/`process` externs,
-and a gated call. The most recent slices closed the `List` comparison-and-clone
-methods and an owned piece in a `print` template, which is why this
-implementation now builds 175 of the 196 fixtures the C backend accepts.
+at a time: closures, the heap-bodied `fs`/`io`/`net`/`path`/`process` externs, a
+gated call, the derived copy and order for a `datac`/`enum` list element, and a
+borrow of a field chain. The most recent slices closed the `List`
+comparison-and-clone methods for a numeric, `bool`, `String` or `Bytes` element
+and an owned piece in a `print` template, which is why this implementation now
+builds 176 of the 201 fixtures the C backend accepts.
 
 ## Stages beyond tier 1
 
@@ -195,8 +213,8 @@ The plan splits the work into tiers, and only the first is in progress:
 
 The memory gate is a test rather than an argument: `kelpc/tests/memory_gate.rs`
 runs `valgrind` over both backends' binaries, and its last run checked
-196 binaries from the C backend and 175 from the `asm` one, out of the 350
-fixtures in the directory, which skipped the 21 this backend refuses and the 154
+201 binaries from the C backend and 176 from the `asm` one, out of the 357
+fixtures in the directory, which skipped the 25 this backend refuses and the 156
 the compiler itself rejects, with zero findings from any of them. So it asserts no
 findings, because the AddressSanitizer gate instruments generated C and cannot see
 this backend. See [Tests](/compiler/tests).
