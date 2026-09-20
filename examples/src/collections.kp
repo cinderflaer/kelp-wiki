@@ -13,8 +13,8 @@
 // cannot overload a name, so the numeric helpers spell their type into the
 // function name, and a String-keyed set is a separate type from a generic one.
 
-impl "deps/listx/lib" as listx
-impl "deps/set/lib" as set
+impl "deps/listx/lib"
+impl "deps/set/lib"
 impl "std/option"
 
 fun main() {

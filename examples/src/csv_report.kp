@@ -13,8 +13,8 @@
 // `Map` key taken as a bare `str`, and the table library's two-line contract
 // (`new_table` then one `add_row` per row).
 
-impl "deps/csv/lib" as csv
-impl "deps/table/lib" as table
+impl "deps/csv/lib"
+impl "deps/table/lib"
 impl "std/str"
 impl "std/fmt"
 

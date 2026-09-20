@@ -21,9 +21,9 @@
 // why it may touch `env` directly.
 
 impl "std/env"
-impl "deps/term/lib" as term caps(env = ["NO_COLOR"])
-impl "deps/log/lib" as log caps(time = [])
-impl "deps/table/lib" as table
+impl "deps/term/lib" caps(env = ["NO_COLOR"])
+impl "deps/log/lib" caps(time = [])
+impl "deps/table/lib"
 
 fun main() {
     var headers: List<String> = List.empty()

@@ -15,7 +15,7 @@
 // readers, and rebuilding a tree bottom-up (a `Json` cannot be pushed to in
 // place, so children are collected first and wrapped).
 
-impl "deps/json/lib" as json
+impl "deps/json/lib"
 
 // A helper, so the walk owns the list it builds.
 fun keep_high_scores(doc: &json.Json).R: String {

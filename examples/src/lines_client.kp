@@ -9,7 +9,7 @@
 impl "std/net"
 impl "std/str"
 impl "std/process"
-impl "deps/lineproto/lib" as lineproto caps(net = ["127.0.0.1:*"])
+impl "deps/lineproto/lib" caps(net = ["127.0.0.1:*"])
 
 fun port_from(argv: &List<String>).R: u16 {
     if argv.len() >= 2 {
