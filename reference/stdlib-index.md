@@ -10,9 +10,10 @@ MkDocs-era layout and is kept at branch `mkdocs-archive` and tag `mkdocs-final`,
 not in the current tree.
 
 The page was last re-derived with that script at `kelp` commit `54b6ba8`, plus
-the three names that landed after it (`fmt.commas_u64`, `fmt.commas_i64` and
-`fmt.human_size`, from `kelp` `a75deb6`). Three names and one module make that
-worth saying: `str.less` and `str.is_digit` landed after the `940c524` revision
+the names that landed after it: `fmt.commas_u64`, `fmt.commas_i64` and
+`fmt.human_size` (`kelp` `a75deb6`), then `fs.cwd`, `fs.is_symlink`,
+`fs.read_link` and `path.absolute`. Three names and one module make that worth
+saying: `str.less` and `str.is_digit` landed after the `940c524` revision
 the page used to be pinned to, and `std/encoding` is new, and the script's own
 `ORDER` list has to carry `encoding` before it writes that section. The script
 prints the MkDocs layout (an H1 title, `docs/`-relative links, no front matter),
@@ -83,6 +84,7 @@ Functions:
 
 - `fun is_absolute(s: &str).R: bool`
 - `fun normalize(s: &str).R: String`
+- `fun absolute(base: &str, p: &str).R: String`
 - `fun last_sep(s: &str).R: usize`
 - `fun file_name(s: &str).R: &str`
 - `fun extension(s: &str).R: &str`
@@ -237,6 +239,9 @@ Functions:
 - `fun exists(path: &str).R: bool`
 - `fun is_file(path: &str).R: bool`
 - `fun is_dir(path: &str).R: bool`
+- `fun is_symlink(path: &str).R: bool`
+- `fun read_link(path: &str).R: String`
+- `fun cwd().R: String`
 - `fun size(path: &str).R: u64`
 - `fun remove(path: &str)`
 - `fun rename(from: &str, to: &str)`
@@ -466,12 +471,12 @@ Functions:
 | --- | ---: | ---: | --- |
 | `std/mem` | 1 | 0 | — |
 | `std/str` | 37 | 1 | — |
-| `std/path` | 11 | 0 | — |
+| `std/path` | 12 | 0 | — |
 | `std/math` | 29 | 3 | — |
 | `std/fmt` | 10 | 0 | — |
 | `std/encoding` | 23 | 4 | — |
 | `std/io` | 26 | 2 | — |
-| `std/fs` | 24 | 1 | fs |
+| `std/fs` | 27 | 1 | fs |
 | `std/process` | 14 | 3 | process |
 | `std/net` | 17 | 2 | net |
 | `std/http` | 54 | 13 | — |

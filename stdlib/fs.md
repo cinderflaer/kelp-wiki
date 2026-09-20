@@ -21,6 +21,9 @@ is denied. The grant is the ceiling for the whole module.
 datac Metadata(val size: u64, val mtime: i64, val mode: u32, val is_dir: bool, val is_file: bool)
 ```
 
+`Metadata` follows a symlink: every field describes what the path resolves to.
+`is_symlink` is the predicate that describes the link itself.
+
 ## Functions
 
 | Function | Returns | Notes |
@@ -31,17 +34,19 @@ datac Metadata(val size: u64, val mtime: i64, val mode: u32, val is_dir: bool, v
 | `write_text(path, text)` | `Unit` | takes the `String` by value |
 | `append(path, data)` | `Unit` | |
 | `exists(path)` | `bool` | |
-| `is_file(path)` / `is_dir(path)` | `bool` | |
+| `is_file(path)` / `is_dir(path)` | `bool` | follows a symlink |
+| `is_symlink(path)` | `bool` | `lstat`: true for the link itself, broken ones included |
+| `read_link(path)` | `String` | the stored target text; panics when the path is not a link |
 | `cwd()` | `String` | the process's working directory, absolute |
 | `size(path)` | `u64` | |
 | `metadata(path)` | `Metadata` | size, mtime, mode, kind |
 | `remove(path)` | `Unit` | |
-| `remove_all(path)` | `Unit` | recursive |
+| `remove_all(path)` | `Unit` | recursive; unlinks a symlink rather than descending it |
 | `rename(from, to)` | `Unit` | atomic within one filesystem |
 | `mkdir(path)` | `Unit` | |
 | `mkdir_all(path)` | `Unit` | creates parents |
 | `list(path)` | `List<String>` | entry names in one directory |
-| `walk(dir)` | `List<String>` | every path below, recursively |
+| `walk(dir)` | `List<String>` | every path below, recursively; reports a symlink but does not descend it |
 | `copy(from, to)` | `Unit` | one file |
 | `symlink(target, link)` | `Unit` | |
 | `touch(path)` | `Unit` | |
@@ -89,6 +94,16 @@ fun main() {
 
 - `list` returns **names**, not paths; join them with
   [`path.join`](/stdlib/path) or use `walk`, which returns full paths.
+- `is_file` and `is_dir` **follow** a symlink, so both answer for what it
+  points at; `is_symlink` answers for the link. A broken link is `true` for
+  `is_symlink` and `false` for both of the others.
+- `walk` and `remove_all` **do not descend** a symlink: `walk` reports it as an
+  entry and `remove_all` unlinks it. A link back up the tree therefore cannot
+  make either one run until the kernel refuses the path length, and a recursive
+  delete of one directory can no longer reach into another one it was not given.
+- `read_link` returns the target exactly as it was stored, so a relative target
+  stays relative (to the link's own directory); join it with
+  `path.parent(link)` when you need the resolved location.
 - `cwd()` matches no pattern: holding `fs` is the whole grant, because a call
   with no path argument has nothing to match. Resolve a relative argument with
   `path.absolute(fs.cwd(), arg)`; the capability check takes only an absolute

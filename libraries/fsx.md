@@ -60,12 +60,11 @@ dying on it. The test is the mode bits only, so a file that is mode-readable but
   `fs.read`; there is no fallible read in v1 to catch it with.
 - `too_deep` counts the directories at the ceiling that were not descended into.
 
-That ceiling is not only a safety valve for huge trees. **v1 cannot tell a
-symlink from the directory it points at**: there is no `lstat`, no `read_link`,
-and `mode` carries permission bits only. `std/fs.walk` follows such a link, so a
-link back up the tree walks until the kernel refuses the path length and the run
-dies on an `ELOOP` panic. A ceiling turns the cycle into a counted skip, which is
-why the default a caller should pass is in the tens and not `usize` max.
+That ceiling is a safety valve for huge trees, and it is also still what bounds
+a tree that is simply deep. A cycle is no longer part of the problem: `survey`
+**does not descend a symlink**, because `fs.is_symlink` tells one from the
+directory it points at, so a link back up the tree is skipped instead of walking
+until the kernel refuses the path length.
 
 ### `tail` and trailing newlines
 
