@@ -191,19 +191,19 @@ its capability gate rather than for the symbol (`time.now_unix_raw`). Scalars,
 `while`, `print!`, arithmetic and an aggregate holding a float all lower, so a
 program made of those builds and runs under `asm` today.
 
-`plan/mk7-own-backend.md` §0 and §5 own the current count. **176 of the 201
-fixtures the C backend accepts build under `asm`, and 25 are refused**, measured
-at compiler commit `c3a8759`, and the
-plan's status table records a suite figure measured the same way: **285 of 336**
+`plan/mk7-own-backend.md` §0 and §5 own the current count. **178 of the 202
+fixtures the C backend accepts build under `asm`, and 24 are refused**, measured
+at compiler commit `8d86d8e`, and the
+plan's status table records a suite figure measured the same way: **288 of 336**
 integration tests passing under `--backend=asm`, with the C backend passing all
 336, a larger denominator,
 because the suite counts multi-file projects and subprocess cases as well
 ([mk7-own-backend.md](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-own-backend.md)).
-Both were measured in one detached worktree at that commit rather than quoted
+Both were measured at that commit rather than quoted
 from an earlier run. Re-measure both before quoting them, because each moves with
 every slice.
 What the `asm` backend lowers today, and
-the 25 refusals it still has, are on the [Backends](/compiler/backends) page.
+the 24 refusals it still has, are on the [Backends](/compiler/backends) page.
 
 If the `asm` backend cannot find the library directory it links against, point
 `KELPC_GLIBC_DIR` at the directory holding `crt1.o` and `libc.so`.
