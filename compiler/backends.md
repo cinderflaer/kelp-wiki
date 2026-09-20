@@ -112,11 +112,11 @@ in [`plan/mk7-own-backend.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/
 
 | | Count |
 | --- | --- |
-| Fixture files under `kelpc/tests/fixtures/*.kp` | 327 |
-| Rejected by the compiler itself (the `should fail` fixtures) | 146 |
-| Accepted by the compiler | 181 |
-| of those, built by the `asm` backend | 161 |
-| of those, refused by the `asm` backend with the documented prefix | 20 |
+| Fixture files under `kelpc/tests/fixtures/*.kp` | 347 |
+| Rejected by the compiler itself (the `should fail` fixtures) | 154 |
+| Accepted by the compiler | 193 |
+| of those, built by the `asm` backend | 168 |
+| of those, refused by the `asm` backend with the documented prefix | 25 |
 | of those, failed for any other reason | 0 |
 
 The plan's own status table records the *suite* number: `250 of 295` integration
@@ -125,7 +125,7 @@ counts multi-file projects and subprocess cases too, and so is not the same
 denominator as the fixture count above. Re-measure either before quoting it: both
 move with every slice, and the plan's header says it is updated as work lands.
 
-### What the 20 refusals are
+### What the 25 refusals are
 
 The differential sweep groups the refusals into the categories the plan's ranking
 table uses (`cargo test --test backend_coverage -- --ignored --nocapture` prints
@@ -133,9 +133,15 @@ it verbatim, and it is the number the ratchet keeps honest):
 
 | Category | Fixtures |
 | --- | --- |
-| a heap type | 9 |
+| a heap type | 10 |
+| a fixed-size array (A-18) | 4 |
 | a closure or a function value | 10 |
 | a gated `extern` | 1 |
+
+The array row is new: `[T; N]` is a by-value struct this backend has no layout
+and no addressing for yet, so both its literals and the type itself are refused.
+It is its own category rather than part of the heap row, because the whole point
+of the type is that it needs no allocator at all.
 
 Two rows the previous version of this page carried are now empty and are gone: an
 `enum` whose payload is a float, and a `datac` holding a float field. The
@@ -145,6 +151,7 @@ One refusal per category, as the backend names them:
 
 ```
 error: the 'asm' backend does not support the `extern fun std.io.is_open_raw` yet
+error: the 'asm' backend does not support a fixed-size array yet
 error: the 'asm' backend does not support the parameter `f: &closure(i32).R: i32` of `apply` yet
 error: the 'asm' backend does not support the `extern fun std.time.now_unix_raw` yet
 ```
@@ -172,7 +179,7 @@ exactly as the C backend's handler is), and what is left is one construct family
 at a time: closures, the heap-bodied `fs`/`io`/`net`/`path`/`process` externs,
 and a gated call. The most recent slices closed the `List` comparison-and-clone
 methods and an owned piece in a `print` template, which is why this
-implementation now builds 161 of the 181 fixtures the C backend accepts.
+implementation now builds 168 of the 193 fixtures the C backend accepts.
 
 ## Stages beyond tier 1
 
@@ -188,8 +195,9 @@ The plan splits the work into tiers, and only the first is in progress:
 
 The memory gate is a test rather than an argument: `kelpc/tests/memory_gate.rs`
 runs `valgrind` over both backends' binaries, and its last run (2026-09-20) checked
-181 binaries from the C backend and 161 from the `asm` one, which skipped the 20
-fixtures it refuses, with zero findings from any of them. So it asserts no
+193 binaries from the C backend and 168 from the `asm` one, out of the 347
+fixtures in the directory, which skipped the 25 this backend refuses and the 154
+the compiler itself rejects, with zero findings from any of them. So it asserts no
 findings, because the AddressSanitizer gate instruments generated C and cannot see
 this backend. See [Tests](/compiler/tests).
 

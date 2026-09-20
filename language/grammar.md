@@ -28,7 +28,8 @@ param        := ident ":" [ "mut" | "move" ] type
 body         := "=" expr | block | <nothing for extern>
 
 type         := [ "&" ] ( ident [ "<" type ("," type)* ">" ] [ "." ident ]
-                       | "fun" "(" [ fparam ("," fparam)* ] ")" [ ".R" ":" type ] )
+                       | "fun" "(" [ fparam ("," fparam)* ] ")" [ ".R" ":" type ]
+                       | "[" type ";" expr "]" )        // a fixed-size array: [T; N]
 fparam       := [ "mut" | "move" ] type
 ```
 
@@ -52,6 +53,8 @@ postfix      := primary ( "?" | "." ident [ typeargs ] [ "(" args ")" ] )*
 primary      := int | float | string | char | template | "true" | "false"
               | "fun" "(" [ param ("," param)* ] ")" [ ".R" ":" type ]
                 ( "=" expr | block )
+              | "[" expr ("," expr)* "]"       // an array literal: length is the count
+              | "[" expr ";" expr "]"          // a repeat: [0; 4096]
               | ident [ typeargs ] [ "(" args ")" ] | "(" expr ")" | block
               | "if" expr block chain
               | "if" "let" ident [ "(" (ident | "_") ("," (ident | "_"))* ")" ] "=" expr

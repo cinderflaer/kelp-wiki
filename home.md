@@ -122,7 +122,7 @@ five-row critical path, and what is named but not scheduled. Generated from
 | --- | --- |
 | Types | `i32` `i64` `u8` `u16` `u32` `u64` `usize` `isize` `f32` `f64` `bool` `char`, plus borrowed text as `str` and `View` |
 | Data | `datac` records with `val`/`var` fields, `enum` tagged unions, exhaustive `when`, `if let`, type parameters, `const`, `pd` passdowns |
-| Ownership | owned builtins `String`, `Bytes`, `List<T>`, `Map<K, V>`, `Box<T>`; moves, shared and `mut` borrows, drops at end of scope, no garbage collector |
+| Ownership | owned builtins `String`, `Bytes`, `List<T>`, `Map<K, V>`, `Box<T>` and the fixed-size array `[T; N]`; moves, shared and `mut` borrows, drops at end of scope, no garbage collector |
 | Errors | `Option`, `Result`, the `?` operator, `panic`/`assert` |
 | Functions | `fun`, named arguments, function values and closures, receiver methods, stdlib-only argument-type overloading |
 | Modules | `impl "std/fs"`, local-file imports, aliases, `pd` passdowns |

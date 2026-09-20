@@ -46,7 +46,7 @@ error, and so is a `const` or `pd` after a `datac`, `enum` or `fun`
 | [Generics and type parameters](/language/generics) | type parameters, instantiation, generic receivers and functions |
 | [Ownership and borrowing](/language/ownership) | moves, drops, borrows, partial moves, `Box.take` |
 | [Text](/language/text) | `str`, `View`, `String`, `Bytes`, printing, conversions |
-| [Collections](/language/collections) | `List<T>`, `Map<K, V>`, `Box<T>` |
+| [Collections](/language/collections) | `List<T>`, `Map<K, V>`, `Box<T>`, the fixed-size array `[T; N]` |
 | [Modules and imports](/language/modules) | `impl`, aliases, projects |
 | [Constants and passdowns](/language/passdowns) | `const`, `pd` passdowns and the hidden borrow |
 | [Capabilities](/language/capabilities) | the model, grants, patterns, delegation |

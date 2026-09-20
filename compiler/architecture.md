@@ -93,7 +93,13 @@ The largest pass (~7.6k lines). It owns:
   node at call sites: callers never write `&`;
 - the `when`/`if let` pattern rules, including that a payload binds as a copy when
   it is `Copy` and as a shared borrow otherwise;
-- rejecting an `extern` that has no compiler-supplied body.
+- rejecting an `extern` that has no compiler-supplied body;
+- **compile-time evaluation** (A-19), which runs here rather than as a pass of its
+  own: a `const` initializer and an array's `[T; N]` length are folded by a small
+  evaluator over the AST (`ConstEvaluator`), which binds parameters and walks the
+  body of a plain `fun` the constant calls. It carries its own step and call-depth
+  budget, and it runs before any signature is built, so a `const` and the `fun` it
+  calls may reference each other in either order.
 
 The output is `tir.rs`: the same shape, every node annotated with its resolved
 type and span.

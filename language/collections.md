@@ -11,6 +11,10 @@ Three containers are compiler builtins: `List<T>`, `Map<K, V>` and `Box<T>`. The
 are owned values with the same move and drop rules as everything else, and their
 elements are stored **inline**, which is why they cannot nest directly.
 
+A fourth type is not a container at all in that sense: `[T; N]`, a fixed-size
+array whose length is part of its type. It allocates nothing, so it is what a
+fixed-size buffer is written as (`[T; N]` below).
+
 ## `List<T>`
 
 ```kelp
@@ -145,9 +149,57 @@ list = Node(value = 2, next = Box.of(list))
 | `set(v)` | `Unit` |
 | `take()` | the value, moved out; the box is left empty. **Panics** on an empty box |
 
+## `[T; N]`
+
+A fixed-size array: `N` elements of `T` held inline, with the length part of the
+type, so `[u8; 4]` and `[u8; 8]` are different types. Nothing is allocated, which
+is the point: a page table, an IDT/GDT or a register-save frame has to exist with
+no allocator in the path.
+
+```kelp
+const PAGE_SIZE: usize = 4096
+const ENTRY_SIZE: usize = 8
+const ENTRIES: usize = PAGE_SIZE / ENTRY_SIZE
+
+val xs: [i32; 3] = [10, 20, 30]         // the length is the count of elements
+print(xs.len())                          // 3, from the type: nothing is loaded
+print(xs.get(i = 1))
+
+var buf: [u8; 4] = [0; 4]                // the repeat form: a zeroed buffer
+buf.set(i = 2, v = 7)
+
+val table: [u64; ENTRIES] = [0; ENTRIES]
+val grid: [[u8; 2]; 3] = [[1, 2], [3, 4], [5, 6]]   // nesting is held inline
+print(grid.get(i = 2).get(i = 1))
+```
+
+| Method | Takes | Returns |
+| --- | --- | --- |
+| `len()` | shared | `usize`, as a compile-time constant |
+| `is_empty()` | shared | `bool`, always `false` |
+| `get(i)` | shared, `usize` | the element, or a borrow of it |
+| `set(i, v)` | exclusive, `usize` | `Unit` |
+
+- The length is a **compile-time constant**: a literal, another `const`, or an
+  expression over them ([Constants](/language/passdowns) has the rules). A `val`
+  computed at runtime is refused.
+- The element may be a scalar, `String`, `Bytes`, a `datac`, an `enum`, or
+  another array. It may not be a borrow or a `List`/`Map`/`Box`.
+- The array is `Copy` when the element is. `[i32; 3]` is a value you can assign
+  freely; `[String; 3]` owns its three strings, so assigning it moves it, and
+  `set` frees the element it replaces.
+- `[x; N]` copies `x` into every slot, so `x` has to own nothing: a scalar, or a
+  `datac` whose fields are all scalars. A `String` element is refused by name,
+  because `[s; 4]` would be four owners of one buffer.
+- There is no `[T; 0]`, no `a[i]` subscript (use `.get`/`.set`) and no growth. A
+  sequence that grows is a `List<T>`.
+- A `datac` field may be one, and so may a parameter, a return value or a
+  `Box` element.
+
 ## Iterating
 
-`for x in xs` walks a `List<T>` ([Control flow](/language/control-flow)). `Map` has no
+`for x in xs` walks a `List<T>` or a `[T; N]`
+([Control flow](/language/control-flow)). `Map` has no
 iterator: iterate `keys()` and look up, or iterate `values()` when the key is not
 needed.
 

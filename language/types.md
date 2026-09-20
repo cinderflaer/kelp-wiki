@@ -26,6 +26,7 @@ valid inside the scope that lent it.
 | `List<T>` | owned | growable sequence, one instantiation per element type |
 | `Map<K, V>` | owned | keyed container, keeps insertion order; `Map<V>` means a `String` key |
 | `Box<T>` | owned | one heap cell holding a `T` or nothing |
+| `[T; N]` | Copy / owned | fixed-size array: `N` elements held **inline**, with the length part of the type and nothing allocated. `Copy` when `T` is, otherwise an owner that drops each element |
 | `datac` name | owned | record with per-field `val`/`var`, optionally with type parameters |
 | `enum` name | owned | tagged union: exactly one variant is live |
 | `fun(T, U).R: V` | Copy | a function value: a function pointer, with the parameters it takes and what it returns |
@@ -96,7 +97,9 @@ val p: Pair<i32, String> = Pair(first = 1, second = "one")
   where `Pair<String, String>` is expected.
 - A type argument may not be `str` or a reference: a field may not be borrowed.
 - A generic type may refer to itself **through a `Box` or a `List`**.
-- Generic *functions* do not exist in v1.
+- A `fun` may declare type parameters too (`fun identity<T>(x: T).R: T`), and a
+  call site instantiates them, by inference or by writing them
+  (`identity<i32>(x = 5)`).
 
 ## Truth and falsiness
 

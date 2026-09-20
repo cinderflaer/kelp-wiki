@@ -69,9 +69,11 @@ const PI2: f64 = math.PI * 2.0
 ```
 
 A `const` is a top-level compile-time value. The type is mandatory, the
-initializer must be foldable at compile time, and every use is substituted as a
-literal, so a `const` costs no storage and no startup work. A `const` may only
-name constants declared before it.
+initializer is evaluated while the compiler runs, and every use is substituted as
+a literal, so a `const` costs no storage and no startup work. A `const` may only
+name constants declared before it; it may also call a plain `fun` whose own body
+stays inside what a constant can evaluate, and that function may be declared
+after it. [Constants and passdowns](/language/passdowns) has the rules.
 
 ## `pd` passdowns
 

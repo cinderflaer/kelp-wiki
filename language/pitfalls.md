@@ -53,6 +53,19 @@ the fix. Source: [`syntax.md` §18 and §22](https://homelabone.xenoo.dev/gittea
 | `Map` key type refused | keys are `String`, an integer or `bool`, and only those |
 | `for` cannot `push` to what it walks | the loop borrows its iterable; iterate over a copy or index the source |
 
+## Arrays and constants
+
+| Message | Fix |
+| --- | --- |
+| `an array of 3 element(s) is expected here, and this literal has 2` | the length is part of the type, so `[T; N]` and the literal have to agree, and `[x; N]` has to produce `N` |
+| `'k' is not a constant here` | an array's length is evaluated at compile time: write a literal, a `const`, or an expression over them. A `val` computed at runtime is not a constant, and a `const` may only name constants declared before it |
+| `the repeat form '[x; N]' needs an element that owns nothing` | `[x; N]` copies `x` into every slot, so `x` cannot own memory; write the elements out, or use a scalar or a scalar-only `datac` |
+| `'&i32' cannot be a container element` | a container owns its elements, so a borrow cannot be one |
+| `an array length has to be at least 1` | there is no `[T; 0]`; a zero-length C array is not standard C |
+| `Array.get: index out of bounds` (runtime) | the index was checked against the array's own length; the call site is the bug |
+| `'print' cannot be called in a constant expression` | a `const` is folded inside the compiler, so it cannot call a builtin, an `extern fun` or a method, only a plain `fun` that stays inside what a constant can evaluate |
+| `this constant expression did not finish within 1000000 steps` | a `const` may call a `fun`, and that function has to terminate on the values the constant gives it |
+
 ## Closures
 
 | Symptom | Fix |
@@ -87,5 +100,5 @@ matters, use [`mathx`](/libraries/mathx)'s checked or saturating forms.
 
 ## See also
 
-- [Ownership and borrowing](/language/ownership), [Text](/language/text), [Collections](/language/collections)
+- [Ownership and borrowing](/language/ownership), [Text](/language/text), [Collections](/language/collections), [Constants and passdowns](/language/passdowns)
 - [Capabilities](/language/capabilities)

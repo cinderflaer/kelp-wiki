@@ -44,9 +44,9 @@ These are deliberate, and each one has a workaround in this documentation.
 - That is what makes some stdlib helpers `Copy`-only: `option.unwrap` on an
   `Option<String>`, `result.map` over a `Result<T, MyErr>` and `list.filter` over
   a `List<String>` each need a move out that does not exist yet.
-- **No references (and no `View`) in fields, `List` elements, `Map` values or
-  `Box` contents.** Text you must store is a `String`; a view is taken at the
-  point of use.
+- **No references (and no `View`) in fields, `List` elements, `Map` values,
+  array elements or `Box` contents.** Text you must store is a `String`; a view
+  is taken at the point of use.
 - A `View` never becomes a `str`: a slice has no NUL after it, so `str.len`/
   `str.eq` on one would read past the slice. Take `v.to_string()`.
 
@@ -55,8 +55,27 @@ These are deliberate, and each one has a workaround in this documentation.
 - **`List` and `Map` cannot nest directly** and cannot hold a borrow, a `str`,
   `Unit` or another container. Wrap the inner one in a one-field `datac` (as
   `csv.Row`, `listx.Chunk`, `table.Row` do) or a `Box`.
-- No iteration protocol: `for` is a desugared index walk over a `List`, and a
-  `Map` has no iterator: iterate `keys()` and look up.
+- **`[T; N]` is fixed at its written length.** There is no `[T; 0]`, no `a[i]`
+  subscript (write `.get`/`.set`, as on a `List`) and no growth. The repeat form
+  `[x; N]` copies `x` into every slot, so its element has to own nothing, which
+  is the one array shape a `datac` element cannot take: write the elements out,
+  or start from a literal and `set` each one. An array cannot be a `List` or
+  `Map` element, and an array element cannot be a `List`, `Map` or `Box`.
+- No iteration protocol: `for` is a desugared index walk over a `List` or an
+  array, and a `Map` has no iterator: iterate `keys()` and look up.
+
+## Compile-time evaluation
+
+- **A `const` is the same language, not a second one.** Its initializer may use
+  the operators, `if`, an integer conversion, other `const`s, and a call to a
+  plain `fun` whose own body stays inside that set. There is no `comptime`
+  block, no compile-time `List`/`Map`, and no `size_of`/`align_of`; a builtin, an
+  `extern fun` and a method call are all out of reach, so `str.len("x")` cannot
+  be a constant.
+- Evaluation is bounded: one million steps and sixty-four nested calls, and
+  exceeding either is a diagnostic. A constant that calls a function is running
+  inside the compiler, so the function has to terminate on the values the
+  constant gives it.
 
 ## Concurrency
 

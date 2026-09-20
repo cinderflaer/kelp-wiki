@@ -106,7 +106,7 @@ may be empty (`while !file.is_open() { }`), which is how a spin-wait is written.
 
 ## `for`
 
-`for` walks a `List<T>` front to back:
+`for` walks a `List<T>` or a `[T; N]` front to back:
 
 ```kelp
 for x in xs {
@@ -114,13 +114,16 @@ for x in xs {
 }
 ```
 
-- The iterable must be a `List<T>`. `for` is **desugared by the parser** into the
-  index-and-`while` walk, so no later pass knows it exists and there is no
-  iterator protocol to implement.
+- The iterable must be a `List<T>` or a `[T; N]`
+  ([Collections](/language/collections)). `for` is **desugared by the parser**
+  into the index-and-`while` walk, so anything with `.len()` and `.get(i)` walks
+  the same way, no later pass knows it exists, and there is no iterator protocol
+  to implement.
 - The element binding gives exactly what `List.get` gives: a copy of a `Copy`
   element, a shared borrow of an owned one. `for n in numbers` reads `n: i32`;
   `for name in names` reads `name: &String`, so a `str` call wants
-  `name.as_str()`.
+  `name.as_str()`. An array's `get` gives the same thing, and its `len` is the
+  type's own length.
 - The iterable is *borrowed* when it is a place, so the body cannot `push` to
   what it walks.
 - Anything else (a call, a literal, or a field of one) is bound to a temporary
