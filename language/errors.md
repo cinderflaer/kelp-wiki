@@ -90,6 +90,12 @@ indices, popping an empty list, `option.unwrap` on `None`, a failing syscall, a
 division by zero in [`complex.div`](/libraries/complex), a scale mismatch in
 [`decimal`](/libraries/decimal).
 
+The one kind of failure that ships *both* ways is a narrowing number
+conversion: `n.to_u8()` panics on a value that does not fit, and `n.try_to_u8()`
+hands back an [`Option`](/stdlib/option) instead, so a value that may be out of
+range is something the caller branches on rather than something the process
+dies of.
+
 **The divergence rule.** A block whose *last statement* is a `panic(...)`
 diverges, so it satisfies any declared return type, including a borrowed one.
 That is what makes a "this cannot happen" accessor expressible:

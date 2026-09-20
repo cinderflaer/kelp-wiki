@@ -42,7 +42,7 @@ the fix. Source: [`syntax.md` §18 and §22](https://homelabone.xenoo.dev/gittea
 | `the character '中' (U+4E2D) does not fit in 'u8'` | a character literal takes the type its context asks for; use a wider type, or the byte you meant |
 | `operator requires matching integer operands, found 'u8' and 'bool'` | `& \| ^ << >> ~` are integer-only and both operands must be the *same* type |
 | a `n * 1.0` type error | there is no implicit numeric conversion: `n.to_f64()` |
-| `i32.to_u64: value out of range` (runtime) | narrowing conversions panic when the value does not fit |
+| `i32.to_u64: value out of range` (runtime) | the plain conversion panics when the value does not fit; `n.try_to_u64()` returns `Option<T>` instead, so the caller can test |
 
 ## Collections
 

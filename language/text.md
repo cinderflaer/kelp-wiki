@@ -152,6 +152,9 @@ val x: f64 = big.to_f64()            // 3.0 — the only integer->float widening
 - `to_<T>()` exists on every integer type for every integer type, plus
   `to_f64()`/`to_f32()`. Widening is exact; narrowing panics when the value does
   not fit; a float has no `to_<int>`.
+- `try_to_<T>()` is the fallible twin, for the pairs whose plain conversion can
+  lose a value: it hands back `Option<T>`, so a caller tests rather than
+  panicking. A widening has no `try_to_<T>` (see [Types](/language/types)).
 - `str.from_i64`, `str.from_u64`, `str.from_f64(x, decimals)` return `String`.
 - `str.parse_i64`, `str.parse_u64`, `str.parse_f64` return
   `Result<T, str.ParseErr>`, where `ParseErr` is `Empty` or `Invalid`.
