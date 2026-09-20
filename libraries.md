@@ -50,9 +50,9 @@ Some libraries are **gated** exactly like a `std/*` module, because they wrap on
 the consumer delegates the capability at the `impl` line.
 
 ```kelp
-impl "deps/fsx/lib" with caps(fs = ["/var/lib/myapp/**"])
-impl "deps/log/lib" with caps(time = [])
-impl "deps/lineproto/lib" with caps(net = ["127.0.0.1:*"])
+impl "deps/fsx/lib" caps(fs = ["/var/lib/myapp/**"])
+impl "deps/log/lib" caps(time = [])
+impl "deps/lineproto/lib" caps(net = ["127.0.0.1:*"])
 ```
 
 | Library | Needs |

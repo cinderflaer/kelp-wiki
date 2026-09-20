@@ -20,7 +20,7 @@ and dies.
 own `impl` line is where the read's authority comes from.
 
 ```kelp
-impl "std/fs" with caps(fs = ["/tmp/kelp-sandbox/vault/**"])
+impl "std/fs" caps(fs = ["/tmp/kelp-sandbox/vault/**"])
 impl "std/str"
 
 // Reads a file inside the granted directory. A path outside it is refused by the
@@ -40,7 +40,7 @@ import line is the ceiling for everything the imported module can do.
 
 ```kelp
 impl "std/fs"
-impl "sandbox_vault" with caps(fs = ["/tmp/kelp-sandbox/vault/**"])
+impl "sandbox_vault" caps(fs = ["/tmp/kelp-sandbox/vault/**"])
 
 fun main() {
     print(sandbox_vault.read("ok.txt"))

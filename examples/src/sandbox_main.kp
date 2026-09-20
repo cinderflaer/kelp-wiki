@@ -16,7 +16,7 @@
 // process exits non-zero: a refusal in Kelp is not a catchable error.
 
 impl "std/fs"
-impl "sandbox_vault" as vault with caps(fs = ["/tmp/kelp-sandbox/vault/**"])
+impl "sandbox_vault" as vault caps(fs = ["/tmp/kelp-sandbox/vault/**"])
 
 fun main() {
     print(vault.read("ok.txt"))

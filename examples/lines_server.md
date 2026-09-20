@@ -26,7 +26,7 @@ what its consumer grants it, and it calls `net.send_all` and `net.recv` on a
 socket the consumer already connected.
 
 ```kelp
-impl "deps/lineproto/lib" with caps(net = ["127.0.0.1:*"])
+impl "deps/lineproto/lib" caps(net = ["127.0.0.1:*"])
 ```
 
 ## The server
@@ -35,7 +35,7 @@ impl "deps/lineproto/lib" with caps(net = ["127.0.0.1:*"])
 impl "std/net"
 impl "std/str"
 impl "std/process"
-impl "deps/lineproto/lib" with caps(net = ["127.0.0.1:*"])
+impl "deps/lineproto/lib" caps(net = ["127.0.0.1:*"])
 
 fun port_from(argv: &List<String>).R: u16 {
     if argv.len() >= 2 {
@@ -88,7 +88,7 @@ the only structural difference.
 impl "std/net"
 impl "std/str"
 impl "std/process"
-impl "deps/lineproto/lib" with caps(net = ["127.0.0.1:*"])
+impl "deps/lineproto/lib" caps(net = ["127.0.0.1:*"])
 
 fun port_from(argv: &List<String>).R: u16 {
     if argv.len() >= 2 {

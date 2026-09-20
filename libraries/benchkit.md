@@ -15,7 +15,7 @@ benchkit = "Juniper/fpl/benchkit"
 ```
 
 ```kelp
-impl "deps/benchkit/lib" with caps(time = [])
+impl "deps/benchkit/lib" caps(time = [])
 ```
 
 ## Functions
@@ -42,7 +42,7 @@ collect several lines before printing any.
 ## Example
 
 ```kelp
-impl "deps/benchkit/lib" with caps(time = [])
+impl "deps/benchkit/lib" caps(time = [])
 impl "std/time"
 
 fun main() {

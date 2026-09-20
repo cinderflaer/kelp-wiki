@@ -4,7 +4,7 @@
 // show where authority is declared: on the `impl` line, in the module that makes
 // the call, not in the caller, and not at the call site.
 
-impl "std/fs" with caps(fs = ["/tmp/kelp-sandbox/vault/**"])
+impl "std/fs" caps(fs = ["/tmp/kelp-sandbox/vault/**"])
 impl "std/str"
 
 // Reads a file inside the granted directory. A path outside it is refused by the

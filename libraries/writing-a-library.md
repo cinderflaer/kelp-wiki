@@ -53,7 +53,7 @@ below is a rule.
    fetched. Two libraries that genuinely share code become one folder, or the
    *consumer* declares both and wires them together.
 4. **A library declares its own capabilities.** A library's own
-   `impl "std/fs" with caps(...)` is the grant it needs; the consumer's manifest
+   `impl "std/fs" caps(...)` is the grant it needs; the consumer's manifest
    grants it nothing. A JSON library holds no authority; a library that reads
    files asks for it where the read is written, and the consumer decides the
    pattern at its own `impl` line.

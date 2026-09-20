@@ -19,7 +19,7 @@ is not importable, so it is not part of the surface a program can name. Behaviou
 panics and examples live in the [Standard library](/stdlib) chapter.
 
 A module marked with a domain needs that capability delegated on the `impl` line, e.g.
-`impl "std/fs" with caps(fs = ["/srv/data/**"])`.
+`impl "std/fs" caps(fs = ["/srv/data/**"])`.
 
 ## `std/mem`
 

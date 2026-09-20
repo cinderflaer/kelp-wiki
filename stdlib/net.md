@@ -7,9 +7,9 @@ tags: "stdlib, networking"
 TCP sockets. **Gated on `net`.**
 
 ```kelp
-impl "std/net" with caps(net = ["api.example.com:443"])
-impl "std/net" with caps(net = ["127.0.0.1:*"])
-impl "std/net" with caps(net = ["*"])                 // anyone
+impl "std/net" caps(net = ["api.example.com:443"])
+impl "std/net" caps(net = ["127.0.0.1:*"])
+impl "std/net" caps(net = ["*"])                 // anyone
 ```
 
 `net` patterns are matched against the **host string the program wrote**, never a

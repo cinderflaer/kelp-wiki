@@ -23,8 +23,8 @@ table = "Juniper/fpl/table"
 ```
 
 ```kelp
-impl "deps/term/lib" with caps(env = ["NO_COLOR"])
-impl "deps/log/lib" with caps(time = [])
+impl "deps/term/lib" caps(env = ["NO_COLOR"])
+impl "deps/log/lib" caps(time = [])
 ```
 
 `term` reads the environment for `NO_COLOR`, so it needs the `env` domain, named
@@ -35,8 +35,8 @@ down to the one variable. `log` stamps each record with the clock, so it needs
 
 ```kelp
 impl "std/env"
-impl "deps/term/lib" with caps(env = ["NO_COLOR"])
-impl "deps/log/lib" with caps(time = [])
+impl "deps/term/lib" caps(env = ["NO_COLOR"])
+impl "deps/log/lib" caps(time = [])
 impl "deps/table/lib"
 
 fun main() {

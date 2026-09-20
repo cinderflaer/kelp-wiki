@@ -7,7 +7,7 @@
 //   [dependencies]
 //   lineproto = "Juniper/fpl/lineproto"
 //
-//   impl "deps/lineproto/lib" as lineproto with caps(net = ["127.0.0.1:*"])
+//   impl "deps/lineproto/lib" as lineproto caps(net = ["127.0.0.1:*"])
 //
 // A library that touches the outside world carries its own `impl` lines, so the
 // *consumer* is the one that decides the pattern. This program serves one
@@ -17,7 +17,7 @@
 impl "std/net"
 impl "std/str"
 impl "std/process"
-impl "deps/lineproto/lib" as lineproto with caps(net = ["127.0.0.1:*"])
+impl "deps/lineproto/lib" as lineproto caps(net = ["127.0.0.1:*"])
 
 fun port_from(argv: &List<String>).R: u16 {
     if argv.len() >= 2 {

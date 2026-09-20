@@ -14,7 +14,7 @@ log = "Juniper/fpl/log"
 ```
 
 ```kelp
-impl "deps/log/lib" with caps(time = [])
+impl "deps/log/lib" caps(time = [])
 ```
 
 `time` has no pattern to restrict, so an empty list is the whole grant.
@@ -67,7 +67,7 @@ stdout pipe. Integer seconds, no milliseconds, no timezone (unix time is UTC).
 ## Example
 
 ```kelp
-impl "deps/log/lib" with caps(time = [])
+impl "deps/log/lib" caps(time = [])
 
 fun main() {
     val l = log.new_logger("app", log.LEVEL_INFO)

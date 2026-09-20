@@ -305,6 +305,8 @@ of them (`kelpc/src/deprecated.rs`, and `syntax.md` 23), and `kelpc build` and
 $ kelpc build src/main.kp
 outdated: `impl "..." as name` is outdated and will be removed in the next development cycle: a module is reached by its own name (`std/path` is `path`, `shapes/circle` is `circle`, and a dependency's entry module `deps/argparse/lib` is `argparse`), so drop the clause and use that name
   --> src/main.kp:1:16
+outdated: `impl "..." with caps(...)` is outdated and will be removed in the next development cycle: drop the `with`: the grant is `impl "std/fs" caps(fs = ["/var/log/**"])`, and the patterns, the domains and the no-escalation rule are exactly the same
+  --> src/main.kp:2:13
 $ echo $?
 0
 ```
@@ -320,10 +322,13 @@ $ echo $?
 - **`kelpc fmt`** never rewrites an old spelling into a new one: it copies tokens.
   **`kelpc lint`** does not report deprecations either, because a deprecation is a
   build's finding rather than a style pass's.
-- The register has one entry so far, the `impl` clause above, and the migration
-  it asks for is usually a deletion: a module is reached by its own name, which
-  for a dependency's entry module is the directory Coral fetched it into
-  (see [Modules and imports](/language/modules)).
+- The register has two entries: the `impl` clause above, and the `with` in front
+  of a capability grant (`impl "std/fs" with caps(fs = [...])`, where the grant
+  itself is `impl "std/fs" caps(fs = [...])`). The migration each asks for is
+  usually a deletion: a module is reached by its own name, which for a
+  dependency's entry module is the directory Coral fetched it into
+  (see [Modules and imports](/language/modules)), and the `with` says nothing
+  the `impl` line does not.
 
 ## Environment variables
 

@@ -11,7 +11,7 @@ text functions are reviewable Kelp rather than a C blob. It is imported with
 
 ```kelp
 impl "std/fs"                                          // needs fs
-impl "std/net" with caps(net = ["api.example.com:443"]) // names the host it may dial
+impl "std/net" caps(net = ["api.example.com:443"]) // names the host it may dial
 impl "std/str"                                          // needs nothing
 ```
 

@@ -9,7 +9,7 @@ Kelp is a statically typed, compiled systems language whose headline feature is
 authority is part of the source and checked at every call site that uses it.
 
 ```kelp
-impl "std/http" with caps(net = ["127.0.0.1:*"])
+impl "std/http" caps(net = ["127.0.0.1:*"])
 impl "std/fs"
 
 fun main() {

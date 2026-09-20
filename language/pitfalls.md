@@ -65,7 +65,7 @@ the fix. Source: [`syntax.md` §18 and §22](https://homelabone.xenoo.dev/gittea
 | Message | Fix |
 | --- | --- |
 | `cannot find module` / a name resolves nowhere | `impl` the file, and note that paths are relative to the project's `src/` |
-| a gated call is refused and names a domain | write the grant on the `impl` line: `with caps(fs = ["/srv/data/**"])` |
+| a gated call is refused and names a domain | write the grant on the `impl` line: `caps(fs = ["/srv/data/**"])` |
 | `... needs the 'fs' capability, which module 'x' was not granted` and `x` is not the module you wrote the call in | the module that holds nothing is the middle one; the message names the `impl` line that imported it without a `caps(...)` clause, and that line is the one to change |
 | a path with `..` or a relative path is refused | `fs`/`process` patterns match absolute, normalized paths |
 | `127.0.0.1` is not covered by `localhost` | `net` matches the host **string you wrote**, not a resolved address |

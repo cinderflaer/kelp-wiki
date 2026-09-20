@@ -75,7 +75,7 @@ impl "std/option"
 Two notes on that table:
 
 - **A pattern on the entry module's own `impl` line does nothing.** The entry
-  module holds the wildcard for every domain, so `impl "std/fs" with caps(fs =
+  module holds the wildcard for every domain, so `impl "std/fs" caps(fs =
   ["/tmp/ok/**"])` in a single-file program still reads `/etc/hostname`. To see a
   restriction, put the gated call in a module one level down.
 - **A mistyped key placed after a `[section]` is silently ignored**, because it
@@ -112,7 +112,7 @@ files, one grant, one call outside it:
 
 ```kelp
 // src/vault.kp
-impl "std/fs" with caps(fs = ["/tmp/kelp-sandbox/vault/**"])
+impl "std/fs" caps(fs = ["/tmp/kelp-sandbox/vault/**"])
 impl "std/str"
 
 fun read(name: &str).R: String {

@@ -8,12 +8,12 @@ Arguments, children, and exiting. **Gated on `process`.**
 
 ```kelp
 impl "std/process"                                      // argv only needs the empty grant
-impl "std/process" with caps(process = ["/usr/bin/curl"]) // spawn/run need a pattern
+impl "std/process" caps(process = ["/usr/bin/curl"]) // spawn/run need a pattern
 ```
 
 `process` patterns are absolute program paths, matched the same way `fs` paths
 are: normalized, symlinks resolved. Reading `argv` needs no pattern: the empty
-grant (`with caps(process = [])`) is enough to name `process.args`, because there
+grant (`caps(process = [])`) is enough to name `process.args`, because there
 is no resource argument to match.
 
 ## Types
