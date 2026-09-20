@@ -31,7 +31,10 @@ the fix. Source: [`syntax.md` §18 and §22](https://homelabone.xenoo.dev/gittea
 
 | Message | Fix |
 | --- | --- |
-| `argument 'c' has type 'char', expected 'u8'` | a character literal with nothing asking for a type is a `char`; write `val c: u8 = '"'` |
+| `argument 'c' has type 'char', expected 'u8'` | a character literal with nothing asking for a type is a `char`, and a `char` is not an integer; write the byte as a byte literal (`b'"'`) or write the type (`val c: u8 = '"'`) |
+| `a byte literal is a 'u8', not a 'i64'` | a byte literal is a `u8` by construction and does not take the type its context asks for; use a character literal when the type should come from where it sits |
+| `a byte literal is one ASCII character or a '\xNN' escape` | a non-ASCII character is a code point, so it belongs in a character literal; `b'\xe9'` is the byte 233 |
+| `a hex escape is written '\xNN', with two hex digits` | the escape is exactly two hex digits in every literal form; in a string literal it stops at the ASCII range, so `"\xff"` is not text |
 | `the character '中' (U+4E2D) does not fit in 'u8'` | a character literal takes the type its context asks for; use a wider type, or the byte you meant |
 | `operator requires matching integer operands, found 'u8' and 'bool'` | `& \| ^ << >> ~` are integer-only and both operands must be the *same* type |
 | a `n * 1.0` type error | there is no implicit numeric conversion: `n.to_f64()` |

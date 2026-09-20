@@ -70,6 +70,7 @@ val e = 'x'             // character literal
 val f = "n = $a, sum = ${a + 1}"   // string template
 val g = 0xff            // integer literal, hexadecimal
 val h = 0b1010          // integer literal, binary
+val i = b'x'            // byte literal
 ```
 
 - **Integer literals** are decimal, or hexadecimal after `0x` and binary after
@@ -97,9 +98,24 @@ val h = 0b1010          // integer literal, binary
 
   A code point that does not fit the type the context asks for is a **compile
   error**, not a truncation: `val ch: u8 = '中'` is refused by name.
-- **String and character literals** use this escape set (grammar §20): `\n`,
-  `\t`, `\r`, `\0`, `\'`, `\"`, `\\` and `\u{...}`. The set is closed: there is
-  no `\x1b`, which is why the `term` library builds its ESC byte as `'\u{1b}'`.
+- **A byte literal** is `b'x'`: one ASCII character or a `\xNN` escape, and a
+  `u8` **by construction**. That is what it is for: `val nl = b'\n'` needs no
+  type written anywhere, which the character-literal spelling (`val nl: u8 =
+  '\n'`) does. It does not take the type its context asks for, so `val n: i64 =
+  b'x'` is refused rather than widened: write `'x'` when the type should come
+  from where the literal sits. A non-ASCII character is a code point, so it
+  belongs in a character literal (`b'é'` is refused, and `b'\xe9'` is the byte
+  233).
+- **String, character and byte literals** use this escape set (grammar §20):
+  `\n`, `\t`, `\r`, `\0`, `\'`, `\"`, `\\`, `\xNN` and `\u{...}`. What each
+  form refuses is the shape it cannot hold: a string literal is NUL-terminated
+  UTF-8, so it has no `\0` and no `\u{...}` and a byte above `0x7f` is not text
+  (`"\xff"` is refused), and a byte literal is one byte, so it has no
+  `\u{...}`.
+- **`\xNN` is exactly two hex digits**, in every literal form, so it cannot run
+  on into the text after it: `"\x41a"` is `"Aa"`, where C's hex escape
+  swallows the `a`. In a character literal it is the code point (`'\x41'` is
+  `'A'`); in a byte literal it is the byte (`b'\xff'` is 255).
 
 ## String templates
 
