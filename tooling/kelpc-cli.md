@@ -135,10 +135,11 @@ its capability gate rather than for the symbol (`time.now_unix_raw`). Scalars,
 `while`, `print!`, arithmetic and an aggregate holding a float all lower, so a
 program made of those builds and runs under `asm` today.
 
-`plan/mk7-own-backend.md` §0 and §5 own the current count. **154 of the 174
-fixtures the C backend accepts build under `asm`, and 20 are refused**, and the
-plan's status table records **250 of 295** integration tests passing under
-`--backend=asm`, with the C backend passing all 295, a larger denominator,
+`plan/mk7-own-backend.md` §0 and §5 own the current count. **174 of the 195
+fixtures the C backend accepts build under `asm`, and 21 are refused**, and the
+plan's status table records a suite figure measured the same way: **282 of 328**
+integration tests passing under `--backend=asm`, with the C backend passing all
+328, a larger denominator,
 because the suite counts multi-file projects and subprocess cases as well
 ([mk7-own-backend.md](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-own-backend.md)).
 The fixture pair was re-measured for this page, and the suite figure is the

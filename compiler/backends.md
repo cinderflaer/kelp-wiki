@@ -73,7 +73,12 @@ whole-string and `errno` checks), `List`'s comparison-and-clone methods
 into a `print` template (a piece costs two integer arguments, not one, and the five
 non-float argument registers are the ceiling: a template with three owned pieces is
 refused as `a print with more than five non-float interpolation arguments`), a `pd`'s
-generated storage, and calls to the
+generated storage, `[T; N]` fixed-size arrays (a synthesized layout per element
+type and length, so one is an ordinary by-value aggregate: `len()`/`is_empty()`
+are the type's own constants, `get`/`set` are bounds-checked over the element's
+stride, and an element that owns memory is dropped per element), a function that
+returns a borrow of anything (`&str` was the only shape whose pointer-in-register
+return this backend classified), and calls to the
 `extern fun`s whose bodies this backend owns or can forward to libc through the
 PLT.
 
@@ -112,20 +117,20 @@ in [`plan/mk7-own-backend.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/
 
 | | Count |
 | --- | --- |
-| Fixture files under `kelpc/tests/fixtures/*.kp` | 347 |
+| Fixture files under `kelpc/tests/fixtures/*.kp` | 349 |
 | Rejected by the compiler itself (the `should fail` fixtures) | 154 |
-| Accepted by the compiler | 193 |
-| of those, built by the `asm` backend | 168 |
-| of those, refused by the `asm` backend with the documented prefix | 25 |
+| Accepted by the compiler | 195 |
+| of those, built by the `asm` backend | 174 |
+| of those, refused by the `asm` backend with the documented prefix | 21 |
 | of those, failed for any other reason | 0 |
 
-The plan's own status table records the *suite* number: `250 of 295` integration
-tests passing under `--backend=asm`, with the C backend passing all 295, which
+The plan's own status table records the *suite* number: **282 of 328** integration
+tests passing under `--backend=asm`, with the C backend passing all 328, which
 counts multi-file projects and subprocess cases too, and so is not the same
 denominator as the fixture count above. Re-measure either before quoting it: both
 move with every slice, and the plan's header says it is updated as work lands.
 
-### What the 25 refusals are
+### What the 21 refusals are
 
 The differential sweep groups the refusals into the categories the plan's ranking
 table uses (`cargo test --test backend_coverage -- --ignored --nocapture` prints
@@ -134,24 +139,19 @@ it verbatim, and it is the number the ratchet keeps honest):
 | Category | Fixtures |
 | --- | --- |
 | a heap type | 10 |
-| a fixed-size array (A-18) | 4 |
 | a closure or a function value | 10 |
 | a gated `extern` | 1 |
 
-The array row is new: `[T; N]` is a by-value struct this backend has no layout
-and no addressing for yet, so both its literals and the type itself are refused.
-It is its own category rather than part of the heap row, because the whole point
-of the type is that it needs no allocator at all.
-
 Two rows the previous version of this page carried are now empty and are gone: an
 `enum` whose payload is a float, and a `datac` holding a float field. The
-float-in-aggregate slice lowered both.
+float-in-aggregate slice lowered both. A third, a fixed-size array (A-18), is
+gone here too: `[T; N]` is a synthesized by-value layout on this backend now, so
+both of its literals and the type itself lower.
 
 One refusal per category, as the backend names them:
 
 ```
 error: the 'asm' backend does not support the `extern fun std.io.is_open_raw` yet
-error: the 'asm' backend does not support a fixed-size array yet
 error: the 'asm' backend does not support the parameter `f: &closure(i32).R: i32` of `apply` yet
 error: the 'asm' backend does not support the `extern fun std.time.now_unix_raw` yet
 ```
@@ -179,7 +179,7 @@ exactly as the C backend's handler is), and what is left is one construct family
 at a time: closures, the heap-bodied `fs`/`io`/`net`/`path`/`process` externs,
 and a gated call. The most recent slices closed the `List` comparison-and-clone
 methods and an owned piece in a `print` template, which is why this
-implementation now builds 168 of the 193 fixtures the C backend accepts.
+implementation now builds 174 of the 195 fixtures the C backend accepts.
 
 ## Stages beyond tier 1
 
@@ -194,9 +194,9 @@ The plan splits the work into tiers, and only the first is in progress:
 | 8: runtime decoupling (parallel track) | in progress; see [Runtime](/compiler/runtime) |
 
 The memory gate is a test rather than an argument: `kelpc/tests/memory_gate.rs`
-runs `valgrind` over both backends' binaries, and its last run (2026-09-20) checked
-193 binaries from the C backend and 168 from the `asm` one, out of the 347
-fixtures in the directory, which skipped the 25 this backend refuses and the 154
+runs `valgrind` over both backends' binaries, and its last run checked
+195 binaries from the C backend and 174 from the `asm` one, out of the 349
+fixtures in the directory, which skipped the 21 this backend refuses and the 154
 the compiler itself rejects, with zero findings from any of them. So it asserts no
 findings, because the AddressSanitizer gate instruments generated C and cannot see
 this backend. See [Tests](/compiler/tests).
