@@ -12,7 +12,8 @@ not in the current tree.
 The page was last re-derived with that script at `kelp` commit `54b6ba8`, plus
 the names that landed after it: `fmt.commas_u64`, `fmt.commas_i64` and
 `fmt.human_size` (`kelp` `a75deb6`), then `fs.cwd`, `fs.is_symlink`,
-`fs.read_link` and `path.absolute`. Three names and one module make that worth
+`fs.read_link` and `path.absolute`, then `io.IoErr`/`io.errno_text` with
+`fs.try_read`, `fs.try_read_text` and `fs.try_open`. Three names and one module make that worth
 saying: `str.less` and `str.is_digit` landed after the `940c524` revision
 the page used to be pinned to, and `std/encoding` is new, and the script's own
 `ORDER` list has to carry `encoding` before it writes that section. The script
@@ -194,6 +195,7 @@ Types:
 
 - `datac File(val fd: i32)`
 - `datac BufReader(val file: File, var buf: Bytes, var start: usize, var end: usize)`
+- `datac IoErr(val errno: i32, val message: String)`
 
 Functions:
 
@@ -223,6 +225,7 @@ Functions:
 - `fun print_bare(s: &str)`
 - `fun eprint(s: &str)`
 - `fun eprint_bare(s: &str)`
+- `fun errno_text(errno: i32).R: String`
 
 ## `std/fs` (needs `fs`)
 
@@ -242,6 +245,8 @@ Functions:
 - `fun is_symlink(path: &str).R: bool`
 - `fun read_link(path: &str).R: String`
 - `fun cwd().R: String`
+- `fun try_read(path: &str).R: result.Result<Bytes, io.IoErr>`
+- `fun try_read_text(path: &str).R: result.Result<String, io.IoErr>`
 - `fun size(path: &str).R: u64`
 - `fun remove(path: &str)`
 - `fun rename(from: &str, to: &str)`
@@ -256,6 +261,7 @@ Functions:
 - `fun symlink(target: &str, link: &str)`
 - `fun touch(path: &str)`
 - `fun open(path: &str, mode: &str).R: io.File`
+- `fun try_open(path: &str, mode: &str).R: result.Result<io.File, io.IoErr>`
 - `fun read_lines(path: &str).R: List<String>`
 - `fun temp_path(prefix: &str).R: String`
 - `fun metadata(path: &str).R: Metadata`
@@ -475,8 +481,8 @@ Functions:
 | `std/math` | 29 | 3 | — |
 | `std/fmt` | 10 | 0 | — |
 | `std/encoding` | 23 | 4 | — |
-| `std/io` | 26 | 2 | — |
-| `std/fs` | 27 | 1 | fs |
+| `std/io` | 27 | 3 | — |
+| `std/fs` | 30 | 1 | fs |
 | `std/process` | 14 | 3 | process |
 | `std/net` | 17 | 2 | net |
 | `std/http` | 54 | 13 | — |

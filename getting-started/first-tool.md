@@ -145,8 +145,9 @@ spellings name the same file:
 The second command in the section above passes an absolute path, which
 `absolute_or_here` returns unchanged.
 
-**Files fail by panicking.** `fs` has no `Result`: a failing syscall aborts the
-process with the errno. That is a real, uncaught failure and it looks like this:
+**Files fail by panicking, unless you ask for the value.** `fs.read_lines` and
+its kin abort the process with the errno. That is a real, uncaught failure and it
+looks like this:
 
 ```sh
 ./head /tmp/nope.txt
@@ -157,8 +158,23 @@ panic: fs.read: cannot open file
   errno 2: No such file or directory
 ```
 
-The exit code is 1. If you want a sentence instead, check `fs.exists(target)` first
-or use `fs.open` and handle it yourself; [`std/fs`](/stdlib/fs) has the list.
+The exit code is 1. To print a sentence and exit 2 instead, swap `fs.read_lines`
+for its fallible twin `fs.try_read_text`, which hands back a `Result`:
+
+```kelp
+val text = fs.try_read_text(resolved.as_str())
+if let Err(e) = text {
+    print(str.concat("error: ", e.message.as_str()))
+    process.exit(2)
+}
+if let Ok(body) = text {
+    val lines = str.split(body.as_str(), "\n")
+    // …
+}
+```
+
+`try_read`, `try_read_text` and `try_open` are the three that fail by value;
+everything else in [`std/fs`](/stdlib/fs) still panics.
 
 **Exit codes are the interface.** 0 is success, 2 is a usage error, 1 is a
 failure. `kelpc run` forwards the program's status, so a shell script can act on

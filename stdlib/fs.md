@@ -28,8 +28,10 @@ datac Metadata(val size: u64, val mtime: i64, val mode: u32, val is_dir: bool, v
 
 | Function | Returns | Notes |
 | --- | --- | --- |
-| `read(path)` | `Bytes` | whole file |
-| `read_text(path)` | `String` | whole file as text |
+| `read(path)` | `Bytes` | whole file; panics on failure |
+| `read_text(path)` | `String` | whole file as text; panics on failure |
+| `try_read(path)` | `Result<Bytes, io.IoErr>` | the fallible `read` |
+| `try_read_text(path)` | `Result<String, io.IoErr>` | the fallible `read_text` |
 | `write(path, data)` | `Unit` | truncates and writes |
 | `write_text(path, text)` | `Unit` | takes the `String` by value |
 | `append(path, data)` | `Unit` | |
@@ -51,21 +53,39 @@ datac Metadata(val size: u64, val mtime: i64, val mode: u32, val is_dir: bool, v
 | `symlink(target, link)` | `Unit` | |
 | `touch(path)` | `Unit` | |
 | `sync(path)` | `Unit` | flush to disk |
-| `open(path, mode)` | `io.File` | |
+| `open(path, mode)` | `io.File` | panics on failure |
+| `try_open(path, mode)` | `Result<io.File, io.IoErr>` | the fallible `open` |
 | `read_lines(path)` | `List<String>` | the file, split on newlines |
 | `temp_path(prefix)` | `String` | a fresh path in the temp directory |
 
 ### Open modes
 
-`fs.open(path, mode)` takes a mode string; the runtime maps it to the C `fopen`
-modes (`"r"`, `"w"`, `"a"`, and their `+`/`b` forms).
+`fs.open(path, mode)` takes one of four mode strings: `"r"`, `"w"` (create and
+truncate), `"a"` (create and append) and `"rw"` (create, no truncate). Anything
+else is a panic for `open` and `errno` `EINVAL` (22) for `try_open`. There are no
+`+`/`b` spellings: a `"b"` is a no-op on POSIX and `"rw"` is what `+` would mean.
+
+`try_read_text` fails on a file that is not valid UTF-8 as well, with `errno` 0
+(no syscall failed) and a message that says so.
 
 ## Errors are panics
 
-There is no `Result` here: a failing syscall **panics** with the errno, and a path
+A failing syscall in the panicking functions **panics** with the errno, and a path
 outside the grant is refused by the capability check. Code that must survive a
-missing file checks `exists`/`is_file` first, or uses the fallible forms where a
-library provides them.
+missing file checks `exists`/`is_file` first, and code that must survive an
+unreadable one uses a fallible form:
+
+```kelp
+val text = fs.try_read_text(path)
+if let Err(e) = text {
+    print(e.message)
+}
+```
+
+The three `try_` functions return `Result<_, io.IoErr>`, where `io.IoErr`
+carries the POSIX `errno` (for a branch on the cause) and its text (for a
+message). Everything else here still panics; the fallible twins are the ones a
+tool needs when it is walking a tree the author did not write.
 
 ```kelp
 impl "std/fs"

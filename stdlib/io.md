@@ -76,6 +76,18 @@ fun main() {
 }
 ```
 
+## Errors
+
+```kelp
+datac IoErr(val errno: i32, val message: String)
+```
+
+A failed syscall, as a value: the POSIX `errno` and its text. `errno` is 0 when
+the failure is not a syscall at all (a file that is not valid UTF-8), and
+`message` is then the whole story. The fallible `fs` functions return it
+([`fs.try_read`](/stdlib/fs) and friends), and `io.errno_text(errno)` turns any
+number into its text, so `errno_text(13)` is `"Permission denied"`.
+
 ## Notes
 
 - A `File` is a raw descriptor: `File(fd = 3)` is whatever the program happens to
