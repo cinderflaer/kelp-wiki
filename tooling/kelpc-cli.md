@@ -13,8 +13,8 @@ after it (`kelpc lint` below, the comment-run and naming-case findings, the
 `kelpc 26.09.0`.
 
 ```text
-usage: kelpc build <file.kp> [-o <out>] [--backend=<name>] [--deny-outdated]
-       kelpc run <file.kp> [--deny-outdated]
+usage: kelpc build <file.kp> [-o <out>] [-O0|-O1|-O2|-O3|-Os] [--deny-outdated]
+       kelpc run <file.kp> [-O0|-O1|-O2|-O3|-Os] [--deny-outdated]
        kelpc check <file.kp> [--json] [--deny-outdated]
        kelpc fmt <file.kp>
        kelpc fmt -w <path>...
@@ -31,7 +31,7 @@ above, and `kelpc version` is the version query.
 | Command | What it does | Exit status |
 | --- | --- | --- |
 | `kelpc build <file.kp>` | compiles to a binary and keeps the artifact | 0 on success, 1 on a diagnostic |
-| `kelpc build <file.kp> -o <out>` | the same, naming the artifact | as above, 1 if `<out>.c` cannot be written |
+| `kelpc build <file.kp> -o <out>` | the same, naming the artifact | as above, 1 if `<out>.ll` cannot be written |
 | `kelpc run <file.kp>` | compiles and executes, forwarding stdout, stderr and the program's exit code | the program's own status |
 | `kelpc check <file.kp>` | runs the front end (load, type check, borrow check) with no code generation and writes no artifact; takes a project directory too | 0 on success, 1 on a diagnostic; an outdated finding on its own stays 0 |
 | `kelpc check <file.kp> --json` | the same, with the findings as one JSON document on stdout | as above |
@@ -59,7 +59,7 @@ Two behaviours worth knowing:
   ```text
   $ kelpc run src/main.kp extra
   error: unexpected argument 'extra'
-  usage: kelpc build <file.kp> [-o <out>] [--backend=<name>]
+  usage: kelpc build <file.kp> [-o <out>] [-O0|-O1|-O2|-O3|-Os] [--deny-outdated]
   ```
 
   Build first and run the binary, or use Coral, which does forward them
@@ -122,17 +122,19 @@ resolution, which is the compiler's own answer to keep or to publish.
 
 | Invocation | Binary | Generated beside it |
 | --- | --- | --- |
-| `kelpc build src/main.kp` | `build/main` | `build/main.c` |
-| `kelpc build proj/` | `build/proj` | `build/proj.c` |
-| `kelpc build proj` | `build/proj` | `build/proj.c` |
-| `kelpc build src/main.kp -o app` | `app` | `app.c` |
-| `kelpc build .` | `build/a.out` | `build/a.c` |
+| `kelpc build src/main.kp` | `build/main` | `build/main.ll` and `build/main.o` |
+| `kelpc build proj/` | `build/proj` | `build/proj.ll` and `build/proj.o` |
+| `kelpc build proj` | `build/proj` | `build/proj.ll` and `build/proj.o` |
+| `kelpc build src/main.kp -o app` | `app` | `app.ll` and `app.o` |
+| `kelpc build .` | `build/a.out` | `build/a.ll` and `build/a.o` |
 
-The hand-written `asm` backend is gone, so `--backend=asm` is now an unknown name.
-With `--backend=llvm` the generated files are `<out>.ll` (textual IR) and
-`<out>.o` (the object), written beside the binary where the C path writes
-`<out>.c`, and the object is linked with `cc -O2 -o <out> <out>.o -lm`. A `kelpc`
-built with the `llvm` backend links `libLLVM-21.so` and needs it at runtime.
+The generated files are `<out>.ll` (textual IR) and `<out>.o` (the object),
+written beside the binary, and the object is linked with
+`cc -o <out> <out>.o -lm` at the build's optimization level. A program that
+reaches an `extern fun` also gets `<out>.externs.c`, the C source of its extern
+object. Every `kelpc` links `libLLVM-21.so` and needs it at runtime. The `c`
+oracle writes `<out>.c` where these land, and is one of the ways the `llvm`
+artifact is checked.
 
 - `build/` is relative to the **current working directory**, and the compiler
   creates it if it is missing.
@@ -146,48 +148,48 @@ built with the `llvm` backend links `libLLVM-21.so` and needs it at runtime.
   error: '/tmp/proj' is a directory but has no coral.toml (pass a .kp file, or add a manifest)
   ```
 
-- **Passing `.` gives the artifact the name `a.out`** (and the C `a.c`), because
-  the last segment has no stem. Name the directory (`kelpc build proj/`) or use
-  `-o` when you care about the name, which a build script always should.
-- With `-o`, the generated C is written beside the binary as `<out>.c`. **The
-  parent directory must already exist**:
+- **Passing `.` gives the artifact the name `a.out`** (and `a.ll` and `a.o`),
+  because the last segment has no stem. Name the directory (`kelpc build proj/`)
+  or use `-o` when you care about the name, which a build script always should.
+- With `-o`, the generated files are written beside the binary as `<out>.ll` and
+  `<out>.o`. **The parent directory must already exist**:
 
   ```text
   $ kelpc build src/main.kp -o /tmp/missing/app
-  error: could not write generated C to '/tmp/missing/app.c': No such file or directory (os error 2)
+  error: could not write generated IR to '/tmp/missing/app.ll': No such file or directory (os error 2)
   ```
 
 ## Backends
 
-One code generator, selected with `--backend=` or `KELPC_BACKEND`; an explicit
-`--backend` wins over the variable, and the default is `c`.
+`kelpc` builds every program with one backend, **`llvm`**. It lowers the typed IR
+to LLVM IR, runs LLVM's own pass pipeline over the module at the build's
+optimization level, emits an object and links it with `cc`.
 
-| Backend | What it does | Toolchain it needs |
-| --- | --- | --- |
-| `c` (default) | transpiles to C | `cc -O2 -fwrapv -lm` |
-| `llvm` | lowers the whole language to LLVM IR and an object | `libLLVM-21` to build `kelpc`, then `cc -O2 -o <out> <out>.o -lm` to link |
-
-```sh
-KELPC_BACKEND=c kelpc run examples/hello.kp   # the default, spelled out
-```
-
-A backend that does not exist is named in the error, so a typo is not a mystery:
+There is no backend to choose. Whatever `--backend=` carries is refused with
 
 ```text
 $ kelpc build src/main.kp --backend=asm2
-error: unknown backend 'asm2'; expected one of: c, llvm
+error: --backend is gone: kelpc builds every program with the llvm backend, and the C backend is kept as the project's own oracle rather than as a user choice
 ```
+
+and a set `KELPC_BACKEND` earns the same refusal, worded for the variable: the
+choice is gone rather than the spelling changed, so a shell that still exports
+one is told rather than silently ignored.
+
+**The `c` backend is the project's own oracle**, kept in the tree, in the suite
+and in CI. It transpiles to C and hands the file to `cc -fwrapv -lm` at the same
+optimization level, and the fixture suite, the differential sweep and the fuzzer
+measure every `llvm` build against its output. It is the reference backend rather
+than a second opinion, and it is not a user surface: the project's own internal
+switch is the only way to reach it.
 
 The hand-written `asm` backend, which emitted x86-64 assembly itself and finished
 with `as` and `ld`, was retired on 2026-09-20 and removed on 2026-09-21. Its plans,
 its counts and its refusal ranking stay as history in
 [`plan/asm-backend/`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/asm-backend/),
-and the [Backends](/compiler/backends) page carries the current table.
+and the [Backends](/compiler/backends) page carries the current shape.
 
-**The C backend is the reference.** The fixture suite is backend-agnostic by
-construction, so a second backend is validated by running it again with
-`KELPC_BACKEND` set to it (the whole suite passes under both), and `--backend=c`
-and `KELPC_BACKEND=c` stay selectable forever. A *gated* item named as a function
+A *gated* item named as a function
 value is refused by the compiler,
 whether or not the naming module holds the domain, because the pattern check is
 emitted from the call's own callee and an indirect call has none.
@@ -206,13 +208,14 @@ tests), `run-llvm-externs.sh` (138 tests) and `run-llvm-pd-caps.sh` (38 tests,
 the `pd` globals, the capability check and the last three refusals, with the deny
 text pinned against the C backend's own). One guard remains in the lowering, for
 an owned temporary at a place it did not stage, and nothing in the corpus reaches
-it. `c` stays the default, the oracle and the way out. The object carries DWARF
+it. The `c` backend is the oracle this build is measured against. The object
+carries DWARF
 line locations, so a fault in an `llvm`-built binary names the `.kp` file and
 line, where the C backend's `#line` was the only source of that before; it is a
-line table, so no variables and no types. There is no IR optimization
-pass pipeline yet, so the object is emitted at LLVM's default codegen level and no
-performance parity with the C backend is claimed; choosing the pipeline is stage
-S6. See
+line table, so no variables and no types. One optimization level is one level for
+the whole build: it selects the LLVM pass pipeline and the target machine's
+codegen level, and it is the `-O` flag the per-program C object and the final link
+are given, so no performance parity with the C backend is claimed. See
 [`plan/mk7-llvm-backend.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-llvm-backend.md).
 
 ## `fmt`
@@ -362,42 +365,44 @@ project's `src/deps/` gets no case rule at all.
 
 ## Outdated syntax
 
-A spelling that is on its way out still compiles. The compiler keeps a register
-of them (`kelpc/src/deprecated.rs`, and `syntax.md` 23), and `kelpc build` and
-`kelpc run` print one finding per construct a program uses:
-
-```text
-$ kelpc build src/main.kp
-outdated: `impl "..." with caps(...)` is outdated and will be removed in the next development cycle: drop the `with`: the grant is `impl "std/fs" caps(fs = ["/var/log/**"])`, and the patterns, the domains and the no-escalation rule are exactly the same
-  --> src/main.kp:2:13
-$ echo $?
-0
-```
+A spelling that is on its way out still compiles, and the compiler keeps a
+register of them (`kelpc/src/deprecated.rs`, and `syntax.md` 23). **The register
+is empty today**: the two entries it has carried, the `as name` clause on an
+`impl` line and the `with` in front of a capability grant, were removed rather
+than merely deprecated, so no program produces an `outdated:` finding any more.
+The mechanism stays in place for the next spelling, and so does its vocabulary:
+`kelpc build` and `kelpc run` print one `outdated:` finding per construct a
+program uses when an entry is added.
 
 - The label is **`outdated: `**, which is neither `error:` nor `warning: `. A
   lint's `warning: ` is a style opinion; this is a promise about a later version.
-- The old spelling **keeps working**, and the exit status is unchanged. Nothing
-  is removed on the day its warning first appears: every entry goes on the next
-  development cycle.
+- An entry's old spelling **keeps working**, and the exit status is unchanged.
+  Nothing is removed on the day its warning first appears: every entry goes on the
+  next development cycle.
 - **`--deny-outdated`** turns the findings into errors and stops before anything
   is generated. That is the gate for a project or a CI run that wants to hear
-  about its own code. A program with nothing on the list builds as it always did.
+  about its own code. With the register empty it changes nothing, and it stays for
+  the next entry.
 - **`kelpc fmt`** never rewrites an old spelling into a new one: it copies tokens.
   **`kelpc lint`** does not report deprecations either, because a deprecation is a
   build's finding rather than a style pass's.
-- The register has one entry, the `with` in front of a capability grant
-  (`impl "std/fs" with caps(fs = [...])`, where the grant itself is
-  `impl "std/fs" caps(fs = [...])`). Its migration is a deletion: the `with`
-  says nothing the `impl` line does not. The first entry, the `as name` clause on
-  an `impl` line, is **retired**: it is gone from the parser, so a program that
-  still writes it gets an error rather than a finding, and the module is reached
-  by its own name (see [Modules and imports](/language/modules)).
+
+Both removed spellings are hard errors that name their fix rather than findings:
+
+```text
+$ kelpc build src/main.kp
+error: `impl "..." with caps(...)` is gone: drop the `with`, so the grant is `impl "std/fs" caps(fs = ["/var/log/**"])`, and the patterns, the domains and the no-escalation rule are exactly the same
+$ echo $?
+1
+```
+
+The `as name` clause is refused the same way, and the module is reached by its own
+name (see [Modules and imports](/language/modules)).
 
 ## Environment variables
 
 | Variable | Effect |
 | --- | --- |
-| `KELPC_BACKEND` | default backend (`c`; `llvm` is selectable too); an explicit `--backend=` wins over it |
 | `LLVM_SYS_211_PREFIX` | where `llvm-sys` finds `libLLVM` and its headers; set by `shell.nix` |
 
 Coral also reads `KELPC` to decide which compiler to run, which is a different

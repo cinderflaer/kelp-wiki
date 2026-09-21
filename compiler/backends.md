@@ -1,34 +1,44 @@
 ---
 title: "Backends"
-description: "A code generator is selectable with --backend= or the KELPC_BACKEND environment variable, and an explicit flag wins over the variable; the default is c. The llvm backend lowers the whole language, matches the C backend byte for byte over the corpus, and carries DWARF line locations so a fault names a .kp line; c stays the default and the oracle."
+description: "kelpc builds every program with one backend, llvm, which lowers the whole language to LLVM IR, emits an object and hands it to cc. The C backend is kept as the project's own oracle, reached only through the project's internal switch, and the two agree byte for byte over the corpus; the object carries DWARF line locations so a fault names a .kp line."
 isPublished: true
 tags: "compiler"
 ---
-A code generator is selectable, chosen with `--backend=` or the
-`KELPC_BACKEND` environment variable. An explicit flag wins over the variable;
-the default is `c`.
+`kelpc` has **one backend for anyone building a program**: `llvm`. It lowers the
+typed IR to LLVM IR, runs LLVM's own pass pipeline over the module, emits an
+object and hands it to `cc`. There is no backend to choose: no `--backend=` flag
+and no `KELPC_BACKEND`.
 
 | Backend | Emits | Finished with | Status |
 | --- | --- | --- | --- |
-| `c` (default) | C source text | `cc -O2 -fwrapv -lm` | complete, and the reference |
-| `llvm` | LLVM IR, then an object | `<out>.ll` and `<out>.o`, then `cc -O2 -o <out> <out>.o -lm` | the whole language the [Language](/language) pages describe, and the same stdout and exit status as the `c` backend byte for byte over the corpus (223 of 223 targets, the refusal ranking empty); one guard remains for an owned temporary at a place the lowering did not stage; the object carries DWARF line locations |
+| `llvm` (the one backend) | LLVM IR, then an object | `<out>.ll` and `<out>.o`, then `cc -O2 -o <out> <out>.o -lm` | the whole language the [Language](/language) pages describe; one guard remains for an owned temporary at a place the lowering did not stage, and nothing in the corpus reaches it; the object carries DWARF line locations |
+| `c` (the project's own oracle) | C source text | `cc -O2 -fwrapv -lm` | complete and maintained, reached only through the project's internal switch, and the thing every `llvm` build is compared against: same stdout and exit status byte for byte over the corpus (223 of 223 targets, the refusal ranking empty) |
+
+A retired spelling names its own removal rather than reading as an unknown flag.
+Whatever `--backend=` carries is refused with
+
+```text
+error: --backend is gone: kelpc builds every program with the llvm backend, and the C backend is kept as the project's own oracle rather than as a user choice
+```
+
+and a set `KELPC_BACKEND` earns the same refusal, worded for the variable. A shell
+that still exports the variable is the case silence would get wrong: it would keep
+believing its builds used one backend while every one of them used the other.
 
 The hand-written **`asm`** backend, which emitted x86-64 assembly text itself and
 finished with `as` and `ld`, was retired on 2026-09-20 and its source was removed
-on 2026-09-21. `--backend=asm` is no longer accepted; the diagnostic reads
-`unknown backend 'asm'; expected one of: c, llvm`. Its plan, its counts, its refusal
+on 2026-09-21. Its plan, its counts, its refusal
 ranking and the measurements behind them stay as history in
 [`plan/asm-backend/`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/asm-backend/).
 
 ```sh
-kelpc build examples/hello.kp                 # the default, and the reference
-KELPC_BACKEND=c kelpc run examples/hello.kp   # the same, spelled out
+kelpc build examples/hello.kp   # llvm, the one backend
 ```
 
-`backend.rs` holds only the selector: how a backend is named, which names exist,
-and how the choice is resolved. The `match` that calls a generator stays at its
-single call site in `main.rs`, and it becomes a trait when a third backend makes
-the interface worth naming.
+`backend.rs` holds the seam: how a backend is named, which names exist, and how
+the default and the oracle switch resolve. `Backend::DEFAULT` is `llvm`, and the
+`match` that calls a generator stays at its single call site in `main.rs`; it
+becomes a trait when a third backend makes the interface worth naming.
 
 ## The LLVM backend
 
@@ -38,8 +48,8 @@ record is
 [`plan/mk7-llvm-backend.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-llvm-backend.md).
 
 It covers the **whole language**, the surface the [Language](/language) pages
-describe. `c` is still the oracle the two are compared against, and the categories
-below are what the differential sweep measures:
+describe. `c` is still the oracle that build is compared against, and the
+categories below are what the differential sweep measures:
 
 - the scalar types (`i32`, `i64`, `u32`, `u64`, `u8`, `u16`, `usize`, `isize`),
   `f32`/`f64`, `bool` and `char`: arithmetic, comparisons, `if`/`while`, calls,
@@ -115,7 +125,8 @@ the C sweep (209 binaries) are green.
 The backend no longer refuses a corpus construct. One guard stays, in
 `codegen_llvm.rs::place_of`, for an owned rvalue no staging site claimed; its
 message is `error: the llvm backend cannot lower 'an owned temporary' at a place
-this lowering does not stage (MK7 S3); use --backend=c`. Nothing in the corpus
+this lowering does not stage yet (MK7 S3); this is a compiler defect`. Nothing in
+the corpus
 reaches it, and it is kept because a wrong lowering is worse than a named refusal:
 a place this lowering did not stage is a bug, and the guard turns it into a
 diagnostic rather than a miscompile. Read the empty refusal ranking as a
@@ -125,9 +136,8 @@ measurement over the corpus, not as a promise that the backend can never refuse.
   the parser, the type checker, the move and borrow checker and the meaning of
   every AST construct do not depend on the target, so only the emission layer is
   new.
-- **What LLVM supplies now:** instruction selection, register allocation, the
-  encoder, the ELF writer, DWARF and an object at LLVM's default codegen level.
-  The optimizer is still to come.
+- **What LLVM supplies now:** the module pass pipeline, instruction selection,
+  register allocation, the encoder, the ELF writer, DWARF and an object.
 - **A fault in an `llvm` binary names the `.kp` file and line.** The object
   carries DWARF line locations, so a program that faults at run time prints a
   backtrace whose frame is a `.kp` source line, and `llvm-symbolizer` or
@@ -164,20 +174,25 @@ measurement over the corpus, not as a promise that the backend can never refuse.
   and links the object it compiles between the IR object and `-lm`. A fixed
   object cannot work, because one body calls a `std/path` function only the
   resolver injects and another names a per-program container typedef.
-- **What is left:** S6 (the optimization-level decision) has not landed, and S7 is
-  the flip. S5 (fuzzing and conformance) landed on 2026-09-21 as
+- **Where it stands:** S6 (the optimization-level decision) and S7 (the flip)
+  landed on 2026-09-21, so `build` and `run` take `-O0`, `-O1`, `-O2`, `-O3` or
+  `-Os`, with `-O2` the default, and `llvm` is the one backend a person can build
+  with. S5 (fuzzing and conformance) landed the same day as
   `kelpc/tests/differential_fuzz.rs`: one seed is one program, built with both
   backends and compared byte for byte, 256 seeds with 0 mismatches, plus a
   checked-in 24-seed conformance corpus. It found and fixed two defects the
   curated corpus could not see, both `llvm`-confined: a float `List`'s `contains`
   emitted an integer compare, and an unread owned `pd` made `atexit` drop a
-  container set that was never declared. The parity is measured, and the default
-  has not moved; `plan/mk7-llvm-backend.md` §5 is the stage table.
-- **No pass pipeline yet:** there is no IR optimization pass pipeline, so the
-  object is emitted at LLVM's default codegen level. Choosing the pipeline is
-  stage S6. There is no measurement behind the `llvm` backend, so it is not
-  claimed to match the C backend's speed: the `bench/speed` numbers are the C
-  path's.
+  container set that was never declared. `plan/mk7-llvm-backend.md` §5 is the
+  stage table.
+- **One level is one level for the whole build:** the level selects the module
+  pass pipeline LLVM runs, the target machine's codegen level, and the `-O` flag
+  the per-program C object and the final link are given, so the differential
+  sweep compares the two backends *at a level* rather than two runs that happen
+  to agree. `-Oz` is refused, because it is a clang-only spelling and the linking
+  `cc` may be gcc; `-Os` is the size level. There is still no measurement behind
+  the `llvm` backend, so it is not claimed to match the C backend's speed: the
+  `bench/speed` numbers are the C path's.
 - **Crate and linking:** `llvm-sys` plus a thin wrapper of our own, linked
   dynamically against the host's `libLLVM`. Every `kelpc` links `libLLVM-21.so`
   and needs it at runtime, whichever backend it is run with: on a build from this
@@ -188,28 +203,29 @@ measurement over the corpus, not as a promise that the backend can never refuse.
 - **Artifacts:** the LLVM path writes `<out>.ll` (textual IR) and `<out>.o` beside
   the binary, where the C path writes `<out>.c`. A program that reaches an
   `extern fun` also gets `<out>.externs.c`, the C source of its extern object.
-  Linking still goes through `cc` (`cc -O2 -o <out> <out>.o -lm`, with the
-  runtime object and, when the program reaches one, the extern object on the
-  line), which is the plan's §1.3 decision.
+  Linking still goes through `cc` (`cc -o <out> <out>.o -lm`, at the build's
+  optimization level, with the runtime object and, when the program reaches one,
+  the extern object on the line), which is the plan's §1.3 decision.
 
 ## The C backend is the oracle
 
 The fixture suite is backend-agnostic by construction: it compiles a fixture, runs
-the result, and compares stdout. So a second backend is validated by running the
-suite again with `KELPC_BACKEND` set to it, and the C backend's own output becomes
-the thing the new backend is compared against, rather than a second opinion. The
-whole suite now runs under both: `BACKENDS="c llvm" ./kelpc/tests/run-all-backends.sh`
-passes, which it could not while one test asserted the C backend's own `.c` sat
-beside the artifact.
+the result, and compares stdout. So the C backend's own output is the thing an
+`llvm` build is measured against, rather than a second opinion. The suite runs
+`llvm` by default and the C oracle through the project's internal switch, and
+`./kelpc/tests/run-all-backends.sh` runs both (`BACKENDS`, default `c llvm`),
+which it could not while one test asserted the C backend's own `.c` sat beside
+the artifact.
 
 Two consequences worth knowing:
 
-1. **`--backend=c` and `KELPC_BACKEND=c` stay selectable forever**, and
-   `codegen_c.rs` is never deleted. With one backend, "correct" means "matches the
-   author's intent"; with two, it is a measurement over the corpus. A flip with no
-   way back is how a second backend becomes unmaintained.
+1. **The C backend is never deleted and never stops being maintained**, and the
+   project's internal oracle switch keeps reaching it. With one backend,
+   "correct" means "matches the author's intent"; with the oracle beside it, it is
+   a measurement over the corpus, and a backend with no way back is how an oracle
+   stops being one.
 
-2. **A construct a second backend cannot lower must be refused by name, never
+2. **A construct a backend cannot lower must be refused by name, never
    miscompiled.** The `llvm` backend already follows this (the guard above). The
    differential sweep that enforces it, `kelpc/tests/backend_coverage.rs`, was
    removed with the `asm` rows and has been rebuilt against the LLVM backend

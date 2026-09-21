@@ -69,8 +69,8 @@ Multi-file loading and name resolution:
   takes the name of the directory Coral fetched it into
   (`impl "deps/argparse/lib"` is `argparse`). The `as name` clause that used to
   choose the name is gone, and the parser refuses it by name; the `with` that
-  used to introduce a capability grant is outdated, and a build warns about it,
-  with the clause now written `caps(...)` on its own.
+  used to introduce a capability grant is gone the same way, so the clause is
+  written `caps(...)` on its own.
 - Paths are relative to `src/`, may not contain `..`, and may not reach outside the
   project.
 - Names are strictly module-qualified: module `m`'s items are reachable elsewhere
@@ -143,8 +143,8 @@ not share it:
 
 | Backend | Steps |
 | --- | --- |
-| `c` | write `<out>.c` beside the binary, then `cc -O2 -o <out> <out>.c -fwrapv -lm` |
-| `llvm` | write `<out>.ll` and `<out>.o` beside the binary, then `cc -O2 -o <out> <out>.o -lm`, with the runtime object and, when the program reaches an `extern fun`, `<out>.externs.o` on the line |
+| `c` (the oracle) | write `<out>.c` beside the binary, then `cc -O2 -o <out> <out>.c -fwrapv -lm` at the build's level |
+| `llvm` (the one backend) | write `<out>.ll` and `<out>.o` beside the binary, then `cc -O2 -o <out> <out>.o -lm` at the build's level, with the runtime object and, when the program reaches an `extern fun`, `<out>.externs.o` on the line |
 
 The generated C is deliberately **kept** next to the binary rather than deleted,
 so debugging the generated program is `gdb ./foo` against a file that is actually
@@ -158,6 +158,10 @@ shipped fixed: one body calls a `std/path` function only the resolver injects,
 and another names a per-program container typedef.
 
 ## Following one program through the passes
+
+This walk names the C oracle's stages; under the default `llvm` backend the code
+generation row is `codegen_llvm.rs` and the finishing writes `<out>.ll` and
+`<out>.o` instead of `<out>.c`.
 
 ```kelp
 impl "std/str"
@@ -199,7 +203,7 @@ fun main() {
 | --- | --- |
 | A library or object target | "Using a library" means copying or fetching a folder of `.kp` sources: see [Libraries](/libraries) |
 | A module dependency list | `kelpc check --json` answers with diagnostics; which module depends on which is still not askable outside the compiler, which is the other half of the interface a build cache wants |
-| An optimiser | For the `c` backend it is whatever `cc -O2` does to the generated C. The `llvm` backend emits its object at LLVM's default codegen level because no IR optimization pass pipeline exists yet; choosing the pipeline is MK7 stage S6. |
+| An optimiser | There is no separate hook to add: `-O0`, `-O1`, `-O2`, `-O3` and `-Os` select the LLVM pass pipeline and the target machine's codegen level, and the same `-O` is given to the per-program C object and the final link. `-O2` is the default. |
 | Incremental compilation and a build cache | [Coral](/getting-started/install) owns the project-level cache |
 
 ## See also

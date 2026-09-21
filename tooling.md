@@ -56,7 +56,7 @@ one of the three that runs while you type.
 
 | To do this | You need | Page |
 | --- | --- | --- |
-| compile or run a file, choose a backend, format sources | `kelpc` | [`kelpc` CLI](/tooling/kelpc-cli) |
+| compile or run a file, format sources | `kelpc` | [`kelpc` CLI](/tooling/kelpc-cli) |
 | have a project with dependencies, tasks, a pinned compiler | Coral (and `kelpc` for the actual compile) | [Coral](/tooling/coral) |
 | completion, hover, diagnostics, rename in an editor | Lighthouse, plus `kelpc` for diagnostics | [Lighthouse](/tooling/lighthouse) |
 | understand what a dependency is, and why a folder must stand alone | the library model | [Libraries (fpl)](/libraries) |
@@ -65,8 +65,8 @@ one of the three that runs while you type.
 ## Pages
 
 - [`kelpc` CLI](/tooling/kelpc-cli): every subcommand and flag, where artifacts land, the
-  backend, `fmt`'s rules and its refusals, environment variables, and what a
-  project changes about module resolution.
+  one backend and its oracle, `fmt`'s rules and its refusals, environment
+  variables, and what a project changes about module resolution.
 - [Coral](/tooling/coral): the manifest key by key, the command surface, the dependency
   model, what a sync installs and fetches, the toolchain store, environment
   variables, and a transcript of a real session.

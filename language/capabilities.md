@@ -62,8 +62,9 @@ permits no program, which is also the smallest grant a consumer can write to
 satisfy the compiler for a module it does not actually want to let out.
 
 The `with` that used to introduce the clause (`impl "std/fs" with caps(...)`) is
-**outdated**: it still compiles, and a build prints an `outdated:` finding naming
-it. Drop it and the grant is unchanged.
+**gone**, refused by the parser with a message that names the fix. The grant is
+`caps(...)` on its own, and the patterns, the domains and the no-escalation rule
+are unchanged.
 
 ### Patterns
 

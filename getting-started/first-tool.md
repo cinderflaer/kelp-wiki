@@ -92,8 +92,8 @@ printf 'a\nb\nc\nd\ne\n' > /tmp/five.txt
 ./head --lines 3 /tmp/five.txt
 ```
 
-`-o` is what puts the binary where you want it: without it, the artifact and the
-generated C land in `build/` in the current working directory, and `-o` only
+`-o` is what puts the binary where you want it: without it, the artifact and its
+generated files land in `build/` in the current working directory, and `-o` only
 works when the directory it names already exists.
 
 ```

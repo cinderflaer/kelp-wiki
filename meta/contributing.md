@@ -46,7 +46,7 @@ their checksums.
   whose stdout is the expected output. Every implemented backend runs it, and a
   construct a backend cannot lower fails loudly with its name rather than
   silently. The `llvm` backend lowers the whole language, so the whole suite runs
-  under both: `BACKENDS="c llvm" ./kelpc/tests/run-all-backends.sh`, which is plan
+  under both: `./kelpc/tests/run-all-backends.sh`, which is plan
   §6's property. The differential sweep in `kelpc/tests/backend_coverage.rs` is
   what proves the two agree, and the per-slice gate scripts carry the closed
   lists.
@@ -101,7 +101,10 @@ the case rule and the two style findings a formatter cannot make.
 ## Retiring a spelling
 
 When a spelling is replaced or deleted it goes through the register rather than
-straight out (`syntax.md` 23, `kelpc/src/deprecated.rs`):
+straight out (`syntax.md` 23, `kelpc/src/deprecated.rs`). The register is **empty
+today**: its two entries, the `as name` clause on an `impl` line and the `with` in
+front of a capability grant, were removed in this cycle rather than deprecated
+again. The mechanism and `--deny-outdated` stay for the next entry:
 
 1. Migrate the compiler's own sources first. A deprecation in the shipped stdlib
    would warn every program that imports that module about a file its reader
@@ -116,17 +119,19 @@ straight out (`syntax.md` 23, `kelpc/src/deprecated.rs`):
    coverage for the deprecation path itself, and they are what the removal has to
    migrate.
 5. Remove it in the next cycle: the parser, the register entry, and every source
-   that still writes it.
+   that still writes it. A removed spelling is a parse error that names its fix,
+   the shape the `as name` clause and the `with` clause both took.
 
 ## Reporting a defect
 
 A useful defect report has:
 
 1. the smallest program that shows it: three lines beats a paragraph;
-2. the exact command and the exact error, including the failing generated-C line
-   if the failure came from `cc`;
+2. the exact command and the exact error, including the file `cc` named if the
+   failure came from `cc`;
 3. what you expected instead, in one sentence;
-4. whether it is `c`-only or backend-independent (`KELPC_BACKEND` is the test).
+4. whether it is `llvm`-only or backend-independent (a build compared against the
+   `c` oracle is the test).
 
 ## Working on this site
 

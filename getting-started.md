@@ -7,8 +7,8 @@ tags: "getting-started"
 Kelp is small enough to learn by writing it, so this chapter is a path rather
 than a reference: eight pages, each one a step you can run.
 
-1. **[Install and build](/getting-started/install)**: build `kelpc`, run a file, pick a
-   backend, and what the toolchain needs from the machine.
+1. **[Install and build](/getting-started/install)**: build `kelpc`, run a file, pick an
+   optimization level, and what the toolchain needs from the machine.
 2. **[Set up your editor](/getting-started/editor)**: Lighthouse as a language server,
    `kelpc fmt`, the VS Code and IntelliJ setups, and what to do with no editor at all.
 3. **[Your first program](/getting-started/first-program)**: a guided tour of Kelp's shape in
