@@ -31,9 +31,12 @@ real `kelpc` binary over two corpora:
 | `kelpc/tests/fixtures/*.kp` | 363 files | one loose file per single-file test |
 | `kelpc/tests/projects/<name>/` | 61 directories | multi-file: a module graph needs a directory, and a granted module needs an importer |
 
-The C backend passes every one of them. The `asm` rows left the suite with the
-backend on 2026-09-21: its counts, its refusal ranking and the fixture-by-fixture
-detail stay frozen in
+The C backend passes every one of them. The `llvm` backend passes the fixtures
+that stay inside the MK7 S1 scalar subset and refuses the rest by name, so the
+whole suite is not yet green on it: `KELPC_BACKEND=llvm` runs the fixtures, and
+the S1 gate below names the closed subset that must pass. The `asm` rows left the
+suite with the backend on 2026-09-21: its counts, its refusal ranking and the
+fixture-by-fixture detail stay frozen in
 [`plan/asm-backend/plan.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/asm-backend/plan.md)
 §0, as history rather than a live measurement.
 One of them,
@@ -84,12 +87,15 @@ Two gates run inside this file:
 
 | Test file | What it does | Default run |
 | --- | --- | --- |
-| `kelpc/tests/run-all-backends.sh` | runs the fixture suite once per backend (`BACKENDS`, default `c`) | a shell script, not a cargo test |
+| `kelpc/tests/run-all-backends.sh` | runs the fixture suite once per backend (`BACKENDS`, default `c`; `BACKENDS="c llvm"` runs both) | a shell script, not a cargo test |
+| `kelpc/tests/run-llvm-scalar-subset.sh` | the MK7 S1 gate: runs the closed scalar-subset fixtures with `KELPC_BACKEND=llvm` and asserts byte-identical stdout | a shell script, not a cargo test |
 | `memory_gate.rs` | valgrind (`--leak-check=full --show-leak-kinds=all`, diagnostics to `--log-file`) over the built binaries, asserting no findings in any process; a spawned child inherits valgrind, so it writes into the same log | ignored; the default run only checks that valgrind is discoverable |
 
 The differential sweep, `backend_coverage.rs`, was removed with the `asm` rows on
-2026-09-21; it is rebuilt against the LLVM backend, with `LLVM_BUILT_BASELINE` in
-place of `ASM_BUILT_BASELINE` (`plan/mk7-llvm-backend.md` §6).
+2026-09-21, so it does not exist today; it is rebuilt against the LLVM backend,
+with `LLVM_BUILT_BASELINE` in place of `ASM_BUILT_BASELINE`
+(`plan/mk7-llvm-backend.md` §6). The refusal-by-name rule is enforced meanwhile by
+the `llvm` backend's own diagnostics and the S1 gate.
 
 ```sh
 cargo test --test memory_gate    -- --ignored                 # valgrind over the binaries

@@ -64,7 +64,7 @@ impl "std/option"
 | `argument 's' has type 'String', expected 'str'` | an owned string where a view is wanted | add `.as_str()` |
 | `List.empty()` or `Map.new()` has no element type | nothing said what is inside | write it on the binding (`var xs: List<i32> = List.empty()`), or let the first `push`/`insert` decide it |
 | `unexpected argument 'extra'` | `kelpc run` was given arguments | it takes none: `kelpc build` then run the binary, or `coral run -- <args>` |
-| `unknown backend 'asm2'` | a backend that does not exist | `c` today; `llvm` is planned ([Backends](/compiler/backends)) |
+| `unknown backend 'asm2'` | a backend that does not exist | the names are `c` and `llvm` ([Backends](/compiler/backends)) |
 | `could not write generated C to '/path/app.c': No such file or directory` | `-o` named a directory that does not exist | create it first, or build without `-o` and take the artifact from `build/` |
 | `panic: fs.read: cannot open file` / `errno 2` | the call ran and the file was not there | `fs` fails by panicking; check `fs.exists(path)` first, or use `fs.open` |
 | `panic: '<path>' is outside the fs capability granted to module '<m>'` | the pattern on the `impl` line does not cover the path | widen the grant, or note that the **entry module holds the wildcard** and only an imported module is restricted |
@@ -86,11 +86,12 @@ worth reading once on purpose rather than once per error.
 
 ## When it is not your code
 
-A second backend refusing a construct by name, rather than miscompiling it, is
-documented behaviour rather than a bug in your program; the LLVM backend is
-expected to carry that discipline when it lands. There is one backend today, so
-the refusal to recognise now is the retired `asm` name: `kelpc build
---backend=asm` reports `unknown backend 'asm'; expected one of: c`.
+A backend refusing a construct by name, rather than miscompiling it, is
+documented behaviour rather than a bug in your program: the `llvm` backend
+carries that discipline today, so `error: the llvm backend cannot lower 'datac'
+yet (MK7 S2); use --backend=c` is not a bug, and `--backend=c` is the way out. The
+other shape of it is the retired `asm` name: `kelpc build --backend=asm` reports
+`unknown backend 'asm'; expected one of: c, llvm`.
 
 `error: cc failed:` is different: `kelpc` generated C that the C compiler would
 not accept, which is a `kelpc` bug. The generated C carries a `#line` directive

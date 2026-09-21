@@ -120,7 +120,7 @@ resolution, which is the compiler's own answer to keep or to publish.
 
 ## Where the artifacts land
 
-| Invocation | Binary | Generated C |
+| Invocation | Binary | Generated beside it |
 | --- | --- | --- |
 | `kelpc build src/main.kp` | `build/main` | `build/main.c` |
 | `kelpc build proj/` | `build/proj` | `build/proj.c` |
@@ -129,8 +129,10 @@ resolution, which is the compiler's own answer to keep or to publish.
 | `kelpc build .` | `build/a.out` | `build/a.c` |
 
 The hand-written `asm` backend is gone, so `--backend=asm` is now an unknown name.
-The planned LLVM backend emits LLVM IR (`.ll`) or an object, with a `libLLVM`
-requirement on `kelpc` itself.
+With `--backend=llvm` the generated files are `<out>.ll` (textual IR) and
+`<out>.o` (the object), written beside the binary where the C path writes
+`<out>.c`, and the object is linked with `cc -O2 -o <out> <out>.o -lm`. A `kelpc`
+built with the `llvm` backend links `libLLVM-21.so` and needs it at runtime.
 
 - `build/` is relative to the **current working directory**, and the compiler
   creates it if it is missing.
@@ -163,6 +165,7 @@ One code generator, selected with `--backend=` or `KELPC_BACKEND`; an explicit
 | Backend | What it does | Toolchain it needs |
 | --- | --- | --- |
 | `c` (default) | transpiles to C | `cc -O2 -fwrapv -lm` |
+| `llvm` | lowers the scalar subset to LLVM IR and an object | `libLLVM-21` to build `kelpc`, then `cc -O2 -o <out> <out>.o -lm` to link |
 
 ```sh
 KELPC_BACKEND=c kelpc run examples/hello.kp   # the default, spelled out
@@ -172,7 +175,7 @@ A backend that does not exist is named in the error, so a typo is not a mystery:
 
 ```text
 $ kelpc build src/main.kp --backend=asm2
-error: unknown backend 'asm2'; expected one of: c
+error: unknown backend 'asm2'; expected one of: c, llvm
 ```
 
 The hand-written `asm` backend, which emitted x86-64 assembly itself and finished
@@ -188,11 +191,15 @@ forever. A *gated* item named as a function value is refused by the compiler,
 whether or not the naming module holds the domain, because the pattern check is
 emitted from the call's own callee and an indirect call has none.
 
-The next backend is **LLVM IR**, and it is not a project: everything up to the
-typed IR is reused, so only the emission layer is new, and LLVM supplies the
-optimizer, the encoder, the ELF writer, the debug-info format, sanitizers and the
-targets. It is roughly feature-complete with the fixture suite green in about 3 to
-6 weeks of work. See
+The **`llvm`** backend is selectable at MK7 stage S1 and covers the scalar subset
+only: integers, `f32`/`f64`, `bool`, `char`, arithmetic, comparisons, `if`/`while`,
+calls, string literals and `print`. On those programs its stdout is byte-identical
+to the C backend's (`kelpc/tests/run-llvm-scalar-subset.sh`). Everything else is
+refused by name with the MK7 stage that will lower it and a `--backend=c` way out,
+for example `error: the llvm backend cannot lower 'datac' yet (MK7 S2); use
+--backend=c`. There is no IR optimization pass pipeline yet, so the object is
+emitted at LLVM's default codegen level and no performance parity with the C
+backend is claimed; choosing the pipeline is stage S6, and debug info is S4. See
 [`plan/mk7-llvm-backend.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-llvm-backend.md).
 
 ## `fmt`
@@ -377,7 +384,7 @@ $ echo $?
 
 | Variable | Effect |
 | --- | --- |
-| `KELPC_BACKEND` | default backend (`c` today, `llvm` once it lands); an explicit `--backend=` wins over it |
+| `KELPC_BACKEND` | default backend (`c`; `llvm` is selectable too); an explicit `--backend=` wins over it |
 | `LLVM_SYS_211_PREFIX` | where `llvm-sys` finds `libLLVM` and its headers; set by `shell.nix` |
 
 Coral also reads `KELPC` to decide which compiler to run, which is a different
