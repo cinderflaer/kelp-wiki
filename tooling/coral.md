@@ -333,10 +333,14 @@ Where each kind of build lands, inside the project's `build/`:
 
 | Target | Artifacts |
 | --- | --- |
-| dev | `build/dev/demo`, `build/dev/demo.c` |
-| release | `build/release/demo`, `build/release/demo.c` |
-| check | `build/check/demo`, `build/check/demo.c` (nothing is written to `dev/` or `release/`) |
-| a task | `build/tasks/task-<name>`, `build/tasks/task-<name>.c` |
+| dev | `build/dev/demo`, `build/dev/demo.ll`, `build/dev/demo.o` |
+| release | `build/release/demo`, `build/release/demo.ll`, `build/release/demo.o` |
+| check | `build/check/demo`, `build/check/demo.ll`, `build/check/demo.o` (nothing is written to `dev/` or `release/`) |
+| a task | `build/tasks/task-<name>`, `build/tasks/task-<name>.ll`, `build/tasks/task-<name>.o` |
+
+The two files beside each binary are the backend's own: `llvm` writes the textual
+IR and the object. They were `.c` while the C backend was what built a program,
+and nothing but `kelpc` reads them.
 | build cache | `build/.coral-cache/<unit>.<mode>.fp`, the fingerprints that make `coral run` say "up to date" |
 
 Tasks are built as their own units. Declaring one and running it:
@@ -356,7 +360,8 @@ task ran
 
 $ find build/tasks -type f
 build/tasks/task-hello
-build/tasks/task-hello.c
+build/tasks/task-hello.ll
+build/tasks/task-hello.o
 ```
 
 ## Dependencies
