@@ -131,6 +131,11 @@ this block" and "which die before this return" as it writes each one, and
 
 Details are in [Backends](/compiler/backends).
 
+The two backends are kept in agreement by measurement rather than by inspection:
+`kelpc/tests/backend_coverage.rs` builds every corpus target with both and compares
+stdout and exit status, and `kelpc/tests/differential_fuzz.rs` generates programs
+from seeds and compares both backends the same way.
+
 ## Finishing (`driver.rs`)
 
 The only place in the compiler that invokes an external tool, and a backend does

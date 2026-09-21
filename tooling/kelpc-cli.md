@@ -186,8 +186,9 @@ and the [Backends](/compiler/backends) page carries the current table.
 
 **The C backend is the reference.** The fixture suite is backend-agnostic by
 construction, so a second backend is validated by running it again with
-`KELPC_BACKEND` set to it, and `--backend=c` and `KELPC_BACKEND=c` stay selectable
-forever. A *gated* item named as a function value is refused by the compiler,
+`KELPC_BACKEND` set to it (the whole suite passes under both), and `--backend=c`
+and `KELPC_BACKEND=c` stay selectable forever. A *gated* item named as a function
+value is refused by the compiler,
 whether or not the naming module holds the domain, because the pattern check is
 emitted from the call's own callee and an indirect call has none.
 
@@ -197,7 +198,7 @@ describe to LLVM IR and an object: the scalar types, `datac` records, `enum` and
 references, closures and function values, the `extern fun` bodies, the `pd`
 globals and the capability check. On the corpus it builds every target the C
 backend builds and prints the same stdout with the same exit status, byte for
-byte: `LLVM_BUILT_BASELINE` is 221 of the 221 targets and the refusal ranking is
+byte: `LLVM_BUILT_BASELINE` is 223 of the 223 targets and the refusal ranking is
 empty. The gates that carry the slices are `kelpc/tests/run-llvm-scalar-subset.sh`,
 `run-llvm-datac-subset.sh`, `run-llvm-strings-drops.sh`, `run-llvm-enum-subset.sh`,
 `run-llvm-containers.sh`, `run-llvm-references.sh`, `run-llvm-closures.sh` (120

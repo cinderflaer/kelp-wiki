@@ -11,7 +11,7 @@ the default is `c`.
 | Backend | Emits | Finished with | Status |
 | --- | --- | --- | --- |
 | `c` (default) | C source text | `cc -O2 -fwrapv -lm` | complete, and the reference |
-| `llvm` | LLVM IR, then an object | `<out>.ll` and `<out>.o`, then `cc -O2 -o <out> <out>.o -lm` | the whole language the [Language](/language) pages describe, and the same stdout and exit status as the `c` backend byte for byte over the corpus (221 of 221 targets, the refusal ranking empty); one guard remains for an owned temporary at a place the lowering did not stage; the object carries DWARF line locations |
+| `llvm` | LLVM IR, then an object | `<out>.ll` and `<out>.o`, then `cc -O2 -o <out> <out>.o -lm` | the whole language the [Language](/language) pages describe, and the same stdout and exit status as the `c` backend byte for byte over the corpus (223 of 223 targets, the refusal ranking empty); one guard remains for an owned temporary at a place the lowering did not stage; the object carries DWARF line locations |
 
 The hand-written **`asm`** backend, which emitted x86-64 assembly text itself and
 finished with `as` and `ld`, was retired on 2026-09-20 and its source was removed
@@ -80,11 +80,11 @@ The corpus agrees byte for byte. The differential sweep builds every fixture the
 C backend builds with `llvm` too, runs both and compares stdout and exit status:
 
 ```text
-221 of 378 corpus targets built by 'c' (157 rejected by it),
-221 also built by 'llvm', 0 refused, 0 mismatch(es), 0 crash(es)
+223 of 380 corpus targets built by 'c' (157 rejected by it),
+223 also built by 'llvm', 0 refused, 0 mismatch(es), 0 crash(es)
 ```
 
-`LLVM_BUILT_BASELINE` is 221 of the 221 targets the C backend builds and the
+`LLVM_BUILT_BASELINE` is 223 of the 223 targets the C backend builds and the
 refusal ranking is empty, which is the plan's §4.1 gate. The deny path is
 byte-identical on all eight denied projects: stdout, stderr and the exit status
 compare equal between the two backends, including `caps_double_eval`, whose
@@ -164,9 +164,15 @@ measurement over the corpus, not as a promise that the backend can never refuse.
   and links the object it compiles between the IR object and `-lm`. A fixed
   object cannot work, because one body calls a `std/path` function only the
   resolver injects and another names a per-program container typedef.
-- **What is left:** S5 (fuzzing and conformance) and S6 (the optimization-level
-  decision) have not landed, and S7 is the flip. The parity is measured, and the
-  default has not moved; `plan/mk7-llvm-backend.md` §5 is the stage table.
+- **What is left:** S6 (the optimization-level decision) has not landed, and S7 is
+  the flip. S5 (fuzzing and conformance) landed on 2026-09-21 as
+  `kelpc/tests/differential_fuzz.rs`: one seed is one program, built with both
+  backends and compared byte for byte, 256 seeds with 0 mismatches, plus a
+  checked-in 24-seed conformance corpus. It found and fixed two defects the
+  curated corpus could not see, both `llvm`-confined: a float `List`'s `contains`
+  emitted an integer compare, and an unread owned `pd` made `atexit` drop a
+  container set that was never declared. The parity is measured, and the default
+  has not moved; `plan/mk7-llvm-backend.md` §5 is the stage table.
 - **No pass pipeline yet:** there is no IR optimization pass pipeline, so the
   object is emitted at LLVM's default codegen level. Choosing the pipeline is
   stage S6. There is no measurement behind the `llvm` backend, so it is not
@@ -191,7 +197,10 @@ measurement over the corpus, not as a promise that the backend can never refuse.
 The fixture suite is backend-agnostic by construction: it compiles a fixture, runs
 the result, and compares stdout. So a second backend is validated by running the
 suite again with `KELPC_BACKEND` set to it, and the C backend's own output becomes
-the thing the new backend is compared against, rather than a second opinion.
+the thing the new backend is compared against, rather than a second opinion. The
+whole suite now runs under both: `BACKENDS="c llvm" ./kelpc/tests/run-all-backends.sh`
+passes, which it could not while one test asserted the C backend's own `.c` sat
+beside the artifact.
 
 Two consequences worth knowing:
 
@@ -207,7 +216,7 @@ Two consequences worth knowing:
    (`plan/mk7-llvm-backend.md` §6), where the baseline is `LLVM_BUILT_BASELINE`:
    it builds every fixture the C backend builds with `llvm`, runs both and compares
    stdout and exit status byte for byte, and records a refusal with its message
-   rather than failing it. The baseline is 221 of the 221 targets and the ranking
+   rather than failing it. The baseline is 223 of the 223 targets and the ranking
    is empty. A refusal that arrived with a new fixture would still be recorded, so
    the ratchet stays the instrument: it may only rise, and a backward step is a
    regression. On its first run it caught a silent miscompile, a borrow returned

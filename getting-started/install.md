@@ -73,7 +73,7 @@ an object: the scalar types, `datac` records, `enum` and `when`, `Bytes`/`String
 and the drop plan, `List`/`Map`/`Box`/`[T; N]`, references, closures and function
 values, the `extern fun` bodies, the `pd` globals and the capability check. It
 builds every target the C backend builds and its stdout and exit status match the
-C backend's byte for byte over the corpus (221 of 221 targets, the refusal ranking
+C backend's byte for byte over the corpus (223 of 223 targets, the refusal ranking
 empty). One guard remains in the lowering, for an owned temporary at a place it
 did not stage, and nothing in the corpus reaches it. `c` stays the default, the
 oracle and the way out. There is no IR optimization pass pipeline yet, so no
@@ -116,7 +116,8 @@ cargo test --test fmt                        # the formatter's corpus and proper
 
 The fixture suite is backend-agnostic by construction: it compiles a fixture,
 runs the result, and compares stdout, so pointing `KELPC_BACKEND` at a backend
-validates it with no test edits. `run-all-backends.sh` is still `BACKENDS=c` by
+validates it with no test edits, and the whole suite passes under both backends.
+`run-all-backends.sh` is still `BACKENDS=c` by
 default, so `BACKENDS="c llvm" ./kelpc/tests/run-all-backends.sh` runs both. The
 byte-identical gates are the separate `run-llvm-scalar-subset.sh`,
 `run-llvm-datac-subset.sh`, `run-llvm-strings-drops.sh`,
@@ -125,8 +126,8 @@ byte-identical gates are the separate `run-llvm-scalar-subset.sh`,
 `run-llvm-externs.sh` and `run-llvm-pd-caps.sh`. The differential sweep,
 `kelpc/tests/backend_coverage.rs`, is `#[ignore]`d because it compiles the whole
 corpus twice; it is the check that the `llvm` backend builds every target the C
-backend builds and prints the same stdout with the same exit status; at the S3 tip
-it builds all 221 targets the C backend builds, with an empty refusal ranking:
+backend builds and prints the same stdout with the same exit status; at the MK7 S5
+tip it builds all 223 targets the C backend builds, with an empty refusal ranking:
 
 ```sh
 cargo test --release --test backend_coverage -- --ignored --nocapture

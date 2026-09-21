@@ -45,11 +45,16 @@ their checksums.
 - **A fixture** for a language change: a `.kp` program under `kelpc/tests/fixtures`
   whose stdout is the expected output. Every implemented backend runs it, and a
   construct a backend cannot lower fails loudly with its name rather than
-  silently. The hand-written `asm` backend was removed on 2026-09-21, so a new
-  fixture is written for the C backend; the `llvm` backend lowers the whole
-  language, so it runs it too. The differential sweep in
-  `kelpc/tests/backend_coverage.rs` is what proves it, and the per-slice gate
-  scripts carry the closed lists.
+  silently. The `llvm` backend lowers the whole language, so the whole suite runs
+  under both: `BACKENDS="c llvm" ./kelpc/tests/run-all-backends.sh`, which is plan
+  §6's property. The differential sweep in `kelpc/tests/backend_coverage.rs` is
+  what proves the two agree, and the per-slice gate scripts carry the closed
+  lists.
+- **A green differential run** for a backend change: `kelpc/tests/backend_coverage.rs`
+  compares the whole corpus and `kelpc/tests/differential_fuzz.rs` generates
+  programs from seeds and compares both backends byte for byte on each. A
+  mismatch is a defect to diagnose in a backend, never a shape removed from the
+  generator or a fixture removed from the corpus.
 - **A test in the corpus** for a capability-matcher or path-normalizer change:
   those two are implemented twice (Kelp and C) and compared.
 - **A citation** for a documentation change: every page in this wiki names the

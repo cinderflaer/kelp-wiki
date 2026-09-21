@@ -12,8 +12,8 @@ purpose, because the property under test *is* the generated C: the capability
 check has to call the Kelp matcher (`cap_matcher.rs`), every statement has to be
 mapped back to its `.kp` line (`compile_and_run.rs`'s
 `the_generated_c_maps_statements_back_to_their_kp_lines`), and a build with no
-`-o` has to leave the generated C beside the artifact
-(`a_build_with_no_output_path_lands_in_build`).
+`-o` has to leave the running backend's own intermediate beside the artifact
+(`.c` for `c`, `.ll` for `llvm`; `a_build_with_no_output_path_lands_in_build`).
 
 ```sh
 cargo test                                   # unit tests + the fixture suite
@@ -23,17 +23,19 @@ cargo test --test fmt                        # the formatter's corpus and proper
 
 ## The fixture suite (`kelpc/tests/compile_and_run.rs`)
 
-354 tests (measured 2026-09-21, after the `asm` backend was removed), driving the
+357 tests (measured 2026-09-21, after the `asm` backend was removed), driving the
 real `kelpc` binary over two corpora:
 
 | Corpus | Count | Shape |
 | --- | --- | --- |
-| `kelpc/tests/fixtures/*.kp` | 364 files | one loose file per single-file test |
+| `kelpc/tests/fixtures/*.kp` | 367 files | one loose file per single-file test |
 | `kelpc/tests/projects/<name>/` | 61 directories | multi-file: a module graph needs a directory, and a granted module needs an importer |
 
 The C backend passes every one of them, and so does the `llvm` backend: it lowers
-the whole language, so `KELPC_BACKEND=llvm` runs the same fixtures and the
-differential sweep below finds no target the C backend builds that it does not.
+the whole language, so `BACKENDS="c llvm" ./kelpc/tests/run-all-backends.sh` runs
+the whole suite under both, which it could not do while one test asserted the C
+backend's own `.c` sat beside the artifact. The differential sweep below finds no
+target the C backend builds that it does not.
 The per-slice gates that follow still name the fixtures they carry.
 The `asm` rows left the suite with the backend on 2026-09-21: its counts, its
 refusal ranking and the fixture-by-fixture detail stay frozen in
@@ -98,6 +100,7 @@ Two gates run inside this file:
 | `kelpc/tests/run-llvm-externs.sh` | the extern fun gate: runs the S1, S2A, S2B, S2C, S2D, S2F and S2E fixtures and the `extern fun` slice (the raw allocator, `str`'s byte reads, the `malloc`-shaped `String`/`Bytes` construction, `sqrt`, `clock_gettime` and a raw `read`) with `KELPC_BACKEND=llvm` and asserts byte-identical stdout (138 tests); it also reads each extern's declaration back out of the `<out>.ll` the backend wrote to assert it matches its body's C signature, and asserts that no `declare %kelp_(Bytes|String)` line exists | a shell script, not a cargo test |
 | `kelpc/tests/run-llvm-pd-caps.sh` | the `pd` globals, the capability check and the last three refusals (38 tests); it pins the exact deny text and exit status against the C backend's own and asserts the owned `pd` is freed at exit | a shell script, not a cargo test |
 | `llvm_debug_info.rs` | the debug-info gate: builds `kelpc/tests/llvm-debug/fault.kp` with `--backend=llvm`, reads the decoded line table back out of the binary with `readelf` and asserts it names the fixture's `.kp` file and statement lines, then runs the binary, whose run-time division by zero traps, and asserts `gdb` places the fault at `fault.kp:16` with its caller at `fault.kp:21`. The fixture sits outside `tests/fixtures/` on purpose: the coverage sweep treats a run that dies from a signal as a failure, which is right for the corpus and wrong for the one program whose job is to crash | a cargo test, and it fails by name when `gdb` or `readelf` is missing |
+| `kelpc/tests/differential_fuzz.rs` | the differential fuzzer and the conformance corpus: one seed generates one valid Kelp program (SplitMix64, no new dependency), written to a file before it is built, built with both backends and compared byte for byte on stdout and exit status. The default run pins one seed and asserts every corpus file byte-equals the generator's output for its seed; the 256-seed run and the corpus run are `#[ignore]`d | the default run is cheap; the heavy runs are ignored |
 | `memory_gate.rs` | valgrind (`--leak-check=full --show-leak-kinds=all`, diagnostics to `--log-file`) over the built binaries, asserting no findings in any process; a spawned child inherits valgrind, so it writes into the same log | ignored; the default run only checks that valgrind is discoverable |
 
 The differential sweep is `backend_coverage.rs`, rebuilt after the `asm` rows went
@@ -108,8 +111,8 @@ target both build, both binaries are run and their stdout and exit status must b
 byte-identical. A target the `llvm` backend cannot build is recorded with its
 refusal message rather than failed, and a crash or a diagnostic that is not a
 named refusal fails the run. It also ratchets a coverage count, `LLVM_BUILT_BASELINE`,
-which may only rise: **221 of the 221 targets** at the S3 tip, so **no target is
-refused** and the ranking is empty, which is the plan's §4.1 gate. The ranking
+which may only rise: **223 of the 223 targets** at the MK7 S5 tip, so **no target
+is refused** and the ranking is empty, which is the plan's §4.1 gate. The ranking
 report still prints any refusal grouped by its exact message, so a refusal that
 arrived with a new fixture names the slice it waits on. The sweep compiles the
 whole corpus twice, so it is `#[ignore]`d:
@@ -122,7 +125,29 @@ It is what caught the silent miscompile in `borrow_returned.kp` (a borrow return
 through the value position of an `if`, and a returned `&String`) that the container
 slice's reference-place handling closed.
 
+A curated corpus only covers the shapes its author thought of, so
+`kelpc/tests/differential_fuzz.rs` generates programs instead. One seed is one
+valid program over the landed surface, drawn by a hand-written SplitMix64 PRNG
+(no new dependency), so the same seed always produces the same text and a
+mismatch has a name a reader can quote. Each program is written to a file *before*
+it is built, then built with both backends and compared byte for byte on stdout
+and exit status, with the failing seed, the file and both outputs printed.
+`FUZZ_SEED_START` and `FUZZ_SEED_COUNT` select the seed list; the default run pins
+one seed and the 256-seed run is `#[ignore]`d. 256 seeds were generated and 256
+built by both backends and agreed, 0 refused and 0 mismatches, and a 512-seed run
+agreed too. `kelpc/tests/fuzz-corpus/` holds a conformance corpus of 24 frozen
+seeds, union-covering all sixteen shapes, run differentially by an ignored test; a
+default-suite test asserts every file byte-equals the generator's own output for
+its seed, so it cannot drift. **A mismatch is a defect in a backend and is
+diagnosed, never answered by deleting a shape from the generator.** The fuzzer
+found two real defects, both `llvm`-confined and each now a fixture: a float
+`List`'s
+`contains` fell through to an integer compare, which is invalid IR
+(`list_float_element.kp`), and an unread owned `pd` made the generated `atexit`
+drop reference a container set that was never declared (`pd_owned_container.kp`).
+
 ```sh
+cargo test --release --test differential_fuzz -- --ignored --nocapture  # the fuzzer and the corpus
 cargo test --test memory_gate    -- --ignored                 # valgrind over the binaries
 ```
 
