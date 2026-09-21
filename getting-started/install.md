@@ -59,7 +59,7 @@ environment variable:
 | Backend | What it does | Chain |
 | --- | --- | --- |
 | `c` (default) | transpiles to C | `cc -O2 -fwrapv -lm` |
-| `llvm` | lowers the scalar subset, `datac` records, the heap slice, tagged unions, the containers, the references that are not a `datac`, and the closures and function values to LLVM IR and an object | `cc -O2 -o <out> <out>.o -lm` |
+| `llvm` | lowers the scalar subset, `datac` records, the heap slice, tagged unions, the containers, the references that are not a `datac`, the closures and function values, and the `extern fun` bodies to LLVM IR and an object | `cc -O2 -o <out> <out>.o -lm` |
 
 The hand-written `asm` backend was retired on 2026-09-20 and removed on
 2026-09-21, so `--backend=asm` now reports `unknown backend 'asm'; expected one
@@ -88,7 +88,10 @@ stage S2E it adds closures and function values: a named `fun` used as a value is
 its own address, a `fun` literal is a bare code pointer, a literal that captures
 is the C backend's fat pointer `{ ptr fn, ptr env, ptr drop }` with a heap
 environment and its own drop, and a call through a value passes the environment
-first. On those programs its
+first. Since stage S3A it lowers the compiler-supplied `extern fun` bodies: the C
+text `externs.rs` holds, written to `<out>.externs.c` with the C backend's own
+includes, typedefs and prototypes and compiled into a per-program object linked
+between the IR object and `-lm`. On those programs its
 stdout is byte-identical to the C backend's. Everything else is refused
 by name with the MK7 stage that will lower it and a `--backend=c` way out. There
 is no IR optimization pass pipeline yet, so no performance parity with the C
@@ -124,6 +127,7 @@ cargo test --test fmt                        # the formatter's corpus and proper
 ./kelpc/tests/run-llvm-containers.sh         # the MK7 S2D gate: the earlier fixtures plus the container slice (103 tests)
 ./kelpc/tests/run-llvm-references.sh         # the MK7 S2F gate: the earlier fixtures plus the reference slice (109 tests)
 ./kelpc/tests/run-llvm-closures.sh           # the MK7 S2E gate: the earlier fixtures plus the closure and function-value slice (120 tests)
+./kelpc/tests/run-llvm-externs.sh            # the MK7 S3A gate: the earlier fixtures plus the extern fun slice (138 tests)
 ```
 
 The fixture suite is backend-agnostic by construction: it compiles a fixture,
@@ -133,7 +137,8 @@ default, so `BACKENDS="c llvm" ./kelpc/tests/run-all-backends.sh` runs both. The
 byte-identical gates are the separate `run-llvm-scalar-subset.sh`,
 `run-llvm-datac-subset.sh`, `run-llvm-strings-drops.sh`,
 `run-llvm-enum-subset.sh`, `run-llvm-containers.sh`,
-`run-llvm-references.sh` and `run-llvm-closures.sh`. The differential sweep,
+`run-llvm-references.sh`, `run-llvm-closures.sh` and
+`run-llvm-externs.sh`. The differential sweep,
 `kelpc/tests/backend_coverage.rs`, is `#[ignore]`d because it compiles the whole
 corpus twice; it is the check that the `llvm` backend builds every target the C
 backend builds and prints the same stdout with the same exit status, and it names

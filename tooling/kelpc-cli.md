@@ -213,23 +213,28 @@ pointer whatever the pointee. Since stage S2E it adds closures and function
 values: a named `fun` used as a value is its own address, a `fun` literal is a bare
 code pointer, a capturing literal is the C backend's fat pointer
 `{ ptr fn, ptr env, ptr drop }` with a heap environment and its own drop, and a
-call through a value passes the environment first.
+call through a value passes the environment first. Since stage S3A it lowers the
+compiler-supplied `extern fun` bodies: the C text `externs.rs` holds, written to
+`<out>.externs.c` with the C backend's own includes, typedefs and prototypes and
+compiled into a per-program object linked between the IR object and `-lm`.
 On those programs its stdout is byte-identical to the C backend's, the gates
 being `kelpc/tests/run-llvm-scalar-subset.sh`,
 `kelpc/tests/run-llvm-datac-subset.sh`,
 `kelpc/tests/run-llvm-strings-drops.sh`,
 `kelpc/tests/run-llvm-enum-subset.sh`,
 `kelpc/tests/run-llvm-containers.sh`,
-`kelpc/tests/run-llvm-references.sh` and
-`kelpc/tests/run-llvm-closures.sh` (120 tests), the S2D gate also reading the
+`kelpc/tests/run-llvm-references.sh`,
+`kelpc/tests/run-llvm-closures.sh` (120 tests) and
+`kelpc/tests/run-llvm-externs.sh` (138 tests), the S2D gate also reading the
 container header and entry layouts back out of the `<out>.ll` the backend wrote,
 the S2F gate the borrowed-parameter signatures, which must be
 `kelp_origin(ptr)`-style pointers, plus a `panic` tail that ends in `unreachable`,
-and the S2E gate the fat pointer's `{ ptr, ptr, ptr }` shape, a `fun` parameter
-and return as `ptr`, and a call through a closure with the environment first.
+the S2E gate the fat pointer's `{ ptr, ptr, ptr }` shape, a `fun` parameter
+and return as `ptr`, and a call through a closure with the environment first, and
+the S3A gate each extern declaration, which must match its body's C signature.
 Everything else is refused by name with the MK7 stage that will lower it and a
-`--backend=c` way out, for example `error: the llvm backend cannot lower the call
-to 'std.mem.alloc_raw' yet (MK7 S3); use --backend=c`. There is no IR optimization pass pipeline yet,
+`--backend=c` way out, for example `error: the llvm backend cannot lower 'pd' yet
+(MK7 S3); use --backend=c`. There is no IR optimization pass pipeline yet,
 so the object is emitted at LLVM's default codegen level and no performance parity with the C
 backend is claimed; choosing the pipeline is stage S6, and debug info is S4. See
 [`plan/mk7-llvm-backend.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-llvm-backend.md).

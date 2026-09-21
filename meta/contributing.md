@@ -49,7 +49,8 @@ their checksums.
   fixture is written for the C backend; the `llvm` backend runs it too when the
   fixture stays inside the scalar subset, the S2A `datac` slice, the S2B heap
   slice, the S2C tagged-union slice, the S2D container slice, the S2F reference
-  slice or the S2E closure slice, and refuses it by name otherwise.
+  slice, the S2E closure slice or the S3A `extern fun` slice, and refuses it by
+  name otherwise.
 - **A test in the corpus** for a capability-matcher or path-normalizer change:
   those two are implemented twice (Kelp and C) and compared.
 - **A citation** for a documentation change: every page in this wiki names the

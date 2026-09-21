@@ -124,7 +124,8 @@ this block" and "which die before this return" as it writes each one, and
 | Module | Emits | Notes |
 | --- | --- | --- |
 | `codegen_c.rs` | C source text | value-position blocks use the GNU statement-expression extension `({ ...; expr; })`, which both `gcc` and `clang` accept; the `Bytes`/`String` runtime (allocation, bounds checks, `free`) is the text of `kelpc/runtime/kelp_rt.c`, emitted into every generated program; the generated C carries a `#line` directive before every statement, so a `cc` failure names the `.kp` file and the line the statement is written on (plan item 20, closed) |
-| `codegen_llvm.rs` | LLVM IR | the MK7 backend: a peer of `codegen_c.rs` over the same `tir`, covering the scalar subset (S1), `datac` records (S2A), the heap slice (S2B: `Bytes`/`String` through the runtime, an owned field, the drop plan, `panic`/`assert`), tagged unions (S2C: `enum` at the C `{ tag, union }` layout, `when`, `if let`, `?`, one `switch` per drop), the containers (S2D: `List`, `Map`, `Box` and `[T; N]` at the C backend's header layouts), references that are not a `datac` (S2F: `Ty::Ref` is one `ptr` whatever the pointee, so `&place` is the place's address, `*p` a pointee-typed load and `*p = v` a store, and a `&T` parameter or return is a `ptr`), and closures and function values (S2E: a named `fun` used as a value is its own address, a `fun` literal is a bare code pointer, and a capturing literal is the C backend's fat pointer `{ ptr fn, ptr env, ptr drop }`, one identified struct per signature, with the environment passed first to the code pointer and a heap environment of its own), and refusing everything outside them by name. See [Backends](/compiler/backends) and [`plan/mk7-llvm-backend.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-llvm-backend.md) |
+| `codegen_llvm.rs` | LLVM IR | the MK7 backend: a peer of `codegen_c.rs` over the same `tir`, covering the scalar subset (S1), `datac` records (S2A), the heap slice (S2B: `Bytes`/`String` through the runtime, an owned field, the drop plan, `panic`/`assert`), tagged unions (S2C: `enum` at the C `{ tag, union }` layout, `when`, `if let`, `?`, one `switch` per drop), the containers (S2D: `List`, `Map`, `Box` and `[T; N]` at the C backend's header layouts), references that are not a `datac` (S2F: `Ty::Ref` is one `ptr` whatever the pointee, so `&place` is the place's address, `*p` a pointee-typed load and `*p = v` a store, and a `&T` parameter or return is a `ptr`), and closures and function values (S2E: a named `fun` used as a value is its own address, a `fun` literal is a bare code pointer, and a capturing literal is the C backend's fat pointer `{ ptr fn, ptr env, ptr drop }`, one identified struct per signature, with the environment passed first to the code pointer and a heap environment of its own), and the `extern fun` bodies (S3A: the C text `externs.rs` holds, compiled per program with the C backend's own includes, typedefs and prototypes into `<out>.externs.c` and linked between the IR object and `-lm`), and refusing everything outside them by name. See [Backends](/compiler/backends) and [`plan/mk7-llvm-backend.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-llvm-backend.md) |
+| `externs.rs` | the C bodies of `extern fun` | the operations that cannot be written in Kelp at all: `codegen_c.rs` writes them into every generated C program, and the `llvm` path writes the same text to `<out>.externs.c` and links the object it compiles |
 | `kelpc/runtime/kelp_rt.c` | the C runtime text, not a compiler module | the single source for the bytes/string routines, the panic and assert paths, the allocation helpers and `kelp_argc`/`kelp_argv`: `codegen_c.rs` emits it into every generated program, and the `llvm` path links it as an object |
 | `kelpc/build.rs` | the runtime object | compiles `kelp_rt.c` once, at `kelpc`'s own build time, into `kelp_rt.o`; `driver.rs` embeds that object with `include_bytes!` and writes it to a temporary file when the `llvm` path links |
 
@@ -138,12 +139,16 @@ not share it:
 | Backend | Steps |
 | --- | --- |
 | `c` | write `<out>.c` beside the binary, then `cc -O2 -o <out> <out>.c -fwrapv -lm` |
-| `llvm` | write `<out>.ll` and `<out>.o` beside the binary, then `cc -O2 -o <out> <out>.o -lm` |
+| `llvm` | write `<out>.ll` and `<out>.o` beside the binary, then `cc -O2 -o <out> <out>.o -lm`, with the runtime object and, when the program reaches an `extern fun`, `<out>.externs.o` on the line |
 
 The generated C is deliberately **kept** next to the binary rather than deleted,
 so debugging the generated program is `gdb ./foo` against a file that is actually
 there. `-fwrapv` makes signed overflow wrap in C, matching what the language
-promises; `-lm` is for `std/math`'s externs.
+promises; `-lm` is for `std/math`'s externs. The extern object is the program's
+own `extern fun` bodies as the C text `externs.rs` holds, compiled with the C
+backend's own includes and prototypes, so it is built per program rather than
+shipped fixed: one body calls a `std/path` function only the resolver injects,
+and another names a per-program container typedef.
 
 ## Following one program through the passes
 

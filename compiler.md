@@ -27,12 +27,12 @@ cargo build --release -p kelpc
 | Type checking | `infer.rs` | types, generics, stdlib overload resolution; fills in implicit borrows |
 | Typed IR | `tir.rs` | every node carries its resolved type and span |
 | Move/borrow checking | `borrowck.rs` | moves, borrows, and the drop plan the code generators read |
-| Code generation | `codegen_c.rs`, `codegen_llvm.rs` | typed IR to C source text, or to LLVM IR (the scalar subset, `datac` records, the heap slice, tagged unions, the containers, the references that are not a `datac`, and the closures and function values, MK7 S1, S2A, S2B, S2C, S2D, S2F and S2E) |
+| Code generation | `codegen_c.rs`, `codegen_llvm.rs` | typed IR to C source text, or to LLVM IR (the scalar subset, `datac` records, the heap slice, tagged unions, the containers, the references that are not a `datac`, the closures and function values, and the `extern fun` bodies, MK7 S1, S2A, S2B, S2C, S2D, S2F, S2E and S3A) |
 | Backend selection | `backend.rs` | `--backend=` / `KELPC_BACKEND` |
 | Finishing | `driver.rs` | writes the artifact and invokes the C compiler |
 | Diagnostics | `diag.rs` | a span is one file's byte range; this maps a module id back to `file:line:col` |
 | Stdlib sources | `stdlib.rs` | the `std/*.kp` text, embedded with `include_str!`, and the capability domains |
-| C bodies for `extern fun` | `externs.rs` | the operations that cannot be written in Kelp at all |
+| C bodies for `extern fun` | `externs.rs` | the operations that cannot be written in Kelp at all: written into every generated C program, and compiled per program from `<out>.externs.c` into the object the `llvm` path links |
 | C runtime text | `kelpc/runtime/kelp_rt.c` | `kelpc`'s own C runtime: the `Bytes`/`String` routines, the panic path and the allocation helpers. `codegen_c.rs` emits it into every generated program, and `build.rs` compiles it into the object the `llvm` path links |
 | Formatting | `fmt.rs` | `kelpc fmt`, token-level |
 

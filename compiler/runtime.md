@@ -18,6 +18,14 @@ backends. `kelpc/runtime/` holds the runtime pieces that are not spliced in as
 text: the C that stayed, the C references kept as oracles, and the newest pair,
 a parser written in Kelp with its C reference beside it.
 
+Since MK7 stage S3A the compiler-supplied `extern fun` bodies are compiled the
+same way: `externs.rs` holds that C text, `codegen_c.rs` writes it into every
+generated program, and the `llvm` path writes the same text to `<out>.externs.c`
+and links the object it compiles, beside the runtime object and before `-lm`. It
+is built per program rather than shipped fixed, because one body calls a
+`std/path` function only the resolver injects and another names a per-program
+container typedef.
+
 | File | Status | Role |
 | --- | --- | --- |
 | `cap_glue.c` | emitted into every program that contains a gated call | the non-matching half of the capability check |
@@ -94,6 +102,7 @@ so no program reaches the parser yet.
 | Symlink resolution (`kelp_resolve_path`) | still C |
 | The allocator | still C; blocked on raw pointers, which the language does not expose |
 | The `Bytes`/`String` heap routines and drop calls | the text of `kelp_rt.c`: emitted by `codegen_c.rs` into every generated program, and linked as an object by the `llvm` path |
+| The compiler-supplied `extern fun` bodies | the C text of `externs.rs`: emitted by `codegen_c.rs` into every generated program, and linked as a per-program object by the `llvm` path |
 
 `std/rt` is the compiler's own runtime module. Its source ships inside the
 binary like a stdlib module's, and `impl "std/rt"` resolves, but it is not part
