@@ -186,6 +186,15 @@ val i = b'x'            // byte literal
   UTF-8, so it has no `\0` and no `\u{...}` and a byte above `0x7f` is not text
   (`"\xff"` is refused), and a byte literal is one byte, so it has no
   `\u{...}`.
+- **A raw NUL byte in a string literal is refused where the `\x00` escape is**:
+  `a 'str' is NUL-terminated, so a raw NUL byte cannot be in a string literal`.
+  The `str` ends at that byte, so carrying it would truncate the literal in
+  either backend instead of failing. It is a lexer rule, so it covers the whole
+  literal, a template's text chunks included; a raw NUL in a comment or an
+  identifier is untouched. This is also why a `Bytes` value built from a string
+  literal cannot carry a NUL: arbitrary bytes are still what `Bytes` is for, and
+  they are built (`Bytes.empty` and `push`), not written as text with a NUL in
+  it.
 - **`\xNN` is exactly two hex digits**, in every literal form, so it cannot run
   on into the text after it: `"\x41a"` is `"Aa"`, where C's hex escape
   swallows the `a`. In a character literal it is the code point (`'\x41'` is

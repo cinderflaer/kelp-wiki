@@ -39,6 +39,8 @@ the fix. Source: [`syntax.md` §18 and §22](https://homelabone.xenoo.dev/gittea
 | `a byte literal is a 'u8', not a 'i64'` | a byte literal is a `u8` by construction and does not take the type its context asks for; use a character literal when the type should come from where it sits |
 | `a byte literal is one ASCII character or a '\xNN' escape` | a non-ASCII character is a code point, so it belongs in a character literal; `b'\xe9'` is the byte 233 |
 | `a hex escape is written '\xNN', with two hex digits` | the escape is exactly two hex digits in every literal form; in a string literal it stops at the ASCII range, so `"\xff"` is not text |
+| `a 'str' is NUL-terminated, so '\x00' cannot be in a string literal` | a `str` ends at a NUL, so the escape cannot spell one; build arbitrary bytes with `Bytes` |
+| `a 'str' is NUL-terminated, so a raw NUL byte cannot be in a string literal` | the same rule for the byte written literally rather than escaped: the `str` ends there, so the literal cannot carry one; build arbitrary bytes with `Bytes` (`Bytes.empty` then `push`) |
 | `the character '中' (U+4E2D) does not fit in 'u8'` | a character literal takes the type its context asks for; use a wider type, or the byte you meant |
 | `operator requires matching integer operands, found 'u8' and 'bool'` | `& \| ^ << >> ~` are integer-only and both operands must be the *same* type |
 | a `n * 1.0` type error | there is no implicit numeric conversion: `n.to_f64()` |

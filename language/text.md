@@ -98,6 +98,11 @@ print(out)
 | `get(i)`, `set(i, b)` | element access (out of range panics) |
 | `clone()`, `as_str()` | copy; borrow as text |
 
+Arbitrary bytes are **built, not written**: a string literal is NUL-terminated,
+so a `Bytes` built from one (`Bytes.from_str`) cannot carry a NUL byte, because
+the lexer refuses a raw NUL or `\x00` in the literal first. Binary data is
+`Bytes.empty()` plus `push`.
+
 Growing a buffer takes an exclusive borrow, so a live `str` view of it blocks the
 growth. That rule is what makes reallocation safe without lifetime syntax.
 
