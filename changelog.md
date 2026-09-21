@@ -38,6 +38,7 @@ this page is the index to it.
 
 | Version | Date | Headline |
 | --- | --- | --- |
+| [26.09.1](#26091-2026-09-21) | 2026-09-21 | `llvm` is the compiler; `as name` and `with caps` removed; `-O0` to `-Os` |
 | [26.09.0](#26090-2026-09-20) | 2026-09-20 | the `YY.MM.N` scheme; `try_to_<T>`; `std/encoding`; the outdated-syntax register |
 | [0.1.5](#015-2026-09-20) | 2026-09-20 | the compiler emits its own x86-64 assembly; `kelpc fmt`; block comments |
 | [0.1.4](#014-2026-09-19) | 2026-09-19 | five checker bugs found by a real 807-line program |
@@ -45,6 +46,87 @@ this page is the index to it.
 | [0.1.2](#012-2026-09-19) | 2026-09-19 | `View`, `char` literals, bitwise operators, `str` to `String` coercion |
 | [0.1.1](#011-2026-09-19) | 2026-09-19 | the `for` loop, `spawn_in`/`run_in`, fallible `try_run`, `fs.symlink` |
 | [0.1.0](#010-no-release) | 2026-09-19 | first tag: the core language, modules, containers, capabilities, stdlib |
+
+## 26.09.1 (2026-09-21)
+
+[Release](https://homelabone.xenoo.dev/gittea/Juniper/kelp/releases/tag/v26.09.1)
+· 130 commits · 179 unit tests, 359 end-to-end green.
+
+**`llvm` is the compiler.** `Backend::DEFAULT` is `Llvm`: `kelpc` lowers its
+typed IR to LLVM IR and lets LLVM optimize, encode and write the object. There is
+no choice to make and no flag to make it with: `--backend=` and `KELPC_BACKEND`
+are both refused by name, and `--backend=asm`, the retired hand-written track,
+left with its source. The C backend stays in the tree as the project's own oracle,
+reached only by the suite, and it is what keeps "correct" a measurement rather
+than an opinion: all 359 fixtures build and run under `llvm` and under `c`, the
+corpus sweep builds 223 of 380 targets with both and records **0 refused, 0
+mismatches, 0 crashes** at `-O0`, `-O1`, `-O2`, `-O3` and `-Os`, the differential
+fuzzer's 256 generated programs agreed, and a 24-program conformance corpus fails
+none. `pd` globals with their drops, the capability check with the same allowlist
+and the same denial text, and the `extern fun` bodies all landed under `llvm`, so
+`std/mem`, `std/math`, `std/time` and `std/path` reach it. A `kelpc` built this
+way needs **`libLLVM-21.so` at runtime**, and `cc` is still the linker, so a C
+compiler and glibc are still required.
+
+**Two spellings are removed, and each fix is one line.** `impl "path" as name` is
+gone: a module's namespace is its own name (`std/path` is `path`,
+`deps/argparse/lib` is `argparse`), so **drop the clause** and rename the call
+sites where the name differed. `impl "..." with caps(...)` is gone: `impl`
+already means what the clause restated, so **drop the `with`** and leave the grant
+as it is (`impl "std/fs" caps(fs = ["/var/log/**"])`). With both gone the
+deprecation register is empty, so **no program produces an `outdated:` finding any
+more**; the mechanism and `--deny-outdated` stay in place for the next spelling.
+
+**The language gained `[T; N]`**, a fixed-size array held inline with its length
+in the type, so a page table or an IDT buffer exists with no allocator in the
+path; **documentation comments** (`//!`, `///`, and a `[docs(<kind>: <name>)]`
+head for a block that documents something else); and **general `const`**, whose
+initializer may use the operators, `if`, a conversion, other `const`s and a call
+to a plain `fun`, so an array length can be an expression
+(`[u64; PAGE_SIZE / ENTRY_SIZE]`). A `List` element takes a derived deep copy and
+order from its fields, so `List<Digest>.clone()` and `.sort()` both mean
+something; a method call's receiver is borrowed after its own arguments, so
+`counts.insert(key = k, v = counts.get_or(key = k, fallback = 0) + 1)` is one
+statement; and a bare `List.empty()` takes its element type from the first
+operation that has to know it. A raw NUL byte in a string literal is refused by
+the lexer, where the two backends used to disagree about the same source file.
+
+**`kelpc build` takes `-O0` to `-Os`** and `-O2` is the default, so a build with
+no flag is what it has always been; one level means one level for both backends,
+and `-Oz` is refused because the C oracle's `cc` may be gcc. The `llvm` backend
+carries **DWARF debug locations**, so a fault in a binary names the `.kp` file and
+line (`gdb` reports `kelp_divide () at fault.kp:16`), where the C backend leaned
+on `cc` and its `#line`. **`kelpc check <file.kp>`** is the front end with no
+backend, and `--json` prints the findings as one document with a range per
+finding, the interface the language server and Coral read instead of parsing a
+message.
+
+**Stdlib.** `std/fs` gains `cwd()`, `is_symlink`, `read_link` and the fallible
+`try_read`/`try_read_text`/`try_open`, which return `Result<_, IoErr>` so a tool
+skips a file it may not read instead of ending its run on the first one;
+`std/io` gains `IoErr` and `errno_text`; `std/path` gains `absolute(base, p)`;
+and `std/fmt` gains `commas_u64`/`commas_i64` and `human_size`.
+
+**Runtime.** The capability matcher and the path normalizer are Kelp now
+(`std/rt.kp`), each proven against the C it replaced by a differential corpus, so
+the same code works under either backend; the stub resolver's DNS message parser
+and its `/etc/hosts` and `/etc/resolv.conf` parser ship with their own
+differential corpora. Nothing a program can write changes.
+
+**Fixed.** The C backend's capability check evaluates a resource argument once
+into a temporary the check and the call share, so a gated call whose resource
+argument has an effect can no longer be admitted against one path and then read
+another, and the gate table now covers a gated module's extern primitives, its
+receiver methods, a gated item named as a function value, and a `pd` initializer's
+check against the module that declared the passdown. The `llvm` backend no longer
+miscompiles a borrow a function returns, and a `panic` in a value-returning tail
+lowers instead of reporting an internal error. On the C side, a call temporary
+whose field was read by value is dropped, `fs.remove_all` unlinks a symlink
+instead of deleting into it, `&expr` on a chain that steps through a borrow is
+accepted, a `when` or a `for` whose scrutinee is a temporary stages it at the root
+instead of refusing it or re-running the call, and a written borrow as a container
+element is refused by name instead of silently dropped. Two `compile_and_run`
+tests that shared one output path no longer race.
 
 ## 26.09.0 (2026-09-20)
 
