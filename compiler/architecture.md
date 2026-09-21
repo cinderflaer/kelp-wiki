@@ -123,7 +123,7 @@ this block" and "which die before this return" as it writes each one.
 | Module | Emits | Notes |
 | --- | --- | --- |
 | `codegen_c.rs` | C source text | value-position blocks use the GNU statement-expression extension `({ ...; expr; })`, which both `gcc` and `clang` accept; the `Bytes`/`String` runtime (allocation, bounds checks, `free`) is a fixed C preamble; the generated C carries a `#line` directive before every statement, so a `cc` failure names the `.kp` file and the line the statement is written on (plan item 20, closed) |
-| `codegen_llvm.rs` | LLVM IR | the MK7 S1 backend: a peer of `codegen_c.rs` over the same `tir`, covering the scalar subset and refusing everything outside it by name. See [Backends](/compiler/backends) and [`plan/mk7-llvm-backend.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-llvm-backend.md) |
+| `codegen_llvm.rs` | LLVM IR | the MK7 backend: a peer of `codegen_c.rs` over the same `tir`, covering the scalar subset (S1) and `datac` records (S2A) and refusing everything outside them by name. See [Backends](/compiler/backends) and [`plan/mk7-llvm-backend.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-llvm-backend.md) |
 
 Details, and what each backend refuses, are in [Backends](/compiler/backends).
 

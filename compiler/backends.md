@@ -1,6 +1,6 @@
 ---
 title: "Backends"
-description: "A code generator is selectable with --backend= or the KELPC_BACKEND environment variable, and an explicit flag wins over the variable; the default is c. The llvm backend lowers the scalar subset and refuses everything else by name."
+description: "A code generator is selectable with --backend= or the KELPC_BACKEND environment variable, and an explicit flag wins over the variable; the default is c. The llvm backend lowers the scalar subset and `datac` records, and refuses everything else by name."
 isPublished: true
 tags: "compiler"
 ---
@@ -11,7 +11,7 @@ the default is `c`.
 | Backend | Emits | Finished with | Status |
 | --- | --- | --- | --- |
 | `c` (default) | C source text | `cc -O2 -fwrapv -lm` | complete, and the reference |
-| `llvm` | LLVM IR, then an object | `<out>.ll` and `<out>.o`, then `cc -O2 -o <out> <out>.o -lm` | the scalar subset only (MK7 S1); everything outside it is refused by name |
+| `llvm` | LLVM IR, then an object | `<out>.ll` and `<out>.o`, then `cc -O2 -o <out> <out>.o -lm` | the scalar subset (MK7 S1) and `datac` records (MK7 S2A); everything outside them is refused by name |
 
 The hand-written **`asm`** backend, which emitted x86-64 assembly text itself and
 finished with `as` and `ld`, was retired on 2026-09-20 and its source was removed
@@ -33,26 +33,35 @@ the interface worth naming.
 ## The LLVM backend
 
 `kelpc` lowers the typed IR to **LLVM IR** and lets LLVM generate the object, the
-way `rustc` does. This is MK7 stage S1, done on 2026-09-21, and the plan of record
-is
+way `rustc` does. This is MK7, begun at stage S1 on 2026-09-21, and the plan of
+record is
 [`plan/mk7-llvm-backend.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-llvm-backend.md).
 
-At S1 it covers the **scalar subset only**: the integer types (`i32`, `i64`,
-`u32`, `u64`, `u8`, `u16`, `usize`, `isize`), `f32`/`f64`, `bool`, `char`,
-arithmetic, comparisons, `if`/`while`, calls, string literals and `print`. On a
-program that stays inside it, the `llvm` backend's stdout is byte-identical to the
-C backend's, which is the gate: `kelpc/tests/run-llvm-scalar-subset.sh`.
+At S1 it covers the **scalar subset**: the integer types (`i32`, `i64`, `u32`,
+`u64`, `u8`, `u16`, `usize`, `isize`), `f32`/`f64`, `bool`, `char`, arithmetic,
+comparisons, `if`/`while`, calls, string literals and `print`. At S2A, landed on
+2026-09-21, it adds a **`datac` whose fields are all scalars or earlier
+all-scalar `datac`s**: the struct type at the same field order and natural
+alignment the C backend's typedef has, construction, a field read and a field
+write, a whole-value assignment, a nested struct, a struct as a local, a `move`
+parameter and a return value, a field mutated through a method's `self`, and the
+shared or exclusive borrow a `datac` parameter resolves to, which is the same
+address either way. On a program that stays inside the two, the `llvm` backend's
+stdout is byte-identical to the C backend's, which is the gates:
+`kelpc/tests/run-llvm-scalar-subset.sh` and `kelpc/tests/run-llvm-datac-subset.sh`.
 
-Everything outside the subset is **refused by name**, never miscompiled and never
-a panic. The error names the construct and the MK7 stage that will lower it:
+Everything outside them is **refused by name**, never miscompiled and never a
+panic. The error names the construct and the MK7 stage that will lower it:
 
 ```text
 $ kelpc build src/main.kp --backend=llvm
-error: the llvm backend cannot lower 'datac' yet (MK7 S2); use --backend=c
+error: the llvm backend cannot lower 'enum' yet (MK7 S2C); use --backend=c
 ```
 
-`datac`, `enum`, `pd`, arrays, references, closures, containers and `extern fun`
-are all refused today.
+An owned field (`String`, `Bytes`, a container, an array), `List`, `Map`, `Box`
+and arrays generally, `enum` and `when`, a borrow of anything that is not a
+`datac`, closures and function values, `pd` and `extern fun` are all refused
+today.
 
 - **What is reused:** everything up to the typed IR. The lexer, the preprocessor,
   the parser, the type checker, the move and borrow checker and the meaning of
@@ -98,8 +107,8 @@ Two consequences worth knowing:
    way back is how a second backend becomes unmaintained.
 
 2. **A construct a second backend cannot lower must be refused by name, never
-   miscompiled.** The `llvm` backend already follows this at S1 (the errors
-   above). The differential sweep that enforces an agreed refusal prefix,
+   miscompiled.** The `llvm` backend already follows this (the errors above). The
+   differential sweep that enforces an agreed refusal prefix,
    `kelpc/tests/backend_coverage.rs`, was removed with the `asm` rows; it is
    rebuilt against the LLVM backend (`plan/mk7-llvm-backend.md` §6), where the
    baseline becomes `LLVM_BUILT_BASELINE`.

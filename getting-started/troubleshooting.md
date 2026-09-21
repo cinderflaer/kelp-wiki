@@ -88,8 +88,8 @@ worth reading once on purpose rather than once per error.
 
 A backend refusing a construct by name, rather than miscompiling it, is
 documented behaviour rather than a bug in your program: the `llvm` backend
-carries that discipline today, so `error: the llvm backend cannot lower 'datac'
-yet (MK7 S2); use --backend=c` is not a bug, and `--backend=c` is the way out. The
+carries that discipline today, so `error: the llvm backend cannot lower 'enum'
+yet (MK7 S2C); use --backend=c` is not a bug, and `--backend=c` is the way out. The
 other shape of it is the retired `asm` name: `kelpc build --backend=asm` reports
 `unknown backend 'asm'; expected one of: c, llvm`.
 

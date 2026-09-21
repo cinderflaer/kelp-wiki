@@ -49,7 +49,7 @@ flowchart LR
 | **MK4** | Capability security | S1 capabilities | medium | Done |
 | **MK5** | Standard library program | S1-S7, S4b, S4c | large | In progress: MK5-S1, MK5-S2 (M1 `io` + `process`, M2 `spawn_in`/`run_in`, the fallible `try_run`, and `fs.sym… |
 | **MK6** | Concurrency | S1 threads, S2 multithreaded downloads | very large | Not started |
-| **MK7** | LLVM backend | S0-S7 | large | Direction changed: the hand-written `asm` track was retired on 2026-09-20 and its source removed on 2026-09-21 (`plan/asm-backend/` holds its plans and measurements), and the plan of record is LLVM IR (`plan/mk7-llvm-backend.md`): the backend seam (S0) is done, and S1 (`llvm` selectable over the scalar subset, byte-identical stdout on the scalar fixtures) landed on 2026-09-21; S2 to S7 remain, weeks of emission-layer work, 3 to 6 weeks to a suite-green backend |
+| **MK7** | LLVM backend | S0-S7 | large | Direction changed: the hand-written `asm` track was retired on 2026-09-20 and its source removed on 2026-09-21 (`plan/asm-backend/` holds its plans and measurements), and the plan of record is LLVM IR (`plan/mk7-llvm-backend.md`): the backend seam (S0) is done, and S1 (`llvm` selectable over the scalar subset, byte-identical stdout on the scalar fixtures) landed on 2026-09-21, then S2A (the `datac` record slice) on the same day; S2B to S7 remain, weeks of emission-layer work, 3 to 6 weeks to a suite-green backend |
 | **MK8** | Language ergonomics and scale | S1-S3 | large | In progress, and re-scoped (the rewrite stages S4 to S6 are cancelled permanently): MK8-S1-M1 part 1 (tagged unions + pattern `when`) and part 2 (A-2, generics) both done, A-3 ship… |
 | **MK9** | Systems substrate | S1-S9 | very large | Proposed; planned |
 | **MK10** | Capability model extensions | S1-S3 | large | Proposed; planned |
@@ -92,7 +92,7 @@ Real work that is not next: nothing here is a question (those are the open items
 | --- | --- | --- |
 | MK5-S4b-M1, TLS for `https` | open item 37 (link the system TLS library, or ship `http`-only) | The missing piece is the decision, not the work. |
 | MK5-S4c, multi-fd `poll` | nothing | The off-ramp for row 4 above, and the honest concurrency answer v1 already ships for one thread. |
-| MK7, the LLVM backend | nothing (the backend seam and the S1 scalar subset are done) | Stages S2 to S7 remain: aggregates and containers, the runtime and externs, DWARF, fuzzing and the optimization-level decision before the default can flip. A real backend rather than an own one: LLVM supplies the optimizer, DWARF, sanitizers and the targets. `plan/mk7-llvm-backend.md` owns the plan. |
+| MK7, the LLVM backend | nothing (the backend seam, the S1 scalar subset and the S2A `datac` slice are done) | Stages S2B to S7 remain: containers and drops, tagged unions and borrowed views, the runtime and externs, DWARF, fuzzing and the optimization-level decision before the default can flip. A real backend rather than an own one: LLVM supplies the optimizer, DWARF, sanitizers and the targets. `plan/mk7-llvm-backend.md` owns the plan. |
 | MK8-S2, MK8-S3 | MK8-S1 | Language ergonomics and compiler scale. The rewrite stages (MK8-S4 to MK8-S6) are cancelled permanently. |
 | MK9, MK10, MK11 | each other; see Dependency notes | Plan-level commitments. No program demands them yet. |
 

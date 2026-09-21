@@ -165,7 +165,7 @@ One code generator, selected with `--backend=` or `KELPC_BACKEND`; an explicit
 | Backend | What it does | Toolchain it needs |
 | --- | --- | --- |
 | `c` (default) | transpiles to C | `cc -O2 -fwrapv -lm` |
-| `llvm` | lowers the scalar subset to LLVM IR and an object | `libLLVM-21` to build `kelpc`, then `cc -O2 -o <out> <out>.o -lm` to link |
+| `llvm` | lowers the scalar subset and `datac` records to LLVM IR and an object | `libLLVM-21` to build `kelpc`, then `cc -O2 -o <out> <out>.o -lm` to link |
 
 ```sh
 KELPC_BACKEND=c kelpc run examples/hello.kp   # the default, spelled out
@@ -192,13 +192,17 @@ whether or not the naming module holds the domain, because the pattern check is
 emitted from the call's own callee and an indirect call has none.
 
 The **`llvm`** backend is selectable at MK7 stage S1 and covers the scalar subset
-only: integers, `f32`/`f64`, `bool`, `char`, arithmetic, comparisons, `if`/`while`,
-calls, string literals and `print`. On those programs its stdout is byte-identical
-to the C backend's (`kelpc/tests/run-llvm-scalar-subset.sh`). Everything else is
-refused by name with the MK7 stage that will lower it and a `--backend=c` way out,
-for example `error: the llvm backend cannot lower 'datac' yet (MK7 S2); use
---backend=c`. There is no IR optimization pass pipeline yet, so the object is
-emitted at LLVM's default codegen level and no performance parity with the C
+(integers, `f32`/`f64`, `bool`, `char`, arithmetic, comparisons, `if`/`while`,
+calls, string literals and `print`) and, since stage S2A, a `datac` whose fields
+are all scalars or earlier all-scalar `datac`s: layout, construction, field read
+and write, whole-value assignment, nesting, locals, `move` parameters and
+returns, and the shared or exclusive borrow a `datac` parameter resolves to. On
+those programs its stdout is byte-identical to the C backend's, the gates being
+`kelpc/tests/run-llvm-scalar-subset.sh` and `kelpc/tests/run-llvm-datac-subset.sh`.
+Everything else is refused by name with the MK7 stage that will lower it and a
+`--backend=c` way out, for example `error: the llvm backend cannot lower 'enum'
+yet (MK7 S2C); use --backend=c`. There is no IR optimization pass pipeline yet,
+so the object is emitted at LLVM's default codegen level and no performance parity with the C
 backend is claimed; choosing the pipeline is stage S6, and debug info is S4. See
 [`plan/mk7-llvm-backend.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-llvm-backend.md).
 
