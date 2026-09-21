@@ -149,8 +149,8 @@ for an aside, a semicolon or a full stop between clauses, and a plain hyphen in
 a range. Older pages here did not follow that rule; do not sweep them, only
 write the new text that way.
 
-The MkDocs layout this repository used before 2026-09-19 — `docs/`,
-`mkdocs.yml`, `hooks/kelp_lexer.py` and the generator scripts under `tools/` — is
+The MkDocs layout this repository used before 2026-09-19 (`docs/`,
+`mkdocs.yml`, `hooks/kelp_lexer.py` and the generator scripts under `tools/`) is
 kept at branch `mkdocs-archive` and tag `mkdocs-final`, not in the current tree.
 The `hooks/`, `site/` and `node_modules/` directories here are untracked
 leftovers from it.
