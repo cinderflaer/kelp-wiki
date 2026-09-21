@@ -18,14 +18,16 @@ which the [Coral page](/tooling/coral) follows.
 **Numbering.** Releases are numbered `YY.MM.N`: the two-digit year, the
 two-digit month, and the release number within that month starting at `0`. The
 first under the scheme is [`v26.09.0`](#v26090-2026-09-20), and every release
-from it on reports its own number. Cargo refuses a leading zero in a version
-component, so `Cargo.toml` carries the semver-legal `26.9.0` while the tag and
-the asset are written padded: `v26.09.0` and `coral-26.09.0-linux-x86_64`.
+from it on reports its own number. Cargo refuses a leading zero in a version component, so `Cargo.toml` carries
+the semver-legal spelling of a release name while the tag and the asset are
+written padded: the `26.09.1` release is `26.9.1` in the manifest, tagged
+`v26.09.1`, with asset `coral-26.09.1-linux-x86_64`.
 `toolchain install` compares an asset name against the tag as text, so the two
 spellings have to be the same one.
 
 | Version | Date | Headline |
 | --- | --- | --- |
+| [v26.09.1](#v26091-2026-09-21) | 2026-09-21 | the `coral docs` family: `get`, `list`, `search` |
 | [v26.09.0](#v26090-2026-09-20) | 2026-09-20 | the `YY.MM.N` scheme; `naming_case` and `http_pool`; an asset named for another version is refused |
 | [v0.5.4](#v054-2026-09-19) | 2026-09-19 | a dependency can name one folder inside a repo |
 | [v0.5.3](#v053-2026-09-19) | 2026-09-19 | a missing release is not an unreadable one; refuse a sign-in page |
@@ -37,6 +39,33 @@ spellings have to be the same one.
 | [v0.2.1](#v021-2026-09-19) | 2026-09-19 | `find_kelpc` checks `~/.coral/bin/kelpc` before `PATH` |
 | [v0.2.0](#v020-2026-09-19) | 2026-09-19 | toolchain management: install and switch a kelp and a coral |
 | [v0.1.0](#v010-2026-09-19) | 2026-09-19 | Coral v1: init, build, run, check, clean, tasks, cache, deps |
+
+## v26.09.1 (2026-09-21)
+
+[Release](https://homelabone.xenoo.dev/gittea/Juniper/coral/releases/tag/v26.09.1)
+
+- The asset is `coral-26.09.1-linux-x86_64` beside the `v26.09.1` tag, the
+  padded spelling `toolchain install` compares against the tag as text.
+- **`coral docs get <file>.kp`** renders one file's documentation comments, each
+  with the declaration it documents and never a body. It needs no project, no
+  manifest and no `kelpc`, so one file is enough.
+- **`coral docs list`** walks the project's own sources (`src/`, `tests/`,
+  skipping a fetched `deps/` tree and a build directory) and prints every
+  documented thing, one line each: where it is, its key, and the first line of
+  its prose.
+- **`coral docs search <query>`** prints the matching entries with their prose.
+  Key and prose are both searched, a query written `fun:test` searches that kind
+  of key only, and no match is an error, so a script can ask whether the project
+  documents something.
+- An entry's key comes from the declaration a block sits above (`fun:test`,
+  `field:bytes`, `variant:Empty`, `module:<file stem>`) or from a one-line
+  `[docs(kind: name)]` head. A head that cannot be read, or a block that
+  documents no declaration, is a warning on stderr with the file and line.
+- `kelpc` is not involved: a documentation comment is trivia to the compiler, so
+  this is a reader over the source text with no parse and no symbol table.
+- **Fixed, documentation:** the README's library-capability example drops `with`
+  from `impl "std/fs" caps(...)`, the spelling the compiler keeps. A fix caused
+  by the Kelp syntax removal, not a Coral behavior change.
 
 ## v26.09.0 (2026-09-20)
 

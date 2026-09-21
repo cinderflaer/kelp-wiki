@@ -11,7 +11,7 @@ pieces move at their own speed, so each entry says which one it is.
 | --- | --- | --- | --- |
 | IntelliJ plugin | `intellij/` | 26.09.0 | Gitea releases, tag `intellij-v<version>`, plus a self-hosted update site |
 | VS Code extension | `vscode/` | 26.9.0 | a `.vsix` built locally with `@vscode/vsce`; not on the Marketplace |
-| Language server | `server/` | 26.9.0 (`26.09.0` in `serverInfo`) | `cargo build --release -p lighthouse`; no release assets |
+| Language server | `server/` | 26.9.1 (`26.09.1` in `serverInfo`) | `cargo build --release -p lighthouse`; no release assets |
 
 Only the IntelliJ plugin has releases and tags. The other two carry their
 version in `package.json` and `Cargo.toml`, and an entry here records the
@@ -22,16 +22,38 @@ scheme is `26.09.0`. Gradle takes the padded name as written, so the plugin's
 version, the tag (`intellij-v26.09.0`) and the asset
 (`lighthouse-intellij-26.09.0.zip`) are the same text. Cargo and npm both
 refuse a leading zero in a version component, so the server's `Cargo.toml` and
-the extension's `package.json` carry `26.9.0`; the server's `serverInfo`
-reports the padded `26.09.0`, so the string an editor shows matches the tag.
+the extension's `package.json` carry the semver-legal spelling, while the
+server's `serverInfo` reports the padded name, so the string an editor shows
+matches the release.
 
 | Release | Date | Headline |
 | --- | --- | --- |
+| [Language server 26.09.1](#language-server-26091-no-release) | 2026-09-21 | the vendored stdlib resync, and `std/encoding`; no plugin release |
 | [IntelliJ 26.09.0](#intellij-plugin-26090-2026-09-20) | 2026-09-20 | the `YY.MM.N` scheme, for all three pieces |
 | [IntelliJ 0.2.1](#intellij-plugin-021-2026-09-19) | 2026-09-19 | the whole IDE arrives over LSP; `closure` and `'x'` in the highlighter |
 | [IntelliJ 0.2.0](#intellij-plugin-020-2026-09-19) | 2026-09-19 | the project's kelp version, from the project |
 | [IntelliJ 0.1.1](#intellij-plugin-011-2026-09-19) | 2026-09-19 | the auto-update feed, and the New Project entry |
 | [Lighthouse v1 (0.1.0)](#lighthouse-v1-no-release) | 2026-09-19 | first version: LSP diagnostics, VS Code extension, IntelliJ plugin |
+
+## Language server 26.09.1 (no release)
+
+No tag and no release: only the IntelliJ plugin has those, and nothing about the
+plugin changed. The VS Code extension is unchanged too, at `26.9.0`, and the
+plugin stays at `26.09.0` with its `intellij-v26.09.0` tag. This entry records
+the server version move, the way the rule at the top of this page says.
+
+- **The vendored stdlib snapshot is refreshed against the shipped sources.** All
+  16 modules were behind, so a jump into the standard library could open an
+  older copy than the compiler builds with.
+- **`std/encoding` is vendored**, and added to the two lists that name the
+  modules, so the newest standard library module is no longer invisible to
+  completion, hover and auto-import.
+- **The index's import test spells the grant the way the compiler keeps it**,
+  `impl "std/fs" caps(...)` rather than the removed `with caps(...)`. The index
+  already skips the whole clause, so this tracks the surviving grammar with no
+  behavior change.
+
+The server reports `26.09.1` in `serverInfo`.
 
 ## IntelliJ plugin 26.09.0 (2026-09-20)
 
