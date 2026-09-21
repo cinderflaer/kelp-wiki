@@ -33,7 +33,8 @@ real `kelpc` binary over two corpora:
 
 The C backend passes every one of them. The `llvm` backend passes the fixtures
 that stay inside the MK7 S1 scalar subset, the S2A `datac` slice, the S2B heap
-slice, the S2C tagged-union slice or the S2D container slice, and refuses the rest
+slice, the S2C tagged-union slice, the S2D container slice or the S2F reference
+slice, and refuses the rest
 by name, so the whole suite is not yet green on it:
 `KELPC_BACKEND=llvm` runs the fixtures, and the gates below name the closed
 subsets that must pass.
@@ -95,6 +96,7 @@ Two gates run inside this file:
 | `kelpc/tests/run-llvm-strings-drops.sh` | the MK7 S2B gate: runs the S1 and S2A fixtures and the heap slice (`Bytes`/`String` through the runtime, an owned field, the drop plan, `panic`/`assert`) with `KELPC_BACKEND=llvm` and asserts byte-identical stdout (40 tests) | a shell script, not a cargo test |
 | `kelpc/tests/run-llvm-enum-subset.sh` | the MK7 S2C gate: runs the S1, S2A and S2B fixtures and the tagged-union slice (`enum` at the C `{ tag, union }` layout, `when`, `if let`, `?`) with `KELPC_BACKEND=llvm`, asserts byte-identical stdout (58 tests), and reads the tag and payload offsets back out of the `<out>.ll` the backend wrote to assert three SysV layouts | a shell script, not a cargo test |
 | `kelpc/tests/run-llvm-containers.sh` | the MK7 S2D gate: runs the S1, S2A, S2B and S2C fixtures and the container slice (`List`, `Map`, `Box` and `[T; N]` at the C backend's header layouts, construction, the method surfaces, `for` over a list, a container as a field and an element, the bounds checks and one drop per container type) with `KELPC_BACKEND=llvm` and asserts byte-identical stdout (103 tests); it also reads the container header and entry layouts back out of the `<out>.ll` the backend wrote and asserts no runtime declaration passes a container header by value | a shell script, not a cargo test |
+| `kelpc/tests/run-llvm-references.sh` | the MK7 S2F gate: runs the S1, S2A, S2B, S2C and S2D fixtures and the reference slice (`&T` to a scalar, a borrow of a field, the read, the write, a `&T` parameter and a `&T` return) with `KELPC_BACKEND=llvm` and asserts byte-identical stdout (109 tests); it also reads the borrowed-parameter signatures back out of the `<out>.ll` the backend wrote to assert they take `kelp_origin(ptr)`-style pointers, and asserts a `panic` tail ends in `unreachable` | a shell script, not a cargo test |
 | `memory_gate.rs` | valgrind (`--leak-check=full --show-leak-kinds=all`, diagnostics to `--log-file`) over the built binaries, asserting no findings in any process; a spawned child inherits valgrind, so it writes into the same log | ignored; the default run only checks that valgrind is discoverable |
 
 The differential sweep is `backend_coverage.rs`, rebuilt after the `asm` rows went
@@ -105,9 +107,11 @@ target both build, both binaries are run and their stdout and exit status must b
 byte-identical. A target the `llvm` backend cannot build is recorded with its
 refusal message rather than failed, and a crash or a diagnostic that is not a
 named refusal fails the run. It also ratchets a coverage count, `LLVM_BUILT_BASELINE`,
-which may only rise: **124 of the 219 targets** at the S2D tip, with **95
-refused** (93 by name, and 2 as an internal error rather than a named gap), and
-the ranking report prints those refusals grouped by their exact
+which may only rise: **129 of the 219 targets** at the S2F tip, with **90
+refused**, all by name and none as an internal error or a crash, and the ranking
+is dominated by the runtime and `pd` slice (S3, 72 of the 90), then closures and
+function values (S2E, 15), then the two owned-temporary shapes (S2B, 3). The
+ranking report prints those refusals grouped by their exact
 message so the slice each one waits on is visible. The sweep compiles the whole
 corpus twice, so it is `#[ignore]`d:
 

@@ -48,8 +48,8 @@ their checksums.
   silently. The hand-written `asm` backend was removed on 2026-09-21, so a new
   fixture is written for the C backend; the `llvm` backend runs it too when the
   fixture stays inside the scalar subset, the S2A `datac` slice, the S2B heap
-  slice, the S2C tagged-union slice or the S2D container slice, and refuses it by
-  name otherwise.
+  slice, the S2C tagged-union slice, the S2D container slice or the S2F reference
+  slice, and refuses it by name otherwise.
 - **A test in the corpus** for a capability-matcher or path-normalizer change:
   those two are implemented twice (Kelp and C) and compared.
 - **A citation** for a documentation change: every page in this wiki names the
