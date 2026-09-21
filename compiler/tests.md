@@ -33,8 +33,8 @@ real `kelpc` binary over two corpora:
 
 The C backend passes every one of them. The `llvm` backend passes the fixtures
 that stay inside the MK7 S1 scalar subset, the S2A `datac` slice, the S2B heap
-slice or the S2C tagged-union slice, and refuses the rest by name, so the whole
-suite is not yet green on it:
+slice, the S2C tagged-union slice or the S2D container slice, and refuses the rest
+by name, so the whole suite is not yet green on it:
 `KELPC_BACKEND=llvm` runs the fixtures, and the gates below name the closed
 subsets that must pass.
 The `asm` rows left the suite with the backend on 2026-09-21: its counts, its
@@ -94,13 +94,29 @@ Two gates run inside this file:
 | `kelpc/tests/run-llvm-datac-subset.sh` | the MK7 S2A gate: runs the S1 fixtures and the closed `datac` slice (28 tests) with `KELPC_BACKEND=llvm` and asserts byte-identical stdout | a shell script, not a cargo test |
 | `kelpc/tests/run-llvm-strings-drops.sh` | the MK7 S2B gate: runs the S1 and S2A fixtures and the heap slice (`Bytes`/`String` through the runtime, an owned field, the drop plan, `panic`/`assert`) with `KELPC_BACKEND=llvm` and asserts byte-identical stdout (40 tests) | a shell script, not a cargo test |
 | `kelpc/tests/run-llvm-enum-subset.sh` | the MK7 S2C gate: runs the S1, S2A and S2B fixtures and the tagged-union slice (`enum` at the C `{ tag, union }` layout, `when`, `if let`, `?`) with `KELPC_BACKEND=llvm`, asserts byte-identical stdout (58 tests), and reads the tag and payload offsets back out of the `<out>.ll` the backend wrote to assert three SysV layouts | a shell script, not a cargo test |
+| `kelpc/tests/run-llvm-containers.sh` | the MK7 S2D gate: runs the S1, S2A, S2B and S2C fixtures and the container slice (`List`, `Map`, `Box` and `[T; N]` at the C backend's header layouts, construction, the method surfaces, `for` over a list, a container as a field and an element, the bounds checks and one drop per container type) with `KELPC_BACKEND=llvm` and asserts byte-identical stdout (103 tests); it also reads the container header and entry layouts back out of the `<out>.ll` the backend wrote and asserts no runtime declaration passes a container header by value | a shell script, not a cargo test |
 | `memory_gate.rs` | valgrind (`--leak-check=full --show-leak-kinds=all`, diagnostics to `--log-file`) over the built binaries, asserting no findings in any process; a spawned child inherits valgrind, so it writes into the same log | ignored; the default run only checks that valgrind is discoverable |
 
-The differential sweep, `backend_coverage.rs`, was removed with the `asm` rows on
-2026-09-21, so it does not exist today; it is rebuilt against the LLVM backend,
-with `LLVM_BUILT_BASELINE` in place of `ASM_BUILT_BASELINE`
-(`plan/mk7-llvm-backend.md` §6). The refusal-by-name rule is enforced meanwhile by
-the `llvm` backend's own diagnostics and the S1, S2A, S2B and S2C gates.
+The differential sweep is `backend_coverage.rs`, rebuilt after the `asm` rows went
+with the backend on 2026-09-21. It is the sweep the project had been missing: it
+always builds *both* backends, so the C backend is an oracle rather than a second
+opinion. Every target the C backend builds is built with `llvm` too; for every
+target both build, both binaries are run and their stdout and exit status must be
+byte-identical. A target the `llvm` backend cannot build is recorded with its
+refusal message rather than failed, and a crash or a diagnostic that is not a
+named refusal fails the run. It also ratchets a coverage count, `LLVM_BUILT_BASELINE`,
+which may only rise: **124 of the 219 targets** at the S2D tip, with **95 refused
+by name**, and the ranking report prints those refusals grouped by their exact
+message so the slice each one waits on is visible. The sweep compiles the whole
+corpus twice, so it is `#[ignore]`d:
+
+```sh
+cargo test --release --test backend_coverage -- --ignored --nocapture
+```
+
+It is what caught the silent miscompile in `borrow_returned.kp` (a borrow returned
+through the value position of an `if`, and a returned `&String`) that the container
+slice's reference-place handling closed.
 
 ```sh
 cargo test --test memory_gate    -- --ignored                 # valgrind over the binaries

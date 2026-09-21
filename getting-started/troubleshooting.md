@@ -88,8 +88,8 @@ worth reading once on purpose rather than once per error.
 
 A backend refusing a construct by name, rather than miscompiling it, is
 documented behaviour rather than a bug in your program: the `llvm` backend
-carries that discipline today, so `error: the llvm backend cannot lower 'a List
-field' yet (MK7 S2D); use --backend=c` is not a bug, and `--backend=c` is the way out. The
+carries that discipline today, so `error: the llvm backend cannot lower the call
+to 'std.mem.alloc_raw' yet (MK7 S3); use --backend=c` is not a bug, and `--backend=c` is the way out. The
 other shape of it is the retired `asm` name: `kelpc build --backend=asm` reports
 `unknown backend 'asm'; expected one of: c, llvm`.
 

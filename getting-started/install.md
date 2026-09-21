@@ -59,7 +59,7 @@ environment variable:
 | Backend | What it does | Chain |
 | --- | --- | --- |
 | `c` (default) | transpiles to C | `cc -O2 -fwrapv -lm` |
-| `llvm` | lowers the scalar subset, `datac` records, the heap slice and tagged unions to LLVM IR and an object | `cc -O2 -o <out> <out>.o -lm` |
+| `llvm` | lowers the scalar subset, `datac` records, the heap slice, tagged unions and the containers to LLVM IR and an object | `cc -O2 -o <out> <out>.o -lm` |
 
 The hand-written `asm` backend was retired on 2026-09-20 and removed on
 2026-09-21, so `--backend=asm` now reports `unknown backend 'asm'; expected one
@@ -77,8 +77,12 @@ shared or exclusive borrow a `datac` parameter resolves to. Since stage S2B it
 adds the heap: `Bytes` and `String` reached through the runtime, a `datac` field
 that owns one, the drop plan, and `panic` and `assert`. Since stage S2C it adds
 tagged unions: `enum` at the C backend's `{ tag, union }` layout, `when`, `if let`
-and `?`, with only the live variant dropped. On those programs its
-stdout is byte-identical to the C backend's. Everything outside them is refused
+and `?`, with only the live variant dropped. Since stage S2D it adds the
+containers: `List`, `Map`, `Box` and the fixed-size `[T; N]`, at the C backend's
+own header layouts, including construction, the method surfaces, `for` over a
+list, a container as a field and an element, the bounds checks and one drop per
+container type. On those programs its
+stdout is byte-identical to the C backend's. Everything else is refused
 by name with the MK7 stage that will lower it and a `--backend=c` way out. There
 is no IR optimization pass pipeline yet, so no performance parity with the C
 backend is claimed. A `kelpc` built with this backend links `libLLVM-21.so` and
@@ -110,6 +114,7 @@ cargo test --test fmt                        # the formatter's corpus and proper
 ./kelpc/tests/run-llvm-datac-subset.sh       # the MK7 S2A gate: the S1 fixtures plus the datac slice
 ./kelpc/tests/run-llvm-strings-drops.sh      # the MK7 S2B gate: the S1 and S2A fixtures plus the heap slice
 ./kelpc/tests/run-llvm-enum-subset.sh        # the MK7 S2C gate: the earlier fixtures plus the tagged-union slice
+./kelpc/tests/run-llvm-containers.sh         # the MK7 S2D gate: the earlier fixtures plus the container slice (103 tests)
 ```
 
 The fixture suite is backend-agnostic by construction: it compiles a fixture,
@@ -117,8 +122,17 @@ runs the result, and compares stdout, so pointing `KELPC_BACKEND` at a backend
 validates it with no test edits. `run-all-backends.sh` is still `BACKENDS=c` by
 default, so `BACKENDS="c llvm" ./kelpc/tests/run-all-backends.sh` runs both. The
 byte-identical gates are the separate `run-llvm-scalar-subset.sh`,
-`run-llvm-datac-subset.sh`, `run-llvm-strings-drops.sh` and
-`run-llvm-enum-subset.sh`.
+`run-llvm-datac-subset.sh`, `run-llvm-strings-drops.sh`,
+`run-llvm-enum-subset.sh` and `run-llvm-containers.sh`. The differential sweep,
+`kelpc/tests/backend_coverage.rs`, is `#[ignore]`d because it compiles the whole
+corpus twice; it is the check that the `llvm` backend builds every target the C
+backend builds and prints the same stdout with the same exit status, and it names
+what it cannot build yet:
+
+```sh
+cargo test --release --test backend_coverage -- --ignored --nocapture
+```
+
 Two heavier checks are `#[ignore]`d so the default run stays fast:
 
 ```sh
