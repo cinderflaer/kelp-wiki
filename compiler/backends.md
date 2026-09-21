@@ -1,6 +1,6 @@
 ---
 title: "Backends"
-description: "A code generator is selectable with --backend= or the KELPC_BACKEND environment variable, and an explicit flag wins over the variable; the default is c. The llvm backend lowers the scalar subset and `datac` records, and refuses everything else by name."
+description: "A code generator is selectable with --backend= or the KELPC_BACKEND environment variable, and an explicit flag wins over the variable; the default is c. The llvm backend lowers the scalar subset, `datac` records and the heap slice, and refuses everything else by name."
 isPublished: true
 tags: "compiler"
 ---
@@ -11,7 +11,7 @@ the default is `c`.
 | Backend | Emits | Finished with | Status |
 | --- | --- | --- | --- |
 | `c` (default) | C source text | `cc -O2 -fwrapv -lm` | complete, and the reference |
-| `llvm` | LLVM IR, then an object | `<out>.ll` and `<out>.o`, then `cc -O2 -o <out> <out>.o -lm` | the scalar subset (MK7 S1) and `datac` records (MK7 S2A); everything outside them is refused by name |
+| `llvm` | LLVM IR, then an object | `<out>.ll` and `<out>.o`, then `cc -O2 -o <out> <out>.o -lm` | the scalar subset (MK7 S1), `datac` records (MK7 S2A) and the heap slice: `Bytes`/`String`, an owned field, drops, `panic` and `assert` (MK7 S2B); everything outside them is refused by name |
 
 The hand-written **`asm`** backend, which emitted x86-64 assembly text itself and
 finished with `as` and `ld`, was retired on 2026-09-20 and its source was removed
@@ -46,9 +46,18 @@ alignment the C backend's typedef has, construction, a field read and a field
 write, a whole-value assignment, a nested struct, a struct as a local, a `move`
 parameter and a return value, a field mutated through a method's `self`, and the
 shared or exclusive borrow a `datac` parameter resolves to, which is the same
-address either way. On a program that stays inside the two, the `llvm` backend's
-stdout is byte-identical to the C backend's, which is the gates:
-`kelpc/tests/run-llvm-scalar-subset.sh` and `kelpc/tests/run-llvm-datac-subset.sh`.
+address either way. At S2B, landed on 2026-09-21, it adds the **heap and the
+runtime**: `Bytes` and `String` as a pointer and a length reached through the
+runtime, a `datac` field that owns one, the **drop plan** `borrowck` produced
+emitted at the same points the C backend emits it (the end of a block, before a
+`return`, and before an assignment overwrites an owned binding, with a move
+clearing its source slot), and `panic`, `assert` and the out-of-range panic of a
+narrowing conversion. On a program that stays inside the three, the `llvm`
+backend's stdout is byte-identical to the C backend's, which is the gates:
+`kelpc/tests/run-llvm-scalar-subset.sh`,
+`kelpc/tests/run-llvm-datac-subset.sh` and
+`kelpc/tests/run-llvm-strings-drops.sh`, the last of which carries the first two
+forward and adds the heap fixtures: 40 tests in one run.
 
 Everything outside them is **refused by name**, never miscompiled and never a
 panic. The error names the construct and the MK7 stage that will lower it:
@@ -58,8 +67,9 @@ $ kelpc build src/main.kp --backend=llvm
 error: the llvm backend cannot lower 'enum' yet (MK7 S2C); use --backend=c
 ```
 
-An owned field (`String`, `Bytes`, a container, an array), `List`, `Map`, `Box`
-and arrays generally, `enum` and `when`, a borrow of anything that is not a
+A field that owns a `String` or a `Bytes` lowers at S2B; a container or an array
+field does not. `List`, `Map`, `Box` and arrays generally, `enum` and `when` and
+`?`, a `str` or `View` field in a `datac`, a borrow of anything that is not a
 `datac`, closures and function values, `pd` and `extern fun` are all refused
 today.
 
@@ -75,7 +85,13 @@ today.
   `nsw`/`nuw`, no `inbounds`, and `noalias` only where the borrow checker proves
   it. `-fwrapv` stops being a flag on the C path and becomes "we never write the
   flag that would make overflow undefined".
-- **Scale:** S2 to S7 remain, roughly 3 to 6 weeks of emission-layer work to a
+- **The runtime's one home:** `kelpc/runtime/kelp_rt.c` holds the
+  bytes/string routines, `kelp_panic`/`kelp_assert`, the allocation helpers and
+  `kelp_argc`/`kelp_argv`. `codegen_c.rs` still emits that text into every
+  generated C program, byte for byte; the `llvm` path links it as an object that
+  `kelpc/build.rs` compiles from the same file. One source, so the panic text
+  and the `Bytes`/`String` invariants cannot drift between the backends.
+- **Scale:** S2C to S7 remain, roughly 3 to 6 weeks of emission-layer work to a
   suite-green backend (the plan's §0.1 and §5).
 - **No pass pipeline yet:** there is no IR optimization pass pipeline, so the
   object is emitted at LLVM's default codegen level. Choosing the pipeline is

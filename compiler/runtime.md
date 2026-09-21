@@ -1,19 +1,27 @@
 ---
 title: "Runtime"
-description: "Most of what a program needs at run time is emitted by the code generator rather than linked - the Bytes/String heap routines, bounds checks, drop calls and the capability plumbing are C text that..."
+description: "Most of what a program needs at run time is emitted by the code generator rather than linked - the Bytes/String heap routines, bounds checks, drop calls and the capability plumbing are C text held once in kelpc/runtime/kelp_rt.c, which codegen_c.rs emits into the generated program and the llvm backend links as a compiled object."
 isPublished: true
 tags: "compiler"
 ---
 Most of what a program needs at run time is emitted by the code generator rather
 than linked: the `Bytes`/`String` heap routines, bounds checks, drop calls and the
 capability plumbing are C text that `codegen_c.rs` splices into the generated
-program. `kelpc/runtime/` holds the runtime pieces that are not spliced in as
+program. Since MK7 stage S2B that text has **one home**:
+`kelpc/runtime/kelp_rt.c` holds the bytes/string routines,
+`kelp_panic`/`kelp_assert`, the allocation helpers and `kelp_argc`/`kelp_argv`.
+The C backend still emits that file into its output, byte for byte, exactly as it
+did when the text was a string literal in `codegen_c.rs`; the `llvm` path links
+it as an object `kelpc/build.rs` compiles from the same file. One source, so the
+panic text and the `Bytes`/`String` invariants cannot drift between the two
+backends. `kelpc/runtime/` holds the runtime pieces that are not spliced in as
 text: the C that stayed, the C references kept as oracles, and the newest pair,
 a parser written in Kelp with its C reference beside it.
 
 | File | Status | Role |
 | --- | --- | --- |
 | `cap_glue.c` | emitted into every program that contains a gated call | the non-matching half of the capability check |
+| `kelp_rt.c` | emitted into every generated program by `codegen_c.rs`; linked as an object into every `llvm`-built binary | the C runtime text: the `Bytes`/`String` routines, `kelp_panic`/`kelp_assert`, the allocation helpers and `kelp_argc`/`kelp_argv` |
 | `cap_matcher_ref.c` | not emitted | the C capability matcher, kept as the differential oracle |
 | `path_normalize_ref.c` | not emitted | the C path normalizer, kept as the differential oracle |
 | `dns_parse.kp` | not emitted, not a std module | the stub resolver's DNS message parser, in Kelp (`plan/asm-backend/plan.md` §7 item 6) |
@@ -85,7 +93,7 @@ so no program reaches the parser yet.
 | DNS message parser (`plan/asm-backend/plan.md` §7 item 6) | Kelp (`dns_parse.kp`), not shipped yet, with the C oracle kept |
 | Symlink resolution (`kelp_resolve_path`) | still C |
 | The allocator | still C; blocked on raw pointers, which the language does not expose |
-| The `Bytes`/`String` heap routines and drop calls | emitted as a fixed C preamble by `codegen_c.rs` |
+| The `Bytes`/`String` heap routines and drop calls | the text of `kelp_rt.c`: emitted by `codegen_c.rs` into every generated program, and linked as an object by the `llvm` path |
 
 `std/rt` is the compiler's own runtime module. Its source ships inside the
 binary like a stdlib module's, and `impl "std/rt"` resolves, but it is not part

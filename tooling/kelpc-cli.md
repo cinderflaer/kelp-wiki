@@ -165,7 +165,7 @@ One code generator, selected with `--backend=` or `KELPC_BACKEND`; an explicit
 | Backend | What it does | Toolchain it needs |
 | --- | --- | --- |
 | `c` (default) | transpiles to C | `cc -O2 -fwrapv -lm` |
-| `llvm` | lowers the scalar subset and `datac` records to LLVM IR and an object | `libLLVM-21` to build `kelpc`, then `cc -O2 -o <out> <out>.o -lm` to link |
+| `llvm` | lowers the scalar subset, `datac` records and the heap slice to LLVM IR and an object | `libLLVM-21` to build `kelpc`, then `cc -O2 -o <out> <out>.o -lm` to link |
 
 ```sh
 KELPC_BACKEND=c kelpc run examples/hello.kp   # the default, spelled out
@@ -196,9 +196,13 @@ The **`llvm`** backend is selectable at MK7 stage S1 and covers the scalar subse
 calls, string literals and `print`) and, since stage S2A, a `datac` whose fields
 are all scalars or earlier all-scalar `datac`s: layout, construction, field read
 and write, whole-value assignment, nesting, locals, `move` parameters and
-returns, and the shared or exclusive borrow a `datac` parameter resolves to. On
-those programs its stdout is byte-identical to the C backend's, the gates being
-`kelpc/tests/run-llvm-scalar-subset.sh` and `kelpc/tests/run-llvm-datac-subset.sh`.
+returns, and the shared or exclusive borrow a `datac` parameter resolves to.
+Since stage S2B it adds the heap: `Bytes` and `String` reached through the
+runtime, a `datac` field that owns one, the drop plan, and `panic` and `assert`.
+On those programs its stdout is byte-identical to the C backend's, the gates
+being `kelpc/tests/run-llvm-scalar-subset.sh`,
+`kelpc/tests/run-llvm-datac-subset.sh` and
+`kelpc/tests/run-llvm-strings-drops.sh`.
 Everything else is refused by name with the MK7 stage that will lower it and a
 `--backend=c` way out, for example `error: the llvm backend cannot lower 'enum'
 yet (MK7 S2C); use --backend=c`. There is no IR optimization pass pipeline yet,

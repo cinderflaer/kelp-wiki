@@ -116,14 +116,17 @@ Two milestones in one pass, over the typed IR:
 | Drops | the pass produces a **drop plan** keyed by span, which the code generators consult: no second walk, and no lockstep between two passes |
 
 The drop plan is why `codegen_c.rs` only has to ask "which locals die at the end of
-this block" and "which die before this return" as it writes each one.
+this block" and "which die before this return" as it writes each one, and
+`codegen_llvm.rs` asks the same two questions at the same points.
 
 ## Code generation
 
 | Module | Emits | Notes |
 | --- | --- | --- |
-| `codegen_c.rs` | C source text | value-position blocks use the GNU statement-expression extension `({ ...; expr; })`, which both `gcc` and `clang` accept; the `Bytes`/`String` runtime (allocation, bounds checks, `free`) is a fixed C preamble; the generated C carries a `#line` directive before every statement, so a `cc` failure names the `.kp` file and the line the statement is written on (plan item 20, closed) |
-| `codegen_llvm.rs` | LLVM IR | the MK7 backend: a peer of `codegen_c.rs` over the same `tir`, covering the scalar subset (S1) and `datac` records (S2A) and refusing everything outside them by name. See [Backends](/compiler/backends) and [`plan/mk7-llvm-backend.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-llvm-backend.md) |
+| `codegen_c.rs` | C source text | value-position blocks use the GNU statement-expression extension `({ ...; expr; })`, which both `gcc` and `clang` accept; the `Bytes`/`String` runtime (allocation, bounds checks, `free`) is the text of `kelpc/runtime/kelp_rt.c`, emitted into every generated program; the generated C carries a `#line` directive before every statement, so a `cc` failure names the `.kp` file and the line the statement is written on (plan item 20, closed) |
+| `codegen_llvm.rs` | LLVM IR | the MK7 backend: a peer of `codegen_c.rs` over the same `tir`, covering the scalar subset (S1), `datac` records (S2A) and the heap slice (S2B: `Bytes`/`String` through the runtime, an owned field, the drop plan, `panic`/`assert`), and refusing everything outside them by name. See [Backends](/compiler/backends) and [`plan/mk7-llvm-backend.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-llvm-backend.md) |
+| `kelpc/runtime/kelp_rt.c` | the C runtime text, not a compiler module | the single source for the bytes/string routines, the panic and assert paths, the allocation helpers and `kelp_argc`/`kelp_argv`: `codegen_c.rs` emits it into every generated program, and the `llvm` path links it as an object |
+| `kelpc/build.rs` | the runtime object | compiles `kelp_rt.c` once, at `kelpc`'s own build time, into `kelp_rt.o`; `driver.rs` embeds that object with `include_bytes!` and writes it to a temporary file when the `llvm` path links |
 
 Details, and what each backend refuses, are in [Backends](/compiler/backends).
 
@@ -175,7 +178,7 @@ fun main() {
 | `infer.rs` | `area(p)`: the parameter is a `datac`, so it becomes a shared borrow and the call site gets a synthesized `&` the author never wrote |
 | `tir.rs` | the same tree, every node carrying `Ty` and `Span` |
 | `borrowck.rs` | `p` is borrowed by `area` and still owned afterwards; a drop plan for the `Point` and for the `List` |
-| `codegen_c.rs` | C, with a `#line` marker before every statement back into the `.kp`, plus the heap preamble the drop plan asked for |
+| `codegen_c.rs` | C, with a `#line` marker before every statement back into the `.kp`, plus the runtime text from `runtime/kelp_rt.c` that the drop plan asked for |
 | `driver.rs` | `<out>.c` written beside the binary, `cc -O2 -fwrapv -lm` invoked |
 
 ## What is *not* in the pipeline
