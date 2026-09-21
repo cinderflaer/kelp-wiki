@@ -105,8 +105,9 @@ target both build, both binaries are run and their stdout and exit status must b
 byte-identical. A target the `llvm` backend cannot build is recorded with its
 refusal message rather than failed, and a crash or a diagnostic that is not a
 named refusal fails the run. It also ratchets a coverage count, `LLVM_BUILT_BASELINE`,
-which may only rise: **124 of the 219 targets** at the S2D tip, with **95 refused
-by name**, and the ranking report prints those refusals grouped by their exact
+which may only rise: **124 of the 219 targets** at the S2D tip, with **95
+refused** (93 by name, and 2 as an internal error rather than a named gap), and
+the ranking report prints those refusals grouped by their exact
 message so the slice each one waits on is visible. The sweep compiles the whole
 corpus twice, so it is `#[ignore]`d:
 

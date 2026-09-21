@@ -155,7 +155,8 @@ Two consequences worth knowing:
    it builds every fixture the C backend builds with `llvm`, runs both and compares
    stdout and exit status byte for byte, records each refusal with its message, and
    ratchets a coverage count that may only rise (124 of the 219 targets at the S2D
-   tip, 95 of them refused by name). On its first run it caught a silent miscompile,
+   tip, 95 of them refused: 93 by name and 2 by an internal error, which is a bug
+   rather than a named gap). On its first run it caught a silent miscompile,
    a borrow returned through the value position of an `if` and a returned `&String`,
    which now match the C backend.
 
