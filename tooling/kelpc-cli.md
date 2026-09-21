@@ -165,7 +165,7 @@ One code generator, selected with `--backend=` or `KELPC_BACKEND`; an explicit
 | Backend | What it does | Toolchain it needs |
 | --- | --- | --- |
 | `c` (default) | transpiles to C | `cc -O2 -fwrapv -lm` |
-| `llvm` | lowers the scalar subset, `datac` records and the heap slice to LLVM IR and an object | `libLLVM-21` to build `kelpc`, then `cc -O2 -o <out> <out>.o -lm` to link |
+| `llvm` | lowers the scalar subset, `datac` records, the heap slice and tagged unions to LLVM IR and an object | `libLLVM-21` to build `kelpc`, then `cc -O2 -o <out> <out>.o -lm` to link |
 
 ```sh
 KELPC_BACKEND=c kelpc run examples/hello.kp   # the default, spelled out
@@ -199,13 +199,17 @@ and write, whole-value assignment, nesting, locals, `move` parameters and
 returns, and the shared or exclusive borrow a `datac` parameter resolves to.
 Since stage S2B it adds the heap: `Bytes` and `String` reached through the
 runtime, a `datac` field that owns one, the drop plan, and `panic` and `assert`.
+Since stage S2C it adds tagged unions: `enum` at the C backend's `{ tag, union }`
+layout, construction, payload read, an `enum` as a local, a parameter and a return
+value, `when`, `if let` and `?`, and only the live variant dropped.
 On those programs its stdout is byte-identical to the C backend's, the gates
 being `kelpc/tests/run-llvm-scalar-subset.sh`,
-`kelpc/tests/run-llvm-datac-subset.sh` and
-`kelpc/tests/run-llvm-strings-drops.sh`.
+`kelpc/tests/run-llvm-datac-subset.sh`,
+`kelpc/tests/run-llvm-strings-drops.sh` and
+`kelpc/tests/run-llvm-enum-subset.sh` (58 tests).
 Everything else is refused by name with the MK7 stage that will lower it and a
-`--backend=c` way out, for example `error: the llvm backend cannot lower 'enum'
-yet (MK7 S2C); use --backend=c`. There is no IR optimization pass pipeline yet,
+`--backend=c` way out, for example `error: the llvm backend cannot lower 'a List
+field' yet (MK7 S2D); use --backend=c`. There is no IR optimization pass pipeline yet,
 so the object is emitted at LLVM's default codegen level and no performance parity with the C
 backend is claimed; choosing the pipeline is stage S6, and debug info is S4. See
 [`plan/mk7-llvm-backend.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-llvm-backend.md).

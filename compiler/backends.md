@@ -1,6 +1,6 @@
 ---
 title: "Backends"
-description: "A code generator is selectable with --backend= or the KELPC_BACKEND environment variable, and an explicit flag wins over the variable; the default is c. The llvm backend lowers the scalar subset, `datac` records and the heap slice, and refuses everything else by name."
+description: "A code generator is selectable with --backend= or the KELPC_BACKEND environment variable, and an explicit flag wins over the variable; the default is c. The llvm backend lowers the scalar subset, `datac` records, the heap slice and tagged unions, and refuses everything else by name."
 isPublished: true
 tags: "compiler"
 ---
@@ -11,7 +11,7 @@ the default is `c`.
 | Backend | Emits | Finished with | Status |
 | --- | --- | --- | --- |
 | `c` (default) | C source text | `cc -O2 -fwrapv -lm` | complete, and the reference |
-| `llvm` | LLVM IR, then an object | `<out>.ll` and `<out>.o`, then `cc -O2 -o <out> <out>.o -lm` | the scalar subset (MK7 S1), `datac` records (MK7 S2A) and the heap slice: `Bytes`/`String`, an owned field, drops, `panic` and `assert` (MK7 S2B); everything outside them is refused by name |
+| `llvm` | LLVM IR, then an object | `<out>.ll` and `<out>.o`, then `cc -O2 -o <out> <out>.o -lm` | the scalar subset (MK7 S1), `datac` records (MK7 S2A), the heap slice: `Bytes`/`String`, an owned field, drops, `panic` and `assert` (MK7 S2B), and tagged unions: `enum` at the C `{ tag, union }` layout, `when`, `if let`, `?`, and one `switch` per drop (MK7 S2C); everything outside them is refused by name |
 
 The hand-written **`asm`** backend, which emitted x86-64 assembly text itself and
 finished with `as` and `ld`, was retired on 2026-09-20 and its source was removed
@@ -52,26 +52,36 @@ runtime, a `datac` field that owns one, the **drop plan** `borrowck` produced
 emitted at the same points the C backend emits it (the end of a block, before a
 `return`, and before an assignment overwrites an owned binding, with a move
 clearing its source slot), and `panic`, `assert` and the out-of-range panic of a
-narrowing conversion. On a program that stays inside the three, the `llvm`
-backend's stdout is byte-identical to the C backend's, which is the gates:
+narrowing conversion. At S2C, landed on 2026-09-21, it adds the **tagged union**:
+`enum` at the same `{ tag, union }` shape the C backend gives it, an `i32` tag at
+offset 0 and the payload at the C union's offset, with the size and alignment read
+from the target machine's data layout rather than assumed. Construction, a payload
+read, an `enum` as a local, a parameter and a return value, a nested payload,
+`when`, `if let` and `?` all lower, and only the live variant is dropped: one
+`switch` on the tag per owning enum. On a program that stays inside the four, the
+`llvm` backend's stdout is byte-identical to the C backend's, which is the gates:
 `kelpc/tests/run-llvm-scalar-subset.sh`,
-`kelpc/tests/run-llvm-datac-subset.sh` and
-`kelpc/tests/run-llvm-strings-drops.sh`, the last of which carries the first two
-forward and adds the heap fixtures: 40 tests in one run.
+`kelpc/tests/run-llvm-datac-subset.sh`,
+`kelpc/tests/run-llvm-strings-drops.sh` and
+`kelpc/tests/run-llvm-enum-subset.sh`, the last of which carries the first three
+forward and adds the tagged-union fixtures: 58 tests in one run. It also reads the
+tag and payload offsets back out of the `<out>.ll` the backend wrote and asserts
+them, which no fixture's own output would catch: three SysV classes, a one-byte
+union at offset 4, an eight-byte union at offset 8 and a 24-byte one at offset 8.
 
 Everything outside them is **refused by name**, never miscompiled and never a
 panic. The error names the construct and the MK7 stage that will lower it:
 
 ```text
 $ kelpc build src/main.kp --backend=llvm
-error: the llvm backend cannot lower 'enum' yet (MK7 S2C); use --backend=c
+error: the llvm backend cannot lower 'a List field' yet (MK7 S2D); use --backend=c
 ```
 
 A field that owns a `String` or a `Bytes` lowers at S2B; a container or an array
-field does not. `List`, `Map`, `Box` and arrays generally, `enum` and `when` and
-`?`, a `str` or `View` field in a `datac`, a borrow of anything that is not a
-`datac`, closures and function values, `pd` and `extern fun` are all refused
-today.
+field does not. `List`, `Map`, `Box` and arrays generally, a `str` or `View`
+field in a `datac` (S2D), a borrow of anything that is not a `datac`, closures and
+function values (S2E), `pd` and `extern fun` (S3) are all refused today. An `enum`
+is not: S2C lowers it, and with it `when`, `if let` and `?`.
 
 - **What is reused:** everything up to the typed IR. The lexer, the preprocessor,
   the parser, the type checker, the move and borrow checker and the meaning of
@@ -91,8 +101,9 @@ today.
   generated C program, byte for byte; the `llvm` path links it as an object that
   `kelpc/build.rs` compiles from the same file. One source, so the panic text
   and the `Bytes`/`String` invariants cannot drift between the backends.
-- **Scale:** S2C to S7 remain, roughly 3 to 6 weeks of emission-layer work to a
-  suite-green backend (the plan's §0.1 and §5).
+- **Scale:** S2D to S7 remain, roughly 3 to 6 weeks of emission-layer work to a
+  suite-green backend (the plan's §0.1 and §5, whose stage-2 table names each
+  slice the refusals point at).
 - **No pass pipeline yet:** there is no IR optimization pass pipeline, so the
   object is emitted at LLVM's default codegen level. Choosing the pipeline is
   stage S6, and debug info (DWARF from attached locations) is stage S4. There is

@@ -27,7 +27,7 @@ cargo build --release -p kelpc
 | Type checking | `infer.rs` | types, generics, stdlib overload resolution; fills in implicit borrows |
 | Typed IR | `tir.rs` | every node carries its resolved type and span |
 | Move/borrow checking | `borrowck.rs` | moves, borrows, and the drop plan the code generators read |
-| Code generation | `codegen_c.rs`, `codegen_llvm.rs` | typed IR to C source text, or to LLVM IR (the scalar subset, `datac` records and the heap slice, MK7 S1, S2A and S2B) |
+| Code generation | `codegen_c.rs`, `codegen_llvm.rs` | typed IR to C source text, or to LLVM IR (the scalar subset, `datac` records, the heap slice and tagged unions, MK7 S1, S2A, S2B and S2C) |
 | Backend selection | `backend.rs` | `--backend=` / `KELPC_BACKEND` |
 | Finishing | `driver.rs` | writes the artifact and invokes the C compiler |
 | Diagnostics | `diag.rs` | a span is one file's byte range; this maps a module id back to `file:line:col` |
