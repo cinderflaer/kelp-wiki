@@ -165,7 +165,7 @@ One code generator, selected with `--backend=` or `KELPC_BACKEND`; an explicit
 | Backend | What it does | Toolchain it needs |
 | --- | --- | --- |
 | `c` (default) | transpiles to C | `cc -O2 -fwrapv -lm` |
-| `llvm` | lowers the scalar subset, `datac` records, the heap slice, tagged unions, the containers, the references that are not a `datac`, and the closures and function values to LLVM IR and an object | `libLLVM-21` to build `kelpc`, then `cc -O2 -o <out> <out>.o -lm` to link |
+| `llvm` | lowers the whole language to LLVM IR and an object | `libLLVM-21` to build `kelpc`, then `cc -O2 -o <out> <out>.o -lm` to link |
 
 ```sh
 KELPC_BACKEND=c kelpc run examples/hello.kp   # the default, spelled out
@@ -191,52 +191,24 @@ forever. A *gated* item named as a function value is refused by the compiler,
 whether or not the naming module holds the domain, because the pattern check is
 emitted from the call's own callee and an indirect call has none.
 
-The **`llvm`** backend is selectable at MK7 stage S1 and covers the scalar subset
-(integers, `f32`/`f64`, `bool`, `char`, arithmetic, comparisons, `if`/`while`,
-calls, string literals and `print`) and, since stage S2A, a `datac` whose fields
-are all scalars or earlier all-scalar `datac`s: layout, construction, field read
-and write, whole-value assignment, nesting, locals, `move` parameters and
-returns, and the shared or exclusive borrow a `datac` parameter resolves to.
-Since stage S2B it adds the heap: `Bytes` and `String` reached through the
-runtime, a `datac` field that owns one, the drop plan, and `panic` and `assert`.
-Since stage S2C it adds tagged unions: `enum` at the C backend's `{ tag, union }`
-layout, construction, payload read, an `enum` as a local, a parameter and a return
-value, `when`, `if let` and `?`, and only the live variant dropped. Since stage
-S2D it adds the containers: `List`, `Map`, `Box` and the fixed-size `[T; N]`,
-built as one monomorphized IR function set per element or value type at the C
-backend's own header layouts, with construction, the method surfaces, `for` over a
-list, a container as a local, a parameter, a return value, a `datac` field and an
-element, the bounds checks and one drop per container type. Since stage S2F it adds
-references that are not a `datac`: a `&T` to a scalar, a borrow of a field, the read
-and the write through one, and a `&T` parameter or return value, with `Ty::Ref` one
-pointer whatever the pointee. Since stage S2E it adds closures and function
-values: a named `fun` used as a value is its own address, a `fun` literal is a bare
-code pointer, a capturing literal is the C backend's fat pointer
-`{ ptr fn, ptr env, ptr drop }` with a heap environment and its own drop, and a
-call through a value passes the environment first. Since stage S3A it lowers the
-compiler-supplied `extern fun` bodies: the C text `externs.rs` holds, written to
-`<out>.externs.c` with the C backend's own includes, typedefs and prototypes and
-compiled into a per-program object linked between the IR object and `-lm`.
-On those programs its stdout is byte-identical to the C backend's, the gates
-being `kelpc/tests/run-llvm-scalar-subset.sh`,
-`kelpc/tests/run-llvm-datac-subset.sh`,
-`kelpc/tests/run-llvm-strings-drops.sh`,
-`kelpc/tests/run-llvm-enum-subset.sh`,
-`kelpc/tests/run-llvm-containers.sh`,
-`kelpc/tests/run-llvm-references.sh`,
-`kelpc/tests/run-llvm-closures.sh` (120 tests) and
-`kelpc/tests/run-llvm-externs.sh` (138 tests), the S2D gate also reading the
-container header and entry layouts back out of the `<out>.ll` the backend wrote,
-the S2F gate the borrowed-parameter signatures, which must be
-`kelp_origin(ptr)`-style pointers, plus a `panic` tail that ends in `unreachable`,
-the S2E gate the fat pointer's `{ ptr, ptr, ptr }` shape, a `fun` parameter
-and return as `ptr`, and a call through a closure with the environment first, and
-the S3A gate each extern declaration, which must match its body's C signature.
-Everything else is refused by name with the MK7 stage that will lower it and a
-`--backend=c` way out, for example `error: the llvm backend cannot lower 'pd' yet
-(MK7 S3); use --backend=c`. There is no IR optimization pass pipeline yet,
-so the object is emitted at LLVM's default codegen level and no performance parity with the C
-backend is claimed; choosing the pipeline is stage S6, and debug info is S4. See
+The **`llvm`** backend lowers the whole language the [Language](/language) pages
+describe to LLVM IR and an object: the scalar types, `datac` records, `enum` and
+`when`, `Bytes`/`String` and the drop plan, `List`/`Map`/`Box`/`[T; N]`,
+references, closures and function values, the `extern fun` bodies, the `pd`
+globals and the capability check. On the corpus it builds every target the C
+backend builds and prints the same stdout with the same exit status, byte for
+byte: `LLVM_BUILT_BASELINE` is 221 of the 221 targets and the refusal ranking is
+empty. The gates that carry the slices are `kelpc/tests/run-llvm-scalar-subset.sh`,
+`run-llvm-datac-subset.sh`, `run-llvm-strings-drops.sh`, `run-llvm-enum-subset.sh`,
+`run-llvm-containers.sh`, `run-llvm-references.sh`, `run-llvm-closures.sh` (120
+tests), `run-llvm-externs.sh` (138 tests) and `run-llvm-pd-caps.sh` (38 tests,
+the `pd` globals, the capability check and the last three refusals, with the deny
+text pinned against the C backend's own). One guard remains in the lowering, for
+an owned temporary at a place it did not stage, and nothing in the corpus reaches
+it. `c` stays the default, the oracle and the way out. There is no IR optimization
+pass pipeline yet, so the object is emitted at LLVM's default codegen level and no
+performance parity with the C backend is claimed; choosing the pipeline is stage
+S6, and debug info is S4. See
 [`plan/mk7-llvm-backend.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-llvm-backend.md).
 
 ## `fmt`

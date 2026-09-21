@@ -27,7 +27,7 @@ cargo build --release -p kelpc
 | Type checking | `infer.rs` | types, generics, stdlib overload resolution; fills in implicit borrows |
 | Typed IR | `tir.rs` | every node carries its resolved type and span |
 | Move/borrow checking | `borrowck.rs` | moves, borrows, and the drop plan the code generators read |
-| Code generation | `codegen_c.rs`, `codegen_llvm.rs` | typed IR to C source text, or to LLVM IR (the scalar subset, `datac` records, the heap slice, tagged unions, the containers, the references that are not a `datac`, the closures and function values, and the `extern fun` bodies, MK7 S1, S2A, S2B, S2C, S2D, S2F, S2E and S3A) |
+| Code generation | `codegen_c.rs`, `codegen_llvm.rs` | typed IR to C source text, or to LLVM IR covering the whole language (MK7; one guard remains for an owned temporary at a place the lowering did not stage) |
 | Backend selection | `backend.rs` | `--backend=` / `KELPC_BACKEND` |
 | Finishing | `driver.rs` | writes the artifact and invokes the C compiler |
 | Diagnostics | `diag.rs` | a span is one file's byte range; this maps a module id back to `file:line:col` |
@@ -46,7 +46,7 @@ and the retired hand-written track in
 ## Pages
 
 - [Pipeline](/compiler/architecture): each stage, and what it is responsible for
-- [Backends](/compiler/backends): `c` and `llvm`, and why a refusal is a feature
+- [Backends](/compiler/backends): `c` and `llvm`, and why `c` stays the oracle
 - [Runtime](/compiler/runtime): the C that is still C, and the capability matcher
 - [Tests](/compiler/tests): the fixture suite, the differential sweeps, the memory gate
 

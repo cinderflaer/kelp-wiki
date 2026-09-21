@@ -87,11 +87,12 @@ worth reading once on purpose rather than once per error.
 ## When it is not your code
 
 A backend refusing a construct by name, rather than miscompiling it, is
-documented behaviour rather than a bug in your program: the `llvm` backend
-carries that discipline today, so `error: the llvm backend cannot lower 'pd' yet
-(MK7 S3); use --backend=c` is not a bug, and `--backend=c` is the way out. The
-other shape of it is the retired `asm` name: `kelpc build --backend=asm` reports
-`unknown backend 'asm'; expected one of: c, llvm`.
+documented behaviour rather than a bug in your program. The `llvm` backend lowers
+the whole language today, so it refuses no corpus construct; one guard remains in
+the lowering for an owned temporary at a place it did not stage, and `--backend=c`
+is always the way out. The other shape of it is the retired `asm` name:
+`kelpc build --backend=asm` reports `unknown backend 'asm'; expected one of: c,
+llvm`.
 
 `error: cc failed:` is different: `kelpc` generated C that the C compiler would
 not accept, which is a `kelpc` bug. The generated C carries a `#line` directive

@@ -1,6 +1,6 @@
 ---
 title: "Backends"
-description: "A code generator is selectable with --backend= or the KELPC_BACKEND environment variable, and an explicit flag wins over the variable; the default is c. The llvm backend lowers the scalar subset, `datac` records, the heap slice, tagged unions, the containers, references that are not a `datac`, closures and function values, and the `extern fun` bodies, and refuses everything else by name."
+description: "A code generator is selectable with --backend= or the KELPC_BACKEND environment variable, and an explicit flag wins over the variable; the default is c. The llvm backend lowers the whole language and matches the C backend byte for byte over the corpus, and c stays the default and the oracle."
 isPublished: true
 tags: "compiler"
 ---
@@ -11,7 +11,7 @@ the default is `c`.
 | Backend | Emits | Finished with | Status |
 | --- | --- | --- | --- |
 | `c` (default) | C source text | `cc -O2 -fwrapv -lm` | complete, and the reference |
-| `llvm` | LLVM IR, then an object | `<out>.ll` and `<out>.o`, then `cc -O2 -o <out> <out>.o -lm` | the scalar subset (MK7 S1), `datac` records (MK7 S2A), the heap slice: `Bytes`/`String`, an owned field, drops, `panic` and `assert` (MK7 S2B), tagged unions: `enum` at the C `{ tag, union }` layout, `when`, `if let`, `?`, and one `switch` per drop (MK7 S2C), the containers: `List`, `Map`, `Box` and `[T; N]` (MK7 S2D), references that are not a `datac`: a `&T` to a scalar, a borrow of a field, the read and the write through one, and a `&T` parameter or return (MK7 S2F), and closures and function values: a declared `fun` as a bare code pointer, a `fun` literal, a capturing closure as the C backend's `{ ptr fn, ptr env, ptr drop }` fat pointer with a heap environment and its own drop, a function value or closure as a local, a parameter, a return value and a `datac` field, and a call through a value, with the environment passed first (MK7 S2E), and the `extern fun` bodies: the C text the C backend already emits from `externs.rs`, compiled per program with the C backend's own includes, typedefs and prototypes and linked between the IR object and `-lm` (MK7 S3A); everything outside them is refused by name |
+| `llvm` | LLVM IR, then an object | `<out>.ll` and `<out>.o`, then `cc -O2 -o <out> <out>.o -lm` | the whole language the [Language](/language) pages describe, and the same stdout and exit status as the `c` backend byte for byte over the corpus (221 of 221 targets, the refusal ranking empty); one guard remains for an owned temporary at a place the lowering did not stage |
 
 The hand-written **`asm`** backend, which emitted x86-64 assembly text itself and
 finished with `as` and `ld`, was retired on 2026-09-20 and its source was removed
@@ -37,113 +37,87 @@ way `rustc` does. This is MK7, begun at stage S1 on 2026-09-21, and the plan of
 record is
 [`plan/mk7-llvm-backend.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-llvm-backend.md).
 
-At S1 it covers the **scalar subset**: the integer types (`i32`, `i64`, `u32`,
-`u64`, `u8`, `u16`, `usize`, `isize`), `f32`/`f64`, `bool`, `char`, arithmetic,
-comparisons, `if`/`while`, calls, string literals and `print`. At S2A, landed on
-2026-09-21, it adds a **`datac` whose fields are all scalars or earlier
-all-scalar `datac`s**: the struct type at the same field order and natural
-alignment the C backend's typedef has, construction, a field read and a field
-write, a whole-value assignment, a nested struct, a struct as a local, a `move`
-parameter and a return value, a field mutated through a method's `self`, and the
-shared or exclusive borrow a `datac` parameter resolves to, which is the same
-address either way. At S2B, landed on 2026-09-21, it adds the **heap and the
-runtime**: `Bytes` and `String` as a pointer and a length reached through the
-runtime, a `datac` field that owns one, the **drop plan** `borrowck` produced
-emitted at the same points the C backend emits it (the end of a block, before a
-`return`, and before an assignment overwrites an owned binding, with a move
-clearing its source slot), and `panic`, `assert` and the out-of-range panic of a
-narrowing conversion. At S2C, landed on 2026-09-21, it adds the **tagged union**:
-`enum` at the same `{ tag, union }` shape the C backend gives it, an `i32` tag at
-offset 0 and the payload at the C union's offset, with the size and alignment read
-from the target machine's data layout rather than assumed. Construction, a payload
-read, an `enum` as a local, a parameter and a return value, a nested payload,
-`when`, `if let` and `?` all lower, and only the live variant is dropped: one
-`switch` on the tag per owning enum. At S2D, landed on 2026-09-21, it adds the
-**containers**: `List`, `Map`, `Box` and the fixed-size `[T; N]`, as one
-monomorphized IR function set per element or value type, with the C backend's own
-header layouts, matched field for field: `List` and `String` as
-`{ ptr, i64, i64 }`, `Box` as `{ ptr }`, `Map` as `{ ptr, i64, i64, i64, ptr,
-i64, i64 }` with an entry `{ K, ptr, i8 }`, and an array inline as `[N x T]`.
-Construction, the method surfaces, `for` over a list, a container as a local, a
-parameter, a return value, a `datac` field and an element, the bounds checks and
-one drop per container type all lower, and the bounds and panic text is
-byte-identical to the C backend's.
+It covers the **whole language**, the surface the [Language](/language) pages
+describe. `c` is still the oracle the two are compared against, and the categories
+below are what the differential sweep measures:
 
-At S2F, landed on 2026-09-21, it adds **references that are not a `datac`**: a
-`&T` to a scalar, a borrow of a field, the read through one, the write through an
-exclusive one, and a `&T` parameter or return value. `Ty::Ref` is one `ptr`
-whatever the pointee, so `&place` is the place's address, `*p` is a pointee-typed
-load and `*p = v` a store through it. At S2E, landed on 2026-09-21, it adds
-**closures and function values**: a named `fun` used as a value is the function's
-own address, a `fun` literal is a bare code pointer, and a literal that captures
-is a closure at the C backend's fat pointer, one identified struct per signature,
-`{ ptr fn, ptr env, ptr drop }`. The code pointer takes the environment as its
-hidden first argument, so an indirect call is `fn(env, args...)`; a `fun`
-parameter or return is a bare `ptr`. A function value or closure lowers as a
-local, a parameter, a return value and a `datac` field, and the heap environment
-is allocated with the same `malloc`/`free` the rest of the runtime uses. On a
-program that stays inside the seven, the
-`llvm` backend's stdout is byte-identical to the C backend's, which is the gates:
-`kelpc/tests/run-llvm-scalar-subset.sh`,
-`kelpc/tests/run-llvm-datac-subset.sh`,
-`kelpc/tests/run-llvm-strings-drops.sh`,
-`kelpc/tests/run-llvm-enum-subset.sh`,
-`kelpc/tests/run-llvm-containers.sh`,
-`kelpc/tests/run-llvm-references.sh` and
-`kelpc/tests/run-llvm-closures.sh`, plus the `extern fun` gate
-`kelpc/tests/run-llvm-externs.sh`, each carrying the earlier gates' fixtures
-forward: the S2D gate adds the container fixtures (103 tests), the S2F gate the
-reference fixtures (109 tests in one run), the S2E gate the closure and
-function-value fixtures (120 tests in one run) and the S3A gate the `extern fun`
-fixtures (138 tests in one run). Each gate also reads the shape it
-is about back out of the `<out>.ll` the backend wrote and asserts it: the S2C gate
-the tag and payload offsets (three SysV classes, a one-byte union at offset 4, an
-eight-byte union at offset 8 and a 24-byte one at offset 8), and the S2D gate the
-container header and entry layouts, plus the guarantee that no runtime declaration
-passes a container header by value. The S2F gate reads the borrowed-parameter
-functions' signatures back out of the IR, asserting each takes a
-`kelp_origin(ptr)`-style pointer, and asserts that a `panic` tail ends in
-`unreachable`. The S2E gate reads the fat pointer's shape back as `{ ptr, ptr,
-ptr }`, that a `fun` parameter and a `fun` return are both `ptr`, that a call
-through a closure passes the environment first, and the shape of a two-field
-environment (an `i32`, an `i64` and an owned `String` at their own alignments).
-No fixture's own output would catch any of them.
+- the scalar types (`i32`, `i64`, `u32`, `u64`, `u8`, `u16`, `usize`, `isize`),
+  `f32`/`f64`, `bool` and `char`: arithmetic, comparisons, `if`/`while`, calls,
+  string literals and `print`;
+- a `datac` at the same field order and natural alignment the C backend's typedef
+  has, and `enum` at the same `{ tag, union }` shape, with `when`, `if let` and
+  `?` and only the live variant dropped;
+- `Bytes` and `String` through the runtime, an owned field, the drop plan
+  `borrowck` produced emitted at the same points the C backend emits it, and
+  `panic`, `assert` and the out-of-range panic of a narrowing conversion;
+- `List`, `Map`, `Box` and the fixed-size `[T; N]` at the C backend's own header
+  layouts, with the method surfaces, `for` over a list, a container as a field
+  and an element, the bounds checks and one drop per container type;
+- references that are not a `datac`: `Ty::Ref` is one `ptr` whatever the
+  pointee, so `&place` is the place's address, `*p` a pointee-typed load and
+  `*p = v` a store, and a `&T` parameter or return is a `ptr`;
+- closures and function values: a named `fun` used as a value is its own address,
+  a `fun` literal is a bare code pointer, and a capturing literal is the C
+  backend's `{ ptr fn, ptr env, ptr drop }` fat pointer, one identified struct per
+  signature, with the environment passed first to the code pointer and a heap
+  environment of its own;
+- the compiler-supplied `extern fun` bodies: the C text `externs.rs` holds,
+  written to `<out>.externs.c` with the C backend's own includes, typedefs and
+  prototypes and compiled into a per-program object linked between the IR object
+  and `-lm`;
+- the `pd` globals: one module-scope global per passdown with internal linkage,
+  filled in declaration order by the generated `kelp_init_pds` so a chained
+  initializer reads what an earlier one wrote, with `kelp_drop_pds` registered
+  with `atexit` for an owned passdown, and `main` as `i32 @main(i32, ptr)` saving
+  `kelp_argc`/`kelp_argv`, which `process.args()` reads;
+- the capability check: the same call sites and the same arguments
+  `codegen_c.rs::cap_plan` decides, the resource argument evaluated once into a
+  value the check and the call share, against the per-`(module, domain)`
+  allowlist arrays, with `runtime/cap_glue.c` compiled into the per-program
+  object so the deny path's text is the C backend's byte for byte.
 
-At S3A, landed on 2026-09-21, it lowers the **`extern fun` bodies**: the C text
-`externs.rs` holds for the raw allocator, `str`'s byte reads, the `malloc`-shaped
-`String`/`Bytes` construction, `sqrt`, `clock_gettime` and the rest of the
-unportable primitives. Each declaration is built from its body's C signature
-rather than the written one, so an owned parameter is a borrow and a `Bytes` or
-`String` return comes back through the hidden first argument. The bodies are
-written to `<out>.externs.c` and compiled into a per-program object, which is
-fixed per program rather than shared: one body calls a `std/path` function only
-the resolver injects and another names a per-program container typedef. The
-`externs` gate, `kelpc/tests/run-llvm-externs.sh`, runs 138 tests, the 120 of the
-S2E run carried forward plus 18, and reads each declaration back out of the
-`<out>.ll` to assert it matches its body's signature. `codegen_c.rs` changed here
-only for visibility and a pure extraction of its include block, with the
-generated C byte-identical.
-
-Everything outside them is **refused by name**, never miscompiled and never a
-panic. The error names the construct and the MK7 stage that will lower it:
+The corpus agrees byte for byte. The differential sweep builds every fixture the
+C backend builds with `llvm` too, runs both and compares stdout and exit status:
 
 ```text
-$ kelpc build src/main.kp --backend=llvm
-error: the llvm backend cannot lower 'pd' yet (MK7 S3); use --backend=c
+221 of 378 corpus targets built by 'c' (157 rejected by it),
+221 also built by 'llvm', 0 refused, 0 mismatch(es), 0 crash(es)
 ```
 
-A field that owns a `String` or a `Bytes` lowers at S2B, a container or an
-array field at S2D, and a borrow of a field at S2F. What is still refused: a
-`str`, `View` or reference field in a `datac` (S2F, an arm the frontend never
-reaches because it refuses a borrowed field before codegen), `pd` (S3), and the
-two owned-temporary shapes, `String#into_bytes` and a field of an owned
-temporary (S2B). No refusal names an `extern fun` call, a closure or a function
-value any more: the bodies lower at S3A, a closure that reaches no stdlib import
-lowers at S2E, and a gated call that names a resource argument is still refused
-by name until the capability check lands (S3). A
-borrow of anything that is not a `datac` is no longer refused: S2F lowers it. An
-`enum` is not, and neither is a container: S2C lowers the tagged union with
-`when`, `if let` and `?`, and S2D lowers `List`, `Map`, `Box` and `[T; N]`.
+`LLVM_BUILT_BASELINE` is 221 of the 221 targets the C backend builds and the
+refusal ranking is empty, which is the plan's §4.1 gate. The deny path is
+byte-identical on all eight denied projects: stdout, stderr and the exit status
+compare equal between the two backends, including `caps_double_eval`, whose
+stdout is one `SIDE` line under both, which is the once-only resource evaluation
+the C side needed a fix for.
+
+Each slice keeps its own gate, and each also reads the shape it is about back out
+of the `<out>.ll` the backend wrote:
+`kelpc/tests/run-llvm-scalar-subset.sh`, `run-llvm-datac-subset.sh`,
+`run-llvm-strings-drops.sh`, `run-llvm-enum-subset.sh`, `run-llvm-containers.sh`,
+`run-llvm-references.sh`, `run-llvm-closures.sh` (120 tests),
+`run-llvm-externs.sh` (138 tests) and `run-llvm-pd-caps.sh` (38 tests). The reads
+are the ones no fixture's own output would catch: the tag and payload offsets of
+three SysV `enum` classes, the container header and entry layouts and the
+guarantee that no runtime declaration passes a container header by value, the
+borrowed-parameter signatures as `kelp_origin(ptr)`-style pointers and a `panic`
+tail ending in `unreachable`, the fat pointer's `{ ptr, ptr, ptr }` shape, `fun`
+parameters and returns as `ptr`, a call through a closure passing the environment
+first, and each extern declaration matching its body's C signature. The
+`run-llvm-pd-caps.sh` gate adds the last half: the `pd` globals, the capability
+check and the last three refusals, and it pins the deny path's text against the C
+backend's own. The ignored valgrind sweep covers 32 `pd`/capability binaries
+besides the closure, extern and container sweeps, and the four LLVM sweeps plus
+the C sweep (209 binaries) are green.
+
+The backend no longer refuses a corpus construct. One guard stays, in
+`codegen_llvm.rs::place_of`, for an owned rvalue no staging site claimed; its
+message is `error: the llvm backend cannot lower 'an owned temporary' at a place
+this lowering does not stage (MK7 S3); use --backend=c`. Nothing in the corpus
+reaches it, and it is kept because a wrong lowering is worse than a named refusal:
+a place this lowering did not stage is a bug, and the guard turns it into a
+diagnostic rather than a miscompile. Read the empty refusal ranking as a
+measurement over the corpus, not as a promise that the backend can never refuse.
 
 - **What is reused:** everything up to the typed IR. The lexer, the preprocessor,
   the parser, the type checker, the move and borrow checker and the meaning of
@@ -170,17 +144,19 @@ borrow of anything that is not a `datac` is no longer refused: S2F lowers it. An
   and links the object it compiles between the IR object and `-lm`. A fixed
   object cannot work, because one body calls a `std/path` function only the
   resolver injects and another names a per-program container typedef.
-- **Scale:** S3 to S7 remain, roughly 3 to 6 weeks of emission-layer work to a
-  suite-green backend (the plan's §0.1 and §5, whose stage-2 table names each
-  slice the refusals point at).
+- **What is left:** S4 (debug locations to DWARF), S5 (fuzzing and conformance)
+  and S6 (the optimization-level decision) have not landed, and S7 is the flip.
+  The parity is measured, and the default has not moved; `plan/mk7-llvm-backend.md`
+  §5 is the stage table.
 - **No pass pipeline yet:** there is no IR optimization pass pipeline, so the
   object is emitted at LLVM's default codegen level. Choosing the pipeline is
   stage S6, and debug info (DWARF from attached locations) is stage S4. There is
   no measurement behind the `llvm` backend, so it is not claimed to match the C
   backend's speed: the `bench/speed` numbers are the C path's.
 - **Crate and linking:** `llvm-sys` plus a thin wrapper of our own, linked
-  dynamically against the host's `libLLVM`. A `kelpc` built with this backend
-  links `libLLVM-21.so` and needs it at runtime: on a build from this checkout the
+  dynamically against the host's `libLLVM`. Every `kelpc` links `libLLVM-21.so`
+  and needs it at runtime, whichever backend it is run with: on a build from this
+  checkout the
   RUNPATH points into the nix store, and a binary built elsewhere records a
   different path. The trade-offs are in the plan's §1. The dev shell that
   provides the LLVM build half is `shell.nix` at the repository root.
@@ -206,20 +182,18 @@ Two consequences worth knowing:
    way back is how a second backend becomes unmaintained.
 
 2. **A construct a second backend cannot lower must be refused by name, never
-   miscompiled.** The `llvm` backend already follows this (the errors above). The
+   miscompiled.** The `llvm` backend already follows this (the guard above). The
    differential sweep that enforces it, `kelpc/tests/backend_coverage.rs`, was
    removed with the `asm` rows and has been rebuilt against the LLVM backend
    (`plan/mk7-llvm-backend.md` §6), where the baseline is `LLVM_BUILT_BASELINE`:
    it builds every fixture the C backend builds with `llvm`, runs both and compares
-   stdout and exit status byte for byte, records each refusal with its message, and
-   ratchets a coverage count that may only rise (183 of the 221 targets at the S3A
-   tip, 38 of them refused, all by name: `pd` (S3) leads with 35, then a field of
-   an owned temporary (S2B) with 2 and `String#into_bytes` (S2B) with 1; no
-   refusal names an `extern fun` call, a closure or a function value any more,
-   and none is unnamed). On its first run it
-   caught a silent miscompile,
-   a borrow returned through the value position of an `if` and a returned `&String`,
-   which now match the C backend.
+   stdout and exit status byte for byte, and records a refusal with its message
+   rather than failing it. The baseline is 221 of the 221 targets and the ranking
+   is empty. A refusal that arrived with a new fixture would still be recorded, so
+   the ratchet stays the instrument: it may only rise, and a backward step is a
+   regression. On its first run it caught a silent miscompile, a borrow returned
+   through the value position of an `if` and a returned `&String`, which now match
+   the C backend.
 
 ## See also
 
