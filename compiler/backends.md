@@ -1,34 +1,33 @@
 ---
 title: "Backends"
-description: "Two code generators are selectable with --backend= or the KELPC_BACKEND environment variable, and an explicit flag wins over the variable; the default is c. The next backend is LLVM IR, and the hand-written assembly backend is retired as a direction."
+description: "One code generator is selectable with --backend= or the KELPC_BACKEND environment variable, and an explicit flag wins over the variable; the default is c. The next backend is LLVM IR."
 isPublished: true
 tags: "compiler"
 ---
-Two code generators are selectable, chosen with `--backend=` or the
+One code generator is selectable, chosen with `--backend=` or the
 `KELPC_BACKEND` environment variable. An explicit flag wins over the variable;
 the default is `c`.
 
 | Backend | Emits | Finished with | Status |
 | --- | --- | --- | --- |
 | `c` (default) | C source text | `cc -O2 -fwrapv -lm` | complete, and the reference |
-| `asm` | x86-64 assembly text | `as --64`, then `ld` with `crt1.o`/`crti.o`/`crtn.o`, `-lc`, `-lm` | selectable, but **retired as a direction** |
 
-`asm` still builds most of the language. It is removed from the compiler once the
-LLVM backend passes the fixture corpus, and it stays selectable until then because
-a backend that is still selectable must still work. Its counts, its refusal
-ranking and the measurements behind them are in
-[`plan/asm-backend/plan.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/asm-backend/plan.md)
-§0 and §5.
+The hand-written **`asm`** backend, which emitted x86-64 assembly text itself and
+finished with `as` and `ld`, was retired on 2026-09-20 and its source was removed
+on 2026-09-21. `--backend=asm` is no longer accepted; the diagnostic reads
+`unknown backend 'asm'; expected one of: c`. Its plan, its counts, its refusal
+ranking and the measurements behind them stay as history in
+[`plan/asm-backend/`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/asm-backend/).
 
 ```sh
-kelpc build examples/hello.kp --backend=asm   # until the LLVM backend lands
-KELPC_BACKEND=c kelpc run examples/hello.kp   # the oracle, and the default
+kelpc build examples/hello.kp                 # the default, and the reference
+KELPC_BACKEND=c kelpc run examples/hello.kp   # the same, spelled out
 ```
 
 `backend.rs` holds only the selector: how a backend is named, which names exist,
 and how the choice is resolved. The `match` that calls a generator stays at its
 single call site in `main.rs`, and it becomes a trait when a third backend makes
-the interface worth naming.
+the interface worth naming. `llvm` is the next name it will carry.
 
 ## The next backend is LLVM IR
 
@@ -54,7 +53,8 @@ the interface worth naming.
   the plan's §0.1, and the stages in its §5.
 - **Crate and linking:** `llvm-sys` plus a thin wrapper of our own, linked
   dynamically against the host's `libLLVM`, which makes the LLVM major part of the
-  compiler's build contract. The trade-offs are in the plan's §1.
+  compiler's build contract. The trade-offs are in the plan's §1. The dev shell
+  that provides the LLVM build half is `shell.nix` at the repository root.
 - **Debug info:** LLVM emits DWARF from the locations we attach, so the format is
   not our work; the C backend's `#line` directive stays until that lands.
 
@@ -65,25 +65,18 @@ the result, and compares stdout. So a second backend is validated by running the
 suite again with `KELPC_BACKEND` set to it, and the C backend's own output becomes
 the thing the new backend is compared against, rather than a second opinion.
 
-Three consequences worth knowing:
+Two consequences worth knowing:
 
-1. **A construct a second backend cannot lower is refused by name, never
-   miscompiled.** The refusal prefix is a constant in the test suite
-   (`REFUSAL_PREFIX`, `kelpc/tests/backend_coverage.rs`), and the differential
-   sweep asserts that every refusal begins with it. The `asm` backend's refusals
-   read like this one:
-
-   ```
-   error: the 'asm' backend does not support the `extern fun std.process.arg_count_raw` yet
-   ```
-
-2. **A refusal is a feature.** A backend earns coverage by agreeing with the C
-   backend on the fixtures it does build, and the coverage number can only rise.
-
-3. **`--backend=c` and `KELPC_BACKEND=c` stay selectable forever**, and
+1. **`--backend=c` and `KELPC_BACKEND=c` stay selectable forever**, and
    `codegen_c.rs` is never deleted. With one backend, "correct" means "matches the
    author's intent"; with two, it is a measurement over the corpus. A flip with no
    way back is how a second backend becomes unmaintained.
+
+2. **A construct a second backend cannot lower must be refused by name, never
+   miscompiled.** The differential sweep that enforced an agreed refusal prefix,
+   `kelpc/tests/backend_coverage.rs`, was removed with the `asm` rows; it is
+   rebuilt against the LLVM backend (`plan/mk7-llvm-backend.md` §6), where the
+   baseline becomes `LLVM_BUILT_BASELINE`.
 
 ## See also
 

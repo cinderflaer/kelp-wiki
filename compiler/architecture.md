@@ -123,7 +123,6 @@ this block" and "which die before this return" as it writes each one.
 | Module | Emits | Notes |
 | --- | --- | --- |
 | `codegen_c.rs` | C source text | value-position blocks use the GNU statement-expression extension `({ ...; expr; })`, which both `gcc` and `clang` accept; the `Bytes`/`String` runtime (allocation, bounds checks, `free`) is a fixed C preamble; the generated C carries a `#line` directive before every statement, so a `cc` failure names the `.kp` file and the line the statement is written on (plan item 20, closed) |
-| `codegen_asm.rs` | x86-64 assembly text | **retired as a direction**: a stack machine (every expression evaluates into `rax`) with a linear-scan register allocator, kept selectable and kept green until the LLVM backend passes the corpus, then removed |
 | `codegen_llvm.rs` | LLVM IR | not written yet: the next backend, a peer of `codegen_c.rs` over the same `tir`. See [`plan/mk7-llvm-backend.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-llvm-backend.md) |
 
 Details, and what each backend refuses, are in [Backends](/compiler/backends).
@@ -136,7 +135,6 @@ not share it:
 | Backend | Steps |
 | --- | --- |
 | `c` | write `<out>.c` beside the binary, then `cc -O2 -o <out> <out>.c -fwrapv -lm` |
-| `asm` | write `<out>.s`, `as --64 -o <out>.o`, then `ld -dynamic-linker <interp> crt1.o crti.o <out>.o crtn.o -lc -lm -L<lib>` |
 | `llvm` (planned) | emit an object with LLVM, then link it exactly as the `c` path links its object; see the backend plan |
 
 The generated C is deliberately **kept** next to the binary rather than deleted,

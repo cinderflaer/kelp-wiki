@@ -13,33 +13,29 @@ check has to call the Kelp matcher (`cap_matcher.rs`), every statement has to be
 mapped back to its `.kp` line (`compile_and_run.rs`'s
 `the_generated_c_maps_statements_back_to_their_kp_lines`), and a build with no
 `-o` has to leave the generated C beside the artifact
-(`a_build_with_no_output_path_lands_in_build`). That last one is C-only by
-construction, so it is the one failing test under `--backend=asm` that is not a
-refused construct.
+(`a_build_with_no_output_path_lands_in_build`).
 
 ```sh
 cargo test                                   # unit tests + the fixture suite
-KELPC_BACKEND=asm cargo test --test compile_and_run   # until `asm` is removed
-BACKENDS="c asm" ./kelpc/tests/run-all-backends.sh
+cargo test --test fmt                        # the formatter's corpus and properties
+./kelpc/tests/run-all-backends.sh            # the suite once per implemented backend
 ```
 
 ## The fixture suite (`kelpc/tests/compile_and_run.rs`)
 
-358 tests (measured 2026-09-20 at compiler commit `926e33f`), driving the real
-`kelpc` binary over two corpora:
+353 tests (measured 2026-09-21, after the `asm` backend was removed), driving the
+real `kelpc` binary over two corpora:
 
 | Corpus | Count | Shape |
 | --- | --- | --- |
-| `kelpc/tests/fixtures/*.kp` | 364 files | one loose file per single-file test |
+| `kelpc/tests/fixtures/*.kp` | 363 files | one loose file per single-file test |
 | `kelpc/tests/projects/<name>/` | 61 directories | multi-file: a module graph needs a directory, and a granted module needs an importer |
 
-The C backend passes every one of them. The `asm` backend passes all but the tests
-that compile a fixture or project it refuses, plus
-`a_build_with_no_output_path_lands_in_build`, which asserts on the generated C.
-Re-measure the pair before quoting it: it moves with every slice, and
+The C backend passes every one of them. The `asm` rows left the suite with the
+backend on 2026-09-21: its counts, its refusal ranking and the fixture-by-fixture
+detail stay frozen in
 [`plan/asm-backend/plan.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/asm-backend/plan.md)
-§0 is the source of truth. The `asm` track is retired, so the numbers it owns are
-frozen rather than moving.
+§0, as history rather than a live measurement.
 One of them,
 `the_host_port_denial_names_the_host_as_written_and_its_own_port`, is a loopback
 test that fails intermittently in a full run: a run that includes it reads 340 and
@@ -68,7 +64,7 @@ in one that does (`caps_raw_ungranted`, `caps_raw_granted`, `caps_raw_positions`
 `caps_raw_denied`, `caps_value_ungranted`, `caps_raw_value_ungranted`,
 `caps_method_*`, `pd_gated_*`). The granted-function-value route is a test file of
 its own (`cap_function_value.rs`, four tests, because the construct is refused at
-inference in both backends) and the project it replaced,
+inference, before any backend) and the project it replaced,
 `caps_raw_value_granted`, went with it.
 
 Two gates run inside this file:
@@ -89,18 +85,19 @@ Two gates run inside this file:
 | Test file | What it does | Default run |
 | --- | --- | --- |
 | `kelpc/tests/run-all-backends.sh` | runs the fixture suite once per backend (`BACKENDS`, default `c`) | a shell script, not a cargo test |
-| `backend_coverage.rs` | the differential sweep: builds every fixture the C backend builds with the second backend too, runs both, and requires byte-identical stdout and exit status; a refusal must begin with the documented prefix; also records the refusal ranking so coverage numbers cannot drift silently. Today the second backend is `asm`; the sweep and its baseline are repurposed for `llvm` (`plan/mk7-llvm-backend.md` §6) | the sweep is ignored; one cheap baseline check runs |
-| `memory_gate.rs` | valgrind (`--leak-check=full --show-leak-kinds=all`, diagnostics to `--log-file`) over both backends' binaries, asserting no findings in any process; a spawned child inherits valgrind, so it writes into the same log | ignored; the default run only checks that valgrind is discoverable |
+| `memory_gate.rs` | valgrind (`--leak-check=full --show-leak-kinds=all`, diagnostics to `--log-file`) over the built binaries, asserting no findings in any process; a spawned child inherits valgrind, so it writes into the same log | ignored; the default run only checks that valgrind is discoverable |
+
+The differential sweep, `backend_coverage.rs`, was removed with the `asm` rows on
+2026-09-21; it is rebuilt against the LLVM backend, with `LLVM_BUILT_BASELINE` in
+place of `ASM_BUILT_BASELINE` (`plan/mk7-llvm-backend.md` §6).
 
 ```sh
-cargo test --test backend_coverage -- --ignored --nocapture   # differential sweep + refusal ranking
-cargo test --test memory_gate    -- --ignored                 # valgrind over both backends
+cargo test --test memory_gate    -- --ignored                 # valgrind over the binaries
 ```
 
-The memory gate exists because the AddressSanitizer gate cannot cover the
-assembly backend: it instruments the *generated C*, and there is none once
-`kelpc` emits its own assembly. Valgrind runs an asm-generated binary like any
-other.
+The memory gate exists because the AddressSanitizer gate cannot cover a backend
+that writes its own object: it instruments the *generated C*, and there is none
+once `kelpc` emits code itself. Valgrind runs any binary.
 
 ## Differential corpora for the runtime
 
@@ -157,8 +154,8 @@ to 87x slower depending on the workload, with one caveat the README records: an
 unconstrained naive `fib` is rewritten into a loop by LLVM at 0.5 ns/op, so the
 call-cost workload needs a side-effecting counter to measure anything at all.
 
-The `bench/speed` gate is also where the second backend's numbers were measured,
-and the plan's annex records the caveats: the `asm` backend compiled a subset of
+The `bench/speed` gate is also where the retired hand-written backend's numbers
+were measured, and the plan's annex records the caveats: it compiled a subset of
 the kernels at that measurement, and the follow-up list of what must be true
 before the number is trustworthy is longer than the number itself. The retired
 track's call-cost measurement is

@@ -25,17 +25,15 @@ across the language, the stdlib and the libraries is one `rg`.
 ```sh
 cargo build --release -p kelpc
 cargo test                                   # unit tests + the fixture suite
-KELPC_BACKEND=asm cargo test --test compile_and_run   # until `asm` is removed
-BACKENDS="c asm" ./kelpc/tests/run-all-backends.sh
+./kelpc/tests/run-all-backends.sh            # the suite once per implemented backend
 ```
 
 The fixture suite compiles a fixture, runs the result and compares stdout, so it
-is backend-agnostic by construction. Three heavier checks are `#[ignore]`d so the
+is backend-agnostic by construction. Two heavier checks are `#[ignore]`d so the
 default run stays fast:
 
 ```sh
-cargo test --test backend_coverage -- --ignored --nocapture   # differential sweep + refusal ranking
-cargo test --test memory_gate      -- --ignored               # valgrind over both backends
+cargo test --test memory_gate      -- --ignored               # valgrind over the binaries
 cargo test --test cap_matcher      -- --ignored               # the matcher vs its C reference
 ```
 
@@ -45,10 +43,10 @@ their checksums.
 ## What a change should carry
 
 - **A fixture** for a language change: a `.kp` program under `kelpc/tests/fixtures`
-  whose stdout is the expected output. Every backend runs it, so a construct a
-  backend cannot lower yet fails loudly with its name rather than silently. The
-  `asm` backend is retired and removed once the LLVM backend passes the corpus, so
-  a new fixture needs the C backend and the LLVM backend, not `asm`.
+  whose stdout is the expected output. Every implemented backend runs it, so a
+  construct a backend cannot lower yet fails loudly with its name rather than
+  silently. The hand-written `asm` backend was removed on 2026-09-21, so a new
+  fixture is written for the C backend, and for the LLVM backend once it lands.
 - **A test in the corpus** for a capability-matcher or path-normalizer change:
   those two are implemented twice (Kelp and C) and compared.
 - **A citation** for a documentation change: every page in this wiki names the
@@ -120,7 +118,7 @@ A useful defect report has:
 2. the exact command and the exact error, including the failing generated-C line
    if the failure came from `cc`;
 3. what you expected instead, in one sentence;
-4. whether it is `c`-only, `asm`-only or both (`KELPC_BACKEND=asm` is the test).
+4. whether it is `c`-only or backend-independent (`KELPC_BACKEND` is the test).
 
 ## Working on this site
 

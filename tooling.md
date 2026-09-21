@@ -65,7 +65,7 @@ one of the three that runs while you type.
 ## Pages
 
 - [`kelpc` CLI](/tooling/kelpc-cli): every subcommand and flag, where artifacts land, the
-  two backends, `fmt`'s rules and its refusals, environment variables, and what a
+  backend, `fmt`'s rules and its refusals, environment variables, and what a
   project changes about module resolution.
 - [Coral](/tooling/coral): the manifest key by key, the command surface, the dependency
   model, what a sync installs and fetches, the toolchain store, environment

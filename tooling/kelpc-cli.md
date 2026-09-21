@@ -128,11 +128,9 @@ resolution, which is the compiler's own answer to keep or to publish.
 | `kelpc build src/main.kp -o app` | `app` | `app.c` |
 | `kelpc build .` | `build/a.out` | `build/a.c` |
 
-Under `--backend=asm` the generated file is the assembly text in place of the C:
-`build/main.s` and `build/main.o`, or `<out>.s` and `<out>.o` with `-o`. That
-backend is retired as a direction and goes when the LLVM backend lands; the planned
-artifact then is LLVM IR (`.ll`) or an object, with a `libLLVM` requirement on
-`kelpc` itself.
+The hand-written `asm` backend is gone, so `--backend=asm` is now an unknown name.
+The planned LLVM backend emits LLVM IR (`.ll`) or an object, with a `libLLVM`
+requirement on `kelpc` itself.
 
 - `build/` is relative to the **current working directory**, and the compiler
   creates it if it is missing.
@@ -159,46 +157,36 @@ artifact then is LLVM IR (`.ll`) or an object, with a `libLLVM` requirement on
 
 ## Backends
 
-Two code generators, selected with `--backend=` or `KELPC_BACKEND`; an explicit
+One code generator, selected with `--backend=` or `KELPC_BACKEND`; an explicit
 `--backend` wins over the variable, and the default is `c`.
 
 | Backend | What it does | Toolchain it needs |
 | --- | --- | --- |
 | `c` (default) | transpiles to C | `cc -O2 -fwrapv -lm` |
-| `asm` | emits x86-64 assembly itself | `as`, `ld` (no C compiler in the chain) |
 
 ```sh
-kelpc build examples/hello.kp --backend=asm   # until `asm` is removed
-KELPC_BACKEND=c kelpc run examples/hello.kp   # the oracle, and the default
+KELPC_BACKEND=c kelpc run examples/hello.kp   # the default, spelled out
 ```
 
 A backend that does not exist is named in the error, so a typo is not a mystery:
 
 ```text
 $ kelpc build src/main.kp --backend=asm2
-error: unknown backend 'asm2'; expected one of: c, asm
+error: unknown backend 'asm2'; expected one of: c
 ```
 
-**The C backend is the reference.** Every fixture in the test suite is built by
-both backends and the two binaries' stdout is compared, so a construct the `asm`
-backend cannot lower is **refused by name** rather than silently miscompiled.
-Three real refusals, measured at compiler commit `926e33f`:
+The hand-written `asm` backend, which emitted x86-64 assembly itself and finished
+with `as` and `ld`, was retired on 2026-09-20 and removed on 2026-09-21. Its plans,
+its counts and its refusal ranking stay as history in
+[`plan/asm-backend/`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/asm-backend/),
+and the [Backends](/compiler/backends) page carries the current table.
 
-```text
-error: the 'asm' backend does not support the `extern fun std.process.arg_count_raw` yet
-error: the 'asm' backend does not support the method `List.clone` on a `List` yet
-error: the 'asm' backend does not support a borrow of anything but a named local (a scalar, a `datac` or a heap type), a `datac` temporary, or a field of one yet
-```
-
-They are three lines and three mechanisms, measured at compiler commit `926e33f`: an `extern` whose body this backend has
-no routine for (`std.process`'s argv and spawn family is the one left), which the plan
-counts in its catch-all heap row; a `List` method over a `datac` or `enum` element;
-and a borrow of a field chain. Scalars, `while`, `print!`, arithmetic, an aggregate
-holding a float, a closure, a plain function value and a gated call all lower, so a
-program made of those builds and runs under `asm` today. A *gated* item named as a
-function value is not lowered at all: the compiler refuses it, in both backends
-and whether or not the naming module holds the domain, because the pattern check
-is emitted from the call's own callee and an indirect call has none.
+**The C backend is the reference.** The fixture suite is backend-agnostic by
+construction, so a second backend is validated by running it again with
+`KELPC_BACKEND` set to it, and `--backend=c` and `KELPC_BACKEND=c` stay selectable
+forever. A *gated* item named as a function value is refused by the compiler,
+whether or not the naming module holds the domain, because the pattern check is
+emitted from the call's own callee and an indirect call has none.
 
 The next backend is **LLVM IR**, and it is not a project: everything up to the
 typed IR is reused, so only the emission layer is new, and LLVM supplies the
@@ -206,22 +194,6 @@ optimizer, the encoder, the ELF writer, the debug-info format, sanitizers and th
 targets. It is roughly feature-complete with the fixture suite green in about 3 to
 6 weeks of work. See
 [`plan/mk7-llvm-backend.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-llvm-backend.md).
-
-[`plan/asm-backend/plan.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/asm-backend/plan.md)
-§0 and §5 hold the measured history of the retired `asm` track, and the
-[Backends](/compiler/backends) page carries the current table. **205 of the 208
-fixtures the C backend accepts build under `asm`, and 3 are refused**, measured at
-compiler commit `926e33f`; the
-suite figure measured the same way is **341 of 358** integration tests passing
-under `--backend=asm`, with the C backend passing all 358, a larger denominator
-because the suite counts multi-file projects and subprocess cases as well. Both
-were measured at that commit rather than quoted from an earlier run. Re-measure
-both before quoting them, because each moves with every slice. What the `asm`
-backend lowers today, and the 3 refusals it still has, are on the
-[Backends](/compiler/backends) page.
-
-If the `asm` backend cannot find the library directory it links against, point
-`KELPC_GLIBC_DIR` at the directory holding `crt1.o` and `libc.so`.
 
 ## `fmt`
 
@@ -405,8 +377,8 @@ $ echo $?
 
 | Variable | Effect |
 | --- | --- |
-| `KELPC_BACKEND` | default backend (`c` or `asm`); an explicit `--backend=` wins over it |
-| `KELPC_GLIBC_DIR` | where the `asm` backend finds `crt1.o` and `libc.so` |
+| `KELPC_BACKEND` | default backend (`c` today, `llvm` once it lands); an explicit `--backend=` wins over it |
+| `LLVM_SYS_211_PREFIX` | where `llvm-sys` finds `libLLVM` and its headers; set by `shell.nix` |
 
 Coral also reads `KELPC` to decide which compiler to run, which is a different
 question from what the compiler does with its own environment (see

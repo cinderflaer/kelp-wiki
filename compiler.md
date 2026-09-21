@@ -27,9 +27,9 @@ cargo build --release -p kelpc
 | Type checking | `infer.rs` | types, generics, stdlib overload resolution; fills in implicit borrows |
 | Typed IR | `tir.rs` | every node carries its resolved type and span |
 | Move/borrow checking | `borrowck.rs` | moves, borrows, and the drop plan the code generators read |
-| Code generation | `codegen_c.rs` (and the retired `codegen_asm.rs`) | typed IR to C source text; the next backend is LLVM IR (`codegen_llvm.rs`) |
+| Code generation | `codegen_c.rs` | typed IR to C source text; the next backend is LLVM IR (`codegen_llvm.rs`) |
 | Backend selection | `backend.rs` | `--backend=` / `KELPC_BACKEND` |
-| Finishing | `driver.rs` | writes the artifact and invokes the C compiler, or `as` and `ld` |
+| Finishing | `driver.rs` | writes the artifact and invokes the C compiler |
 | Diagnostics | `diag.rs` | a span is one file's byte range; this maps a module id back to `file:line:col` |
 | Stdlib sources | `stdlib.rs` | the `std/*.kp` text, embedded with `include_str!`, and the capability domains |
 | C bodies for `extern fun` | `externs.rs` | the operations that cannot be written in Kelp at all |

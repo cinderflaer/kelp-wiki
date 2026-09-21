@@ -52,8 +52,8 @@ by the first few lines of a file instead of by auditing it.
 
     ---
 
-    [Compiler](/compiler) covers the pipeline, the two backends, the
-    runtime and the test gates. [Contributing](/meta/contributing) has the
+    [Compiler](/compiler) covers the pipeline, the backend, the runtime and the
+    test gates. [Contributing](/meta/contributing) has the
     workflow.
 
 -   **Libraries**

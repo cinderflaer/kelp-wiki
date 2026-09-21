@@ -66,10 +66,7 @@ is not a value.
 A template interpolates **any** scalar or text value, owned or borrowed, so
 `print("w = ${s}")` works with `s` a `String`, a `Bytes` or a `View` as well as
 with a `str` or a number. An owned piece is freed once the line is printed; a
-borrow and a `View` are not freed at all. Under `--backend=asm` a template is
-limited to five non-float slots for now, and an owned piece takes two of them; that
-limit is the `asm` backend's, and it goes with the backend
-([Backends](/compiler/backends)).
+borrow and a `View` are not freed at all.
 
 `std/io` adds `print_bare`, `eprint` and `eprint_bare` for control over the
 newline and the stream, plus `File` writes. See

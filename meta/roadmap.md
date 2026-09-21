@@ -49,7 +49,7 @@ flowchart LR
 | **MK4** | Capability security | S1 capabilities | medium | Done |
 | **MK5** | Standard library program | S1-S7, S4b, S4c | large | In progress: MK5-S1, MK5-S2 (M1 `io` + `process`, M2 `spawn_in`/`run_in`, the fallible `try_run`, and `fs.sym… |
 | **MK6** | Concurrency | S1 threads, S2 multithreaded downloads | very large | Not started |
-| **MK7** | LLVM backend | S0-S7 | large | Direction changed: the hand-written `asm` track is retired and archived (`plan/asm-backend/`), and the plan of record is LLVM IR (`plan/mk7-llvm-backend.md`): the backend seam (stage 0) is done, and the rest is weeks of emission-layer work, 3 to 6 weeks to a suite-green backend. The retired track's own numbers are in `plan/asm-backend/plan.md` §0 |
+| **MK7** | LLVM backend | S0-S7 | large | Direction changed: the hand-written `asm` track was retired on 2026-09-20 and its source removed on 2026-09-21 (`plan/asm-backend/` holds its plans and measurements), and the plan of record is LLVM IR (`plan/mk7-llvm-backend.md`): the backend seam (stage 0) is done, and the rest is weeks of emission-layer work, 3 to 6 weeks to a suite-green backend |
 | **MK8** | Language ergonomics and scale | S1-S3 | large | In progress, and re-scoped (the rewrite stages S4 to S6 are cancelled permanently): MK8-S1-M1 part 1 (tagged unions + pattern `when`) and part 2 (A-2, generics) both done, A-3 ship… |
 | **MK9** | Systems substrate | S1-S9 | very large | Proposed; planned |
 | **MK10** | Capability model extensions | S1-S3 | large | Proposed; planned |
