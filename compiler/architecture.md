@@ -124,7 +124,7 @@ this block" and "which die before this return" as it writes each one, and
 | Module | Emits | Notes |
 | --- | --- | --- |
 | `codegen_c.rs` | C source text | value-position blocks use the GNU statement-expression extension `({ ...; expr; })`, which both `gcc` and `clang` accept; the `Bytes`/`String` runtime (allocation, bounds checks, `free`) is the text of `kelpc/runtime/kelp_rt.c`, emitted into every generated program; the generated C carries a `#line` directive before every statement, so a `cc` failure names the `.kp` file and the line the statement is written on (plan item 20, closed) |
-| `codegen_llvm.rs` | LLVM IR | the MK7 backend: a peer of `codegen_c.rs` over the same `tir`, covering the whole language, so it builds every target the C backend builds and the two agree byte for byte over the corpus. One guard stays in `place_of` for an owned rvalue no staging site claimed. See [Backends](/compiler/backends) and [`plan/mk7-llvm-backend.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-llvm-backend.md) |
+| `codegen_llvm.rs` | LLVM IR | the MK7 backend: a peer of `codegen_c.rs` over the same `tir`, covering the whole language, so it builds every target the C backend builds and the two agree byte for byte over the corpus. It attaches DWARF line locations, so a fault in the object names the `.kp` file and the line the statement is on. One guard stays in `place_of` for an owned rvalue no staging site claimed. See [Backends](/compiler/backends) and [`plan/mk7-llvm-backend.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-llvm-backend.md) |
 | `externs.rs` | the C bodies of `extern fun` | the operations that cannot be written in Kelp at all: `codegen_c.rs` writes them into every generated C program, and the `llvm` path writes the same text to `<out>.externs.c` and links the object it compiles |
 | `kelpc/runtime/kelp_rt.c` | the C runtime text, not a compiler module | the single source for the bytes/string routines, the panic and assert paths, the allocation helpers and `kelp_argc`/`kelp_argv`: `codegen_c.rs` emits it into every generated program, and the `llvm` path links it as an object |
 | `kelpc/build.rs` | the runtime object | compiles `kelp_rt.c` once, at `kelpc`'s own build time, into `kelp_rt.o`; `driver.rs` embeds that object with `include_bytes!` and writes it to a temporary file when the `llvm` path links |
@@ -143,7 +143,9 @@ not share it:
 
 The generated C is deliberately **kept** next to the binary rather than deleted,
 so debugging the generated program is `gdb ./foo` against a file that is actually
-there. `-fwrapv` makes signed overflow wrap in C, matching what the language
+there. An `llvm` binary needs no kept file for that: its object carries DWARF line
+locations, so the same `gdb ./foo` names the `.kp` file and the line the statement
+is on. `-fwrapv` makes signed overflow wrap in C, matching what the language
 promises; `-lm` is for `std/math`'s externs. The extern object is the program's
 own `extern fun` bodies as the C text `externs.rs` holds, compiled with the C
 backend's own includes and prototypes, so it is built per program rather than
@@ -192,7 +194,7 @@ fun main() {
 | --- | --- |
 | A library or object target | "Using a library" means copying or fetching a folder of `.kp` sources: see [Libraries](/libraries) |
 | A module dependency list | `kelpc check --json` answers with diagnostics; which module depends on which is still not askable outside the compiler, which is the other half of the interface a build cache wants |
-| An optimiser | For the `c` backend it is whatever `cc -O2` does to the generated C. The `llvm` backend emits its object at LLVM's default codegen level because no IR optimization pass pipeline exists yet; choosing the pipeline is MK7 stage S6, and DWARF debug info is stage S4. |
+| An optimiser | For the `c` backend it is whatever `cc -O2` does to the generated C. The `llvm` backend emits its object at LLVM's default codegen level because no IR optimization pass pipeline exists yet; choosing the pipeline is MK7 stage S6. |
 | Incremental compilation and a build cache | [Coral](/getting-started/install) owns the project-level cache |
 
 ## See also

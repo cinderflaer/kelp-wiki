@@ -1,6 +1,6 @@
 ---
 title: "Backends"
-description: "A code generator is selectable with --backend= or the KELPC_BACKEND environment variable, and an explicit flag wins over the variable; the default is c. The llvm backend lowers the whole language and matches the C backend byte for byte over the corpus, and c stays the default and the oracle."
+description: "A code generator is selectable with --backend= or the KELPC_BACKEND environment variable, and an explicit flag wins over the variable; the default is c. The llvm backend lowers the whole language, matches the C backend byte for byte over the corpus, and carries DWARF line locations so a fault names a .kp line; c stays the default and the oracle."
 isPublished: true
 tags: "compiler"
 ---
@@ -11,7 +11,7 @@ the default is `c`.
 | Backend | Emits | Finished with | Status |
 | --- | --- | --- | --- |
 | `c` (default) | C source text | `cc -O2 -fwrapv -lm` | complete, and the reference |
-| `llvm` | LLVM IR, then an object | `<out>.ll` and `<out>.o`, then `cc -O2 -o <out> <out>.o -lm` | the whole language the [Language](/language) pages describe, and the same stdout and exit status as the `c` backend byte for byte over the corpus (221 of 221 targets, the refusal ranking empty); one guard remains for an owned temporary at a place the lowering did not stage |
+| `llvm` | LLVM IR, then an object | `<out>.ll` and `<out>.o`, then `cc -O2 -o <out> <out>.o -lm` | the whole language the [Language](/language) pages describe, and the same stdout and exit status as the `c` backend byte for byte over the corpus (221 of 221 targets, the refusal ranking empty); one guard remains for an owned temporary at a place the lowering did not stage; the object carries DWARF line locations |
 
 The hand-written **`asm`** backend, which emitted x86-64 assembly text itself and
 finished with `as` and `ld`, was retired on 2026-09-20 and its source was removed
@@ -106,7 +106,9 @@ parameters and returns as `ptr`, a call through a closure passing the environmen
 first, and each extern declaration matching its body's C signature. The
 `run-llvm-pd-caps.sh` gate adds the last half: the `pd` globals, the capability
 check and the last three refusals, and it pins the deny path's text against the C
-backend's own. The ignored valgrind sweep covers 32 `pd`/capability binaries
+backend's own. Six of the nine gates strip a `, !dbg !N` suffix before asserting
+an instruction's shape: where a line came from is a separate claim from what the
+instruction is. The ignored valgrind sweep covers 32 `pd`/capability binaries
 besides the closure, extern and container sweeps, and the four LLVM sweeps plus
 the C sweep (209 binaries) are green.
 
@@ -124,8 +126,26 @@ measurement over the corpus, not as a promise that the backend can never refuse.
   every AST construct do not depend on the target, so only the emission layer is
   new.
 - **What LLVM supplies now:** instruction selection, register allocation, the
-  encoder and the ELF writer, and an object at LLVM's default codegen level. The
-  optimizer and DWARF are still to come.
+  encoder, the ELF writer, DWARF and an object at LLVM's default codegen level.
+  The optimizer is still to come.
+- **A fault in an `llvm` binary names the `.kp` file and line.** The object
+  carries DWARF line locations, so a program that faults at run time prints a
+  backtrace whose frame is a `.kp` source line, and `llvm-symbolizer` or
+  `addr2line` resolves the same address to the same `file:line:column`. The C
+  backend's `#line` was the only route to that, and this is stage S4's exit
+  criterion rather than a nice-to-have: for a default backend, a crash report
+  that points into generated IR instead of a Kelp source line is the difference
+  between actionable and not. What it is: a line table, one compile unit per
+  module, one file per `.kp` source, one subprogram per `.kp`-declared function
+  carrying its declaration's own line, and a location per statement and block
+  tail. What it is not: no variables, no types, no lexical blocks, no `inlinedAt`
+  (nothing inlines), and no subprogram for the generated helpers (the drops, the
+  container sets, the closure machinery) or for an `extern fun` whose body is C. A
+  location is per statement rather than per sub-expression, which is the C
+  backend's granularity too. `kelpc/tests/llvm_debug_info.rs` is the proof: its fixture
+  `kelpc/tests/llvm-debug/fault.kp` divides by a run-time zero on purpose, and
+  the test reads the decoded line table back with `readelf` and places the fault
+  at `fault.kp:16` through `gdb`.
 - **What stays ours:** the lowering from `tir` to IR, and Kelp's move and borrow
   semantics mapped onto LLVM's model, which includes the new UB surface: no
   `nsw`/`nuw`, no `inbounds`, and `noalias` only where the borrow checker proves
@@ -144,15 +164,14 @@ measurement over the corpus, not as a promise that the backend can never refuse.
   and links the object it compiles between the IR object and `-lm`. A fixed
   object cannot work, because one body calls a `std/path` function only the
   resolver injects and another names a per-program container typedef.
-- **What is left:** S4 (debug locations to DWARF), S5 (fuzzing and conformance)
-  and S6 (the optimization-level decision) have not landed, and S7 is the flip.
-  The parity is measured, and the default has not moved; `plan/mk7-llvm-backend.md`
-  §5 is the stage table.
+- **What is left:** S5 (fuzzing and conformance) and S6 (the optimization-level
+  decision) have not landed, and S7 is the flip. The parity is measured, and the
+  default has not moved; `plan/mk7-llvm-backend.md` §5 is the stage table.
 - **No pass pipeline yet:** there is no IR optimization pass pipeline, so the
   object is emitted at LLVM's default codegen level. Choosing the pipeline is
-  stage S6, and debug info (DWARF from attached locations) is stage S4. There is
-  no measurement behind the `llvm` backend, so it is not claimed to match the C
-  backend's speed: the `bench/speed` numbers are the C path's.
+  stage S6. There is no measurement behind the `llvm` backend, so it is not
+  claimed to match the C backend's speed: the `bench/speed` numbers are the C
+  path's.
 - **Crate and linking:** `llvm-sys` plus a thin wrapper of our own, linked
   dynamically against the host's `libLLVM`. Every `kelpc` links `libLLVM-21.so`
   and needs it at runtime, whichever backend it is run with: on a build from this

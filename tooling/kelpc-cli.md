@@ -205,10 +205,13 @@ tests), `run-llvm-externs.sh` (138 tests) and `run-llvm-pd-caps.sh` (38 tests,
 the `pd` globals, the capability check and the last three refusals, with the deny
 text pinned against the C backend's own). One guard remains in the lowering, for
 an owned temporary at a place it did not stage, and nothing in the corpus reaches
-it. `c` stays the default, the oracle and the way out. There is no IR optimization
+it. `c` stays the default, the oracle and the way out. The object carries DWARF
+line locations, so a fault in an `llvm`-built binary names the `.kp` file and
+line, where the C backend's `#line` was the only source of that before; it is a
+line table, so no variables and no types. There is no IR optimization
 pass pipeline yet, so the object is emitted at LLVM's default codegen level and no
 performance parity with the C backend is claimed; choosing the pipeline is stage
-S6, and debug info is S4. See
+S6. See
 [`plan/mk7-llvm-backend.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-llvm-backend.md).
 
 ## `fmt`
