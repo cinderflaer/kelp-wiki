@@ -1,6 +1,6 @@
 ---
 title: "Backends"
-description: "A code generator is selectable with --backend= or the KELPC_BACKEND environment variable, and an explicit flag wins over the variable; the default is c. The llvm backend lowers the scalar subset, `datac` records, the heap slice, tagged unions, the containers and references that are not a `datac`, and refuses everything else by name."
+description: "A code generator is selectable with --backend= or the KELPC_BACKEND environment variable, and an explicit flag wins over the variable; the default is c. The llvm backend lowers the scalar subset, `datac` records, the heap slice, tagged unions, the containers, references that are not a `datac`, and closures and function values, and refuses everything else by name."
 isPublished: true
 tags: "compiler"
 ---
@@ -11,7 +11,7 @@ the default is `c`.
 | Backend | Emits | Finished with | Status |
 | --- | --- | --- | --- |
 | `c` (default) | C source text | `cc -O2 -fwrapv -lm` | complete, and the reference |
-| `llvm` | LLVM IR, then an object | `<out>.ll` and `<out>.o`, then `cc -O2 -o <out> <out>.o -lm` | the scalar subset (MK7 S1), `datac` records (MK7 S2A), the heap slice: `Bytes`/`String`, an owned field, drops, `panic` and `assert` (MK7 S2B), tagged unions: `enum` at the C `{ tag, union }` layout, `when`, `if let`, `?`, and one `switch` per drop (MK7 S2C), the containers: `List`, `Map`, `Box` and `[T; N]` (MK7 S2D), and references that are not a `datac`: a `&T` to a scalar, a borrow of a field, the read and the write through one, and a `&T` parameter or return (MK7 S2F); everything outside them is refused by name |
+| `llvm` | LLVM IR, then an object | `<out>.ll` and `<out>.o`, then `cc -O2 -o <out> <out>.o -lm` | the scalar subset (MK7 S1), `datac` records (MK7 S2A), the heap slice: `Bytes`/`String`, an owned field, drops, `panic` and `assert` (MK7 S2B), tagged unions: `enum` at the C `{ tag, union }` layout, `when`, `if let`, `?`, and one `switch` per drop (MK7 S2C), the containers: `List`, `Map`, `Box` and `[T; N]` (MK7 S2D), references that are not a `datac`: a `&T` to a scalar, a borrow of a field, the read and the write through one, and a `&T` parameter or return (MK7 S2F), and closures and function values: a declared `fun` as a bare code pointer, a `fun` literal, a capturing closure as the C backend's `{ ptr fn, ptr env, ptr drop }` fat pointer with a heap environment and its own drop, a function value or closure as a local, a parameter, a return value and a `datac` field, and a call through a value, with the environment passed first (MK7 S2E); everything outside them is refused by name |
 
 The hand-written **`asm`** backend, which emitted x86-64 assembly text itself and
 finished with `as` and `ld`, was retired on 2026-09-20 and its source was removed
@@ -73,24 +73,39 @@ At S2F, landed on 2026-09-21, it adds **references that are not a `datac`**: a
 `&T` to a scalar, a borrow of a field, the read through one, the write through an
 exclusive one, and a `&T` parameter or return value. `Ty::Ref` is one `ptr`
 whatever the pointee, so `&place` is the place's address, `*p` is a pointee-typed
-load and `*p = v` a store through it. On a program that stays inside the six, the
+load and `*p = v` a store through it. At S2E, landed on 2026-09-21, it adds
+**closures and function values**: a named `fun` used as a value is the function's
+own address, a `fun` literal is a bare code pointer, and a literal that captures
+is a closure at the C backend's fat pointer, one identified struct per signature,
+`{ ptr fn, ptr env, ptr drop }`. The code pointer takes the environment as its
+hidden first argument, so an indirect call is `fn(env, args...)`; a `fun`
+parameter or return is a bare `ptr`. A function value or closure lowers as a
+local, a parameter, a return value and a `datac` field, and the heap environment
+is allocated with the same `malloc`/`free` the rest of the runtime uses. On a
+program that stays inside the seven, the
 `llvm` backend's stdout is byte-identical to the C backend's, which is the gates:
 `kelpc/tests/run-llvm-scalar-subset.sh`,
 `kelpc/tests/run-llvm-datac-subset.sh`,
 `kelpc/tests/run-llvm-strings-drops.sh`,
 `kelpc/tests/run-llvm-enum-subset.sh`,
-`kelpc/tests/run-llvm-containers.sh` and
-`kelpc/tests/run-llvm-references.sh`, each carrying the earlier gates' fixtures
-forward: the S2D gate adds the container fixtures (103 tests) and the S2F gate the
-reference fixtures (109 tests in one run). Each gate also reads the layout it is
-about back out of the `<out>.ll` the backend wrote and asserts it: the S2C gate
+`kelpc/tests/run-llvm-containers.sh`,
+`kelpc/tests/run-llvm-references.sh` and
+`kelpc/tests/run-llvm-closures.sh`, each carrying the earlier gates' fixtures
+forward: the S2D gate adds the container fixtures (103 tests), the S2F gate the
+reference fixtures (109 tests in one run) and the S2E gate the closure and
+function-value fixtures (120 tests in one run). Each gate also reads the shape it
+is about back out of the `<out>.ll` the backend wrote and asserts it: the S2C gate
 the tag and payload offsets (three SysV classes, a one-byte union at offset 4, an
 eight-byte union at offset 8 and a 24-byte one at offset 8), and the S2D gate the
 container header and entry layouts, plus the guarantee that no runtime declaration
 passes a container header by value. The S2F gate reads the borrowed-parameter
 functions' signatures back out of the IR, asserting each takes a
 `kelp_origin(ptr)`-style pointer, and asserts that a `panic` tail ends in
-`unreachable`. No fixture's own output would catch any of them.
+`unreachable`. The S2E gate reads the fat pointer's shape back as `{ ptr, ptr,
+ptr }`, that a `fun` parameter and a `fun` return are both `ptr`, that a call
+through a closure passes the environment first, and the shape of a two-field
+environment (an `i32`, an `i64` and an owned `String` at their own alignments).
+No fixture's own output would catch any of them.
 
 Everything outside them is **refused by name**, never miscompiled and never a
 panic. The error names the construct and the MK7 stage that will lower it:
@@ -103,8 +118,12 @@ error: the llvm backend cannot lower the call to 'std.mem.alloc_raw' yet (MK7 S3
 A field that owns a `String` or a `Bytes` lowers at S2B, a container or an
 array field at S2D, and a borrow of a field at S2F. What is still refused: a
 `str`, `View` or reference field in a `datac` (S2F, an arm the frontend never
-reaches because it refuses a borrowed field before codegen), closures and
-function values (S2E), and `pd`, `extern fun` and the raw stdlib externs (S3). A
+reaches because it refuses a borrowed field before codegen), and `pd`,
+`extern fun` and the raw stdlib externs (S3). No refusal names a closure or a
+function value any more: a closure that reaches no stdlib import lowers at S2E,
+and a closure-shaped fixture that still refuses does so under the S3 message,
+because the backend lowers an `impl`ed module whole and `std/str` reaches
+`std.mem.alloc_raw`. A
 borrow of anything that is not a `datac` is no longer refused: S2F lowers it. An
 `enum` is not, and neither is a container: S2C lowers the tagged union with
 `when`, `if let` and `?`, and S2D lowers `List`, `Map`, `Box` and `[T; N]`.
@@ -127,7 +146,7 @@ borrow of anything that is not a `datac` is no longer refused: S2F lowers it. An
   generated C program, byte for byte; the `llvm` path links it as an object that
   `kelpc/build.rs` compiles from the same file. One source, so the panic text
   and the `Bytes`/`String` invariants cannot drift between the backends.
-- **Scale:** S2E and S3 to S7 remain, roughly 3 to 6 weeks of emission-layer work to a
+- **Scale:** S3 to S7 remain, roughly 3 to 6 weeks of emission-layer work to a
   suite-green backend (the plan's §0.1 and §5, whose stage-2 table names each
   slice the refusals point at).
 - **No pass pipeline yet:** there is no IR optimization pass pipeline, so the
@@ -166,11 +185,11 @@ Two consequences worth knowing:
    (`plan/mk7-llvm-backend.md` §6), where the baseline is `LLVM_BUILT_BASELINE`:
    it builds every fixture the C backend builds with `llvm`, runs both and compares
    stdout and exit status byte for byte, records each refusal with its message, and
-   ratchets a coverage count that may only rise (129 of the 219 targets at the S2F
-   tip, 90 of them refused, all by name: the runtime and `pd` slice (S3) leads with
-   72, then closures and function values (S2E) with 15, then the two
-   owned-temporary shapes (S2B) with 3; the ranking is dominated by one slice, S3,
-   and after it by the closure slice, and none is unnamed). On its first run it
+   ratchets a coverage count that may only rise (140 of the 220 targets at the S2E
+   tip, 80 of them refused, all by name: the runtime, `extern fun` and `pd` slice
+   (S3) leads with 77, then the two owned-temporary shapes (S2B) with 3; no
+   refusal names a closure or a function value any more, and none is unnamed, so
+   the ranking is one slice, S3). On its first run it
    caught a silent miscompile,
    a borrow returned through the value position of an `if` and a returned `&String`,
    which now match the C backend.

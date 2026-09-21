@@ -165,7 +165,7 @@ One code generator, selected with `--backend=` or `KELPC_BACKEND`; an explicit
 | Backend | What it does | Toolchain it needs |
 | --- | --- | --- |
 | `c` (default) | transpiles to C | `cc -O2 -fwrapv -lm` |
-| `llvm` | lowers the scalar subset, `datac` records, the heap slice, tagged unions, the containers and the references that are not a `datac` to LLVM IR and an object | `libLLVM-21` to build `kelpc`, then `cc -O2 -o <out> <out>.o -lm` to link |
+| `llvm` | lowers the scalar subset, `datac` records, the heap slice, tagged unions, the containers, the references that are not a `datac`, and the closures and function values to LLVM IR and an object | `libLLVM-21` to build `kelpc`, then `cc -O2 -o <out> <out>.o -lm` to link |
 
 ```sh
 KELPC_BACKEND=c kelpc run examples/hello.kp   # the default, spelled out
@@ -209,17 +209,24 @@ list, a container as a local, a parameter, a return value, a `datac` field and a
 element, the bounds checks and one drop per container type. Since stage S2F it adds
 references that are not a `datac`: a `&T` to a scalar, a borrow of a field, the read
 and the write through one, and a `&T` parameter or return value, with `Ty::Ref` one
-pointer whatever the pointee.
+pointer whatever the pointee. Since stage S2E it adds closures and function
+values: a named `fun` used as a value is its own address, a `fun` literal is a bare
+code pointer, a capturing literal is the C backend's fat pointer
+`{ ptr fn, ptr env, ptr drop }` with a heap environment and its own drop, and a
+call through a value passes the environment first.
 On those programs its stdout is byte-identical to the C backend's, the gates
 being `kelpc/tests/run-llvm-scalar-subset.sh`,
 `kelpc/tests/run-llvm-datac-subset.sh`,
 `kelpc/tests/run-llvm-strings-drops.sh`,
 `kelpc/tests/run-llvm-enum-subset.sh`,
-`kelpc/tests/run-llvm-containers.sh` and
-`kelpc/tests/run-llvm-references.sh` (109 tests), the S2D gate also reading the
+`kelpc/tests/run-llvm-containers.sh`,
+`kelpc/tests/run-llvm-references.sh` and
+`kelpc/tests/run-llvm-closures.sh` (120 tests), the S2D gate also reading the
 container header and entry layouts back out of the `<out>.ll` the backend wrote,
-and the S2F gate the borrowed-parameter signatures, which must be
-`kelp_origin(ptr)`-style pointers, plus a `panic` tail that ends in `unreachable`.
+the S2F gate the borrowed-parameter signatures, which must be
+`kelp_origin(ptr)`-style pointers, plus a `panic` tail that ends in `unreachable`,
+and the S2E gate the fat pointer's `{ ptr, ptr, ptr }` shape, a `fun` parameter
+and return as `ptr`, and a call through a closure with the environment first.
 Everything else is refused by name with the MK7 stage that will lower it and a
 `--backend=c` way out, for example `error: the llvm backend cannot lower the call
 to 'std.mem.alloc_raw' yet (MK7 S3); use --backend=c`. There is no IR optimization pass pipeline yet,
