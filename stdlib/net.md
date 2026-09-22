@@ -40,7 +40,7 @@ of the descriptor.
 | `send(s, data)` | `usize` | one `send`; may write less than asked |
 | `send_all(s, data)` | `usize` | loops until everything is written |
 | `send_text(s, text)` | `Unit` | |
-| `recv(s, max)` | `Bytes` | up to `max` bytes; **empty means the peer closed** |
+| `recv(s, max)` | `Bytes` | up to `max` bytes; **empty means the peer closed**, or that `max` was `0` |
 | `recv_into(s, buf, at)` | `usize` | |
 | `Socket.wait_readable(timeout_ms)` / `wait_writable(...)` | `bool` | |
 | `Socket.set_timeout(ms)` | `Unit` | `mut` receiver |
@@ -73,7 +73,9 @@ fun main() {
 
 - `recv` returning **empty** `Bytes` is the only end-of-stream signal; a partial
   read is normal and a loop is the caller's job
-  ([`lineproto`](/libraries/lineproto) does exactly that).
+  ([`lineproto`](/libraries/lineproto) does exactly that). A `max` of `0` also
+  returns empty, immediately rather than after blocking, which is what
+  `recv_into` with an empty buffer already did.
 - `send` may write fewer bytes than asked; use `send_all` unless you are
   implementing your own back-pressure.
 - Blocking is the default. `set_timeout` and `wait_readable` are how a caller gets
