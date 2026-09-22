@@ -33,9 +33,9 @@ datac LineReader(val fd: i32, var buf: Bytes, var start: usize)
 ```
 
 `LineReader` stores the socket's raw `fd: i32` rather than a `net.Socket` field:
-`net.Socket` is not `Copy`, and a `datac` field can only be read out by
-reference, never moved out by value, so every call reconstructs
-`net.Socket(fd = fd)` locally instead of storing one.
+`net.Socket` is not `Copy`, and a field cannot be moved out of a borrow, so a
+method on `LineReader` cannot take the socket out of the field; every call
+reconstructs `net.Socket(fd = fd)` locally instead of storing one.
 
 ## Functions
 
