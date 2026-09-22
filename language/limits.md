@@ -92,6 +92,12 @@ These are deliberate, and each one has a workaround in this documentation.
   standard library reaches the outside world by processes and by `poll`-style
   readiness (`wait_readable`) instead. A program that needs two things at once
   spawns a process.
+- **An atomic cell exists, and it carries no thread by itself.** `Atomic<T>` in
+  [`std/atomic`](/stdlib/atomic) is one location every access to which is a
+  single atomic operation, and the single ordering v1 has is `SeqCst`. There is
+  no `thread.spawn`, no `thread.join` and no `thread.fence` yet, so nothing
+  shares the cell across threads today; a shared counter is a `pd val` atomic,
+  which is the declaration that will let a second thread hold the borrow.
 
 ## Text
 

@@ -14,7 +14,11 @@ Names have landed in batches since the last full pass: `fmt.commas_u64`,
 `fmt.commas_i64` and `fmt.human_size` (`kelp` `a75deb6`), then `fs.cwd`,
 `fs.is_symlink`, `fs.read_link` and `path.absolute`, then `io.IoErr` and
 `io.errno_text` with `fs.try_read`, `fs.try_read_text` and `fs.try_open`, and
-finally `str.less`, `str.is_digit` and the whole `std/encoding` module.
+finally `str.less`, `str.is_digit` and the whole `std/encoding` module. The
+`std/atomic` names below (`Atomic<T>` and `Ordering`, MK9-S3-M1 stage A1) were
+added by hand at `kelp` `7350f91`, for the same reason the rest of the page is
+hand-kept: the generator is not in the tree, so a new module has to be written
+into the page by hand rather than re-derived.
 
 `std/rt` has no section: it ships inside the binary but is the compiler's own
 runtime module rather than part of the stdlib surface. `impl "std/rt"` resolves
@@ -470,6 +474,33 @@ Functions:
 - `fun or_else<T, E, F>(r: &Result<T, E>, f: closure(&E).R: Result<T, F>).R: Result<T, F>`
 - `fun each<T, E>(r: &Result<T, E>, f: closure(&T))`
 
+## `std/atomic`
+
+Types:
+
+- `enum Ordering { SeqCst }`
+
+Functions (the `Atomic<T>` methods are compiler builtins rather than
+declarations in `std/atomic.kp`; the module declares the `Ordering` type they
+take):
+
+- `fun Atomic<T>.new(value: T).R: Atomic<T>`
+- `fun Atomic<T>.load(order: Ordering).R: T`
+- `fun Atomic<T>.store(value: T, order: Ordering)`
+- `fun Atomic<T>.swap(value: T, order: Ordering).R: T`
+- `fun Atomic<T>.compare_exchange(current: T, new: T, order: Ordering).R: result.Result<T, T>`
+- `fun Atomic<T>.fetch_add(value: T, order: Ordering).R: T`
+- `fun Atomic<T>.fetch_sub(value: T, order: Ordering).R: T`
+- `fun Atomic<T>.fetch_and(value: T, order: Ordering).R: T`
+- `fun Atomic<T>.fetch_or(value: T, order: Ordering).R: T`
+- `fun Atomic<T>.fetch_xor(value: T, order: Ordering).R: T`
+
+The element set is `bool` and the integer types, spelled with the names
+`AtomicBool`, `AtomicU8`, `AtomicU16`, `AtomicU32`, `AtomicU64`, `AtomicUsize`,
+`AtomicI32`, `AtomicI64` and `AtomicIsize`; there is no `AtomicI8`/`AtomicI16`.
+The `fetch_*` set exists on the integer instantiations only, never on
+`AtomicBool`.
+
 ## Modules at a glance
 
 | Module | Functions | Types/constants | Domain |
@@ -491,6 +522,7 @@ Functions:
 | `std/list` | 6 | 0 | — |
 | `std/option` | 9 | 1 | — |
 | `std/result` | 12 | 1 | — |
+| `std/atomic` | 10 | 1 | - |
 
 ## Not part of the stdlib surface
 
