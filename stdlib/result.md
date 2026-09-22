@@ -36,7 +36,8 @@ can fail returns `Result<T, E>` and its caller writes `val v = f(...)?`.
 | `or_else<T, E, F>(r, f: closure(&E).R: Result<T, F>)` | `Result<T, F>` | **`T` must be `Copy`**: the receiver is a borrow |
 | `each<T, E>(r, f: closure(&T))` | `Unit` | |
 
-As with `Option`, these are free functions: an `enum` carries no methods in v1.
+As with `Option`, these are free functions: a method call through an `enum` value
+is refused in v1.
 
 ## Example
 

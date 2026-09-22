@@ -145,8 +145,11 @@ ada
 ## Notes
 
 - A `float` cannot be a `Set` key: the compiler's `Map` key set is `String`,
-  the integers and `bool`: `nan != nan` would make an inserted key unfindable.
-- A `datac`, an enum or a container cannot be a key either: v1 has no equality
-  for them.
+  the integers, `bool`, `char`, or a keyable `datac`/`enum`; `nan != nan` would
+  make an inserted key unfindable.
+- A `datac` or `enum` is a `Map` key when its fields are keyable, or when it
+  declares `hash` and `eq` (see [Collections](/language/collections)); this
+  wrapper is only for the two key shapes above, and a container, view or borrow
+  is still not a key.
 - Calling a method on a returned temporary is refused
   (`set.union(a, b).len()`): bind the result to a `val` first.

@@ -127,7 +127,7 @@ print(runs.get(key = 7))
 - Entries keep **insertion order**, which is why `keys()` and `values()` are lists
   and not hash order.
 - **`Map<V>` written with one argument means `Map<String, V>`.**
-- **A key must be keyable.** The compiler generates the key's hash and equality from `K`, so the set is what it can generate those for: `String`, an integer, `bool`, `char`, or a `datac`/`enum` whose every field (or every variant payload) is itself keyable. A float is refused (`nan != nan` would make an inserted key unfindable), and a `Bytes`, container, view, borrow or `datac`/`enum` with a field outside the set is refused with a message that names the field.
+- **A key must be keyable.** The compiler derives the key's hash and equality from `K`, so the derived set is `String`, an integer, `bool`, `char`, or a `datac`/`enum` whose every field (or every variant payload) is itself keyable. A `datac` or `enum` the derivation refuses becomes a key by declaring both `fun T.hash().R: u64` and `fun T.eq(other: &T).R: bool`, which the map calls instead of a derived pair and never alongside one; both halves are required, the two signatures are fixed (a shared receiver, no type parameters, `eq` taking one `&T`), and a half or a signature the map cannot call is refused where it is declared. The key is still cloned into the entry, so the type has to be deep-copyable as well. A float is refused (`nan != nan` would make an inserted key unfindable), and a `Bytes`, container, view, borrow or `datac`/`enum` with a field outside those sets is refused with a message that names the field (or names the half of the pair that is missing).
 - `Map<K, V>` is neither a list element nor a map value, so
   `Map<String, Map<i32>>` is impossible.
 - A `String`-keyed map takes its key as a bare `str` in every method (the map
@@ -144,7 +144,7 @@ print(runs.get(key = 7))
 | `get_or(key, fallback)` | the value or the fallback |
 | `has(key)` | `bool` |
 | `remove(key)` | the value, moved out; **panics** when the key is absent |
-| `keys()` / `values()` | `List<String>` / `List<V>`, insertion order |
+| `keys()` / `values()` | `List<K>` / `List<V>`, insertion order |
 | `clear()` | `Unit` |
 
 ## `Box<T>`

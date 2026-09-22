@@ -118,7 +118,8 @@ fun mut Pair<A, B>.replace_second(v: B) { second = v }
 - The type arguments are the receiver's own instantiation, so `p.first_of()` on a
   `Pair<i32, String>` is instantiated once for `A = i32, B = String`.
 - A method cannot add type parameters of its own beyond the type's.
-- **An `enum` carries no methods in v1**, generic or not. Write a free function
+- **A method call through an `enum` value is refused in v1**, generic or not, so
+  an `enum` method is not a way to write one. Write a free function
   over the instantiation instead, as `std/option` does:
 
   ```kelp

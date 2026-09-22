@@ -35,8 +35,9 @@ writes `val x = f(...)?`. Nothing in the compiler knows this module exists: the
 | `or_else<T>(o, f: fun().R: Option<T>)` | `Option<T>` | **`T` must be `Copy`**: the receiver is a borrow |
 | `each<T>(o, f: closure(&T))` | `Unit` | |
 
-There are no methods on `Option`: an `enum` carries no methods in v1, so every
-combinator is a free function and takes the option as its first argument.
+There are no methods on `Option`: a method call through an `enum` value is
+refused in v1, so every combinator is a free function and takes the option as its
+first argument.
 
 ## Where the payload goes
 

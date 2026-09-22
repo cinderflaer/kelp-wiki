@@ -100,7 +100,8 @@ fun mut Pair<A, B>.replace_second(v: B) { second = v }
   `Pair<i32, String>` is instantiated once for `A = i32, B = String`. There is no
   inference to do, and no way to call a method on the template itself.
 - A method cannot add type parameters of its own beyond the type's.
-- An `enum` carries no methods in v1, generic or not. Write a free function over
+- A method call through an `enum` value is refused in v1, generic or not, so an
+  `enum` method is not a way to write one. Write a free function over
   the instantiation instead, as `std/option` does:
 
   ```kelp

@@ -26,14 +26,20 @@ These are deliberate, and each one has a workaround in this documentation.
   each declare type parameters, but a receiver on a generic type must write the
   type's own parameters, in order: `fun Pair<A, B>.first()`. A method cannot add
   parameters of its own. See [Generics and type parameters](/language/generics).
-- **An `enum` carries no methods**, generic or not: combinators over `Option` and
-  `Result` are free functions.
-- **A `Map` key must be keyable.** The compiler generates the key's hash and
-  equality, so the set is what it can generate those for: `String`, an integer,
-  `bool`, `char`, or a `datac`/`enum` whose every field (or every variant payload)
-  is itself keyable. A float is refused (`nan`), and a `Bytes`, container, view,
-  borrow or `datac`/`enum` with a field outside the set is refused with a message
-  naming that field.
+- **A method call through an `enum` value is refused**, and combinators over `Option` and
+  `Result` are free functions. An `enum` may still *declare* a receiver method
+  (the `Map` key pair below is one), and the compiler calls it, but `e.method()`
+  on a binding of enum type is rejected; call a free function instead.
+- **A `Map` key must be keyable.** The compiler derives the key's hash and
+  equality from the fields, so the derived set is `String`, an integer, `bool`,
+  `char`, or a `datac`/`enum` whose every field (or every variant payload) is
+  itself keyable. A `datac` or `enum` outside that set becomes a key by declaring
+  both `fun T.hash().R: u64` and `fun T.eq(other: &T).R: bool`, which the map
+  calls instead of a derived pair; the key is still cloned into the entry, so the
+  type has to be deep-copyable. A float is refused (`nan`), and a `Bytes`,
+  container, view, borrow or `datac`/`enum` with a field outside the set is
+  refused with a message naming that field or the half of the pair that is
+  missing.
 - **No user overloading**, and no user `extern` bodies: `extern fun` is reserved
   for compiler-shipped stdlib modules. (`abs`, `min`, `max`, `clamp` are the only
   overloads in the language, and they are stdlib-only.)

@@ -57,7 +57,7 @@ the fix. Source: [`syntax.md` §18 and §22](https://homelabone.xenoo.dev/gittea
 | --- | --- |
 | `List.empty()` / `Map.new()` has no element type | nothing said what is inside and nothing decided it: write it on the binding (`var xs: List<i32> = List.empty()`), or `push`/`insert`/`set` a value, which decides the element |
 | a nested container is refused | wrap the inner one in a one-field `datac` or a `Box` |
-| `Map` key type refused | a key is keyable when the compiler can generate its hash and its equality: `String`, an integer, `bool`, `char`, or a `datac`/`enum` whose fields are all keyable. The message names the field that is not |
+| `Map` key type refused | a key is keyable when the compiler can derive its hash and its equality: `String`, an integer, `bool`, `char`, or a `datac`/`enum` whose fields are all keyable, and a `datac`/`enum` outside that set becomes a key by declaring `hash` and `eq`. The message names the field that is not, or the half of the pair that is missing |
 | `for` cannot `push` to what it walks | the loop borrows its iterable; iterate over a copy or index the source |
 
 ## Arrays and constants

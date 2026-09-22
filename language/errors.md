@@ -28,8 +28,8 @@ enum Result<T, E> {
 }
 ```
 
-Neither has methods: an `enum` carries no methods in v1, so the combinators are
-free functions in [`std/option`](/stdlib/option) and
+Neither has methods: a method call through an `enum` value is refused in v1, so
+the combinators are free functions in [`std/option`](/stdlib/option) and
 [`std/result`](/stdlib/result).
 
 ```kelp
