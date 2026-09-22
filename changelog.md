@@ -424,7 +424,7 @@ semicolon or a full stop between clauses, and a plain hyphen in a range.
 
 ## See also
 
-- [Roadmap](/meta/roadmap): what is planned, and what is in progress
+- [Roadmap](/meta/roadmap): the pointer to the plan in the compiler repository
 - [Compiler](/compiler): the pipeline each entry changed
 - [Coral changelog](/tooling/coral-changelog) and
   [Lighthouse changelog](/tooling/lighthouse-changelog): the other two repositories
