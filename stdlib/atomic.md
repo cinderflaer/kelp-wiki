@@ -145,10 +145,10 @@ fun main() {
   reports what was actually there in `Err`; a successful one reports the value
   it replaced in `Ok`. A call site needs `impl "std/result"` in the program, and
   the compiler names that module when it is missing.
-- **An atomic is a location of its own.** It is refused as a `List` or `Map`
-  element, because the container's own routines read and write an element as a
-  plain location and every access to an atomic has to be one atomic operation.
-  A `datac` field of atomic type is accepted.
+- **An atomic is a location of its own.** It is refused as a `List`, `Map`, `Box`
+  or array element, because the container's own routines read and write an
+  element as a plain location and every access to an atomic has to be one atomic
+  operation. A `datac` field of atomic type is accepted.
 - **An atomic carries no thread by itself.** v1 has no `thread.spawn`, no
   `thread.join` and no `thread.fence`; [Limits in v1](/language/limits) records
   what concurrency does not exist yet.

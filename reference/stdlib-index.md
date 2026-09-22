@@ -16,7 +16,7 @@ Names have landed in batches since the last full pass: `fmt.commas_u64`,
 `io.errno_text` with `fs.try_read`, `fs.try_read_text` and `fs.try_open`, and
 finally `str.less`, `str.is_digit` and the whole `std/encoding` module. The
 `std/atomic` names below (`Atomic<T>` and `Ordering`, MK9-S3-M1 stage A1) were
-added by hand at `kelp` `7350f91`, for the same reason the rest of the page is
+added by hand at `kelp` `724cb67`, for the same reason the rest of the page is
 hand-kept: the generator is not in the tree, so a new module has to be written
 into the page by hand rather than re-derived.
 
