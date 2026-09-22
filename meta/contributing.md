@@ -193,7 +193,7 @@ to be updated when that source moves:
 
 The [roadmap page](/meta/roadmap) is a pointer rather than a copy: it names
 `kelp/plan/roadmap.md` as the authority and copies none of its tables, diagrams
-or statuses, so it cannot drift. The roadmap block on the [home page](/home) is
+or statuses, so its status cannot drift. The roadmap block on the [home page](/home) is
 kept by hand.
 
 Mermaid diagrams are not checked by any build: Wiki.js copies a diagram's text
