@@ -111,9 +111,10 @@ flowchart LR
     class MK9,MK10,MK11 statusProposed
 ```
 
-[The full roadmap](/meta/roadmap) has every mark's scope and status, the
-five-row critical path, and what is named but not scheduled. Generated from
-`plan/roadmap.md` at `kelp` commit `59c9abe`.
+[The roadmap page](/meta/roadmap) points at `plan/roadmap.md`, which is the
+authority: it has every mark's scope and status, the five-row critical path, and
+what is named but not scheduled. This block is kept by hand against it, and has
+to be updated when it moves.
 <!-- roadmap:end -->
 
 ## What the language has

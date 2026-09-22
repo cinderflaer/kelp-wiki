@@ -185,9 +185,8 @@ switch is the only way to reach it.
 
 The hand-written `asm` backend, which emitted x86-64 assembly itself and finished
 with `as` and `ld`, was retired on 2026-09-20 and removed on 2026-09-21. Its plans,
-its counts and its refusal ranking stay as history in
-[`plan/asm-backend/`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/asm-backend/),
-and the [Backends](/compiler/backends) page carries the current shape.
+its counts and its refusal ranking are history rather than a live measurement, and
+the [Backends](/compiler/backends) page carries the current shape.
 
 A *gated* item named as a function
 value is refused by the compiler,
@@ -215,8 +214,9 @@ line, where the C backend's `#line` was the only source of that before; it is a
 line table, so no variables and no types. One optimization level is one level for
 the whole build: it selects the LLVM pass pipeline and the target machine's
 codegen level, and it is the `-O` flag the per-program C object and the final link
-are given, so no performance parity with the C backend is claimed. See
-[`plan/mk7-llvm-backend.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-llvm-backend.md).
+are given, so no performance parity with the C backend is claimed. See the MK7
+record in
+[`plan/done.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/done.md).
 
 ## `fmt`
 

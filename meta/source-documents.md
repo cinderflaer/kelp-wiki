@@ -14,11 +14,9 @@ page here and its source disagree, the source is right and the page is a bug.
 | [`plan/syntax.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md) | the language and the style: every section of the Language chapter cites it by number |
 | [`plan/architecture.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/architecture.md) | the design: compiler layout, the capability model, the v1 surface, the standard library's decisions |
 | [`plan/roadmap.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/roadmap.md) | the plan: the marks, the open items, the backlog |
-| [`plan/done.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/done.md) | the milestone record of what has shipped |
-| [`plan/mk7-llvm-backend.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-llvm-backend.md) | the compiler's LLVM backend: the crate and linking decision, what stays the same, what is our work, the switch criteria and the stages |
-| [`plan/asm-backend/`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/asm-backend/) | the removed hand-written backend track: its plans, its call-overhead measurement, and the encoder and ELF-writer inventory |
+| [`plan/done.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/done.md) | the milestone record of what has shipped, including the MK7 LLVM backend and the retired hand-written track it replaced |
 | [`README.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/README.md) | the front door: what the language has, how to build, the repository layout |
-| `kelpc/std/*.kp` | the standard library, which is the authority for its own signatures: the [index](/reference/stdlib-index) is generated from it |
+| `kelpc/std/*.kp` | the standard library, which is the authority for its own signatures: the [index](/reference/stdlib-index) is kept in step with it |
 | `kelpc/src/*.rs` | the compiler; each file's `//!` header describes its job |
 | `kelpc/tests/` | the fixture suite and the gates |
 | `bench/speed/` | the four-workload benchmark |
