@@ -136,10 +136,33 @@ Borrowing a field that stayed is still fine (`bag.name.as_str()`), and a `Copy`
 field is always readable. To *take* an owned field that only a borrow reaches,
 hold it in a `Box` and `take()` it.
 
-This is also why several stdlib combinators are `Copy`-only: `option.unwrap` on an
-`Option<String>`, `result.map` over a `Result<T, MyErr>` and `list.filter` over a
-`List<String>` each read an owned value out of a borrowed `enum`, `Result` or
-`List`, which a partial move does not cover.
+An owned `enum` payload obeys the same rule: a `when`/`if let` over an owned place
+binds the payload **by value** and takes it out of the enum, so the enum cannot be
+used as a whole afterwards and the same payload cannot be bound twice on one path.
+Over a borrow the payload binds as a borrow and nothing moves:
+
+```kelp
+enum Held {
+    Word(val text: String)
+    Blank
+}
+
+fun take_word(h: move Held).R: String = when h {
+    Word(text) -> text        // the payload moves out of the owned `h`
+    Blank -> String.from_str(s = "")
+}
+
+fun peek_word(h: &Held).R: usize = when h {
+    Word(text) -> text.len()  // `text` is a `&String` here; nothing moved
+    Blank -> 0
+}
+```
+
+The helpers whose receiver stays a borrow are `Copy`-only on the side they
+rebuild: `option.or_else`, `result.unwrap`/`unwrap_or`/`unwrap_err`/`and_then`/
+`or_else` and `list.filter` over a `List<String>`. `option.unwrap` on an
+`Option<String>` and `result.map` over a `Result<T, MyErr>` take their receiver
+with `move` and work.
 
 ## Drops
 

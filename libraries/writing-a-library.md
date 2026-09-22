@@ -70,10 +70,13 @@ below is a rule.
 - **A closure parameter that borrows a module-declared type codegens**, so a
   library may take a callback over its own type: `json` ships
   `each_value`/`filter_array`.
-- **`Option`/`Result` payloads cannot be moved out of a `Copy`-less enum**, which
-  is why a library's "unpack" helpers take an `out` parameter and return `bool`
-  (the shape `std/io`'s `read_line_into` uses) rather than returning
-  `Option<String>`.
+- **An owned payload comes out of an owned place, not out of a borrow.** A
+  parameter of an owned type is a borrow, so a library's "unpack" helper either
+  takes the value with `move` and hands the payload out (`option.unwrap`), or
+  returns the payload inside an `Option`/`Result` (`result.map`) and lets the
+  caller match an owned local. A helper that only has a borrow fills an `out`
+  parameter and returns `bool` (the shape `std/io`'s `read_line_into` uses)
+  instead of returning `Option<String>`.
 
 ## Adding one to `fpl`
 

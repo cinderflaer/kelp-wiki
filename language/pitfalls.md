@@ -17,6 +17,8 @@ the fix. Source: [`syntax.md` §18 and §22](https://homelabone.xenoo.dev/gittea
 | `cannot move the field 'xs' out of 'b': the value is borrowed, so it is not this frame's to give away` | an owned field was read by value out of a borrowed struct | pass a borrow, call a method on it, or take the value as a `move T` parameter and read the field from that local |
 | `cannot read the owned field 'xs' by value: the base is not a local this frame owns, so a partial move cannot take the field out; use it through a borrow (pass it to a parameter, call a method on it) or hold it in a 'Box' and 'take()' it` | reading an owned field out of a temporary or a field chain | bind the owner to a local first, then read the field from that local |
 | `cannot use 'bag' as a whole value: its field 'xs' was moved out` | using or borrowing the binding as a whole after one of its fields was moved out | use the fields that stayed, or assign a fresh value into the moved field on a `var` local |
+| `use of moved value 'h.text'` | that `enum` payload was read by value already | a payload of an owned place is taken once, exactly as a field is: match the payloads that stayed, or match a borrow of the enum |
+| `cannot use 'h' as a whole value: its payload 'text' was moved out` | using the enum as a whole after one of its payloads was moved out | match only the payloads that stayed, or match a borrow of the enum instead |
 | `this call returns a borrow of its parameter 'self', so that argument has to be a variable or a field` | a method that returns a borrow of its receiver was called on a temporary | bind the receiver first: `val u = set.union(a, b)` then `u.len()`; a field of a returned `datac` (`mkName().name.as_str()`) is the same case one projection deeper |
 | `this is a borrow of a borrow` (with the operand named) | `&o` where `o` is already a borrow, which a parameter always is | pass the parameter itself: `o`, not `&o` |
 | `cannot borrow a temporary value` | `&expr` needs a place, and a call's result is not one, nor is a field of one | bind the call to a `val` and borrow the field of that: `val h = mk()` then `&h.name` |
@@ -93,7 +95,7 @@ the fix. Source: [`syntax.md` §18 and §22](https://homelabone.xenoo.dev/gittea
 
 | Symptom | Reality |
 | --- | --- |
-| `option.unwrap` on an `Option<String>` will not type-check | the combinators are `Copy`-only; use `if let`/`when`, or `Box.take` |
+| `option.or_else` / `result.unwrap` on an owned payload will not type-check | the helpers whose receiver stays a borrow are `Copy`-only; `option.unwrap`, `option.unwrap_or`, `option.expect`, `result.map` and `result.map_err` take their receiver with `move`, and `if let`/`when` over an owned place binds the payload by value |
 | `?` refuses to propagate a different error type | v1 has no error conversion; `result.map_err` is the bridge |
 | two `fun pick(...)` overloads collide | a user module cannot overload; spell the type into the name |
 | an `enum` cannot have a method | v1 has no enum methods; write a free function |

@@ -441,9 +441,9 @@ Functions:
 
 - `fun is_some<T>(o: &Option<T>).R: bool`
 - `fun is_none<T>(o: &Option<T>).R: bool`
-- `fun unwrap_or<T>(o: &Option<T>, fallback: T).R: T`
-- `fun unwrap<T>(o: &Option<T>).R: T`
-- `fun expect<T>(o: &Option<T>, message: &str).R: T`
+- `fun unwrap_or<T>(o: move Option<T>, fallback: move T).R: T`
+- `fun unwrap<T>(o: move Option<T>).R: T`
+- `fun expect<T>(o: move Option<T>, message: &str).R: T`
 - `fun map<T, U>(o: &Option<T>, f: closure(&T).R: U).R: Option<U>`
 - `fun and_then<T, U>(o: &Option<T>, f: closure(&T).R: Option<U>).R: Option<U>`
 - `fun or_else<T>(o: &Option<T>, f: closure().R: Option<T>).R: Option<T>`
@@ -464,8 +464,8 @@ Functions:
 - `fun unwrap_err<T, E>(r: &Result<T, E>).R: E`
 - `fun expect<T, E>(r: &Result<T, E>, message: &str).R: T`
 - `fun expect_err<T, E>(r: &Result<T, E>, message: &str).R: E`
-- `fun map<T, U, E>(r: &Result<T, E>, f: closure(&T).R: U).R: Result<U, E>`
-- `fun map_err<T, E, F>(r: &Result<T, E>, f: closure(&E).R: F).R: Result<T, F>`
+- `fun map<T, U, E>(r: move Result<T, E>, f: closure(&T).R: U).R: Result<U, E>`
+- `fun map_err<T, E, F>(r: move Result<T, E>, f: closure(&E).R: F).R: Result<T, F>`
 - `fun and_then<T, U, E>(r: &Result<T, E>, f: closure(&T).R: Result<U, E>).R: Result<U, E>`
 - `fun or_else<T, E, F>(r: &Result<T, E>, f: closure(&E).R: Result<T, F>).R: Result<T, F>`
 - `fun each<T, E>(r: &Result<T, E>, f: closure(&T))`

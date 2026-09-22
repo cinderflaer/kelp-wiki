@@ -91,14 +91,18 @@ fun label(s: &Shape).R: &str = when s {
 - The number of bindings must equal the number of payload fields; `_` ignores
   one.
 - The scrutinee is matched where it is when it is a **place** (a binding, a
-  field path, or a dereference): nothing moves, and only the matched field is
-  copied or borrowed. A **temporary** is bound to a hidden local first, because a
-  non-`Copy` payload binds as a borrow of it and that borrow has to outlive the
-  arm's body. A chain over a temporary stages its **root**, so
-  `when mk().t { ... }` binds `mk()` and frees the whole value once.
-- A payload binds as a **copy** when it is `Copy` and as a **shared borrow**
-  otherwise, so matching never partially moves the scrutinee: `r` above is an
-  `f64`, while a `Word(val text: String)` payload binds as `&String`.
+  field path, or a dereference): nothing moves out of it as a whole, and only the
+  matched payload is copied, borrowed, or (an owned payload of an owned place)
+  moved out. A **temporary** is bound to a hidden local first, so the arm has a
+  place to read the payload out of, and a non-`Copy` payload borrow has something
+  to point at for the length of the arm. A chain over a temporary stages its
+  **root**, so `when mk().t { ... }` binds `mk()` and frees the whole value once.
+- A payload binds as a **copy** when it is `Copy`, **by value** when it is owned
+  and the scrutinee is an owned place (a `val`/`var` binding or a `move T`
+  parameter), and as a **shared borrow** otherwise: `r` above is an `f64`, while a
+  `Word(val text: String)` payload binds as an owned `String` out of an owned
+  `Word` and as `&String` out of a `&Word`. The value taken by value is gone from
+  the enum afterwards.
 - There is no `else` requirement when every variant has an arm; an `else ->` arm
   covers the variants not named above it.
 

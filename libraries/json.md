@@ -36,10 +36,11 @@ enum Json {
 }
 ```
 
-`Json` is owned and read-only in practice: v1 matches an enum payload through a
-shared borrow, so a payload cannot be pushed to in place. A document is built
-bottom-up — collect `List`s of children, then wrap them with `array` or
-`object`. The constructors exist so a program never spells a variant name.
+`Json` is owned and read-only in practice: a match over an owned `Json` takes the
+payload out of the enum into a binding, so a payload cannot be pushed to in
+place. A document is built bottom-up: collect `List`s of children, then wrap them
+with `array` or `object`. The constructors exist so a program never spells a
+variant name.
 
 `Object` is a pair of parallel lists, so key order is document order and
 duplicate keys are preserved by the parser (`get` finds the first).
@@ -134,9 +135,9 @@ at the first NUL, a `String` carries its own length.
 | `as_f64_or(v, fallback: f64)` | `f64` |
 | `text_or(v, fallback: &str)` | `String` |
 
-There is no `try_str`: `Option<T>` is only offered for a `Copy` payload, and a
-payload cannot be moved out of an enum in v1. `text_or` returns an owned copy
-and applies the fallback.
+There is no `try_str`: the `try_*` readers take `&Json`, a borrow, and an owned
+payload cannot be moved out of a borrow, so only a `Copy` payload can come back
+inside an `Option`. `text_or` returns an owned copy and applies the fallback.
 
 ## Keyed lookup
 

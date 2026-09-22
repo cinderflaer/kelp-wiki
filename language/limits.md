@@ -38,16 +38,18 @@ These are deliberate, and each one has a workaround in this documentation.
 
 ## Ownership
 
-- **A partial move takes a field of an owned local, and nothing else.**
-  `val xs = bag.xs` moves that field out of an owned `val`/`var` local or a
-  `move T` parameter, and the binding keeps the fields that stayed. A field
-  cannot be moved out of a borrow, a temporary or a field chain, and an owned
-  `enum` payload cannot be read out of an owned `enum` either: use a `Box` and
-  `take()` it, or pass a borrow.
-- That is what makes some stdlib helpers `Copy`-only: `option.unwrap` on an
-  `Option<String>`, `result.map` over a `Result<T, MyErr>` and `list.filter` over
-  a `List<String>` each read an owned value out of a borrowed `enum`, `Result` or
-  `List`, which a partial move does not cover.
+- **A partial move takes one projection of an owned local.** `val xs = bag.xs`
+  moves that field out of an owned `val`/`var` local or a `move T` parameter, and
+  the binding keeps the fields that stayed. An owned `enum` payload read by value
+  out of an owned place is the same partial move, which is what a `when`/`if let`
+  over an owned place does with the payload it binds. A projection read out of a
+  borrowed structure or out of a nested place is still refused.
+- **The helpers whose receiver stays a borrow are `Copy`-only.** `option.unwrap`
+  on an `Option<String>` and `result.map` over a `Result<T, MyErr>` take their
+  receiver with `move` now, so both work. `option.or_else`, `result.unwrap`,
+  `result.unwrap_or`, `result.unwrap_err`, `result.and_then`, `result.or_else`
+  and `list.filter` over a `List<String>` read through a borrow and rebuild what
+  they hand back, so the payload (or the accepted element) must be `Copy`.
 - **No references (and no `View`) in fields, `List` elements, `Map` values,
   array elements or `Box` contents.** Text you must store is a `String`; a view
   is taken at the point of use.

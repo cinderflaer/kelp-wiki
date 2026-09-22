@@ -47,7 +47,7 @@ fun main() {
 
     val r = encoding.base64_decode("aGVsbG8=")
     if let Ok(decoded) = r {
-        print(String.from_bytes(decoded.clone()))
+        print(String.from_bytes(decoded))
     }
 }
 ```
@@ -62,10 +62,12 @@ hello
 
 ## Notes
 
-- **A decoder's payload is a borrow**, because that is what `Result`'s header
-  promises: `if let Ok(decoded) = r` binds `&Bytes`, so the copy out is explicit
+- **A decoder's payload binds by value out of an owned result**: `val r =
+  encoding.base64_decode(..)` then `if let Ok(decoded) = r` gives you the `Bytes`
+  itself, so `String.from_bytes(decoded)` adopts that buffer. Match a `&Result`
+  instead and the payload binds as a borrow, and then the copy out is explicit
   (`decoded.clone()`). The same holds for `percent_decode`, whose payload is a
-  `&String`. `result.unwrap` is only offered for a `Copy` payload.
+  `String`. `result.unwrap` is only offered for a `Copy` payload.
 - **Percent against form.** `percent_encode`/`percent_decode` are the URL form:
   a space is `%20` and `+` is data. `form_encode`/`form_decode` are
   `application/x-www-form-urlencoded`: a space is `+` and `+` is a space. Keeping
