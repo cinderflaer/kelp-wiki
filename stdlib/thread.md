@@ -40,7 +40,7 @@ on the C backend and `fence seq_cst` on the LLVM one, and a single-threaded
 program cannot observe it at all.
 
 The fence lives in this module rather than beside the atomic cell so that the
-whole thread surface is one module: stage C1 of MK9-S3-M1 adds `spawn` and
+whole thread surface is one module: stage C1 of MK6-S1-M1 adds `spawn` and
 `join` here instead of inventing a module around one function.
 
 ## The ordering comes from `std/atomic`

@@ -43,11 +43,13 @@ naming one that does not exist yet is the ordinary unknown-variant error.
 ## The cell two threads would share
 
 An [`Atomic<T>`](/stdlib/atomic) is one location every access to which is a
-single atomic operation. A second thread would reach it through a **`pd val`**,
-never a `pd var`: a passdown declared `val` hands a function a shared borrow,
-which is the borrow a thread argument may take, while a function that assigns to
-a `var` passdown holds it exclusively, and an exclusive borrow may not cross to
-a thread. That is the same rule that keeps a `&mut T` from being sent anywhere
+single atomic operation. A shared counter is declared **`pd val`**, because a
+`val` passdown hands a function a shared borrow, which is the borrow a thread
+argument may take. A `pd var` counter works as well, including a store followed
+by a load in one function, because an atomic's operations are shared borrows
+reborrowed from the passdown's hidden reference; what `var` adds is the exclusive
+borrow a function takes when it assigns to the passdown itself, and that borrow
+may not cross to a thread. That is the same rule that keeps a `&mut T` from being sent anywhere
 ([Ownership and borrowing](/language/ownership)).
 
 ## No threads yet, so nothing can race
@@ -64,7 +66,7 @@ no async, no coroutines.
 
 ## Where the definition lives
 
-The published definition of the model is `plan/mk9-memory-model.md` section 3
+The definition of the model on record is `plan/mk9-memory-model.md` section 3
 until **MK9-S3-M2** states it as the language's own. `syntax.md` §12.6 is the
 interim statement, and it borrows the definition by reference rather than
 publishing it.
