@@ -28,10 +28,12 @@ These are deliberate, and each one has a workaround in this documentation.
   parameters of its own. See [Generics and type parameters](/language/generics).
 - **An `enum` carries no methods**, generic or not: combinators over `Option` and
   `Result` are free functions.
-- **A `Map` key must be `String`, an integer or `bool`.** The compiler generates
-  the key's hash and equality, so the set is closed: a float is refused (`nan`),
-  and a `datac`, container or borrow is refused because v1 has no equality for
-  them.
+- **A `Map` key must be keyable.** The compiler generates the key's hash and
+  equality, so the set is what it can generate those for: `String`, an integer,
+  `bool`, `char`, or a `datac`/`enum` whose every field (or every variant payload)
+  is itself keyable. A float is refused (`nan`), and a `Bytes`, container, view,
+  borrow or `datac`/`enum` with a field outside the set is refused with a message
+  naming that field.
 - **No user overloading**, and no user `extern` bodies: `extern fun` is reserved
   for compiler-shipped stdlib modules. (`abs`, `min`, `max`, `clamp` are the only
   overloads in the language, and they are stdlib-only.)

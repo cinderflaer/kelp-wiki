@@ -79,7 +79,9 @@ xs.sort()                 // by path, then by size
 
 A `List`, `Box`, `Map` or owned-array field has neither, so a record holding one
 is refused for both, and the diagnostic says which. `contains` still needs
-equality, which a `datac` does not have, and `Map`'s `get_or`/`values` are still
+equality, which a `datac` does not have: a keyable `datac`'s derived equality is
+`Map`'s own, used to find a key, and it is not a `==` a program can write. `Map`'s
+`get_or`/`values` are still
 scalar-only.
 
 Scalars sort too, and so do `f32`/`f64`: a float list with a `nan` in it has no
@@ -125,14 +127,12 @@ print(runs.get(key = 7))
 - Entries keep **insertion order**, which is why `keys()` and `values()` are lists
   and not hash order.
 - **`Map<V>` written with one argument means `Map<String, V>`.**
-- **A key must be `String`, an integer, or `bool`.** The compiler generates the
-  key's hash and equality from `K`, so the set is closed: a float is refused
-  (`nan != nan` would make an inserted key unfindable) and a `datac`, container or
-  borrow is refused (v1 has no equality for them).
+- **A key must be keyable.** The compiler generates the key's hash and equality from `K`, so the set is what it can generate those for: `String`, an integer, `bool`, `char`, or a `datac`/`enum` whose every field (or every variant payload) is itself keyable. A float is refused (`nan != nan` would make an inserted key unfindable), and a `Bytes`, container, view, borrow or `datac`/`enum` with a field outside the set is refused with a message that names the field.
 - `Map<K, V>` is neither a list element nor a map value, so
   `Map<String, Map<i32>>` is impossible.
 - A `String`-keyed map takes its key as a bare `str` in every method (the map
-  copies it in), while other key types take the key by value. That split is why
+  copies it in), a scalar key is passed by value, and a user key type is passed by
+  shared borrow. That split is why
   [`set`](/libraries/set) ships two types instead of one generic set.
 
 | Method | Returns |
