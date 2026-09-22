@@ -192,8 +192,9 @@ to be updated when that source moves:
 | [Standard library index](/reference/stdlib-index) | `kelpc/std/*.kp` |
 
 The [roadmap page](/meta/roadmap) is a pointer rather than a copy: it names
-`kelp/plan/roadmap.md` as the authority and repeats nothing from it, so it cannot
-drift. The roadmap block on the [home page](/home) is kept by hand.
+`kelp/plan/roadmap.md` as the authority and copies none of its tables, diagrams
+or statuses, so it cannot drift. The roadmap block on the [home page](/home) is
+kept by hand.
 
 Mermaid diagrams are not checked by any build: Wiki.js copies a diagram's text
 without judging it, so an invalid one shows up in the browser as an error box.

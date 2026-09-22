@@ -38,10 +38,9 @@ cargo build --release -p kelpc
 
 The design authority for this chapter is
 [`plan/architecture.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/architecture.md),
-with the backend's plan of record in
-[`plan/mk7-llvm-backend.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-llvm-backend.md),
-and the retired hand-written track in
-[`plan/asm-backend/`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/asm-backend/).
+with the MK7 backend record, and the retired hand-written track it replaced,
+archived in
+[`plan/done.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/done.md).
 
 ## Pages
 

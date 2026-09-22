@@ -32,7 +32,7 @@ container typedef.
 | `kelp_rt.c` | emitted into every generated program by `codegen_c.rs`; linked as an object into every `llvm`-built binary | the C runtime text: the `Bytes`/`String` routines, `kelp_panic`/`kelp_assert`, the allocation helpers and `kelp_argc`/`kelp_argv` |
 | `cap_matcher_ref.c` | not emitted | the C capability matcher, kept as the differential oracle |
 | `path_normalize_ref.c` | not emitted | the C path normalizer, kept as the differential oracle |
-| `dns_parse.kp` | not emitted, not a std module | the stub resolver's DNS message parser, in Kelp (`plan/asm-backend/plan.md` §7 item 6) |
+| `dns_parse.kp` | not emitted, not a std module | the stub resolver's DNS message parser, in Kelp |
 | `dns_parse_ref.c` | not emitted | the same parser in C, kept as the differential oracle |
 
 ## `cap_glue.c`: what the capability runtime still is in C
@@ -53,8 +53,8 @@ runtime.
 
 ## Why the matcher exists twice
 
-The retired hand-written track's §8 (`plan/asm-backend/plan.md`) planned to move the runtime
-from C text into Kelp one piece at a time. It is happening anyway, for its own reasons. The
+The retired hand-written track planned to move the runtime from C text into Kelp
+one piece at a time. It is happening anyway, for its own reasons. The
 matcher and the normalizer have now moved, and **the C versions were kept rather
 than deleted**, because a port of a security check has no other oracle:
 
@@ -83,8 +83,8 @@ Comparing bytes and not only verdicts is deliberate for the normalizer: a path
 that normalizes to something *inside* the grant while resolving outside it is
 exactly the escape being rejected.
 
-The same discipline covers the stub resolver's message parser, which is a §7 item
-rather than a §8 one and is not a security check: `dns_parse.kp` and
+The same discipline covers the stub resolver's message parser, which is not a
+security check: `dns_parse.kp` and
 `dns_parse_ref.c` are fed the same 1990-case corpus by `kelpc/tests/dns_parse.rs`,
 one printed verdict per case, and the two have to agree line for line. A parser
 that agrees only on a well-formed reply is the one that comes apart on a
@@ -98,7 +98,7 @@ so no program reaches the parser yet.
 | --- | --- |
 | Capability matcher | Kelp (`std/rt.kp`), with the C oracle kept |
 | Path normalizer | Kelp (`std/rt.kp`), with the C oracle kept |
-| DNS message parser (`plan/asm-backend/plan.md` §7 item 6) | Kelp (`dns_parse.kp`), not shipped yet, with the C oracle kept |
+| DNS message parser | Kelp (`dns_parse.kp`), not shipped yet, with the C oracle kept |
 | Symlink resolution (`kelp_resolve_path`) | still C |
 | The allocator | still C; blocked on raw pointers, which the language does not expose |
 | The `Bytes`/`String` heap routines and drop calls | the text of `kelp_rt.c`: emitted by `codegen_c.rs` into every generated program, and linked as an object by the `llvm` path |

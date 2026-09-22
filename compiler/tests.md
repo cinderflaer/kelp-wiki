@@ -39,9 +39,8 @@ differential sweep below finds no
 target the C backend builds that it does not.
 The per-slice gates that follow still name the fixtures they carry.
 The `asm` rows left the suite with the backend on 2026-09-21: its counts, its
-refusal ranking and the fixture-by-fixture detail stay frozen in
-[`plan/asm-backend/plan.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/asm-backend/plan.md)
-§0, as history rather than a live measurement.
+refusal ranking and the fixture-by-fixture detail are history rather than a live
+measurement.
 One of them,
 `the_host_port_denial_names_the_host_as_written_and_its_own_port`, is a loopback
 test that fails intermittently in a full run: a run that includes it reads 340 and
@@ -215,9 +214,7 @@ The `bench/speed` gate is also where the retired hand-written backend's numbers
 were measured, and the plan's annex records the caveats: it compiled a subset of
 the kernels at that measurement, and the follow-up list of what must be true
 before the number is trustworthy is longer than the number itself. The retired
-track's call-cost measurement is
-[`plan/asm-backend/call-overhead.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/asm-backend/call-overhead.md),
-and it is the measurement the LLVM decision rests on.
+track's call-cost measurement is the measurement the LLVM decision rests on.
 
 ## See also
 

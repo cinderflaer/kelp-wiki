@@ -28,8 +28,8 @@ believing its builds used one backend while every one of them used the other.
 The hand-written **`asm`** backend, which emitted x86-64 assembly text itself and
 finished with `as` and `ld`, was retired on 2026-09-20 and its source was removed
 on 2026-09-21. Its plan, its counts, its refusal
-ranking and the measurements behind them stay as history in
-[`plan/asm-backend/`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/asm-backend/).
+ranking and the measurements behind them are history rather than a live
+measurement.
 
 ```sh
 kelpc build examples/hello.kp   # llvm, the one backend
@@ -43,9 +43,9 @@ becomes a trait when a third backend makes the interface worth naming.
 ## The LLVM backend
 
 `kelpc` lowers the typed IR to **LLVM IR** and lets LLVM generate the object, the
-way `rustc` does. This is MK7, begun at stage S1 on 2026-09-21, and the plan of
+way `rustc` does. This is MK7, begun at stage S1 on 2026-09-21, and the milestone
 record is
-[`plan/mk7-llvm-backend.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-llvm-backend.md).
+[`plan/done.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/done.md).
 
 It covers the **whole language**, the surface the [Language](/language) pages
 describe. `c` is still the oracle that build is compared against, and the
@@ -183,8 +183,8 @@ measurement over the corpus, not as a promise that the backend can never refuse.
   checked-in 24-seed conformance corpus. It found and fixed two defects the
   curated corpus could not see, both `llvm`-confined: a float `List`'s `contains`
   emitted an integer compare, and an unread owned `pd` made `atexit` drop a
-  container set that was never declared. `plan/mk7-llvm-backend.md` §5 is the
-  stage table.
+  container set that was never declared. The MK7 record in `plan/done.md`
+  names each stage.
 - **One level is one level for the whole build:** the level selects the module
   pass pipeline LLVM runs, the target machine's codegen level, and the `-O` flag
   the per-program C object and the final link are given, so the differential
@@ -228,8 +228,8 @@ Two consequences worth knowing:
 2. **A construct a backend cannot lower must be refused by name, never
    miscompiled.** The `llvm` backend already follows this (the guard above). The
    differential sweep that enforces it, `kelpc/tests/backend_coverage.rs`, was
-   removed with the `asm` rows and has been rebuilt against the LLVM backend
-   (`plan/mk7-llvm-backend.md` §6), where the baseline is `LLVM_BUILT_BASELINE`:
+   removed with the `asm` rows and has been rebuilt against the LLVM backend,
+   where the baseline is `LLVM_BUILT_BASELINE`:
    it builds every fixture the C backend builds with `llvm`, runs both and compares
    stdout and exit status byte for byte, and records a refusal with its message
    rather than failing it. The baseline is 223 of the 223 targets and the ranking
