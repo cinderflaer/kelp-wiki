@@ -159,8 +159,8 @@ fun peek_word(h: &Held).R: usize = when h {
 ```
 
 The helpers whose receiver stays a borrow are `Copy`-only on the side they
-rebuild: `option.or_else`, `result.unwrap`/`unwrap_or`/`unwrap_err`/`and_then`/
-`or_else` and `list.filter` over a `List<String>`. `option.unwrap` on an
+rebuild: `option.or_else`, `result.unwrap`/`unwrap_or`/`unwrap_err`/`expect`/
+`expect_err`/`and_then`/`or_else` and `list.filter` over a `List<String>`. `option.unwrap` on an
 `Option<String>` and `result.map` over a `Result<T, MyErr>` take their receiver
 with `move` and work.
 

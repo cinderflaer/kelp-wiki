@@ -47,9 +47,10 @@ These are deliberate, and each one has a workaround in this documentation.
 - **The helpers whose receiver stays a borrow are `Copy`-only.** `option.unwrap`
   on an `Option<String>` and `result.map` over a `Result<T, MyErr>` take their
   receiver with `move` now, so both work. `option.or_else`, `result.unwrap`,
-  `result.unwrap_or`, `result.unwrap_err`, `result.and_then`, `result.or_else`
-  and `list.filter` over a `List<String>` read through a borrow and rebuild what
-  they hand back, so the payload (or the accepted element) must be `Copy`.
+  `result.unwrap_or`, `result.unwrap_err`, `result.expect`, `result.expect_err`,
+  `result.and_then`, `result.or_else` and `list.filter` over a `List<String>`
+  read through a borrow and rebuild what they hand back, so the payload (or the
+  accepted element) must be `Copy`.
 - **No references (and no `View`) in fields, `List` elements, `Map` values,
   array elements or `Box` contents.** Text you must store is a `String`; a view
   is taken at the point of use.

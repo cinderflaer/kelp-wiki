@@ -46,7 +46,9 @@ that binds the payload is a partial move: it takes the value out, and the option
 own drop frees the payloads the move left behind. That is what makes
 `Option<String>.unwrap()` work. The option is consumed either way, so a caller that
 wants to keep it passes a fresh expression (`option.unwrap(o = find(...))`) or
-matches the option instead, which binds the payload without giving the option up.
+matches it for a tag test (`when o { Some(_) -> .. }`). A pattern that binds an
+owned payload takes it out just as `unwrap` does; a `Copy` payload is copied, so
+the option stays usable.
 
 `or_else` cannot do that: its receiver is a borrow and its `Some` arm rebuilds the
 option out of the payload it borrowed, which is a copy, so it stays `Copy`-only.
