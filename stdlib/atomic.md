@@ -149,9 +149,11 @@ fun main() {
   or array element, because the container's own routines read and write an
   element as a plain location and every access to an atomic has to be one atomic
   operation. A `datac` field of atomic type is accepted.
-- **An atomic carries no thread by itself.** v1 has no `thread.spawn`, no
-  `thread.join` and no `thread.fence`; [Limits in v1](/language/limits) records
-  what concurrency does not exist yet.
+- **An atomic carries no thread by itself.** v1 has no `thread.spawn` and no
+  `thread.join`, so nothing shares the cell across threads today; the standalone
+  fence, [`thread.fence(order)`](/stdlib/thread), orders no location of its own.
+  [Limits in v1](/language/limits) and [Concurrency in v1](/language/concurrency)
+  record what does not exist yet.
 
 ## See also
 

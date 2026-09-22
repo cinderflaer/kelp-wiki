@@ -38,6 +38,7 @@ The domain each module needs comes from the compiler's own table
 | `std/option` | — | `Option<T>` and its combinators |
 | `std/result` | — | `Result<T, E>` and its combinators |
 | `std/atomic` | - | `Atomic<T>` and the one ordering v1 has |
+| `std/thread` | - | the standalone fence, `fence(order)` |
 | `std/rt` | — | the compiler's own runtime module (the capability matcher), injected for a program that imports a gated module; not part of the stdlib surface |
 
 ## Compiler builtins
@@ -79,6 +80,7 @@ The builtins are described in [Text](/language/text) and
 | `option` | [`std/option`](/stdlib/option) |
 | `result` | [`std/result`](/stdlib/result) |
 | `atomic` | [`std/atomic`](/stdlib/atomic) |
+| `thread` | [`std/thread`](/stdlib/thread) |
 
 Two conventions worth knowing before reading a page:
 

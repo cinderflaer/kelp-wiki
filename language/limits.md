@@ -91,13 +91,17 @@ These are deliberate, and each one has a workaround in this documentation.
 - **No threads, no async, no coroutines.** Concurrency is a later milestone; the
   standard library reaches the outside world by processes and by `poll`-style
   readiness (`wait_readable`) instead. A program that needs two things at once
-  spawns a process.
-- **An atomic cell exists, and it carries no thread by itself.** `Atomic<T>` in
-  [`std/atomic`](/stdlib/atomic) is one location every access to which is a
-  single atomic operation, and the single ordering v1 has is `SeqCst`. There is
-  no `thread.spawn`, no `thread.join` and no `thread.fence` yet, so nothing
-  shares the cell across threads today; a shared counter is a `pd val` atomic,
-  which is the declaration that will let a second thread hold the borrow.
+  spawns a process. [Concurrency in v1](/language/concurrency) has the model as
+  it stands.
+- **An atomic cell and a standalone fence exist, and neither carries a thread by
+  itself.** `Atomic<T>` in [`std/atomic`](/stdlib/atomic) is one location every
+  access to which is a single atomic operation, and `thread.fence(order)` in
+  [`std/thread`](/stdlib/thread) joins the total order while naming no location.
+  The single ordering v1 has is `SeqCst`, and the fence changes nothing a
+  single-threaded program can observe. There is no `thread.spawn` and no
+  `thread.join` yet, so nothing shares the cell across threads today; a shared
+  counter is a `pd val` atomic, which is the declaration that will let a second
+  thread hold the borrow.
 
 ## Text
 
@@ -116,6 +120,7 @@ behaviour escape hatch.
 
 ## See also
 
+- [Concurrency in v1](/language/concurrency)
 - [Pitfalls](/language/pitfalls)
 - [Ownership and borrowing](/language/ownership)
 - [Collections](/language/collections)

@@ -16,9 +16,10 @@ Names have landed in batches since the last full pass: `fmt.commas_u64`,
 `io.errno_text` with `fs.try_read`, `fs.try_read_text` and `fs.try_open`, and
 finally `str.less`, `str.is_digit` and the whole `std/encoding` module. The
 `std/atomic` names below (`Atomic<T>` and `Ordering`, MK9-S3-M1 stage A1) were
-added by hand at `kelp` `724cb67`, for the same reason the rest of the page is
-hand-kept: the generator is not in the tree, so a new module has to be written
-into the page by hand rather than re-derived.
+added by hand at `kelp` `724cb67` and the `std/thread` name below (`fence`,
+stage A2 of the same milestone) at `kelp` `eb836da`, for the same reason the
+rest of the page is hand-kept: the generator is not in the tree, so a new module
+has to be written into the page by hand rather than re-derived.
 
 `std/rt` has no section: it ships inside the binary but is the compiler's own
 runtime module rather than part of the stdlib surface. `impl "std/rt"` resolves
@@ -501,6 +502,14 @@ The element set is `bool` and the integer types, spelled with the names
 The `fetch_*` set exists on the integer instantiations only, never on
 `AtomicBool`.
 
+## `std/thread`
+
+Functions (the fence is a compiler builtin rather than a declaration in
+`std/thread.kp`; the module declares nothing, and the `Ordering` it takes is
+`std/atomic`'s type):
+
+- `fun fence(order: Ordering)`
+
 ## Modules at a glance
 
 | Module | Functions | Types/constants | Domain |
@@ -523,6 +532,7 @@ The `fetch_*` set exists on the integer instantiations only, never on
 | `std/option` | 9 | 1 | — |
 | `std/result` | 12 | 1 | — |
 | `std/atomic` | 10 | 1 | - |
+| `std/thread` | 1 | 0 | - |
 
 ## Not part of the stdlib surface
 
