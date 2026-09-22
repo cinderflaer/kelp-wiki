@@ -106,6 +106,7 @@ line3
   anything more (a filtered copy, a size cap) belongs in the caller.
 - `tail` reads the whole file and splits it; it is not a seek-from-end.
 - `files_equal` compares by reading both files whole.
-- `survey` calls `fs.metadata` once per entry. A `Metadata` is five `stat` calls
-  (one per field, because an `extern` returns one value), so a walk of a large
-  tree is syscall-bound before it is I/O-bound.
+- `survey` calls `fs.metadata` once per entry, and `fs.metadata` fills a
+  `Metadata` from one `stat`, so the walk pays one syscall per entry rather than
+  the five it charged before: a large tree is no longer syscall-bound before it
+  is I/O-bound.
