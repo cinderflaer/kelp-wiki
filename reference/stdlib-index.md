@@ -1,24 +1,20 @@
 ---
 title: "Standard library index"
-description: "Every public name in the shipped standard library, one line each, generated from kelpc/std/.kp at kelp commit 940c524 by tools/stdlib-index.py, a generator kept at the archived branch mkdocs-archive, plus str.less and str.is_digit from kelp 2fa7de5. Behaviour, panics and examples live in the Standard..."
+description: "Every public name in the shipped standard library, one line each, kept by hand against kelpc/std/.kp. Behaviour, panics and examples live in the Standard library chapter."
 isPublished: true
 tags: "reference"
 ---
-Every public name in the shipped standard library, one line each, generated from
-`kelpc/std/*.kp` by `tools/stdlib-index.py`, which lived in this repository's
-MkDocs-era layout and is kept at branch `mkdocs-archive` and tag `mkdocs-final`,
-not in the current tree.
+Every public name in the shipped standard library, one line each, kept by hand
+against `kelpc/std/*.kp` and updated here when the standard library moves. The
+MkDocs-era `tools/stdlib-index.py` that once wrote the page is archived at
+branch `mkdocs-archive` and tag `mkdocs-final`, not in the current tree, and is
+not run.
 
-The page was last re-derived with that script at `kelp` commit `54b6ba8`, plus
-the names that landed after it: `fmt.commas_u64`, `fmt.commas_i64` and
-`fmt.human_size` (`kelp` `a75deb6`), then `fs.cwd`, `fs.is_symlink`,
-`fs.read_link` and `path.absolute`, then `io.IoErr`/`io.errno_text` with
-`fs.try_read`, `fs.try_read_text` and `fs.try_open`. Three names and one module make that worth
-saying: `str.less` and `str.is_digit` landed after the `940c524` revision
-the page used to be pinned to, and `std/encoding` is new, and the script's own
-`ORDER` list has to carry `encoding` before it writes that section. The script
-prints the MkDocs layout (an H1 title, `docs/`-relative links, no front matter),
-so the front matter and the absolute links on this page are the hand-kept part.
+Names have landed in batches since the last full pass: `fmt.commas_u64`,
+`fmt.commas_i64` and `fmt.human_size` (`kelp` `a75deb6`), then `fs.cwd`,
+`fs.is_symlink`, `fs.read_link` and `path.absolute`, then `io.IoErr` and
+`io.errno_text` with `fs.try_read`, `fs.try_read_text` and `fs.try_open`, and
+finally `str.less`, `str.is_digit` and the whole `std/encoding` module.
 
 `std/rt` has no section: it ships inside the binary but is the compiler's own
 runtime module rather than part of the stdlib surface. `impl "std/rt"` resolves

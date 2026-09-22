@@ -104,8 +104,9 @@ fun use_line(l: Line) {
 }
 ```
 
-To *take* an owned field, hold it in a `Box` and `take()` it, or make the
-parameter `move Line` and read the field out of the value you now own.
+To *take* an owned field, hold it in a `Box` and `take()` it. Making the
+parameter `move Line` does not lift the rule: the value that arrives is still
+one structure, and the owned field inside it cannot be read out by value either.
 
 This is also why several stdlib combinators are `Copy`-only: `option.unwrap` on an
 `Option<String>`, `result.map` over a `Result<T, MyErr>` and `list.filter` over a

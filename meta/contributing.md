@@ -184,14 +184,13 @@ change that needs **no** unreleased compiler is not release-coupled, and lands o
 `main` directly. [Writing a library](/libraries/writing-a-library) has the rule
 for `fpl` in full.
 
-Two pages are **generated**, not written by hand, and re-derived when their
-source moves. The generators are part of that archived layout, so re-deriving one
-needs a checkout of it:
+Two pages are **kept by hand**, each against a source in another repository, and
+each has to be updated when that source moves:
 
-| Page | Generated from | Generator (archived) |
-| --- | --- | --- |
-| [Roadmap](/meta/roadmap) (and the block on the [home page](/home)) | `kelp/plan/roadmap.md` (the authority), via a `../kelp` checkout | `tools/roadmap.py` at `mkdocs-final` |
-| [Standard library index](/reference/stdlib-index) | `kelpc/std/*.kp`, via a `../kelp` checkout | `tools/stdlib-index.py` at `mkdocs-final` |
+| Page | Kept against |
+| --- | --- |
+| [Roadmap](/meta/roadmap) (and the block on the [home page](/home)) | `kelp/plan/roadmap.md` (the authority) |
+| [Standard library index](/reference/stdlib-index) | `kelpc/std/*.kp` |
 
 Mermaid diagrams are not checked by any build: Wiki.js copies a diagram's text
 without judging it, so an invalid one shows up in the browser as an error box.

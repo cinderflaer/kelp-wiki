@@ -6,7 +6,7 @@ tags: "meta"
 ---
 Kelp's milestones are **marks** (a named goal), **stages** (a significant part of a mark) and **stages' milestones**; the hierarchy and the identifier rules are in [`plan/roadmap.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/roadmap.md), which is the authority for everything on this page.
 
-Generated from `plan/roadmap.md` at `kelp` commit `59c9abe` by `tools/roadmap.py`, which lived in this repository's MkDocs-era layout and is kept at branch `mkdocs-archive` and tag `mkdocs-final`, not in the current tree: re-run it from there and commit the result when the roadmap moves. The diagrams show order and status, not calendar time: the roadmap has no dates, because a mark moves when its prerequisites land rather than on a schedule.
+This page is kept by hand against `plan/roadmap.md`: nothing regenerates it, so it has to be updated here in the same session as a roadmap change. The diagrams show order and status, not calendar time: the roadmap has no dates, because a mark moves when its prerequisites land rather than on a schedule.
 
 ## The marks at a glance
 

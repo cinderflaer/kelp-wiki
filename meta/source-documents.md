@@ -18,7 +18,7 @@ page here and its source disagree, the source is right and the page is a bug.
 | [`plan/mk7-llvm-backend.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk7-llvm-backend.md) | the compiler's LLVM backend: the crate and linking decision, what stays the same, what is our work, the switch criteria and the stages |
 | [`plan/asm-backend/`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/asm-backend/) | the removed hand-written backend track: its plans, its call-overhead measurement, and the encoder and ELF-writer inventory |
 | [`README.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/README.md) | the front door: what the language has, how to build, the repository layout |
-| `kelpc/std/*.kp` | the standard library, which is the authority for its own signatures: the [index](/reference/stdlib-index) is generated from it |
+| `kelpc/std/*.kp` | the standard library, which is the authority for its own signatures: the [index](/reference/stdlib-index) is kept in step with it |
 | `kelpc/src/*.rs` | the compiler; each file's `//!` header describes its job |
 | `kelpc/tests/` | the fixture suite and the gates |
 | `bench/speed/` | the four-workload benchmark |

@@ -133,8 +133,9 @@ rather than a backend gap: a gated item named as a *function value*
 and which argument position holds the resource is a property of that signature, so
 a call through the pointer has no check to emit and no place to put one. The
 compiler therefore refuses the value by name, for the wrapper spelling and the
-`extern fun` one alike, and whether or not the naming module holds the domain (`kelpc/src/infer.rs::function_value_at`, commit `fccb578`;
-`BUG-k2Qv7` was the report). A function *literal* over a gated call
+`extern fun` one alike, and whether or not the naming module holds the domain
+(`kelpc/src/infer.rs::function_value_at`, commit `fccb578`). A function *literal*
+over a gated call
 (`val f = fun(p: &str).R: Bytes = fs.read(p)`) is a different shape: its body is a
 direct call in the module that wrote it, so it is checked at run time like any
 other. Nothing in the shipped stdlib or in the examples uses a gated item as a

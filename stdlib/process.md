@@ -56,7 +56,9 @@ datac Child(
 | `exit(code: i32)` | — | ends the process with that status |
 | `getpid()` | `i64` | |
 
-`args` does **not** include the program itself: the child's argv is its own.
+`args` **includes** the program itself: `args().get(0)` is the program's own
+path, exactly as `argv[0]` is in C, so a tool drops the first entry before it
+parses the rest.
 
 ## Example
 
