@@ -44,9 +44,11 @@ datac Node(val value: i32, val next: Box<Node>)
   c.count = 5              // ok: field is var and c is a var binding
   ```
 
-- Reading an owned field **by value** is refused (no partial moves):
-  `val s = node.text` would produce two owners of the same buffer. Borrow it
-  instead, or hold it in a `Box` and `take()` it out.
+- Reading an owned field **by value** takes it out of an owned local:
+  `val s = node.text` moves the field out and the local keeps the rest (see
+  [Partial moves](/language/ownership)). Out of a borrow it is refused, because
+  that would produce two owners of the same buffer: borrow it instead, or hold
+  it in a `Box` and `take()` it out.
 - `datac` values are dropped at the end of the owning scope, fields recursively.
 
 ## `enum`

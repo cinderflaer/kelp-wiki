@@ -38,12 +38,16 @@ These are deliberate, and each one has a workaround in this documentation.
 
 ## Ownership
 
-- **No partial moves.** An owned field cannot be read out of a borrowed
-  structure, and an owned `enum` payload cannot be read out of an owned one
-  either: use a `Box` and `take()` it, or pass a borrow.
+- **A partial move takes a field of an owned local, and nothing else.**
+  `val xs = bag.xs` moves that field out of an owned `val`/`var` local or a
+  `move T` parameter, and the binding keeps the fields that stayed. A field
+  cannot be moved out of a borrow, a temporary or a field chain, and an owned
+  `enum` payload cannot be read out of an owned `enum` either: use a `Box` and
+  `take()` it, or pass a borrow.
 - That is what makes some stdlib helpers `Copy`-only: `option.unwrap` on an
   `Option<String>`, `result.map` over a `Result<T, MyErr>` and `list.filter` over
-  a `List<String>` each need a move out that does not exist yet.
+  a `List<String>` each read an owned value out of a borrowed `enum`, `Result` or
+  `List`, which a partial move does not cover.
 - **No references (and no `View`) in fields, `List` elements, `Map` values,
   array elements or `Box` contents.** Text you must store is a `String`; a view
   is taken at the point of use.

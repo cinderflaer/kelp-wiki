@@ -90,27 +90,56 @@ Rules the checker enforces:
   }
   ```
 
-## No partial moves
+## Partial moves
 
-An owned field cannot be read out of a borrowed structure:
+Reading an owned field of an owned local binding by value takes that field out
+and leaves the rest of the binding owned:
 
 ```kelp
-datac Line(val text: String, val n: usize)
+datac Bag(val xs: List<i32>, val name: String)
 
-fun use_line(l: Line) {
-    print(l.text)             // error: cannot read the owned field 'text' by value
-    print(l.text.as_str())    // fine: a view of the field
-    print(l.n)                // fine: `usize` is Copy
+fun use(bag: move Bag) {
+    val xs = bag.xs          // `xs` moves out of `bag`
+    print(bag.name)          // `name` stayed, and is readable
+    print(xs.len())
 }
 ```
 
-To *take* an owned field, hold it in a `Box` and `take()` it. Making the
-parameter `move Line` does not lift the rule: the value that arrives is still
-one structure, and the owned field inside it cannot be read out by value either.
+The binding is still freed as a whole at the end of its scope, and the moved
+field's slot is cleared at the read, so nothing is freed twice. On a `val` local
+the field is gone for good; on a `var` local a fresh value assigned into the
+field owns it again. A move on one branch of an `if` takes the field only on
+that path, and after the merge only the fields that stayed are read by name.
+
+The field has to be a **direct field of a local this frame owns**: a `val` local,
+a `var` local, or a `move T` parameter. A borrow, a temporary and a field chain
+are all refused, because the frame has nothing of its own to give away there:
+
+```kelp
+fun steal(b: &Bag).R: List<i32> = b.xs
+// error: cannot move the field 'xs' out of 'b': the value is borrowed
+```
+
+To take a field out of a chain, move each hop into a local first: `val inner =
+outer.inner` then `val xs = inner.xs`.
+
+Once a field is gone, reading it again and handing the binding on as a whole are
+both refused, because the empty slot would go with it:
+
+```kelp
+val xs = bag.xs
+val again = bag.xs         // error: use of moved value 'bag.xs'
+val whole = bag            // error: cannot use 'bag' as a whole value: its field 'xs' was moved out
+```
+
+Borrowing a field that stayed is still fine (`bag.name.as_str()`), and a `Copy`
+field is always readable. To *take* an owned field that only a borrow reaches,
+hold it in a `Box` and `take()` it.
 
 This is also why several stdlib combinators are `Copy`-only: `option.unwrap` on an
 `Option<String>`, `result.map` over a `Result<T, MyErr>` and `list.filter` over a
-`List<String>` each need a move out that v1 does not have.
+`List<String>` each read an owned value out of a borrowed `enum`, `Result` or
+`List`, which a partial move does not cover.
 
 ## Drops
 

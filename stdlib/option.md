@@ -40,7 +40,8 @@ combinator is a free function and takes the option as its first argument.
 
 ## Why some of them need `Copy`
 
-V1 has no partial moves: an owned payload cannot be read out of an owned enum. So
+An owned payload cannot be read out of an `enum`: a payload binds as a borrow,
+and a partial move only takes a field of an owned `datac` local. So
 `option.unwrap` on an `Option<String>` is a compile error: the way out is
 `if let`/`when`, which borrows the payload, or a `Box` you can `take()` from.
 
