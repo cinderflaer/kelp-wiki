@@ -67,9 +67,11 @@ These are deliberate, and each one has a workaround in this documentation.
 
 ## Containers
 
-- **`List` and `Map` cannot nest directly** and cannot hold a borrow, a `str`,
-  `Unit` or another container. Wrap the inner one in a one-field `datac` (as
-  `csv.Row`, `listx.Chunk`, `table.Row` do) or a `Box`.
+- **A `List` element and a `Box` element may be a `List` or a `Box`;** a `Map`
+  value and an array element may not be a container at all, and every container
+  refuses a borrow, a `str`, a `View`, an atomic, a function value and `Unit` as
+  an element. A map that holds a list, or a named row, wraps the inner one in a
+  one-field `datac` (as `csv.Row`, `listx.Chunk`, `table.Row` do).
 - **`[T; N]` is fixed at its written length.** There is no `[T; 0]`, no `a[i]`
   subscript (write `.get`/`.set`, as on a `List`) and no growth. The repeat form
   `[x; N]` copies `x` into every slot, so its element has to own nothing, which

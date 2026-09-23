@@ -8,8 +8,11 @@ Source section:
 [`syntax.md` §12](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
 
 Three containers are compiler builtins: `List<T>`, `Map<K, V>` and `Box<T>`. They
-are owned values with the same move and drop rules as everything else, and their
-elements are stored **inline**, which is why they cannot nest directly.
+are owned values with the same move and drop rules as everything else, and each
+one owns its elements. The element sets are not the same: a `List` element and a
+`Box` element may themselves be a `List` or a `Box`, while a `Map` value is
+narrower, and every container refuses a borrow, a view, an atomic, a function
+value and `Unit` as an element.
 
 A fourth type is not a container at all in that sense: `[T; N]`, a fixed-size
 array whose length is part of its type. It allocates nothing, so it is what a
@@ -89,18 +92,21 @@ meaningful order, which is why [`stats`](/libraries/stats) and
 [`benchkit`](/libraries/benchkit) carry their own sorts for data that may
 contain one.
 
-### Restriction: no nested containers
+### Restriction: the element set
 
-The element type may be a scalar, `String`, `Bytes` or a `datac`. It may **not**
-be a borrow, a `str`, `Unit`, a `List` or a `Map`. A nested container is wrapped
-in a one-field `datac`:
+The element type may be a scalar, `String`, `Bytes`, a `datac`/`enum`, another
+`List`, or a `Box`. It may **not** be a `Map`, a borrow, a `str`, a `View`, an
+atomic, a function value or `Unit`. A list of lists needs no wrapper:
 
 ```kelp
-datac Row(val cells: List<String>)          // what csv uses for a row
-val rows: List<Row> = List.empty()
+val rows: List<List<String>> = List.empty()
 ```
 
-`Box<T>` is the other way out, for a *recursive* type:
+A one-field `datac` is still how a library gives the inner list a name, as
+`csv.Row`, `listx.Chunk` and `table.Row` do; it is a naming choice, not a
+requirement of the language.
+
+`Box<T>` is the owning pointer for a *recursive* type:
 
 ```kelp
 datac Node(val value: i32, val next: Box<Node>)
@@ -128,6 +134,10 @@ print(runs.get(key = 7))
   and not hash order.
 - **`Map<V>` written with one argument means `Map<String, V>`.**
 - **A key must be keyable.** The compiler derives the key's hash and equality from `K`, so the derived set is `String`, an integer, `bool`, `char`, or a `datac`/`enum` whose every field (or every variant payload) is itself keyable. A `datac` or `enum` the derivation refuses becomes a key by declaring both `fun T.hash().R: u64` and `fun T.eq(other: &T).R: bool`, which the map calls instead of a derived pair and never alongside one; both halves are required, the two signatures are fixed (a shared receiver, no type parameters, `eq` taking one `&T`), and a half or a signature the map cannot call is refused where it is declared. The key is still cloned into the entry, so the type has to be deep-copyable as well. A float is refused (`nan != nan` would make an inserted key unfindable), and a `Bytes`, container, view, borrow or `datac`/`enum` with a field outside those sets is refused with a message that names the field (or names the half of the pair that is missing).
+- **A value is narrower than a list element.** The value set is a scalar,
+  `String`, `Bytes` or a `datac`/`enum`, so `Map<String, List<i32>>` and
+  `Map<String, Box<i32>>` are refused; a value that holds a list wraps it in a
+  one-field `datac`.
 - `Map<K, V>` is neither a list element nor a map value, so
   `Map<String, Map<i32>>` is impossible.
 - A `String`-keyed map takes its key as a bare `str` in every method (the map

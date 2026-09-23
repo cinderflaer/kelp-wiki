@@ -65,7 +65,10 @@ below is a rule.
 - **A user module cannot overload a name**, which is why `listx` spells the type
   into the function (`sum_i32`, `min_f64`) and why `set` ships two types
   (`Set<T>` and `StrSet`) where the standard library would overload one.
-- **`List` and `Map` cannot nest directly**, so a nested container is wrapped in a
+- **The container element sets are narrow.** A `List` element and a `Box`
+  element may be a `List` or a `Box`, but a `Map` value and an array element may
+  not be a container, and no container takes a borrow, a view or an atomic. A
+  library that puts a list inside a map, or wants a named row, wraps it in a
   one-field `datac`: `csv.Row`, `listx.Chunk` and `table.Row` are exactly that.
 - **A closure parameter that borrows a module-declared type codegens**, so a
   library may take a callback over its own type: `json` ships
