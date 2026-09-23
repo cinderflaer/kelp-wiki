@@ -33,7 +33,8 @@ valid inside the scope that lent it.
 | `fun(T, U).R: V` | Copy | a function value: a function pointer, with the parameters it takes and what it returns |
 | `closure(T, U).R: V` | owned | a function value **plus** the environment its captures were moved into |
 
-There is no `void`: a function with no `.R: T` returns `Unit`.
+There is no `void`: a function with no `.R: T` returns `Unit`, which has no
+representation, so a binding of one holds nothing ([Returns](/language/returns)).
 
 ## Nothing converts itself, except text
 

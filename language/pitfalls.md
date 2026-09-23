@@ -102,7 +102,7 @@ the fix. Source: [`syntax.md` §18 and §22](https://homelabone.xenoo.dev/gittea
 | `option.or_else` / `result.unwrap` on an owned payload will not type-check | the helpers whose receiver stays a borrow are `Copy`-only; `option.unwrap`, `option.unwrap_or`, `option.expect`, `result.map` and `result.map_err` take their receiver with `move`, and `if let`/`when` over an owned place binds the payload by value |
 | `?` refuses to propagate a different error type | v1 has no error conversion; `result.map_err` is the bridge |
 | two `fun pick(...)` overloads collide | a user module cannot overload; spell the type into the name |
-| an `enum` cannot have a method | v1 has no enum methods; write a free function |
+| `Shape.Empty.label()` is refused | a receiver that builds a variant names a type; bind it first (`val s = Shape.Empty`, then `s.label()`) |
 
 ## The one behaviour that is not a warning
 

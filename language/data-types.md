@@ -69,6 +69,9 @@ enum Shape {
   passing one moves it; dropping it drops the live variant's payloads.
 - Construction names the variant, qualified by the enum:
   `Shape.Circle(r = 1.0)`, `Shape.Empty`. Arguments may be named or positional.
+- An `enum` may declare receiver methods, and a call on a value of the type
+  resolves one. A receiver that builds a variant names a type rather than a value,
+  so it is refused: bind the variant first.
 
 ## Matching
 
@@ -138,9 +141,12 @@ val n: Option<i32> = Option.Some(value = 7)
 
 ## Methods
 
-A `datac` may carry methods ([Methods and receivers](/language/methods)); an **`enum`
-carries none** in v1, so combinators over `Option`/`Result` are free functions in
-`std/option` and `std/result`.
+A `datac` may carry methods ([Methods and receivers](/language/methods)), and so
+may a concrete `enum`: `fun Shape.label()`, called on a value of the type
+(`val s = Shape.Empty`, then `s.label()`), while `Shape.Empty.label()` is refused
+because a receiver that builds the variant names a type rather than a value. A
+generic `enum`'s template carries none, so combinators over `Option`/`Result` are
+free functions in `std/option` and `std/result`.
 
 ## See also
 

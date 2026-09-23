@@ -26,10 +26,11 @@ These are deliberate, and each one has a workaround in this documentation.
   each declare type parameters, but a receiver on a generic type must write the
   type's own parameters, in order: `fun Pair<A, B>.first()`. A method cannot add
   parameters of its own. See [Generics and type parameters](/language/generics).
-- **A method call through an `enum` value is refused**, and combinators over `Option` and
-  `Result` are free functions. An `enum` may still *declare* a receiver method
-  (the `Map` key pair below is one), and the compiler calls it, but `e.method()`
-  on a binding of enum type is rejected; call a free function instead.
+- **A generic `enum`'s template carries no method.** A concrete `enum` may declare
+  a receiver method and a value of the type calls it (`val e = E.A`, then
+  `e.tag()`); a receiver that builds the variant names a type, so `E.A.tag()` is
+  refused. The `Map` key pair below is such a method, and the combinators over
+  `Option` and `Result` are free functions because those two are generic.
 - **A `Map` key must be keyable.** The compiler derives the key's hash and
   equality from the fields, so the derived set is `String`, an integer, `bool`,
   `char`, or a `datac`/`enum` whose every field (or every variant payload) is

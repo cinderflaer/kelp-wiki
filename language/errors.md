@@ -28,9 +28,9 @@ enum Result<T, E> {
 }
 ```
 
-Neither has methods: a method call through an `enum` value is refused in v1, so
-the combinators are free functions in [`std/option`](/stdlib/option) and
-[`std/result`](/stdlib/result).
+Neither ships methods: both are generic, and a generic `enum`'s template
+declares none, so the combinators are free functions in
+[`std/option`](/stdlib/option) and [`std/result`](/stdlib/result).
 
 ```kelp
 val parsed = str.parse_i64(text)

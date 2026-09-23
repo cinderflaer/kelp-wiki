@@ -55,6 +55,11 @@ print(c.total())
   refused with `cannot borrow 'p' as exclusive: already borrowed as shared`.
 - `self` inside `fun mut T.m()` is a `&mut T`: a pointer, and `Copy`, so naming a
   field and then calling another method on `self` is legal.
+- A **concrete `enum`** may declare a receiver method too, and a call on a value of
+  the enum type resolves it: `val s = Shape.Empty`, then `s.label()`. A receiver
+  that builds the variant names a type rather than a value, so `Shape.Empty.label()`
+  is refused with `an 'enum' method is called on a value, not on a variant path`:
+  bind the variant first.
 
 ## Return types that borrow
 
@@ -118,9 +123,10 @@ fun mut Pair<A, B>.replace_second(v: B) { second = v }
 - The type arguments are the receiver's own instantiation, so `p.first_of()` on a
   `Pair<i32, String>` is instantiated once for `A = i32, B = String`.
 - A method cannot add type parameters of its own beyond the type's.
-- **A method call through an `enum` value is refused in v1**, generic or not, so
-  an `enum` method is not a way to write one. Write a free function
-  over the instantiation instead, as `std/option` does:
+- A method on a **generic `enum`'s template** is refused (`'Option' is a generic
+  enum: a method cannot be declared on the enum template`). A concrete `enum` may
+  declare one ([datac and enum](/language/data-types)); for a generic `enum` write
+  a free function over the instantiation instead, as `std/option` does:
 
   ```kelp
   fun is_some<T>(o: &Option<T>).R: bool = when o {
