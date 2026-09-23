@@ -28,7 +28,9 @@ impl "std/str"
 // path and the granted patterns.
 //
 // The path is bound to a `val` first: `.as_str()` on a temporary is refused.
-fun read(name: &str).R: String {
+// `pub` exports the name: `sandbox_main` is another module, so it reaches this
+// one only through the qualifier, and a private `read` would be refused there.
+pub fun read(name: &str).R: String {
     val path = str.concat("/tmp/kelp-sandbox/vault/", name)
     return fs.read_text(path.as_str())
 }
@@ -97,6 +99,13 @@ and the empty line each `print` of a trailing newline leaves.
 
 ## What to take from it
 
+- **Authority and reachability are separate clauses.** `sandbox_main` calls
+  `sandbox_vault.read`, so `read` is declared `pub` (A-13). The `caps(...)`
+  grant decides what that call may touch; it does not carry the name into
+  another module's reach. Drop the `pub` and the build stops at the call site:
+  `'sandbox_vault.read' is private: 'read' is declared in module 'sandbox_vault'
+  without 'pub', so only that module can name it; add 'pub' to its declaration
+  to export it`.
 - **The importer decides the pattern.** `sandbox_vault` asks for `fs`, and
   `sandbox_main` says how much of it the vault may have. A module that granted
   itself more than its importer holds is a compile error, not a runtime surprise:

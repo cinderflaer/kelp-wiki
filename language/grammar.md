@@ -16,14 +16,16 @@ line         := impl | const | pd | datac | enum | fun
 impl         := "impl" string [ "with" "caps" "(" grant ("," grant)* ")" ]
                 // `as name` was removed: the parser refuses the clause by name
 grant        := ident "=" "[" string ("," string)* "]"
-const        := "const" ident ":" type "=" expr
+const        := [ "pub" ] "const" ident ":" type "=" expr
 pd           := "pd" ("val" | "var") ident [ ":" type ] "=" expr
-datac        := "datac" ident [ typeparams ] "(" [ field ("," field)* ] ")"
+datac        := [ "pub" ] "datac" ident [ typeparams ] "(" [ field ("," field)* ] ")"
 field        := ("val" | "var") ident ":" type
-enum         := "enum" ident [ typeparams ] "{" ( ident [ "(" [ field ("," field)* ] ")" ] )* "}"
+enum         := [ "pub" ] "enum" ident [ typeparams ] "{" ( ident [ "(" [ field ("," field)* ] ")" ] )* "}"
 typeparams   := "<" ident ("," ident)* ">"
 typeargs     := "<" type ("," type)* ">"   // in an expression: adjacent to the name and to "("
-fun          := [ "extern" ] "fun" [ "mut" ] ( ident [ typeparams ] "." )? ident [ typeparams ]
+// A leading "pub" (13.4) is accepted on const, datac, enum and fun, and
+// nowhere else: a `pd` is module-scoped and an impl is not an item.
+fun          := [ "pub" ] [ "extern" ] "fun" [ "mut" ] ( ident [ typeparams ] "." )? ident [ typeparams ]
                 "(" [ param ("," param)* ] ")" [ ".R" ":" type ] body
 param        := ident ":" [ "mut" | "move" ] type
 body         := "=" expr | block | <nothing for extern>
@@ -78,6 +80,10 @@ chain        := [ "elif" expr block chain
 
 - `line` is what a top-level file holds, and the parser enforces the order the
   productions appear in: imports first, then declarations.
+- A leading `pub` is accepted on a top-level `const`, `datac`, `enum`, `fun` and
+  `extern fun`, and nowhere else (13.4): a `pd` is module-scoped by design, an
+  `impl` is not an item, and a method's reachability follows its declaring type.
+  A top-level item with no `pub` is private to its own module.
 - `postfix` carries the three postfix forms: `?`, field access, and a call, which
   is why `f(x)?` and `a.b.c(1)` both parse.
 - `primary` includes `block` and `if`/`when` as expressions, which is how

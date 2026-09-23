@@ -28,7 +28,8 @@ fun main() {
 
 - **Nothing is imported by default**, not even the standard library. A module's
   own top-level names are visible without qualification; everything else is
-  `module.name`.
+  `module.name`, and only for the items that module exports with `pub` (see
+  [Visibility](#visibility)).
 - **The module's name is its own name**: the last path segment, so `impl
   "shapes/circle"` is `circle` and `impl "std/fs"` is `fs`. A **dependency's
   entry module**, a path ending in `/lib` under `deps/`, is named after the
@@ -38,12 +39,64 @@ fun main() {
   now the module's own name is the only name, and a program that still writes the
   clause gets a parse error that names the fix. Where the name you wanted is not
   the module's own name, rename the call sites instead.
-- **Only the entry module has unprefixed access to the whole program.** Every
-  other module sees exactly what it imported.
+- **A bare name belongs to the module that writes it.** Every module names its
+  own items without qualification; another module's item is reached as
+  `alias.Item`, never by its bare name.
 - **Authority is declared at the import**, and it is the only place it can be
   acquired. See [Capabilities](/language/capabilities).
 - A local `impl` path is a path in the project's `src/` without the `.kp`
   extension: `impl "shapes/circle"` is `src/shapes/circle.kp`.
+
+## Visibility
+
+Every top-level item is **private to its own module**. A module that imports
+another reaches only the items that module exports with `pub` (A-13):
+
+```kelp
+pub const LIMIT: i32 = 10
+pub datac Point(val x: i32, val y: i32)
+pub enum Shape { Circle(val r: f64) Empty }
+pub fun scale(v: f64, k: f64).R: f64 = v * k
+pub extern fun clock_ticks().R: u64
+```
+
+- `pub` is accepted only on a top-level `fun`, `extern fun`, `datac`, `enum` or
+  `const`. Written anywhere else it is a parse error that names those forms:
+  `'pub' applies to a top-level 'fun', 'extern fun', 'datac', 'enum' or 'const',
+  found Val`.
+- A `pd` never takes `pub`: a passdown is module-scoped by design, so
+  `pub pd ...` is refused where it is written: `a 'pd' cannot be 'pub': a
+  passdown is module-scoped by design, so another module cannot reach it; a
+  'fun' that reads it can be exported instead`. A `fun` that reads the passdown
+  is what another module uses, and that function can be `pub`.
+- A method never takes `pub`. A method's reachability follows its declaring
+  type, so `pub datac Circle` is what lets another module call `value.area()` on
+  a `Circle` it holds, however the method was declared. `pub fun Circle.area()`
+  is a parse error that says to mark the type instead.
+- Inside its own file an item is reachable by its bare name whether or not it is
+  written `pub`. `pub` governs only another module's `alias.Item` spelling.
+- A private item that exists gets an error of its own, distinct from a name that
+  does not exist:
+
+  ```text
+  error: 'lib.hidden' is private: 'hidden' is declared in module 'lib' without 'pub', so only that module can name it; add 'pub' to its declaration to export it
+  error: module 'lib' has no item 'nope'
+  ```
+
+  A "did you mean" hint never offers a private item.
+- **A `pub` item may name a private type in its signature.** `pub fun make().R:
+  Hidden` compiles with `Hidden` private, and a caller in another module can read
+  `make().x` even though it cannot name `Hidden`; writing `lib.Hidden` in a type
+  position is refused like any other private name. Refusing a private type in an
+  exported signature is a rule this slice does not add: it scopes the *name* a
+  module reaches, not the shape of an exported signature. That is an honest
+  limit, not an oversight, and a later slice would close it.
+- **The shipped standard library is exempt, transitionally.** A compiler-shipped
+  `std/...` module exports every top-level item whether or not it is written
+  `pub`, because the shipped modules import each other (`std/fmt` imports
+  `std/str`, `std/net` imports `std/io` and `std/str`, and so on). Without the
+  rule the standard library stops building. The exemption goes away when the
+  shipped declarations are marked `pub`.
 
 ## Canonical file order
 

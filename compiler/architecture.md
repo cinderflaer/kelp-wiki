@@ -73,8 +73,11 @@ Multi-file loading and name resolution:
   written `caps(...)` on its own.
 - Paths are relative to `src/`, may not contain `..`, and may not reach outside the
   project.
-- Names are strictly module-qualified: module `m`'s items are reachable elsewhere
-  only as `m.Item`, and bare inside `m` itself.
+- Names are module-qualified across modules: module `m`'s items are reachable
+  elsewhere only as `m.Item` and only when `m` exports them with `pub`, and bare
+  inside `m` itself whether or not they are `pub` (syntax.md 13.4). The gate is
+  decided in `infer.rs` from a key set of exported items built once per program;
+  a compiler-shipped `std/...` module exports everything, transitionally.
 - **Capability gating happens here.** Each module has a capability-domain set
   computed from its incoming `caps(...)` grant; resolving `net.connect` in a
   module whose set lacks `net` is an undefined-name error, not a runtime check that

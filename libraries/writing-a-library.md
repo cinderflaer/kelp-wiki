@@ -19,9 +19,9 @@ mylib/
 impl "std/str"
 impl "std/result"
 
-datac Item(val name: String, val count: i64)
+pub datac Item(val name: String, val count: i64)
 
-fun parse(text: &str).R: result.Result<List<Item>, ParseErr> { ... }
+pub fun parse(text: &str).R: result.Result<List<Item>, ParseErr> { ... }
 ```
 
 And in a consumer:
@@ -62,6 +62,12 @@ below is a rule.
 
 ## Constraints the language puts on a library
 
+- **A consumer reaches the entry file's items only when they are `pub`.**
+  Another module reaches a `fun`, `extern fun`, `datac`, `enum` or `const` that
+  carries `pub`, and nothing else (A-13), so the surface a consumer calls is the
+  surface the library marks. A method follows its declaring type: `pub` on the
+  type exports the methods a value of it carries, and `pub` on a method is
+  refused. A `pd` never takes `pub`, because a passdown is module-scoped.
 - **A user module cannot overload a name**, which is why `listx` spells the type
   into the function (`sum_i32`, `min_f64`) and why `set` ships two types
   (`Set<T>` and `StrSet`) where the standard library would overload one.

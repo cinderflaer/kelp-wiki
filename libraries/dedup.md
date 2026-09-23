@@ -76,8 +76,9 @@ fun candidates(files: &List<Entry>, o: &Options).R: List<Entry>
 keep only the files whose size another file shares, `hash` each survivor once,
 group by `(size, hash)`, and, when `o.verify` is set, call `equal` against the
 first member of each group so a hash collision narrows the group instead of
-reporting a duplicate that is not one. The pieces are exported too, so a caller
-can run the stages itself.
+reporting a duplicate that is not one. The pieces are part of the library's
+surface as well, so a caller can run the stages itself; another module reaches a
+library item only when the library declares it `pub` (A-13).
 
 `Report.unique` is the payoff of the size prefilter: the files dropped without a
 read. On a real tree it is most of them.
