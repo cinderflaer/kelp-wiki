@@ -84,19 +84,34 @@ pub extern fun clock_ticks().R: u64
   ```
 
   A "did you mean" hint never offers a private item.
-- **A `pub` item may name a private type in its signature.** `pub fun make().R:
-  Hidden` compiles with `Hidden` private, and a caller in another module can read
-  `make().x` even though it cannot name `Hidden`; writing `lib.Hidden` in a type
-  position is refused like any other private name. Refusing a private type in an
-  exported signature is a rule this slice does not add: it scopes the *name* a
-  module reaches, not the shape of an exported signature. That is an honest
-  limit, not an oversight, and a later slice would close it.
+- **An exported declaration may name only a type its own module exports.**
+  Reachability scopes the shape of a signature as well as the name of an item: a
+  `pub fun`'s parameters and return, a method declared inside a `pub datac` or
+  `pub enum` (reached through a value of that type), a `pub extern fun`, a `pub
+  datac`'s field types, a `pub enum`'s variant payload types and a `pub const`'s
+  written type must all be names a consumer can reach. The check walks a written
+  type to the bottom, so it recurses through `List<T>`, `Box<T>`, `Map<K, V>`,
+  `[T; N]`, generic arguments, borrows and function types. `pub fun make().R:
+  Hidden` is refused when `Hidden` is private, even though a caller could still
+  read `make().x` without naming the type. A private declaration may name
+  anything, because nothing outside its module can name it either, and a type
+  parameter is not a declared type, so naming one is never a violation. The
+  refusal names the fix:
+
+  ```text
+  error: 'lib.make' is exported but its signature names 'lib.Hidden', which module 'lib' does not export: add 'pub' to 'Hidden', or make 'lib.make' private
+  ```
+
+  The check reads the whole program's export set, so a private type declared
+  after the item that names it is refused the same way as one declared before:
+  the order of two declarations in one file does not decide the answer.
 - **The shipped standard library is exempt, transitionally.** A compiler-shipped
   `std/...` module exports every top-level item whether or not it is written
   `pub`, because the shipped modules import each other (`std/fmt` imports
-  `std/str`, `std/net` imports `std/io` and `std/str`, and so on). Without the
-  rule the standard library stops building. The exemption goes away when the
-  shipped declarations are marked `pub`.
+  `std/str`, `std/net` imports `std/io` and `std/str`, and so on). The signature
+  rule above is vacuous there for the same reason. Without the exemption the
+  standard library stops building, and it goes away when the shipped
+  declarations are marked `pub`.
 
 ## Canonical file order
 

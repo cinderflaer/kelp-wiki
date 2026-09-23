@@ -78,6 +78,12 @@ Multi-file loading and name resolution:
   inside `m` itself whether or not they are `pub` (syntax.md 13.4). The gate is
   decided in `infer.rs` from a key set of exported items built once per program;
   a compiler-shipped `std/...` module exports everything, transitionally.
+- The same export set backs the **private-in-public** rule (`check_pub_signatures`):
+  an exported declaration's signature may name only types its own module exports,
+  walked through containers, arrays, borrows, generic arguments and function
+  types. It runs once over the merged program before any body is checked, so the
+  order of two declarations in one file does not change the answer, and a private
+  declaration is never inspected.
 - **Capability gating happens here.** Each module has a capability-domain set
   computed from its incoming `caps(...)` grant; resolving `net.connect` in a
   module whose set lacks `net` is an undefined-name error, not a runtime check that

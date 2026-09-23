@@ -83,7 +83,9 @@ chain        := [ "elif" expr block chain
 - A leading `pub` is accepted on a top-level `const`, `datac`, `enum`, `fun` and
   `extern fun`, and nowhere else (13.4): a `pd` is module-scoped by design, an
   `impl` is not an item, and a method's reachability follows its declaring type.
-  A top-level item with no `pub` is private to its own module.
+  A top-level item with no `pub` is private to its own module, and a declaration
+  that carries `pub` may name only types its own module exports, so an exported
+  signature is reachable in every name it writes.
 - `postfix` carries the three postfix forms: `?`, field access, and a call, which
   is why `f(x)?` and `a.b.c(1)` both parse.
 - `primary` includes `block` and `if`/`when` as expressions, which is how

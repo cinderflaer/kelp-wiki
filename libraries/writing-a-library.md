@@ -20,6 +20,7 @@ impl "std/str"
 impl "std/result"
 
 pub datac Item(val name: String, val count: i64)
+pub enum ParseErr { Empty Bad(val offset: usize) }
 
 pub fun parse(text: &str).R: result.Result<List<Item>, ParseErr> { ... }
 ```
@@ -68,6 +69,16 @@ below is a rule.
   surface the library marks. A method follows its declaring type: `pub` on the
   type exports the methods a value of it carries, and `pub` on a method is
   refused. A `pd` never takes `pub`, because a passdown is module-scoped.
+- **An exported signature names only exported types.** A consumer reaches
+  `parse`, so it has to be able to reach every type that signature writes: the
+  parameters and the return, a method declared inside an exported type, a `pub
+  datac`'s fields, a `pub enum`'s variant payloads, a `pub const`'s written type,
+  and whatever a container, an array, a borrow or a function type nests. That is
+  why `Item` and `ParseErr` above carry `pub`; a `pub fun` that returned a
+  private `ParseErr` would be refused with `'mylib.parse' is exported but its
+  signature names 'mylib.ParseErr', which module 'mylib' does not export: add
+  'pub' to 'ParseErr', or make 'mylib.parse' private`. A private helper is never
+  inspected, so it may name anything.
 - **A user module cannot overload a name**, which is why `listx` spells the type
   into the function (`sum_i32`, `min_f64`) and why `set` ships two types
   (`Set<T>` and `StrSet`) where the standard library would overload one.
