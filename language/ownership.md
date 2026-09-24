@@ -46,6 +46,10 @@ A temporary is already an owner, so `consume(String.from_str("bob"))` needs no
 binding. A **borrow cannot be moved out of**: `fun forward(s: String).R: usize =
 consume(s)` is an error, because `s` belongs to the caller.
 
+A tuple is an owned value like any other, so a parameter of the type borrows the
+argument and `move (A, B)` is the parameter form that takes it over:
+`fun take(p: move (String, i32))`.
+
 Assignment to an existing `var` moves the new value in and frees the old value,
 which is how a recursive structure is rebuilt in a loop:
 
@@ -135,6 +139,29 @@ val whole = bag            // error: cannot use 'bag' as a whole value: its fiel
 Borrowing a field that stayed is still fine (`bag.name.as_str()`), and a `Copy`
 field is always readable. To *take* an owned field that only a borrow reaches,
 hold it in a `Box` and `take()` it.
+
+**A tuple's positions obey the same rule.** A destructuring binding moves its
+initializer into the binding, exactly as `val p = place` takes a place, and then
+reads each position out of that value, which is the partial move. The value's own
+drop frees the positions that stayed, and the source place cannot be bound again:
+
+```kelp
+fun use(p: move (String, String)) {
+    val (first, _) = p          // `p` moves into the binding; the other position stays
+    print(first.as_str())
+}
+
+fun peek(p: &(String, i32)) {
+    val (text, n) = p           // error: cannot read an owned position out of a borrow
+}
+```
+
+Reading the same position twice, taking the source apart a second time, and
+reading an owned position out of a *borrow* are each refused, and a `Copy`
+position is always readable. A tuple is owned as a whole, so every rule above
+applies to it: a parameter of the type borrows it, `move (A, B)` takes it, and it
+is dropped position by position at the end of its scope
+([Types](/language/types)).
 
 An owned `enum` payload obeys the same rule: a `when`/`if let` over an owned place
 binds the payload **by value** and takes it out of the enum, so the enum cannot be

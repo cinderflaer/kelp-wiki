@@ -31,11 +31,52 @@ valid inside the scope that lent it.
 | `[T; N]` | Copy / owned | fixed-size array: `N` elements held **inline**, with the length part of the type and nothing allocated. `Copy` when `T` is, otherwise an owner that drops each element |
 | `datac` name | owned | record with per-field `val`/`var`, optionally with type parameters |
 | `enum` name | owned | tagged union: exactly one variant is live |
+| `(A, B)` | owned | a tuple: two or more element values held in **position order**. Not `Copy`, and it takes the derived deep copy and the derived order a `datac` takes, position by position. Read by destructuring only ([Bindings and assignment](/language/bindings)) |
 | `fun(T, U).R: V` | Copy | a function value: a function pointer, with the parameters it takes and what it returns |
 | `closure(T, U).R: V` | owned | a function value **plus** the environment its captures were moved into |
 
 There is no `void`: a function with no `.R: T` returns `Unit`, which has no
 representation, so a binding of one holds nothing ([Returns](/language/returns)).
+
+## Tuples
+
+A tuple is two or more values held in **position order**, and it is a type:
+`(i32, i32)` is a pair of `i32`s, written wherever a type is written.
+
+```kelp
+fun min_max(xs: &List<i32>).R: (i32, i32) {
+    // ...
+    return (lo, hi)
+}
+
+val (lo, hi) = min_max(xs)      // a tuple value is read by destructuring
+```
+
+- **Two or more elements.** `(T)` is not a one-element tuple: it is the
+  parenthesized type `T`, exactly as `(e)` is the parenthesized expression `e`,
+  so `val x = (5)` binds an `i32`. `()` is refused by name, because the absent
+  value's type is spelled `unit`.
+- **A tuple owns its elements.** There is nothing to declare: the compiler
+  derives one record per element list, and an element is stored by value where
+  the tuple sits. An element is field-like, so a borrow, a `str` or a `View`
+  cannot be one, and neither can `unit`.
+- **Not `Copy`.** Assigning a tuple moves it, and a parameter of the type
+  borrows it, exactly as for a `datac`. Each element is copied or moved by its
+  own rule.
+- **The derived deep copy and the derived order are position by position**, the
+  way a `datac`'s are field by field: `List.sort` orders a tuple whose elements
+  have an order (the first position decides, the second breaks the tie), and
+  `List.clone`/`List.slice`/`Map.get_or` copy a tuple whose elements can each be
+  deep-copied ([Collections](/language/collections)). There is no `==` between
+  two tuples, exactly as there is none between two `datac`s.
+- **A position is read by destructuring, never by index.** There is no `t.0`.
+  `val (lo, hi) = p` binds both positions, `_` ignores one, and a nested tuple
+  takes a nested pattern ([Bindings and assignment](/language/bindings)).
+- **Where a tuple may appear:** wherever its elements may. A local, a parameter,
+  a return type, a `datac` field, an `enum` payload, a `List`/`Map`/`Box`/array
+  element, and a type argument.
+- A tuple is a record, so `print` refuses one exactly as it refuses a `datac`:
+  print its positions instead.
 
 ## Nothing converts itself, except text
 
@@ -99,6 +140,8 @@ val p: Pair<i32, String> = Pair(first = 1, second = "one")
 - Two instantiations are two different types: `Pair<i32, i32>` cannot be passed
   where `Pair<String, String>` is expected.
 - A type argument may not be `str` or a reference: a field may not be borrowed.
+  A tuple is concrete, so it is a legal type argument: `List<(i32, i32)>`,
+  `Box<(String, u64)>`.
 - A generic type may refer to itself **through a `Box` or a `List`**.
 - A `fun` may declare type parameters too (`fun identity<T>(x: T).R: T`), and a
   call site instantiates them, by inference or by writing them

@@ -16,14 +16,16 @@ scope.
 val n = 10               // immutable binding, type inferred
 var total: i64 = 0       // mutable binding, explicit type
 total += n               // compound assignment: total = total + n
+val (lo, hi) = min_max(xs)   // destructuring: one binding per tuple position
 ```
 
 ## Which one
 
 - `val` cannot be assigned after the declaration.
 - `var` can.
-- Both require an initializer: the grammar is `val`/`var` `name` [`: type`] `=`
-  `expr`.
+- Both require an initializer: the grammar for an ordinary binding is
+  `val`/`var` `name` [`: type`] `= expr`. A binding whose name is replaced by a
+  parenthesized pattern takes one tuple apart instead (see below).
 
 Mutability is a property of the *path*, and a `var` binding is only the first
 step. A `datac` field is assignable only when both of these hold:
@@ -95,6 +97,39 @@ total %= 3          // total = total % 3
 There are no compound forms for the bitwise operators. `~`, `&`, `|`, `^`, `<<`
 and `>>` are expressions only
 ([Operators and expressions](/language/expressions)).
+
+## Destructuring a tuple
+
+A binding may take one tuple value apart in the same statement
+([Types](/language/types) has the type):
+
+```kelp
+val (lo, hi) = min_max(xs)      // one binding per position
+var (a, b) = (1, 2)             // every position is a `var`
+val (_, text) = read_pair()     // `_` ignores a position
+val ((x, y), z) = corners()     // a nested tuple takes a nested pattern
+```
+
+- The number of positions the pattern writes has to equal the number of
+  elements the tuple has; a pattern written for another arity is refused with
+  both counts.
+- `_` ignores a position instead of binding it. What it holds stays in the value
+  that was destructured, so an owned element an `_` ignores is freed by that
+  value's own drop.
+- `val` and `var` mean what they mean on an ordinary binding, for every
+  position: `var (a, b) = ...` makes both `a` and `b` assignable.
+- **A destructuring binding takes no written type.** `val (a, b): (i32, i32) = ...`
+  is refused, because one written type for several positions could not be checked
+  against the positions it names. Bind the whole value first when its type needs
+  writing: `val p: (i32, i32) = ...`, then `val (a, b) = p`.
+- The initializer is moved into the binding, exactly as `val p = place` takes a
+  place, and each position is then read out of that value. The whole value is
+  bound once, so a second binding of the same place is a use of a moved value,
+  and two positions that write one name are ordinary shadowing. That is the
+  partial move [Ownership and borrowing](/language/ownership) states.
+- An initializer that is a borrow of a tuple binds every `Copy` position and
+  refuses an owned one; that is the rule a field of a borrow already follows. The
+  initializer has to be a tuple at all: `val (a, b) = 7` is refused by name.
 
 ## See also
 

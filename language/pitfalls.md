@@ -57,8 +57,23 @@ the fix. Source: [`syntax.md` §18 and §22](https://homelabone.xenoo.dev/gittea
 | --- | --- |
 | `List.empty()` / `Map.new()` has no element type | nothing said what is inside and nothing decided it: write it on the binding (`var xs: List<i32> = List.empty()`), or `push`/`insert`/`set` a value, which decides the element |
 | a `Map` value or an array element is a container | a `List` element and a `Box` element may be a `List` or a `Box`, but a `Map` value and an array element may not be a container at all; wrap the inner one in a one-field `datac` |
-| `Map` key type refused | a key is keyable when the compiler can derive its hash and its equality: `String`, an integer, `bool`, `char`, or a `datac`/`enum` whose fields are all keyable, and a `datac`/`enum` outside that set becomes a key by declaring `hash` and `eq`. The message names the field that is not, or the half of the pair that is missing |
+| `Map` key type refused | a key is keyable when the compiler can derive its hash and its equality: `String`, an integer, `bool`, `char`, or a `datac`/`enum`/tuple whose fields, variant payloads or positions are all keyable, and a `datac`/`enum` outside that set becomes a key by declaring `hash` and `eq`. The message names the field that is not, or the half of the pair that is missing |
 | `for` cannot `push` to what it walks | the loop borrows its iterable; iterate over a copy or index the source |
+
+## Tuples
+
+| Message | What happened | Fix |
+| --- | --- | --- |
+| `this pattern has 3 position(s), and the tuple it destructures ('(i32, i32)') has 2` | the pattern writes a different number of positions than the tuple has elements | write one binding per element, and `_` for a position you do not need |
+| `a destructuring binding takes no written type: ...` | `val (a, b): (i32, i32) = ...` wrote one type for several positions | bind the whole value first (`val p: (i32, i32) = ...`), then `val (a, b) = p` |
+| `a destructuring binding takes one tuple value apart, and this initializer is a 'i32'` | the initializer is not a tuple | bind a single value with an ordinary `val name = ...` |
+| `use of moved value 'p'` | the initializer was already taken apart by an earlier destructuring | bind the value once, and name every position you need in that one statement |
+| `cannot read element 1 of the tuple out of a borrow by value: ...` | an owned position was read out of a borrow | read a `Copy` position, use the tuple through a borrow, or take it with `move` |
+| `element 1 of the tuple is a borrowed type ('str')` | a tuple stores its elements by value, exactly as a `datac` field does | store an owned `String` |
+| `element 2 of the tuple is 'unit'` | `unit` is the absent value and cannot be stored | produce a value, or leave the position out |
+| `'Later' is declared after this type` | a tuple element is a by-value field, so it may only name a type declared earlier | declare the element type first, or hold it behind a `Box` or a `List` |
+| `cannot pass a value of type '(i32, i32)' to 'print'` | a tuple is a record, and `print` takes a scalar, a `str` or a `String` | print each position |
+| `'()' is not a type` / `'()' is not a value` | a tuple has two or more elements, and the absent value's type is `unit` | write `unit`, or two or more elements |
 
 ## Arrays and constants
 

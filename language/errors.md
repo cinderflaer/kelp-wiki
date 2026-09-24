@@ -66,6 +66,13 @@ fun quarter(n: i64).R: result.Result<i64, str.ParseErr> {
 - A failure returns immediately, dropping the frame's locals exactly as a
   `return` does.
 - It moves a payload out of the operand, so a **borrow cannot be an operand**.
+- It applies to the expression it is written on, so a tuple is never its operand.
+  When a tuple is the *success* payload, `?` reaches the `Result` the element is
+  and hands the tuple back: with
+  `fun mk(n: i32).R: Result<(i32, i32), String>`, the line
+  `val (a, b) = mk(n)?` binds the tuple and takes it apart. A tuple is not an
+  `enum`, so `?` written on the tuple itself is the ordinary "the operand must be
+  an `enum`" refusal ([Types](/language/types)).
 
 ## `panic` and `assert`
 
