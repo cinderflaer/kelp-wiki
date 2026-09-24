@@ -45,6 +45,15 @@ tags: "language, ownership"
 
 - `title` and `description` are rendered in the page header, the search index and
   link previews. Quote them: titles contain `: ` and backticks.
+- **`description` must be 255 characters or fewer.** The `pages.description`
+  column is `varchar(255)`, so a longer value makes the insert fail with `value
+  too long for type character varying(255)`. Wiki.js logs `Failed to process
+  <path>` and then reports the sync as `COMPLETED`, so the page never exists and
+  nothing else says so: the first sign is a 404 on a page that is plainly in the
+  repository. Four pages were over the limit when this was found (`discord`,
+  `kelpc-cli`, `backends`, `runtime`); three of them were live only because
+  Wiki.js rewrites a page that has not changed, so the trap waits for the next
+  edit.
 - `isPublished` must be a boolean. `published:` is not read and does nothing.
 - `tags` must be a comma-space separated **string**. The module does
   `tags.split(', ')`; a YAML list makes it throw `_.get(...).split is not a

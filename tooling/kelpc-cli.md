@@ -1,6 +1,6 @@
 ---
 title: "`kelpc` CLI"
-description: "The compiler's command line. Everything on this page was run against a release build on the machine that wrote it, and the outputs are quoted from those runs: the bulk of it against the build tagged `v0.1.4`, the `lint` section, the `--deny-outdated` flag, the outdated-syntax register and the `check` section against `kelpc 26.09.0` and the unreleased work after it."
+description: "The compiler's command line, quoted from runs against release builds: `build`, `run`, `check` (with `--json`), `fmt`, `lint` and `--deny-outdated`."
 isPublished: true
 tags: "tooling, cli"
 ---

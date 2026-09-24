@@ -1,6 +1,6 @@
 ---
 title: "Backends"
-description: "kelpc builds every program with one backend, llvm, which lowers the whole language to LLVM IR, emits an object and hands it to cc. The C backend is kept as the project's own oracle, reached only through the project's internal switch, and the two agree byte for byte over the corpus; the object carries DWARF line locations so a fault names a .kp line."
+description: "`llvm` is the compiler: it lowers the whole language to LLVM IR and hands the object to `cc`. The C backend is the project's own oracle, and the two agree byte for byte over the corpus."
 isPublished: true
 tags: "compiler"
 ---
