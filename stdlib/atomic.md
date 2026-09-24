@@ -149,11 +149,14 @@ fun main() {
   or array element, because the container's own routines read and write an
   element as a plain location and every access to an atomic has to be one atomic
   operation. A `datac` field of atomic type is accepted.
-- **An atomic carries no thread by itself.** v1 has no `thread.spawn` and no
-  `thread.join`, so nothing shares the cell across threads today; the standalone
-  fence, [`thread.fence(order)`](/stdlib/thread), orders no location of its own.
-  [Limits in v1](/language/limits) and [Concurrency in v1](/language/concurrency)
-  record what does not exist yet.
+- **An atomic is the cell a worker and its joiner share.** It is reached through
+  a **shared borrow**, and that is the one borrow [`thread.spawn(entry, arg)`](/stdlib/thread)
+  lets cross a thread boundary: a `pd val` atomic is the declaration that hands
+  the worker that borrow, and the type has no `&mut` path for the checker to
+  refuse. The standalone fence, [`thread.fence(order)`](/stdlib/thread), orders
+  no location of its own. [Concurrency in v1](/language/concurrency) has the
+  crossing rule, and [Limits in v1](/language/limits) records what does not
+  exist yet.
 
 ## See also
 

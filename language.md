@@ -47,7 +47,7 @@ error, and so is a `const` or `pd` after a `datac`, `enum` or `fun`
 | [Ownership and borrowing](/language/ownership) | moves, drops, borrows, partial moves, `Box.take` |
 | [Text](/language/text) | `str`, `View`, `String`, `Bytes`, printing, conversions |
 | [Collections](/language/collections) | `List<T>`, `Map<K, V>`, `Box<T>`, the fixed-size array `[T; N]` |
-| [Concurrency in v1](/language/concurrency) | `SeqCst`, the atomic cell and the fence, and the threads v1 does not have |
+| [Concurrency in v1](/language/concurrency) | `SeqCst`, the atomic cell, the fence, and the one borrow that crosses to a worker |
 | [Modules and imports](/language/modules) | `impl`, aliases, visibility, projects |
 | [Constants and passdowns](/language/passdowns) | `const`, `pd` passdowns and the hidden borrow |
 | [Capabilities](/language/capabilities) | the model, grants, patterns, delegation |

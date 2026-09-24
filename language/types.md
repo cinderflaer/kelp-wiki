@@ -27,6 +27,7 @@ valid inside the scope that lent it.
 | `Map<K, V>` | owned | keyed container, keeps insertion order; `Map<V>` means a `String` key |
 | `Box<T>` | owned | one heap cell holding a `T` or nothing |
 | `Atomic<T>` | owned | one location every access to which is a single atomic operation; **not `Copy`**, owns nothing and needs no drop. `T` is `bool` or an integer type. See [`std/atomic`](/stdlib/atomic) |
+| `Thread<T>` | owned | a handle on one worker the runtime owns; **not `Copy`**, one pointer to a worker record. `T` is the entry point's return type. Accepted as a local, a `datac`/`enum` field and a parameter, refused as a `List`/`Map`/`Box`/array element, because joining is a one-shot thing a container's own routines would duplicate. See [`std/thread`](/stdlib/thread) |
 | `[T; N]` | Copy / owned | fixed-size array: `N` elements held **inline**, with the length part of the type and nothing allocated. `Copy` when `T` is, otherwise an owner that drops each element |
 | `datac` name | owned | record with per-field `val`/`var`, optionally with type parameters |
 | `enum` name | owned | tagged union: exactly one variant is live |
