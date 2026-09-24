@@ -25,9 +25,10 @@ datac Pair<A, B>(val first: A, val second: B)
 datac Chunk<T>(val items: List<T>)
 ```
 
-`zip` returns `List<Pair<A, B>>` and `chunks` returns `List<Chunk<T>>` because
-`List<List<T>>` and `List<Pair>`-of-nested-containers cannot be written: a
-nested container has no inline C representation ([syntax.md](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md) §12.1).
+`zip` returns `List<Pair<A, B>>` and `chunks` returns `List<Chunk<T>>`, so each
+element is a named type: `Pair` is a two-field `datac` and `Chunk<T>` wraps one
+`List<T>`. `List<List<T>>` is legal, but the named element is the shape these
+functions ship.
 
 ## Functions
 

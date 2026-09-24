@@ -123,8 +123,9 @@ true
 
 ## Notes
 
-- The example passes `x` rather than `&x` because an `if let` payload binds by
-  shared borrow, so `x` is already a `&Civil` (syntax.md §6.1, §10.2).
+- The example passes `x` rather than `&x`: a parameter of a borrowed type takes
+  the value bare, and `p` is an owned local, so `if let Ok(x) = p` binds `x` by
+  value rather than as a `&Civil` (syntax.md §6.1, §10.2).
 - `parse_iso8601` does not reject an impossible date: `2024-02-31` parses, and
   `to_unix` then gives the same instant as 2024-03-02. Validate day-of-month
   yourself if that matters.

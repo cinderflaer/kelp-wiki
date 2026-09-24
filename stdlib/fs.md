@@ -56,7 +56,7 @@ datac Metadata(val size: u64, val mtime: i64, val mode: u32, val is_dir: bool, v
 | `open(path, mode)` | `io.File` | panics on failure |
 | `try_open(path, mode)` | `Result<io.File, io.IoErr>` | the fallible `open` |
 | `read_lines(path)` | `List<String>` | the file, split on newlines |
-| `temp_path(prefix)` | `String` | a fresh path in the temp directory |
+| `temp_path(prefix)` | `String` | a fresh, empty file in the temp directory |
 
 ### Open modes
 
@@ -135,7 +135,10 @@ fun main() {
   mid-write leaves a half-file.
 - `Metadata.mode` is the raw mode bits; the boolean `is_dir`/`is_file` are what
   most callers want.
-- `temp_path` returns a name; it does not create the file.
+- `temp_path` **creates** the file as well as naming it: it is built on
+  `mkstemp`, so the returned path is a fresh, empty file, not a free name.
+  Nothing removes it for you: call `fs.remove` on the path when you are done,
+  or the file stays behind.
 
 ## See also
 

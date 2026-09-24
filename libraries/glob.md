@@ -40,8 +40,7 @@ impl "deps/glob/lib"
 ## Cost
 
 The classic O(len(pattern) × len(text)) DP table, flattened to one
-`List<bool>` (a nested container has no inline C representation, syntax.md
-§12.1) and indexed by `row * cols + col`.
+`List<bool>` and indexed by `row * cols + col`.
 
 ## Example
 

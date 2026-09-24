@@ -58,9 +58,8 @@ datac BitWriter(var out: Bytes, var pending: u8, var pending_bits: usize)
 | `finish(w: move BitWriter)` | `Bytes`: pads the last partial byte with zero bits and returns the buffer |
 
 `finish` takes the writer **by value** (`move`): a `mut` receiver only borrows,
-and moving `out` out of a borrowed receiver is the partial move v1 refuses, so
-getting the `Bytes` out needs ownership of the whole writer. After `finish` the
-writer is gone.
+and a field cannot be moved out of a borrow, so getting the `Bytes` out needs
+ownership of the writer. After `finish` the writer is gone.
 
 Writes are buffered in `pending` until a full byte accumulates, then pushed to
 `out`.

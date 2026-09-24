@@ -111,6 +111,33 @@ Rules (§5.2):
 - `?` is postfix and binds tighter than every binary operator. Because it moves a
   payload out of the operand, **a borrow cannot be an operand**: match a
   borrowed operand with `when` or `if let` instead.
+- It applies to the expression it is written on and to nothing else, so a tuple
+  is never its operand. When a tuple is the *success* payload, `?` reaches the
+  `Result` the element is and hands the tuple back: with
+  `fun mk(n: i32).R: Result<(i32, i32), String>`, the line
+  `val (a, b) = mk(n)?` binds the tuple and takes it apart. A tuple is not an
+  `enum`, so `?` written on the tuple itself is the ordinary "the operand must be
+  an `enum`" refusal ([Types](/language/types)).
+
+## Tuple values
+
+`(lo, hi)` is a tuple value, and `(i32, i32)` is its type: two or more positions,
+in order ([Types](/language/types)).
+
+```kelp
+val pair = (1, 2)
+val (lo, hi) = min_max(xs)      // destructuring is the only way to read one
+```
+
+- `(e)` is the parenthesized expression `e`, not a one-element tuple: `val x =
+  (5)` binds an `i32`, and `()` is refused by name because the absent value is
+  `unit`.
+- There is **no positional access** on a value: `pair.0` is not a field access.
+  Read a position with a destructuring binding
+  ([Bindings and assignment](/language/bindings)), or bind the whole tuple to a
+  `val` first.
+- A tuple is a record, so it is not printable: `print` takes a scalar, a `str`
+  or a `String`. Print each position instead.
 
 ## Compound assignment
 

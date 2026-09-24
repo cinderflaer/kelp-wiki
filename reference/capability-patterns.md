@@ -15,7 +15,8 @@ impl "std/http" caps(net = ["api.example.com:443", "127.0.0.1:*"])
 impl "logger" caps(fs = ["/var/log/myapp/**"], env = ["LOG_*"])
 ```
 
-`domain = [pattern, ...]`, one or more domains, in any order. **An empty list
+`domain = [pattern, ...]`, one or more domains, in any order, or the whole set in
+one clause, `caps(*)` (see [Delegation](#delegation)). **An empty list
 denies everything**: `caps(process = [])` is a grant that permits no program. It is also the smallest grant that satisfies
 the compiler for a module you do not want to let out.
 
@@ -85,6 +86,11 @@ impl "std/rand" caps(rand = [])
 
 - The **entry module holds the wildcard** for every domain, so a single-file
   program needs no grant for its own calls.
+- `caps(*)` is that whole set in one clause: `impl "helper" caps(*)` delegates
+  `/**` for the path domains and `*` for the name domains, the same set the
+  importing module holds. It stands alone (`caps(*, net = [...])` is a parse
+  error in either order), it can never grant more than the delegator holds, and
+  it is refused on an import that reaches no capability domain at all.
 - A non-entry module holds exactly what its importer granted, and **can delegate
   less than it holds, never more**: granting a pattern the importer does not hold
   is an error.

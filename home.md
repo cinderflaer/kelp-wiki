@@ -62,7 +62,7 @@ by the first few lines of a file instead of by auditing it.
 
     [Libraries (fpl)](/libraries) is the first-party library catalogue:
     JSON, CSV, TOML, base64, dates, sets, bit packing, big integers, decimals,
-    HTTP helpers and more.
+    HTTP helpers, Discord bots and more.
 
 -   **Release history**
 
@@ -77,7 +77,7 @@ by the first few lines of a file instead of by auditing it.
 <!-- roadmap:start -->
 ## Roadmap
 
-Of the 11 marks, **4 are done**, **3 in progress** (MK5, MK7, MK8), **1 not started** (MK6) and 3 proposed. The critical path is next at **MK6-S1-M1**: process threads. No dates: the milestones are ordered by dependency, not by calendar. A
+Of the 11 marks, **4 are done**, **5 in progress** (MK5, MK6, MK7, MK8, MK9), **0 not started** and 2 proposed. The critical path is at **MK6-S1-M1**: process threads, whose `thread.spawn`/`thread.join` half shipped, so what is next is stage C2 (`thread.sleep_ms`, `thread.current_id`) and then **MK6-S2-M1**, multithreaded downloads. No dates: the milestones are ordered by dependency, not by calendar. A
 mark moves when its prerequisites land, and `plan/roadmap.md` is the record.
 
 ```mermaid
@@ -92,12 +92,12 @@ flowchart LR
         MK5["MK5 Standard library program<br/>large"]
         MK7["MK7 LLVM backend<br/>large"]
         MK8["MK8 Language ergonomics<br/>large"]
+        MK9["MK9 Systems substrate<br/>very large"]
     end
     subgraph planned["Not started"]
         MK6["MK6 Concurrency<br/>very large"]
     end
     subgraph proposed["Proposed"]
-        MK9["MK9 Systems substrate<br/>very large"]
         MK10["MK10 Capability model extensions<br/>large"]
         MK11["MK11 Verification and semantics<br/>very large"]
     end
@@ -106,9 +106,8 @@ flowchart LR
     classDef statusPlanned fill:#5b6b7a,color:#ffffff,stroke:#455260
     classDef statusProposed fill:#7c6a94,color:#ffffff,stroke:#615275
     class MK1,MK2,MK3,MK4 statusDone
-    class MK5,MK7,MK8 statusActive
-    class MK6 statusPlanned
-    class MK9,MK10,MK11 statusProposed
+    class MK5,MK6,MK7,MK8,MK9 statusActive
+    class MK10,MK11 statusProposed
 ```
 
 [The roadmap page](/meta/roadmap) points at `plan/roadmap.md`, which is the
@@ -122,13 +121,13 @@ to be updated when it moves.
 | | |
 | --- | --- |
 | Types | `i32` `i64` `u8` `u16` `u32` `u64` `usize` `isize` `f32` `f64` `bool` `char`, plus borrowed text as `str` and `View` |
-| Data | `datac` records with `val`/`var` fields, `enum` tagged unions, exhaustive `when`, `if let`, type parameters, `const`, `pd` passdowns |
+| Data | `datac` records with `val`/`var` fields, tuple types read by a destructuring binding, `enum` tagged unions, exhaustive `when`, `if let`, type parameters, `const`, `pd` passdowns |
 | Ownership | owned builtins `String`, `Bytes`, `List<T>`, `Map<K, V>`, `Box<T>` and the fixed-size array `[T; N]`; moves, shared and `mut` borrows, drops at end of scope, no garbage collector |
 | Errors | `Option`, `Result`, the `?` operator, `panic`/`assert` |
 | Functions | `fun`, named arguments, function values and closures, receiver methods, stdlib-only argument-type overloading |
 | Modules | `impl "std/fs"`, local-file imports, aliases, `pd` passdowns |
 | Capabilities | `fs`, `net`, `process`, `env`, `time`, `rand` |
-| Stdlib | `mem` `str` `path` `math` `fmt` `io` `fs` `process` `net` `http` `time` `rand` `env` `list` `option` `result` |
+| Stdlib | `mem` `str` `path` `math` `fmt` `io` `fs` `process` `net` `http` `ws` `encoding` `time` `rand` `env` `list` `option` `result` `atomic` `thread` |
 | Toolchain | `kelpc` (compiler), [Coral](/tooling) (build tool and package manager), [Lighthouse](/tooling) (editor support) |
 
 There is deliberately **no** `unsafe`, no exceptions, no undefined-behaviour
@@ -194,7 +193,7 @@ The project lives in Gitea, at
 | [`kelp`](https://homelabone.xenoo.dev/gittea/Juniper/kelp) | The compiler `kelpc` in Rust, plus the `plan/*.md` documents that are the authority for the language. |
 | [`fpl`](https://homelabone.xenoo.dev/gittea/Juniper/fpl) | One folder per first-party Kelp library: `argparse`, `bigint`, `csv`, `json` and the rest of the catalogue. |
 | [`coral`](https://homelabone.xenoo.dev/gittea/Juniper/coral) | The build tool and package manager. |
-| [`lighthouse`](https://homelabone.xenoo.dev/gittea/Juniper/lighthouse) | Editor support: the LSP server, the VS Code extension and the IntelliJ plugin. |
+| [`lighthouse`](https://homelabone.xenoo.dev/gittea/Juniper/lighthouse) | Editor support: the LSP server and the IntelliJ plugin. |
 | [`kelp-wiki`](https://homelabone.xenoo.dev/gittea/Juniper/kelp-wiki) | The sources for this documentation. `main` is the MkDocs source; the `wikijs` branch is what this wiki imports. |
 
 All repositories, including the ones unrelated to Kelp:

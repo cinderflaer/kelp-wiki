@@ -50,12 +50,12 @@ enum ParseErr {
 
 | Function | Returns | Notes |
 | --- | --- | --- |
-| `new(prog: &str)` | `Parser` | bind with `var` — `add_*` mutates it |
+| `new(prog: &str)` | `Parser` | bind with `var`: `add_*` mutates it |
 | `add_flag(p: mut Parser, name: &str, help: &str)` | `Unit` | |
 | `add_option(p: mut Parser, name: &str, default: &str, help: &str)` | `Unit` | `default` is what `get_option` returns when unset |
 | `parse(p: &Parser, args: &List<String>)` | `result.Result<ParsedArgs, ParseErr>` | unknown `--name`, or a `--name` option with no following token, is an error |
 | `has_flag(pa: &ParsedArgs, name: &str)` | `bool` | |
-| `get_option(p: &Parser, pa: &ParsedArgs, name: &str)` | `String` | explicitly set value, else the declared default. **Panics** `argparse.get_option: 'name' was never declared with add_option` — that is a caller bug, not user input |
+| `get_option(p: &Parser, pa: &ParsedArgs, name: &str)` | `String` | explicitly set value, else the declared default. **Panics** `argparse.get_option: 'name' was never declared with add_option`. That is a caller bug, not user input |
 | `positionals(pa: &ParsedArgs)` | `&List<String>` | every token that was not `--…` |
 | `help_text(p: &Parser)` | `String` | rendered usage, flags and options |
 | `err_name(e: &ParseErr)` | `&str` | the offending name |
@@ -68,7 +68,8 @@ something derived from its *first* reference parameter (syntax.md §10.2).
 Inspection helpers: `is_known_flag(p: &Parser, name: &str) -> bool` and
 `is_known_option(p: &Parser, name: &str) -> bool`, for checking a name before
 `parse` or for building your own scanner. `parse_long_token` is the internal
-one-token step and `copy_err` rebuilds a `ParseErr` payload.
+one-token step; it builds each `ParseErr` value directly from the token text, so
+nothing is rebuilt from a borrow.
 
 ## `--name value` and `--name=value`
 
@@ -172,7 +173,7 @@ here rather than in every consumer.
 | Function | Returns | Notes |
 | --- | --- | --- |
 | `parse_bytes(text: &str)` | `result.Result<u64, str.ParseErr>` | a byte count with an optional binary suffix: `512`, `4k`, `4kb`, `1m`, `2g`, `1t`. Case is ignored, a trailing `b` means bytes. `Err(Empty)` when there are no digits at all, `Err(Invalid)` otherwise |
-| `get_bytes(p, pa, name, default: u64)` | `result.Result<u64, str.ParseErr>` | `parse_bytes` on a declared option, with `default` standing in when the option was not given at all |
+| `get_bytes(p, pa, name, default: u64)` | `result.Result<u64, str.ParseErr>` | `parse_bytes` on a declared option; `default` stands in only when the resolved text is empty, which is the option not given with an empty declared default, or given as `--name=`. Any other text, the declared default included, is parsed, so `4k` gives 4096 and `out.txt` is an `Err` |
 
 A value that *was* given and does not parse is still an `Err`, so a caller can
 tell "unset" from "bad":

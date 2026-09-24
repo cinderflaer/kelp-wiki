@@ -78,10 +78,10 @@ kelpc build json_filter.kp -o json_filter && ./json_filter
 
 ## What to take from it
 
-- **A `Json` tree is owned and read-only in practice.** v1 matches an enum payload
-  through a borrow, so a document is built **bottom-up**: collect the children in a
-  `List`, then wrap them with `json.array` or `json.object`. That is the whole
-  reason `kept` exists.
+- **A `Json` tree is owned and read-only in practice.** A match over an owned
+  `Json` takes the payload out of the enum into a binding, so a document is built
+  **bottom-up**: collect the children in a `List`, then wrap them with
+  `json.array` or `json.object`. That is the whole reason `kept` exists.
 - **Readers panic on the wrong type**; `json.as_i64` on a string is a panic, not an
   `Option`. A program that must tolerate a shape uses `json.try_i64`,
   `json.as_i64_or`, or checks `json.is_int` first.

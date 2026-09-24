@@ -31,12 +31,15 @@ The domain each module needs comes from the compiler's own table
 | `std/process` | `process` | `args`, `spawn`, `run`, `exit` |
 | `std/net` | `net` | TCP connect/listen/accept, `send`/`recv` |
 | `std/http` | `net` (held) | an HTTP/1.1 client; ungated itself, but importing it needs `net` delegated |
+| `std/ws` | `net`, `rand` (both held) | a WebSocket client (RFC 6455) over `ws://`; importing it needs both delegated, `net` for the socket and `rand` for the handshake key and every masking key |
 | `std/time` | `time` | `now_unix`, `now_mono_ns`, `sleep_ms` |
 | `std/rand` | `rand` | unseeded `u64`, `below`, `bytes` |
 | `std/env` | `env` | `has`, `get`, `set`, `unset` |
 | `std/list` | — | `map`, `filter`, `each`, `find_index`, `any`, `all` |
 | `std/option` | — | `Option<T>` and its combinators |
 | `std/result` | — | `Result<T, E>` and its combinators |
+| `std/atomic` | - | `Atomic<T>` and the one ordering v1 has |
+| `std/thread` | - | `spawn`, `join`, `fence(order)` and the `ThreadErr` a join hands back |
 | `std/rt` | — | the compiler's own runtime module (the capability matcher), injected for a program that imports a gated module; not part of the stdlib surface |
 
 ## Compiler builtins
@@ -71,12 +74,15 @@ The builtins are described in [Text](/language/text) and
 | `process` | [`std/process`](/stdlib/process) |
 | `net` | [`std/net`](/stdlib/net) |
 | `http` | [`std/http`](/stdlib/http) |
+| `ws` | [`std/ws`](/stdlib/ws) |
 | `time` | [`std/time`](/stdlib/time) |
 | `rand` | [`std/rand`](/stdlib/rand) |
 | `env` | [`std/env`](/stdlib/env) |
 | `list` | [`std/list`](/stdlib/list) |
 | `option` | [`std/option`](/stdlib/option) |
 | `result` | [`std/result`](/stdlib/result) |
+| `atomic` | [`std/atomic`](/stdlib/atomic) |
+| `thread` | [`std/thread`](/stdlib/thread) |
 
 Two conventions worth knowing before reading a page:
 

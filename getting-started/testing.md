@@ -30,16 +30,17 @@ so the task goes in `src/tasks/`, which is the other directory `coral init`
 writes. A task entry may import the project's own modules and its dependencies,
 because `impl` paths resolve against `src/` like anywhere else. Building the task
 compiles everything it imports, so a test task is a compile check of those modules
-even when every check passes.
+even when every check passes. Both functions are `pub` because the task file is
+another module: it reaches `calc`'s items only where `calc` exports them (A-13).
 
 ## A project with a test task
 
 Three files. First, the code under test, in `src/shapes/calc.kp`:
 
 ```kelp
-fun double(n: i64).R: i64 = n * 2
+pub fun double(n: i64).R: i64 = n * 2
 
-fun is_even(n: i64).R: bool = n % 2 == 0
+pub fun is_even(n: i64).R: bool = n % 2 == 0
 ```
 
 Then `src/tasks/test.kp`:

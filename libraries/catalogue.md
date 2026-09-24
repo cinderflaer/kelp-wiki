@@ -1,10 +1,10 @@
 ---
 title: "Catalogue"
-description: "All twenty-seven first-party libraries, grouped by what they do. Every one is a folder in the fpl repository and every one is a single manifest line."
+description: "All twenty-eight first-party libraries, grouped by what they do. Every one is a folder in the fpl repository and every one is a single manifest line."
 isPublished: true
 tags: "library"
 ---
-All twenty-seven first-party libraries, grouped by what they do. Every one is a
+All twenty-eight first-party libraries, grouped by what they do. Every one is a
 folder in the [fpl repository](https://homelabone.xenoo.dev/gittea/Juniper/fpl)
 and every one is a single manifest line.
 
@@ -54,6 +54,7 @@ and every one is a single manifest line.
 | [`dedup`](/libraries/dedup) | Duplicate-file grouping and tree snapshot/drift over `List<Entry>` | — |
 | [`httpx`](/libraries/httpx) | Query strings, Basic Auth, PUT/DELETE/PATCH, `Set-Cookie` | — |
 | [`lineproto`](/libraries/lineproto) | CRLF line protocols over a socket | `net` |
+| [`discord`](/libraries/discord) | Discord bots and webhooks over `std/http` and `std/ws`: payload builders, a gateway loop, webhooks, and every opcode and close code the raw path needs | `net`, `rand`, `time` |
 
 ## Programs: arguments, output, testing, timing
 

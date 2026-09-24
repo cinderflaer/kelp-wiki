@@ -44,10 +44,16 @@ datac Node(val value: i32, val next: Box<Node>)
   c.count = 5              // ok: field is var and c is a var binding
   ```
 
-- Reading an owned field **by value** is refused (no partial moves):
-  `val s = node.text` would produce two owners of the same buffer. Borrow it
-  instead, or hold it in a `Box` and `take()` it out.
+- Reading an owned field **by value** takes it out of an owned local:
+  `val s = node.text` moves the field out and the local keeps the rest (see
+  [Partial moves](/language/ownership)). Out of a borrow it is refused, because
+  that would produce two owners of the same buffer: borrow it instead, or hold
+  it in a `Box` and `take()` it out.
 - `datac` values are dropped at the end of the owning scope, fields recursively.
+- **A tuple is a record too.** `(i32, String)` is a record with positional
+  fields: it needs no declaration, it is a legal `datac` field and a legal
+  `enum` payload, and it obeys every rule above. Its positions are read by
+  destructuring, because there is no `.0` ([Types](/language/types)).
 
 ## `enum`
 
@@ -67,6 +73,9 @@ enum Shape {
   passing one moves it; dropping it drops the live variant's payloads.
 - Construction names the variant, qualified by the enum:
   `Shape.Circle(r = 1.0)`, `Shape.Empty`. Arguments may be named or positional.
+- An `enum` may declare receiver methods, and a call on a value of the type
+  resolves one. A receiver that builds a variant names a type rather than a value,
+  so it is refused: bind the variant first.
 
 ## Matching
 
@@ -89,14 +98,18 @@ fun label(s: &Shape).R: &str = when s {
 - The number of bindings must equal the number of payload fields; `_` ignores
   one.
 - The scrutinee is matched where it is when it is a **place** (a binding, a
-  field path, or a dereference): nothing moves, and only the matched field is
-  copied or borrowed. A **temporary** is bound to a hidden local first, because a
-  non-`Copy` payload binds as a borrow of it and that borrow has to outlive the
-  arm's body. A chain over a temporary stages its **root**, so
-  `when mk().t { ... }` binds `mk()` and frees the whole value once.
-- A payload binds as a **copy** when it is `Copy` and as a **shared borrow**
-  otherwise, so matching never partially moves the scrutinee: `r` above is an
-  `f64`, while a `Word(val text: String)` payload binds as `&String`.
+  field path, or a dereference): nothing moves out of it as a whole, and only the
+  matched payload is copied, borrowed, or (an owned payload of an owned place)
+  moved out. A **temporary** is bound to a hidden local first, so the arm has a
+  place to read the payload out of, and a non-`Copy` payload borrow has something
+  to point at for the length of the arm. A chain over a temporary stages its
+  **root**, so `when mk().t { ... }` binds `mk()` and frees the whole value once.
+- A payload binds as a **copy** when it is `Copy`, **by value** when it is owned
+  and the scrutinee is an owned place (a `val`/`var` binding or a `move T`
+  parameter), and as a **shared borrow** otherwise: `r` above is an `f64`, while a
+  `Word(val text: String)` payload binds as an owned `String` out of an owned
+  `Word` and as `&String` out of a `&Word`. The value taken by value is gone from
+  the enum afterwards.
 - There is no `else` requirement when every variant has an arm; an `else ->` arm
   covers the variants not named above it.
 
@@ -132,9 +145,12 @@ val n: Option<i32> = Option.Some(value = 7)
 
 ## Methods
 
-A `datac` may carry methods ([Methods and receivers](/language/methods)); an **`enum`
-carries none** in v1, so combinators over `Option`/`Result` are free functions in
-`std/option` and `std/result`.
+A `datac` may carry methods ([Methods and receivers](/language/methods)), and so
+may a concrete `enum`: `fun Shape.label()`, called on a value of the type
+(`val s = Shape.Empty`, then `s.label()`), while `Shape.Empty.label()` is refused
+because a receiver that builds the variant names a type rather than a value. A
+generic `enum`'s template carries none, so combinators over `Option`/`Result` are
+free functions in `std/option` and `std/result`.
 
 ## See also
 

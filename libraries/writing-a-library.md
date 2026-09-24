@@ -19,9 +19,10 @@ mylib/
 impl "std/str"
 impl "std/result"
 
-datac Item(val name: String, val count: i64)
+pub datac Item(val name: String, val count: i64)
+pub enum ParseErr { Empty Bad(val offset: usize) }
 
-fun parse(text: &str).R: result.Result<List<Item>, ParseErr> { ... }
+pub fun parse(text: &str).R: result.Result<List<Item>, ParseErr> { ... }
 ```
 
 And in a consumer:
@@ -62,18 +63,40 @@ below is a rule.
 
 ## Constraints the language puts on a library
 
+- **A consumer reaches the entry file's items only when they are `pub`.**
+  Another module reaches a `fun`, `extern fun`, `datac`, `enum` or `const` that
+  carries `pub`, and nothing else (A-13), so the surface a consumer calls is the
+  surface the library marks. A method follows its declaring type: `pub` on the
+  type exports the methods a value of it carries, and `pub` on a method is
+  refused. A `pd` never takes `pub`, because a passdown is module-scoped.
+- **An exported signature names only exported types.** A consumer reaches
+  `parse`, so it has to be able to reach every type that signature writes: the
+  parameters and the return, a method declared inside an exported type, a `pub
+  datac`'s fields, a `pub enum`'s variant payloads, a `pub const`'s written type,
+  and whatever a container, an array, a borrow or a function type nests. That is
+  why `Item` and `ParseErr` above carry `pub`; a `pub fun` that returned a
+  private `ParseErr` would be refused with `'mylib.parse' is exported but its
+  signature names 'mylib.ParseErr', which module 'mylib' does not export: add
+  'pub' to 'ParseErr', or make 'mylib.parse' private`. A private helper is never
+  inspected, so it may name anything.
 - **A user module cannot overload a name**, which is why `listx` spells the type
   into the function (`sum_i32`, `min_f64`) and why `set` ships two types
   (`Set<T>` and `StrSet`) where the standard library would overload one.
-- **`List` and `Map` cannot nest directly**, so a nested container is wrapped in a
+- **The container element sets are narrow.** A `List` element and a `Box`
+  element may be a `List` or a `Box`, but a `Map` value and an array element may
+  not be a container, and no container takes a borrow, a view or an atomic. A
+  library that puts a list inside a map, or wants a named row, wraps it in a
   one-field `datac`: `csv.Row`, `listx.Chunk` and `table.Row` are exactly that.
 - **A closure parameter that borrows a module-declared type codegens**, so a
   library may take a callback over its own type: `json` ships
   `each_value`/`filter_array`.
-- **`Option`/`Result` payloads cannot be moved out of a `Copy`-less enum**, which
-  is why a library's "unpack" helpers take an `out` parameter and return `bool`
-  (the shape `std/io`'s `read_line_into` uses) rather than returning
-  `Option<String>`.
+- **An owned payload comes out of an owned place, not out of a borrow.** A
+  parameter of an owned type is a borrow, so a library's "unpack" helper either
+  takes the value with `move` and hands the payload out (`option.unwrap`), or
+  returns the payload inside an `Option`/`Result` (`result.map`) and lets the
+  caller match an owned local. A helper that only has a borrow fills an `out`
+  parameter and returns `bool` (the shape `std/io`'s `read_line_into` uses)
+  instead of returning `Option<String>`.
 
 ## Adding one to `fpl`
 

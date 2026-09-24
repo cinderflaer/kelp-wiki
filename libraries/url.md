@@ -165,8 +165,10 @@ when base {
 | `encode_path(text: &str)` | `String` | a whole path: `/`, the sub-delimiters, `:` and `@` stay literal |
 | `decode_component(text: &str)` | `result.Result<String, ParseErr>` | `%XX` undone; **`+` is data, not a space** |
 
-`query_get` plus `option.unwrap` does not compile, because `unwrap` needs a
-`Copy` payload and a `String` is not `Copy`. That is why `query_get_or` exists.
+`query_get` returns an owned `option.Option<String>`, and `option.unwrap` takes
+its receiver with `move`, so `option.unwrap(o = query_get(u = u, name = "k"))`
+compiles and hands the owned `String` out. `query_get_or` is the one-call
+accessor for a fallback that does not panic.
 
 `query_pairs` splits on `&`, then on the first `=`; a part with no `=` is a name
 with an empty value. **`+` is not a space** here, because that is
@@ -261,8 +263,9 @@ print(url.to_string(u))     // https://example.com:8443/api?q=1
   `effective_port` returns `-1` and `origin` keeps whatever port was written.
 - **Everything else in the module is internal.** The predicates and scanners the
   functions above are written with (`eff_starts`, `strip_last_segment`,
-  `find_byte` and the rest) are callable, because the language has no visibility
-  modifier, but a program should not call them.
+  `find_byte` and the rest) carry no `pub`, and another module reaches a library
+  item only when the library declares it `pub` (A-13), so these are not callable
+  from outside the library, and program code should not call them anyway.
 - **It carries its own percent codec.** A folder in `fpl` must stand alone, so
   this is not a dependency on [`encoding`](/libraries/encoding). Program code that
   wants plain percent coding should use `encoding`.

@@ -46,6 +46,10 @@ A temporary is already an owner, so `consume(String.from_str("bob"))` needs no
 binding. A **borrow cannot be moved out of**: `fun forward(s: String).R: usize =
 consume(s)` is an error, because `s` belongs to the caller.
 
+A tuple is an owned value like any other, so a parameter of the type borrows the
+argument and `move (A, B)` is the parameter form that takes it over:
+`fun take(p: move (String, i32))`.
+
 Assignment to an existing `var` moves the new value in and frees the old value,
 which is how a recursive structure is rebuilt in a loop:
 
@@ -90,26 +94,102 @@ Rules the checker enforces:
   }
   ```
 
-## No partial moves
+## Partial moves
 
-An owned field cannot be read out of a borrowed structure:
+Reading an owned field of an owned local binding by value takes that field out
+and leaves the rest of the binding owned:
 
 ```kelp
-datac Line(val text: String, val n: usize)
+datac Bag(val xs: List<i32>, val name: String)
 
-fun use_line(l: Line) {
-    print(l.text)             // error: cannot read the owned field 'text' by value
-    print(l.text.as_str())    // fine: a view of the field
-    print(l.n)                // fine: `usize` is Copy
+fun use(bag: move Bag) {
+    val xs = bag.xs          // `xs` moves out of `bag`
+    print(bag.name)          // `name` stayed, and is readable
+    print(xs.len())
 }
 ```
 
-To *take* an owned field, hold it in a `Box` and `take()` it, or make the
-parameter `move Line` and read the field out of the value you now own.
+The binding is still freed as a whole at the end of its scope, and the moved
+field's slot is cleared at the read, so nothing is freed twice. On a `val` local
+the field is gone for good; on a `var` local a fresh value assigned into the
+field owns it again. A move on one branch of an `if` takes the field only on
+that path, and after the merge only the fields that stayed are read by name.
 
-This is also why several stdlib combinators are `Copy`-only: `option.unwrap` on an
-`Option<String>`, `result.map` over a `Result<T, MyErr>` and `list.filter` over a
-`List<String>` each need a move out that v1 does not have.
+The field has to be a **direct field of a local this frame owns**: a `val` local,
+a `var` local, or a `move T` parameter. A borrow, a temporary and a field chain
+are all refused, because the frame has nothing of its own to give away there:
+
+```kelp
+fun steal(b: &Bag).R: List<i32> = b.xs
+// error: cannot move the field 'xs' out of 'b': the value is borrowed
+```
+
+To take a field out of a chain, move each hop into a local first: `val inner =
+outer.inner` then `val xs = inner.xs`.
+
+Once a field is gone, reading it again and handing the binding on as a whole are
+both refused, because the empty slot would go with it:
+
+```kelp
+val xs = bag.xs
+val again = bag.xs         // error: use of moved value 'bag.xs'
+val whole = bag            // error: cannot use 'bag' as a whole value: its field 'xs' was moved out
+```
+
+Borrowing a field that stayed is still fine (`bag.name.as_str()`), and a `Copy`
+field is always readable. To *take* an owned field that only a borrow reaches,
+hold it in a `Box` and `take()` it.
+
+**A tuple's positions obey the same rule.** A destructuring binding moves its
+initializer into the binding, exactly as `val p = place` takes a place, and then
+reads each position out of that value, which is the partial move. The value's own
+drop frees the positions that stayed, and the source place cannot be bound again:
+
+```kelp
+fun use(p: move (String, String)) {
+    val (first, _) = p          // `p` moves into the binding; the other position stays
+    print(first.as_str())
+}
+
+fun peek(p: &(String, i32)) {
+    val (text, n) = p           // error: cannot read an owned position out of a borrow
+}
+```
+
+Reading the same position twice, taking the source apart a second time, and
+reading an owned position out of a *borrow* are each refused, and a `Copy`
+position is always readable. A tuple is owned as a whole, so every rule above
+applies to it: a parameter of the type borrows it, `move (A, B)` takes it, and it
+is dropped position by position at the end of its scope
+([Types](/language/types)).
+
+An owned `enum` payload obeys the same rule: a `when`/`if let` over an owned place
+binds the payload **by value** and takes it out of the enum, so the enum cannot be
+used as a whole afterwards and the same payload cannot be bound twice on one path.
+Over a borrow the payload binds as a borrow and nothing moves:
+
+```kelp
+enum Held {
+    Word(val text: String)
+    Blank
+}
+
+fun take_word(h: move Held).R: String = when h {
+    Word(text) -> text        // the payload moves out of the owned `h`
+    Blank -> String.from_str(s = "")
+}
+
+fun peek_word(h: &Held).R: usize = when h {
+    Word(text) -> text.len()  // `text` is a `&String` here; nothing moved
+    Blank -> 0
+}
+```
+
+The helpers whose receiver stays a borrow are `Copy`-only on the side they
+rebuild: `option.or_else`, `result.unwrap`/`unwrap_or`/`unwrap_err`/`expect`/
+`expect_err`/`and_then`/`or_else` and `list.filter` over a `List<String>`. `option.unwrap` on an
+`Option<String>` and `result.map` over a `Result<T, MyErr>` take their receiver
+with `move` and work.
 
 ## Drops
 

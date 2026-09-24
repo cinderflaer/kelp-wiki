@@ -97,7 +97,7 @@ file:
 | `parse_array_into(inner: &str, out: mut List<String>)` | `bool` | the text between `[` and `]` |
 | `translate_escape(e: u8)` | `u8` | `n` -> newline, `t` -> tab, anything else itself |
 | `is_ws_byte(c: u8)` | `bool` | space or tab |
-| `copy_err(e: &ParseErr)` | `ParseErr` | rebuilds a payload-less variant, since v1 cannot move an enum payload out of a match |
+| `copy_err(e: &ParseErr)` | `ParseErr` | rebuilds a payload-less variant; the receiver is a borrow, so nothing can be moved out of it |
 
 ## Example
 
@@ -145,6 +145,6 @@ true
 - No duplicate detection: two entries with the same section and key both live in
   `entries` and `find_entry` returns the first.
 - The quoted-string and array readers fill an `out` parameter and return `bool`
-  instead of returning `Option<String>`, because v1 cannot move an owned payload
-  out of an enum by pattern-matching. That shape is internal; the public
-  accessors above are unaffected.
+  rather than wrapping the result in an `Option`, because the caller owns the
+  buffer and a partial decode stays visible in it. That shape is internal; the
+  public accessors above are unaffected.

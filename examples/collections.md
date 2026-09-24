@@ -128,9 +128,9 @@ set        first member = alpha
 - **`fold` threads an accumulator of any type, owned included,** while `zip` and
   `chunks` need `Copy` elements because they build new containers out of what
   `get` hands back.
-- **`chunks` wraps each run in a one-field `datac`** (`Chunk<T>`), because a
-  `List` cannot hold another `List`. The same shape appears in `csv.Row` and
-  `table.Row`.
+- **`chunks` wraps each run in a one-field `datac`** (`Chunk<T>`), a named
+  element type, the same shape `csv.Row` and `table.Row` use. `List<List<T>>` is
+  legal, but `chunks` returns `List<Chunk<T>>`.
 - **`sort_by` is an insertion-selection hybrid over `remove`/`insert`,** which is
   what makes it work for owned elements, at the cost of O(n²) comparisons.
 - **`position_i32` returns an `Option`,** so a missing value is a `None` rather

@@ -13,31 +13,39 @@ builtin type name like `str` or `String`, not a keyword.
 program      := line* EOF
 line         := impl | const | pd | datac | enum | fun
 
-impl         := "impl" string [ "with" "caps" "(" grant ("," grant)* ")" ]
-                // `as name` was removed: the parser refuses the clause by name
+impl         := "impl" string [ "caps" "(" ( grant ( "," grant )* | "*" ) ")" ]
+                // `caps(*)` (15.2) delegates the whole resource of every domain and
+                // stands alone: a named domain beside the `*` is refused by name.
+                // `as name` was removed (13.1) and `with caps(...)` with it (15.2):
+                // the parser refuses each by name, and `as` stays a keyword
 grant        := ident "=" "[" string ("," string)* "]"
-const        := "const" ident ":" type "=" expr
+const        := [ "pub" ] "const" ident ":" type "=" expr
 pd           := "pd" ("val" | "var") ident [ ":" type ] "=" expr
-datac        := "datac" ident [ typeparams ] "(" [ field ("," field)* ] ")"
+datac        := [ "pub" ] "datac" ident [ typeparams ] "(" [ field ("," field)* ] ")"
 field        := ("val" | "var") ident ":" type
-enum         := "enum" ident [ typeparams ] "{" ( ident [ "(" [ field ("," field)* ] ")" ] )* "}"
+enum         := [ "pub" ] "enum" ident [ typeparams ] "{" ( ident [ "(" [ field ("," field)* ] ")" ] )* "}"
 typeparams   := "<" ident ("," ident)* ">"
 typeargs     := "<" type ("," type)* ">"   // in an expression: adjacent to the name and to "("
-fun          := [ "extern" ] "fun" [ "mut" ] ( ident [ typeparams ] "." )? ident [ typeparams ]
+// A leading "pub" (13.4) is accepted on const, datac, enum and fun, and
+// nowhere else: a `pd` is module-scoped and an impl is not an item.
+fun          := [ "pub" ] [ "extern" ] "fun" [ "mut" ] ( ident [ typeparams ] "." )? ident [ typeparams ]
                 "(" [ param ("," param)* ] ")" [ ".R" ":" type ] body
 param        := ident ":" [ "mut" | "move" ] type
 body         := "=" expr | block | <nothing for extern>
 
 type         := [ "&" ] ( ident [ "<" type ("," type)* ">" ] [ "." ident ]
                        | "fun" "(" [ fparam ("," fparam)* ] ")" [ ".R" ":" type ]
-                       | "[" type ";" expr "]" )        // a fixed-size array: [T; N]
+                       | "[" type ";" expr "]"        // a fixed-size array: [T; N]
+                       | "(" type "," type ("," type)* ")" )  // a tuple: (A, B)
 fparam       := [ "mut" | "move" ] type
 ```
 
 ```
 stmt         := "val" | "var" | "while" | "for" | "return" | expr
-val          := "val" ident [ ":" type ] "=" expr
-var          := "var" ident [ ":" type ] "=" expr
+val          := "val" ( ident [ ":" type ] | pattern ) "=" expr
+var          := "var" ( ident [ ":" type ] | pattern ) "=" expr
+pattern      := "(" position "," position ("," position)* ")"
+position     := ident | "_" | pattern
 while        := "while" expr block
 for          := "for" ident "in" expr block   // the `in` is contextual, not a keyword
 return       := "return" [ expr ]
@@ -56,6 +64,7 @@ primary      := int | float | string | char | template | "true" | "false"
                 ( "=" expr | block )
               | "[" expr ("," expr)* "]"       // an array literal: length is the count
               | "[" expr ";" expr "]"          // a repeat: [0; 4096]
+              | "(" expr "," expr ("," expr)* ")"   // a tuple value: (lo, hi)
               | ident [ typeargs ] [ "(" args ")" ] | "(" expr ")" | block
               | "if" expr block chain
               | "if" "let" ident [ "(" (ident | "_") ("," (ident | "_"))* ")" ] "=" expr
@@ -78,10 +87,25 @@ chain        := [ "elif" expr block chain
 
 - `line` is what a top-level file holds, and the parser enforces the order the
   productions appear in: imports first, then declarations.
+- `impl` carries the optional grant: `caps(domain = [pattern, ...])`, or the
+  single `caps(*)` that delegates the whole resource of every domain the
+  importing module holds. The `*` stands alone; a named domain beside it is
+  refused by name (15.2).
+- A leading `pub` is accepted on a top-level `const`, `datac`, `enum`, `fun` and
+  `extern fun`, and nowhere else (13.4): a `pd` is module-scoped by design, an
+  `impl` is not an item, and a method's reachability follows its declaring type.
+  A top-level item with no `pub` is private to its own module, and a declaration
+  that carries `pub` may name only types its own module exports, so an exported
+  signature is reachable in every name it writes.
 - `postfix` carries the three postfix forms: `?`, field access, and a call, which
   is why `f(x)?` and `a.b.c(1)` both parse.
 - `primary` includes `block` and `if`/`when` as expressions, which is how
   `val label: String = if flag { "yes" } else { "no" }` works.
+- `(T)` is the parenthesized type `T`, and `(e)` is the parenthesized expression
+  `e`, so a tuple has two or more positions and there is no one-element tuple;
+  `()` is neither a type nor a value, because the absent value's type is `unit`.
+  A tuple value is read by a destructuring `val`/`var` and by nothing else
+  ([Bindings and assignment](/language/bindings)).
 - `chain` is what follows the first block of an `if` or an `if let`: nothing, an
   `else` block, or another link. A link is written `elif` (the preferred
   spelling) or `else if`, so a chain may mix the two; a chain that produces a

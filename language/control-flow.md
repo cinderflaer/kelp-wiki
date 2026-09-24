@@ -81,15 +81,19 @@ if let Rect(w, h) = shape {
   rules are the same: the variant must exist, the binding count must match the
   payload, and `_` ignores one.
 - The scrutinee may be **any expression**, temporary or place. A *place* is
-  matched directly with nothing moved; a *temporary* is bound to a hidden local
-  first, which is how `if let Ok(v) = json.parse(text)` is legal at all. A field
-  chain over a temporary stages its **root**: `if let Word(w) = mk().t` binds
-  `mk()` and matches its `t`, so the whole `mk()` result is freed when the block
-  ends rather than the field being read out of a value that has no storage of its
-  own.
-- A payload binds as a **copy** when it is `Copy` and as a **shared borrow**
-  otherwise. So in `if let Ok(x) = parsed` where `parsed: Result<Civil, _>`, `x`
-  is already a `&Civil`: pass `x`, not `&x`.
+  matched directly, and only the projection an arm reads out by value is gone
+  from it; a *temporary* is bound to a hidden local first, which is how `if let
+  Ok(v) = json.parse(text)` is legal at all, and that hidden local is an owned
+  place like any other. A field chain over a temporary stages its **root**:
+  `if let Word(w) = mk().t` binds `mk()` and matches its `t`, so the whole `mk()`
+  result is freed when the block ends rather than the field being read out of a
+  value that has no storage of its own.
+- A payload binds as a **copy** when it is `Copy`, **by value** when it is owned
+  and the scrutinee is an owned place (a `val`/`var` binding or a `move T`
+  parameter), and as a **shared borrow** otherwise. So `if let Ok(x) = parsed`
+  where `parsed` is an owned `Result<Civil, _>` gives you a `Civil` and takes it
+  out of `parsed`, while a `parsed: &Result<Civil, _>` gives you a `&Civil`: pass
+  `x`, not `&x`.
 
 ## `while`
 
@@ -160,19 +164,21 @@ fun area(s: &Shape).R: f64 = when s {
 ```
 
 - The scrutinee is matched where it is when it is a **place** (a name, a
-  `.field` chain, `*expr`): nothing moves, and only the matched field is copied
-  or borrowed. A **temporary** (a call's result, a literal) is bound to a hidden
+  `.field` chain, `*expr`): nothing moves out of it as a whole, and only the
+  matched payload is copied, borrowed, or (an owned payload of an owned place)
+  moved out. A **temporary** (a call's result, a literal) is bound to a hidden
   local first, because a payload borrow has to outlive the arm it is bound in;
-  the local is freed once the match ends. A chain over a temporary stages its
-  **root**: `when mk().t { ... }` binds `mk()` and matches its `t`, so the whole
-  temporary is freed exactly once, never the field alone.
+  the local is freed once the match ends, and it is an owned place like any
+  other. A chain over a temporary stages its **root**: `when mk().t { ... }`
+  binds `mk()` and matches its `t`, so the whole temporary is freed exactly once,
+  never the field alone.
 - Matching must be exhaustive: either every variant has an arm, or an `else ->`
   arm is present.
 - There are no guards, no literal patterns and no nested patterns in v1. An arm
   head is a variant name with one binding per payload field, and `_` ignores a
   payload.
-- A payload binds as a copy when `Copy` and as a shared borrow otherwise, so
-  matching never partially moves the scrutinee.
+- A payload binds as a copy when `Copy`, **by value** when it is owned and the
+  scrutinee is an owned place, and as a shared borrow otherwise.
 
 ## `return`
 

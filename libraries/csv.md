@@ -30,9 +30,9 @@ enum ParseErr {
 }
 ```
 
-`Row` wraps `List<String>` in a one-field `datac` because `List<List<String>>`
-cannot be written: a nested container has no C representation to hold inline
-([syntax.md](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md) §12.1). The same pattern `listx`'s `Chunk<T>` uses.
+`Row` wraps `List<String>` in a one-field `datac`, so a row is a named type;
+`List<List<String>>` is legal, but the parser hands back a `Row`. The same
+pattern `listx`'s `Chunk<T>` uses.
 
 ## `Row` methods
 

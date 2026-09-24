@@ -56,15 +56,55 @@ impl "std/http" caps(net = ["api.example.com:443", "127.0.0.1:*"])
 impl "logger" caps(fs = ["/var/log/myapp/**"], env = ["LOG_*"])
 ```
 
-A grant is `domain = [pattern, ...]`. Two domains in one line are fine. An **empty
-pattern list denies everything**: `caps(process = [])` is a grant that
-permits no program, which is also the smallest grant a consumer can write to
-satisfy the compiler for a module it does not actually want to let out.
+A grant is `domain = [pattern, ...]`, or the whole set in one clause, `caps(*)`
+(below). Two domains in one line are fine. An **empty pattern list denies
+everything**: `caps(process = [])` is a grant that permits no program, which is
+also the smallest grant a consumer can write to satisfy the compiler for a module
+it does not actually want to let out.
 
 The `with` that used to introduce the clause (`impl "std/fs" with caps(...)`) is
 **gone**, refused by the parser with a message that names the fix. The grant is
 `caps(...)` on its own, and the patterns, the domains and the no-escalation rule
 are unchanged.
+
+### `caps(*)`
+
+`impl "helper" caps(*)` is the whole grant in one clause: it delegates `/**` for
+the path domains and `*` for the name domains, the same set the importing module
+holds. It is for a caller that hands a library everything it may reach without
+naming the domains one by one, and it is **not a way to acquire authority**: the
+set it hands over is the delegator's own, and a module that received `caps(*)`
+holds that wildcard and can delegate it onward exactly as it can delegate a
+pattern it was given.
+
+The `*` **stands alone**, and the clause is refused in three cases, each by name:
+
+- **A named domain beside the `*`** (`caps(*, net = [...])`, in either order) is
+  a parse error, because `*` already means every domain:
+
+  ```text
+  error: `caps(*)` already means every domain, so nothing can stand beside the `*`: write `caps(*)` alone, or name the domains it needs (`caps(net = ["host:port"])`, `caps(fs = ["/a/**"], env = ["HOME"])`)
+  ```
+
+- **The delegating module does not hold the wildcard itself.** The message names
+  the wildcard and the domain that failed, never a pattern the writer would have
+  to invent:
+
+  ```text
+  error: module 'mid' cannot give 'inner' the whole-resource wildcard for 'fs' with `caps(*)`: it does not hold that wildcard itself (it holds: /tmp/kelp_caps_star_esc/**); a module can delegate less than it has, never more
+  ```
+
+- **The import reaches no capability domain** (`std/str`, `std/math`): there is
+  nothing to hand over, so the clause is noise at best and a sign that the wrong
+  module was named at worst.
+
+  ```text
+  error: module 'std/str' is ungated: it reaches no capability domain, so `caps(*)` would grant it nothing; drop the clause
+  ```
+
+A module that reaches a gated one counts even when it is ungated itself:
+`std/http` is ungated and holds `net`, so `impl "std/http" caps(*)` is a
+legitimate line, while the clause on `std/str` is the refusal above.
 
 ### Patterns
 
@@ -112,6 +152,18 @@ example: it only builds and reads plain data, but importing `std/http` needs
 `net` delegated, so `httpx` writes `caps(net = [])` internally: the smallest
 grant that compiles, and it never dials.
 
+`std/ws` is the two-domain case, and both domains are used. Its text names
+`std/net` for the socket and `std/rand` for the sixteen bytes of
+`Sec-WebSocket-Key` and the masking key of every frame, so a consumer writes both
+on the line:
+
+```kelp
+impl "std/ws" caps(net = ["gateway.example.com:80"], rand = [])
+```
+
+A program that leaves `rand` off does not build: a module holds exactly what its
+importer granted it, and the refusal names the call inside `std/ws`.
+
 When that delegation is missing and the failing module is **not** the one you
 wrote the call in, the diagnostic points at the link that broke: it names the
 `impl` line that imported the module with no `caps(...)` clause, and that line is
@@ -133,8 +185,9 @@ rather than a backend gap: a gated item named as a *function value*
 and which argument position holds the resource is a property of that signature, so
 a call through the pointer has no check to emit and no place to put one. The
 compiler therefore refuses the value by name, for the wrapper spelling and the
-`extern fun` one alike, and whether or not the naming module holds the domain (`kelpc/src/infer.rs::function_value_at`, commit `fccb578`;
-`BUG-k2Qv7` was the report). A function *literal* over a gated call
+`extern fun` one alike, and whether or not the naming module holds the domain
+(`kelpc/src/infer.rs::function_value_at`, commit `fccb578`). A function *literal*
+over a gated call
 (`val f = fun(p: &str).R: Bytes = fs.read(p)`) is a different shape: its body is a
 direct call in the module that wrote it, so it is checked at run time like any
 other. Nothing in the shipped stdlib or in the examples uses a gated item as a
@@ -159,5 +212,6 @@ failure as a panic from the gated call.
 
 - [Capability patterns](/reference/capability-patterns): the pattern grammar in full
 - [`std/fs`](/stdlib/fs), [`std/net`](/stdlib/net), [`std/process`](/stdlib/process),
-  [`std/env`](/stdlib/env), [`std/time`](/stdlib/time), [`std/rand`](/stdlib/rand)
+  [`std/env`](/stdlib/env), [`std/time`](/stdlib/time), [`std/rand`](/stdlib/rand),
+  [`std/ws`](/stdlib/ws)
 - [Compiler](/compiler): how the check is implemented

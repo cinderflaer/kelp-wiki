@@ -38,6 +38,7 @@ this page is the index to it.
 
 | Version | Date | Headline |
 | --- | --- | --- |
+| [26.09.2](#26092-2026-09-24) | 2026-09-24 | `pub` and private by default; tuples; threads; `std/ws`; `caps(*)`; `try_connect` |
 | [26.09.1](#26091-2026-09-21) | 2026-09-21 | `llvm` is the compiler; `as name` and `with caps` removed; `-O0` to `-Os` |
 | [26.09.0](#26090-2026-09-20) | 2026-09-20 | the `YY.MM.N` scheme; `try_to_<T>`; `std/encoding`; the outdated-syntax register |
 | [0.1.5](#015-2026-09-20) | 2026-09-20 | the compiler emits its own x86-64 assembly; `kelpc fmt`; block comments |
@@ -46,6 +47,58 @@ this page is the index to it.
 | [0.1.2](#012-2026-09-19) | 2026-09-19 | `View`, `char` literals, bitwise operators, `str` to `String` coercion |
 | [0.1.1](#011-2026-09-19) | 2026-09-19 | the `for` loop, `spawn_in`/`run_in`, fallible `try_run`, `fs.symlink` |
 | [0.1.0](#010-no-release) | 2026-09-19 | first tag: the core language, modules, containers, capabilities, stdlib |
+
+## 26.09.2 (2026-09-24)
+
+[Release](https://homelabone.xenoo.dev/gittea/Juniper/kelp/releases/tag/v26.09.2)
+· 82 commits · 203 unit tests, 461 end-to-end green.
+
+**Modules are private by default.** A top-level item is private to its module
+unless it is declared `pub`, and an exported signature may not name a type its
+ow module does not export: the refusal names the item, the type and the module.
+`pub` is accepted on a top-level `fun`, `extern fun`, `datac`, `enum` or `const`;
+a `pd` is module-scoped by design, and a method's reachability follows its
+declaring type. A compiler-shipped `std/...` module still exports everything,
+transitionally, because the shipped modules import each other without `pub`.
+
+**A function can hand back two things.** `(A, B)` is a type with positional
+fields and `val (lo, hi) = min_max(xs)` binds one, so a pair no longer needs a
+one-shot `datac`. A tuple owns its elements, is never `Copy`, takes the derived
+deep copy and order position by position, and is read by destructuring only:
+there is no `t.0` and no tuple pattern in `when`.
+
+**Threads exist.** `thread.spawn(entry, arg).R: Thread<T>` starts a real OS
+worker and `thread.join(handle).R: Result<T, ThreadErr>` waits for it, on both
+backends. A panic inside a worker ends that worker and arrives at its joiner as
+`Err`, while the rest of the program keeps running; the abandoned frame leaks,
+deliberately, because v1 has no user `Drop`. `std/atomic` ships `Atomic<T>` and
+`Ordering` with the one ordering v1 has, and `std/thread` the standalone
+`thread.fence(order)`.
+
+**`std/ws`, and a dial that is a value.** A WebSocket client (RFC 6455) over
+`ws://`, pure Kelp over `std/net` and `std/encoding`, with `sha1` added for the
+handshake and a grant line of `caps(net = [...], rand = [])` because the
+handshake key and every masking key have to be unpredictable. `net.try_connect`
+and `ws.try_connect` sit beside the panicking `connect` and hand back a reason
+instead of ending the program, the shape `try_run` already has, so a reconnect
+loop can back off and give up.
+
+**A grant can be one word.** `impl "x" caps(*)` hands the imported module every
+domain's whole resource, the same set the entry module holds. It is not a way to
+acquire authority: a delegator gives only what it holds, so a module granted one
+path or one host cannot use it.
+
+**And the fixes**, several of which were silent: the `llvm` backend declared the
+C bodies it calls without the C ABI's `zeroext` on a narrow integer, so a `u16`
+such as a URL's port could be handed over with dirty upper bits and dial a
+garbage port; an owned local a second `var` rebinds is now freed for the value its
+own declaration owns, instead of leaking the first buffer or freeing the wrong
+one; a function owning both a `move` parameter and an owned local frees both; a
+literal that does not fit its context is refused instead of wrapping to `-1`; a
+capability path of about a thousand segments is refused rather than killing the
+process with SIGSEGV; `net.recv` with a length of zero returns at once; a `unit`
+value can be bound at last; and a method on a concrete `enum` resolves on a value
+of that enum.
 
 ## 26.09.1 (2026-09-21)
 

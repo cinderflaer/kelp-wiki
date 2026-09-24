@@ -25,18 +25,19 @@ can fail returns `Result<T, E>` and its caller writes `val v = f(...)?`.
 | Function | Returns | Notes |
 | --- | --- | --- |
 | `is_ok<T, E>(r)` / `is_err<T, E>(r)` | `bool` | |
-| `unwrap<T, E>(r)` | `T` | panics on `Err` |
-| `unwrap_or<T, E>(r, fallback: T)` | `T` | |
-| `unwrap_err<T, E>(r)` | `E` | panics on `Ok` |
-| `expect<T, E>(r, message: &str)` | `T` | panics with the message on `Err` |
-| `expect_err<T, E>(r, message: &str)` | `E` | panics with the message on `Ok` |
-| `map<T, U, E>(r, f: closure(&T).R: U)` | `Result<U, E>` | |
-| `map_err<T, E, F>(r, f: closure(&E).R: F)` | `Result<T, F>` | |
-| `and_then<T, U, E>(r, f: closure(&T).R: Result<U, E>)` | `Result<U, E>` | |
-| `or_else<T, E, F>(r, f: closure(&E).R: Result<T, F>)` | `Result<T, F>` | |
+| `unwrap<T, E>(r)` | `T` | **`T` must be `Copy`**; panics on `Err` |
+| `unwrap_or<T, E>(r, fallback: T)` | `T` | **`T` must be `Copy`** |
+| `unwrap_err<T, E>(r)` | `E` | **`E` must be `Copy`**; panics on `Ok` |
+| `expect<T, E>(r, message: &str)` | `T` | **`T` must be `Copy`**; panics with the message on `Err` |
+| `expect_err<T, E>(r, message: &str)` | `E` | **`E` must be `Copy`**; panics with the message on `Ok` |
+| `map<T, U, E>(r: move Result<T, E>, f: closure(&T).R: U)` | `Result<U, E>` | the result is consumed; the rebuilt side may be owned |
+| `map_err<T, E, F>(r: move Result<T, E>, f: closure(&E).R: F)` | `Result<T, F>` | the result is consumed; the rebuilt side may be owned |
+| `and_then<T, U, E>(r, f: closure(&T).R: Result<U, E>)` | `Result<U, E>` | **`E` must be `Copy`**: the receiver is a borrow |
+| `or_else<T, E, F>(r, f: closure(&E).R: Result<T, F>)` | `Result<T, F>` | **`T` must be `Copy`**: the receiver is a borrow |
 | `each<T, E>(r, f: closure(&T))` | `Unit` | |
 
-As with `Option`, these are free functions: an `enum` carries no methods in v1.
+As with `Option`, these are free functions: a generic `enum`'s template declares
+no methods.
 
 ## Example
 
@@ -76,10 +77,15 @@ fun describe(e: &str.ParseErr).R: String = when e {
 
 ## Notes
 
-- `unwrap` needs no `Copy` bound in the *signature* list above because the
-  stdlib's generic handling differs from `Option`'s in places; the practical rule
-  is the same: an owned payload that cannot be moved out is not `unwrap`-able:
-  use `if let`/`when`, which borrow the payload.
+- The helpers split by what their receiver is. `map` and `map_err` take the
+  result with `move`, because each hands the side it did not transform back
+  inside a fresh result: `map` over a `Result<T, Bad>` moves the `Bad` on, and
+  `map_err` over a `Result<String, E>` moves the `String` on, so an owned
+  success or error type works. The rest read through a borrow: `unwrap`,
+  `unwrap_or`, `unwrap_err`, `expect`, `expect_err`, `and_then` and `or_else`
+  hand a payload out by value or rebuild the side they did not transform, so the
+  payload they touch must be `Copy`. An owned payload read out of an owned
+  result comes out with `if let`/`when`, which binds it by value.
 - `?` propagates only between *identical* failure payload types. v1 has no error
   conversion, so `Result<i64, String>` cannot be propagated out of a function
   returning `Result<i64, IoErr>`; `map_err` is the bridge.

@@ -23,9 +23,12 @@ fun greet(name: &str) {                    // no .R: returns Unit
   value.
 - There is no inferred return type for a block body. The signature always says
   what comes back, and the body has to agree with it.
-- `Unit` is not a value and cannot be stored ([Types](/language/types)). A
-  function returning `Unit` has nowhere for `?` to propagate to, which includes
-  `main` ([Errors and panics](/language/errors)).
+- `Unit` has no representation, so it is refused where a value has to be stored (a
+  field, a `List` element, a `Map` value), while a binding of a `Unit` value is
+  allowed and holds nothing: `val x = noise()` and `val y: unit = x` both compile,
+  and a `Unit` parameter is not passed. A function returning `Unit` has nowhere for
+  `?` to propagate to, which includes `main` ([Errors and
+  panics](/language/errors)).
 - A generic function may write a type parameter in the return type
   (`fun identity<T>(x: T).R: T`). `main` may not take type parameters
   ([Generics and type parameters](/language/generics)).

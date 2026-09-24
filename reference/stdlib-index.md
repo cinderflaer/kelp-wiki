@@ -1,24 +1,30 @@
 ---
 title: "Standard library index"
-description: "Every public name in the shipped standard library, one line each, generated from kelpc/std/.kp at kelp commit 940c524 by tools/stdlib-index.py, a generator kept at the archived branch mkdocs-archive, plus str.less and str.is_digit from kelp 2fa7de5. Behaviour, panics and examples live in the Standard..."
+description: "Every public name in the shipped standard library, one line each, kept by hand against kelpc/std/.kp. Behaviour, panics and examples live in the Standard library chapter."
 isPublished: true
 tags: "reference"
 ---
-Every public name in the shipped standard library, one line each, generated from
-`kelpc/std/*.kp` by `tools/stdlib-index.py`, which lived in this repository's
-MkDocs-era layout and is kept at branch `mkdocs-archive` and tag `mkdocs-final`,
-not in the current tree.
+Every public name in the shipped standard library, one line each, kept by hand
+against `kelpc/std/*.kp` and updated here when the standard library moves. The
+MkDocs-era `tools/stdlib-index.py` that once wrote the page is archived at
+branch `mkdocs-archive` and tag `mkdocs-final`, not in the current tree, and is
+not run.
 
-The page was last re-derived with that script at `kelp` commit `54b6ba8`, plus
-the names that landed after it: `fmt.commas_u64`, `fmt.commas_i64` and
-`fmt.human_size` (`kelp` `a75deb6`), then `fs.cwd`, `fs.is_symlink`,
-`fs.read_link` and `path.absolute`, then `io.IoErr`/`io.errno_text` with
-`fs.try_read`, `fs.try_read_text` and `fs.try_open`. Three names and one module make that worth
-saying: `str.less` and `str.is_digit` landed after the `940c524` revision
-the page used to be pinned to, and `std/encoding` is new, and the script's own
-`ORDER` list has to carry `encoding` before it writes that section. The script
-prints the MkDocs layout (an H1 title, `docs/`-relative links, no front matter),
-so the front matter and the absolute links on this page are the hand-kept part.
+Names have landed in batches since the last full pass: `fmt.commas_u64`,
+`fmt.commas_i64` and `fmt.human_size` (`kelp` `a75deb6`), then `fs.cwd`,
+`fs.is_symlink`, `fs.read_link` and `path.absolute`, then `io.IoErr` and
+`io.errno_text` with `fs.try_read`, `fs.try_read_text` and `fs.try_open`, and
+finally `str.less`, `str.is_digit` and the whole `std/encoding` module. The
+`std/atomic` names below (`Atomic<T>` and `Ordering`, MK9-S3-M1 stage A1) were
+added by hand at `kelp` `724cb67` and the `std/thread` name below (`fence`,
+stage A2 of the same milestone) at `kelp` `eb836da`, for the same reason the
+rest of the page is hand-kept: the generator is not in the tree, so a new module
+has to be written into the page by hand rather than re-derived. The last batch is
+`std/ws`, the WebSocket client, at `kelp` `0d2c527`, with `encoding.sha1` beside
+it. The batch after it is the fallible dial at `kelp` `93d050f`:
+`net.try_connect` with `ConnectErr`, and `ws.try_connect` with `WsErr` beside the
+three helpers that keep the panicking `connect` wrappers honest (`handshake`,
+`refusal_text`, `fail_connect`).
 
 `std/rt` has no section: it ships inside the binary but is the compiler's own
 runtime module rather than part of the stdlib surface. `impl "std/rt"` resolves
@@ -189,6 +195,9 @@ Functions:
 - `fun is_unreserved(c: u8).R: bool`
 - `fun percent_encode(text: &str).R: String`
 - `fun percent_decode(text: &str).R: result.Result<String, DecodeErr>`
+- `fun rotl32(x: u32, n: u32).R: u32`
+- `fun sha1(data: &Bytes).R: Bytes`
+- `fun push_u32_be(out: mut Bytes, v: u32)`
 - `fun form_encode(text: &str).R: String`
 - `fun form_decode(text: &str).R: result.Result<String, DecodeErr>`
 
@@ -300,10 +309,12 @@ Types:
 
 - `datac Socket(val fd: i32)`
 - `datac Listener(val fd: i32)`
+- `datac ConnectErr(val reason: String)`
 
 Functions:
 
 - `fun connect(host: &str, port: u16).R: Socket`
+- `fun try_connect(host: &str, port: u16).R: result.Result<Socket, ConnectErr>`
 - `fun listen(port: u16).R: Listener`
 - `fun accept(l: Listener).R: Socket`
 - `fun close(s: Socket)`
@@ -445,9 +456,9 @@ Functions:
 
 - `fun is_some<T>(o: &Option<T>).R: bool`
 - `fun is_none<T>(o: &Option<T>).R: bool`
-- `fun unwrap_or<T>(o: &Option<T>, fallback: T).R: T`
-- `fun unwrap<T>(o: &Option<T>).R: T`
-- `fun expect<T>(o: &Option<T>, message: &str).R: T`
+- `fun unwrap_or<T>(o: move Option<T>, fallback: move T).R: T`
+- `fun unwrap<T>(o: move Option<T>).R: T`
+- `fun expect<T>(o: move Option<T>, message: &str).R: T`
 - `fun map<T, U>(o: &Option<T>, f: closure(&T).R: U).R: Option<U>`
 - `fun and_then<T, U>(o: &Option<T>, f: closure(&T).R: Option<U>).R: Option<U>`
 - `fun or_else<T>(o: &Option<T>, f: closure().R: Option<T>).R: Option<T>`
@@ -468,11 +479,136 @@ Functions:
 - `fun unwrap_err<T, E>(r: &Result<T, E>).R: E`
 - `fun expect<T, E>(r: &Result<T, E>, message: &str).R: T`
 - `fun expect_err<T, E>(r: &Result<T, E>, message: &str).R: E`
-- `fun map<T, U, E>(r: &Result<T, E>, f: closure(&T).R: U).R: Result<U, E>`
-- `fun map_err<T, E, F>(r: &Result<T, E>, f: closure(&E).R: F).R: Result<T, F>`
+- `fun map<T, U, E>(r: move Result<T, E>, f: closure(&T).R: U).R: Result<U, E>`
+- `fun map_err<T, E, F>(r: move Result<T, E>, f: closure(&E).R: F).R: Result<T, F>`
 - `fun and_then<T, U, E>(r: &Result<T, E>, f: closure(&T).R: Result<U, E>).R: Result<U, E>`
 - `fun or_else<T, E, F>(r: &Result<T, E>, f: closure(&E).R: Result<T, F>).R: Result<T, F>`
 - `fun each<T, E>(r: &Result<T, E>, f: closure(&T))`
+
+## `std/atomic`
+
+Types:
+
+- `enum Ordering { SeqCst }`
+
+Functions (the `Atomic<T>` methods are compiler builtins rather than
+declarations in `std/atomic.kp`; the module declares the `Ordering` type they
+take):
+
+- `fun Atomic<T>.new(value: T).R: Atomic<T>`
+- `fun Atomic<T>.load(order: Ordering).R: T`
+- `fun Atomic<T>.store(value: T, order: Ordering)`
+- `fun Atomic<T>.swap(value: T, order: Ordering).R: T`
+- `fun Atomic<T>.compare_exchange(current: T, new: T, order: Ordering).R: result.Result<T, T>`
+- `fun Atomic<T>.fetch_add(value: T, order: Ordering).R: T`
+- `fun Atomic<T>.fetch_sub(value: T, order: Ordering).R: T`
+- `fun Atomic<T>.fetch_and(value: T, order: Ordering).R: T`
+- `fun Atomic<T>.fetch_or(value: T, order: Ordering).R: T`
+- `fun Atomic<T>.fetch_xor(value: T, order: Ordering).R: T`
+
+The element set is `bool` and the integer types, spelled with the names
+`AtomicBool`, `AtomicU8`, `AtomicU16`, `AtomicU32`, `AtomicU64`, `AtomicUsize`,
+`AtomicI32`, `AtomicI64` and `AtomicIsize`; there is no `AtomicI8`/`AtomicI16`.
+The `fetch_*` set exists on the integer instantiations only, never on
+`AtomicBool`.
+
+## `std/thread`
+
+Types:
+
+- `datac ThreadErr(val message: String)`
+
+Functions (all three are compiler builtins rather than declarations in
+`std/thread.kp`; the module's only `.kp` declaration is `ThreadErr`, and the
+`Ordering` the fence takes is `std/atomic`'s type):
+
+- `fun spawn(entry, arg: move A).R: Thread<T>`
+- `fun join(handle: move Thread<T>).R: result.Result<T, ThreadErr>`
+- `fun fence(order: Ordering)`
+
+`spawn` and `join` are not in the builtin signature table: what crosses the
+thread boundary decides their types, so the checker builds the signature at the
+call site. `entry` is a declared `fun`, a `fun` literal or a capturing closure
+taking one parameter; `arg` is moved into the worker; and `T` is `entry`'s
+return type. `join` consumes the handle, so a handle is joined once, and hands
+back `Ok` with the worker's value or `Err` with a `ThreadErr`, whose `message`
+is the panic text. The whole surface is on [`std/thread`](/stdlib/thread).
+
+## `std/ws`
+
+Holds `net` for the socket and `rand` for the sixteen bytes of
+`Sec-WebSocket-Key` and the masking key of every frame, so an import delegates
+both: `impl "std/ws" caps(net = ["host:port"], rand = [])`. The `net` half of
+the check is the host-and-port check `net.connect` gives, against the host as
+written, before name resolution. `ws.try_connect` is the fallible connect beside
+the panicking `ws.connect`: a refused dial comes back as `WsErr.Dial` and an
+answer that is not `101` as `WsErr.Handshake`, while a head that is not HTTP and a
+peer that closes mid-handshake still panic, because neither has a status to
+report.
+
+Types:
+
+- `datac Url(val scheme: String, val host: String, val port: u16, val path: String)`
+- `datac Header(val name: String, val value: String)`
+- `datac Frame(val fin: bool, val opcode: u8, val data: Bytes)`
+- `datac Conn(val fd: i32, var buf: Bytes, var start: usize, var frag_opcode: u8, var frag_data: Bytes)`
+- `enum WsErr { Dial(val reason: String), Handshake(val status: i32, val reason: String) }`
+- `enum Msg { Text(val text: String), Binary(val data: Bytes), Ping(val data: Bytes), Pong(val data: Bytes), Close(val code: u16, val reason: String) }`
+
+Constants:
+
+- `const DEFAULT_PORT: u16 = 80`
+- `const DEFAULT_SCHEME: str = "ws"`
+- `const WS_GUID: str = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"`
+- `const MAX_FRAME: usize = 1048576`
+- `const MAX_HEAD: usize = 8192`
+- `const OP_CONTINUATION: u8 = 0`
+- `const OP_TEXT: u8 = 1`
+- `const OP_BINARY: u8 = 2`
+- `const OP_CLOSE: u8 = 8`
+- `const OP_PING: u8 = 9`
+- `const OP_PONG: u8 = 10`
+- `const CLOSE_NO_STATUS: u16 = 1005`
+
+Functions:
+
+- `fun parse_url(s: &str).R: Url`
+- `fun split_authority(rest: &str).R: Url`
+- `fun make_url(authority: String, path: &str).R: Url`
+- `fun parse_port(text: &str).R: u16`
+- `fun accept_for(key: &str).R: String`
+- `fun with_number(prefix: &str, n: u64, suffix: &str).R: String`
+- `fun build_head(host: &str, port: u16, path: &str, key: &str).R: String`
+- `fun find_head_end(b: Bytes).R: usize`
+- `fun head_text(b: Bytes, end: usize).R: String`
+- `fun name_eq(a: &str, b: &str).R: bool`
+- `fun split_head_headers(head: &str).R: List<Header>`
+- `fun header_value(hs: List<Header>, name: &str).R: String`
+- `fun parse_status(head: &str).R: i32`
+- `fun status_code(text: &str).R: i32`
+- `fun try_connect(host: &str, port: u16, path: &str).R: result.Result<Conn, WsErr>`
+- `fun handshake(s: net.Socket, host: &str, port: u16, path: &str, key_text: &str, expected: &str).R: result.Result<Conn, WsErr>`
+- `fun refusal_text(e: move WsErr).R: String`
+- `fun fail_connect(e: move WsErr).R: Conn`
+- `fun connect(host: &str, port: u16, path: &str).R: Conn`
+- `fun Conn.send_frame(opcode: u8, data: &Bytes)`
+- `fun Conn.send_text(text: &str)`
+- `fun Conn.send_binary(data: &Bytes)`
+- `fun Conn.ping(data: &Bytes)`
+- `fun Conn.pong(data: &Bytes)`
+- `fun sendable_close_code(code: u16).R: bool`
+- `fun Conn.close(code: u16, reason: &str)`
+- `fun mut Conn.read_head().R: String`
+- `fun mut Conn.read_exact(n: usize).R: Bytes`
+- `fun mut Conn.read_frame().R: Frame`
+- `fun data_msg(opcode: u8, data: move Bytes).R: Msg`
+- `fun close_msg(data: Bytes).R: Msg`
+- `fun mut Conn.recv().R: Msg`
+
+`recv` is the message layer: it assembles a text or binary message across as
+many continuation frames as the peer sends and returns one `Msg`, and it returns
+a `Ping`, a `Pong` or a `Close` rather than answering one. `read_frame` is the
+layer under it. The whole surface is on [`std/ws`](/stdlib/ws).
 
 ## Modules at a glance
 
@@ -483,18 +619,21 @@ Functions:
 | `std/path` | 12 | 0 | — |
 | `std/math` | 29 | 3 | — |
 | `std/fmt` | 10 | 0 | — |
-| `std/encoding` | 23 | 4 | — |
+| `std/encoding` | 26 | 4 | - |
 | `std/io` | 27 | 3 | — |
 | `std/fs` | 30 | 1 | fs |
 | `std/process` | 14 | 3 | process |
-| `std/net` | 17 | 2 | net |
+| `std/net` | 18 | 3 | net |
 | `std/http` | 54 | 13 | — |
+| `std/ws` | 32 | 18 | net, rand |
 | `std/time` | 3 | 0 | time |
 | `std/rand` | 3 | 0 | rand |
 | `std/env` | 4 | 0 | env |
 | `std/list` | 6 | 0 | — |
 | `std/option` | 9 | 1 | — |
 | `std/result` | 12 | 1 | — |
+| `std/atomic` | 10 | 1 | - |
+| `std/thread` | 3 | 1 | - |
 
 ## Not part of the stdlib surface
 

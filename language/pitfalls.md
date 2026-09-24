@@ -12,8 +12,13 @@ the fix. Source: [`syntax.md` §18 and §22](https://homelabone.xenoo.dev/gittea
 | Message | What happened | Fix |
 | --- | --- | --- |
 | `use of moved value 'a'` | an owned value was assigned, returned or passed with `move` | borrow instead (a plain parameter borrows), make a second owned copy, or reorder so the last use is last |
+| `use of moved value 'bag.xs'` | a field that was moved out by value was read again | bind the field once and use the binding, or take the whole value as a `move T` parameter |
 | `cannot move out of a borrow` | a `move` parameter was handed a value that belongs to the caller | take a `move T` parameter yourself, or borrow |
-| `cannot read the owned field 'name' by value: v1 has no partial moves` | reading an owned field out of a borrowed struct | pass a borrow, call a method on it, or hold it in a `Box` and `take()` |
+| `cannot move the field 'xs' out of 'b': the value is borrowed, so it is not this frame's to give away` | an owned field was read by value out of a borrowed struct | pass a borrow, call a method on it, or take the value as a `move T` parameter and read the field from that local |
+| `cannot read the owned field 'xs' by value: the base is not a local this frame owns, so a partial move cannot take the field out; use it through a borrow (pass it to a parameter, call a method on it) or hold it in a 'Box' and 'take()' it` | reading an owned field out of a temporary or a field chain | bind the owner to a local first, then read the field from that local |
+| `cannot use 'bag' as a whole value: its field 'xs' was moved out` | using or borrowing the binding as a whole after one of its fields was moved out | use the fields that stayed, or assign a fresh value into the moved field on a `var` local |
+| `use of moved value 'h.text'` | that `enum` payload was read by value already | a payload of an owned place is taken once, exactly as a field is: match the payloads that stayed, or match a borrow of the enum |
+| `cannot use 'h' as a whole value: its payload 'text' was moved out` | using the enum as a whole after one of its payloads was moved out | match only the payloads that stayed, or match a borrow of the enum instead |
 | `this call returns a borrow of its parameter 'self', so that argument has to be a variable or a field` | a method that returns a borrow of its receiver was called on a temporary | bind the receiver first: `val u = set.union(a, b)` then `u.len()`; a field of a returned `datac` (`mkName().name.as_str()`) is the same case one projection deeper |
 | `this is a borrow of a borrow` (with the operand named) | `&o` where `o` is already a borrow, which a parameter always is | pass the parameter itself: `o`, not `&o` |
 | `cannot borrow a temporary value` | `&expr` needs a place, and a call's result is not one, nor is a field of one | bind the call to a `val` and borrow the field of that: `val h = mk()` then `&h.name` |
@@ -51,9 +56,24 @@ the fix. Source: [`syntax.md` §18 and §22](https://homelabone.xenoo.dev/gittea
 | Symptom | Fix |
 | --- | --- |
 | `List.empty()` / `Map.new()` has no element type | nothing said what is inside and nothing decided it: write it on the binding (`var xs: List<i32> = List.empty()`), or `push`/`insert`/`set` a value, which decides the element |
-| a nested container is refused | wrap the inner one in a one-field `datac` or a `Box` |
-| `Map` key type refused | keys are `String`, an integer or `bool`, and only those |
+| a `Map` value or an array element is a container | a `List` element and a `Box` element may be a `List` or a `Box`, but a `Map` value and an array element may not be a container at all; wrap the inner one in a one-field `datac` |
+| `Map` key type refused | a key is keyable when the compiler can derive its hash and its equality: `String`, an integer, `bool`, `char`, or a `datac`/`enum`/tuple whose fields, variant payloads or positions are all keyable, and a `datac`/`enum` outside that set becomes a key by declaring `hash` and `eq`. The message names the field that is not, or the half of the pair that is missing |
 | `for` cannot `push` to what it walks | the loop borrows its iterable; iterate over a copy or index the source |
+
+## Tuples
+
+| Message | What happened | Fix |
+| --- | --- | --- |
+| `this pattern has 3 position(s), and the tuple it destructures ('(i32, i32)') has 2` | the pattern writes a different number of positions than the tuple has elements | write one binding per element, and `_` for a position you do not need |
+| `a destructuring binding takes no written type: ...` | `val (a, b): (i32, i32) = ...` wrote one type for several positions | bind the whole value first (`val p: (i32, i32) = ...`), then `val (a, b) = p` |
+| `a destructuring binding takes one tuple value apart, and this initializer is a 'i32'` | the initializer is not a tuple | bind a single value with an ordinary `val name = ...` |
+| `use of moved value 'p'` | the initializer was already taken apart by an earlier destructuring | bind the value once, and name every position you need in that one statement |
+| `cannot read element 1 of the tuple out of a borrow by value: ...` | an owned position was read out of a borrow | read a `Copy` position, use the tuple through a borrow, or take it with `move` |
+| `element 1 of the tuple is a borrowed type ('str')` | a tuple stores its elements by value, exactly as a `datac` field does | store an owned `String` |
+| `element 2 of the tuple is 'unit'` | `unit` is the absent value and cannot be stored | produce a value, or leave the position out |
+| `'Later' is declared after this type` | a tuple element is a by-value field, so it may only name a type declared earlier | declare the element type first, or hold it behind a `Box` or a `List` |
+| `cannot pass a value of type '(i32, i32)' to 'print'` | a tuple is a record, and `print` takes a scalar, a `str` or a `String` | print each position |
+| `'()' is not a type` / `'()' is not a value` | a tuple has two or more elements, and the absent value's type is `unit` | write `unit`, or two or more elements |
 
 ## Arrays and constants
 
@@ -80,6 +100,10 @@ the fix. Source: [`syntax.md` §18 and §22](https://homelabone.xenoo.dev/gittea
 | Message | Fix |
 | --- | --- |
 | `cannot find module` / a name resolves nowhere | `impl` the file, and note that paths are relative to the project's `src/` |
+| `'lib.hidden' is private: 'hidden' is declared in module 'lib' without 'pub' ...` | the item exists but another module cannot reach it; add `pub` to its declaration, or call it from inside its own module. A name that does not exist at all gets `module 'lib' has no item 'hidden'` instead, and a "did you mean" hint never offers a private item |
+| `'pub' applies to a top-level 'fun', 'extern fun', 'datac', 'enum' or 'const', found ...` | `pub` goes in front of one of those declarations and nowhere else |
+| `pub` is refused on a `pd` or on a method | a passdown is module-scoped by design, and a method's reachability follows its declaring type: mark the type `pub` instead |
+| `'lib.make' is exported but its signature names 'lib.Hidden', which module 'lib' does not export ...` | the declaration is reachable from another module, so every type its signature names has to be reachable too; add `pub` to the type, or make the declaration private. It covers a `pub fun`'s parameters and return, a method inside a `pub datac` or `pub enum`, a `pub extern fun`, a `pub datac`'s fields and a `pub enum`'s variant payloads, and the type arguments of a container, an array, a borrow or a function type |
 | a gated call is refused and names a domain | write the grant on the `impl` line: `caps(fs = ["/srv/data/**"])` |
 | `... needs the 'fs' capability, which module 'x' was not granted` and `x` is not the module you wrote the call in | the module that holds nothing is the middle one; the message names the `impl` line that imported it without a `caps(...)` clause, and that line is the one to change |
 | a path with `..` or a relative path is refused | `fs`/`process` patterns match absolute, normalized paths |
@@ -90,10 +114,10 @@ the fix. Source: [`syntax.md` §18 and §22](https://homelabone.xenoo.dev/gittea
 
 | Symptom | Reality |
 | --- | --- |
-| `option.unwrap` on an `Option<String>` will not type-check | the combinators are `Copy`-only; use `if let`/`when`, or `Box.take` |
+| `option.or_else` / `result.unwrap` on an owned payload will not type-check | the helpers whose receiver stays a borrow are `Copy`-only; `option.unwrap`, `option.unwrap_or`, `option.expect`, `result.map` and `result.map_err` take their receiver with `move`, and `if let`/`when` over an owned place binds the payload by value |
 | `?` refuses to propagate a different error type | v1 has no error conversion; `result.map_err` is the bridge |
 | two `fun pick(...)` overloads collide | a user module cannot overload; spell the type into the name |
-| an `enum` cannot have a method | v1 has no enum methods; write a free function |
+| `Shape.Empty.label()` is refused | a receiver that builds a variant names a type; bind it first (`val s = Shape.Empty`, then `s.label()`) |
 
 ## The one behaviour that is not a warning
 

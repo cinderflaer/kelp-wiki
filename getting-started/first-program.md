@@ -114,8 +114,9 @@ fun main() {
 }
 ```
 
-A `Copy` payload binds as a copy (`r` is an `f64`), an owned payload binds as a
-borrow. Matching must be exhaustive.
+A `Copy` payload binds as a copy (`r` is an `f64`). Here `s` is a borrow, so an
+owned payload would bind as a shared borrow; over an owned local it binds by value
+and moves out. Matching must be exhaustive.
 
 ## Collections and loops
 

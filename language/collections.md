@@ -8,8 +8,11 @@ Source section:
 [`syntax.md` §12](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
 
 Three containers are compiler builtins: `List<T>`, `Map<K, V>` and `Box<T>`. They
-are owned values with the same move and drop rules as everything else, and their
-elements are stored **inline**, which is why they cannot nest directly.
+are owned values with the same move and drop rules as everything else, and each
+one owns its elements. The element sets are not the same: a `List` element and a
+`Box` element may themselves be a `List` or a `Box`, while a `Map` value is
+narrower, and every container refuses a borrow, a view, an atomic, a function
+value and `Unit` as an element.
 
 A fourth type is not a container at all in that sense: `[T; N]`, a fixed-size
 array whose length is part of its type. It allocates nothing, so it is what a
@@ -63,10 +66,11 @@ Out-of-range indices and popping an empty list panic.
 clonable.
 
 A **`datac`/`enum` element gets a derived deep copy and a derived order from its
-fields.** It is clonable (so `clone` and `slice` work) when every field it holds
-is, and sortable when every field has an order. The order is field by field in
-declaration order, a `String`/`Bytes` byte-wise, an `enum` by tag and then by the
-live variant's payload:
+fields**, and a tuple element takes the same two position by position. It is
+clonable (so `clone` and `slice` work) when every field it holds is, and sortable
+when every field has an order. The order is field by field in declaration order,
+a `String`/`Bytes` byte-wise, an `enum` by tag and then by the live variant's
+payload:
 
 ```kelp
 datac Digest(val path: String, val size: u64)
@@ -79,26 +83,31 @@ xs.sort()                 // by path, then by size
 
 A `List`, `Box`, `Map` or owned-array field has neither, so a record holding one
 is refused for both, and the diagnostic says which. `contains` still needs
-equality, which a `datac` does not have, and `Map`'s `get_or`/`values` are still
-scalar-only.
+equality, which a `datac` does not have: a keyable `datac`'s derived equality is
+`Map`'s own, used to find a key, and it is not a `==` a program can write.
+`Map`'s `get_or` and `values` take the same clonable value set the `List`
+operations take, so a map of records copies its value out.
 
 Scalars sort too, and so do `f32`/`f64`: a float list with a `nan` in it has no
 meaningful order, which is why [`stats`](/libraries/stats) and
 [`benchkit`](/libraries/benchkit) carry their own sorts for data that may
 contain one.
 
-### Restriction: no nested containers
+### Restriction: the element set
 
-The element type may be a scalar, `String`, `Bytes` or a `datac`. It may **not**
-be a borrow, a `str`, `Unit`, a `List` or a `Map`. A nested container is wrapped
-in a one-field `datac`:
+The element type may be a scalar, `String`, `Bytes`, a `datac`/`enum`, a tuple,
+another `List`, or a `Box`. It may **not** be a `Map`, a borrow, a `str`, a
+`View`, an atomic, a function value or `Unit`. A list of lists needs no wrapper:
 
 ```kelp
-datac Row(val cells: List<String>)          // what csv uses for a row
-val rows: List<Row> = List.empty()
+val rows: List<List<String>> = List.empty()
 ```
 
-`Box<T>` is the other way out, for a *recursive* type:
+A one-field `datac` is still how a library gives the inner list a name, as
+`csv.Row`, `listx.Chunk` and `table.Row` do; it is a naming choice, not a
+requirement of the language.
+
+`Box<T>` is the owning pointer for a *recursive* type:
 
 ```kelp
 datac Node(val value: i32, val next: Box<Node>)
@@ -125,14 +134,16 @@ print(runs.get(key = 7))
 - Entries keep **insertion order**, which is why `keys()` and `values()` are lists
   and not hash order.
 - **`Map<V>` written with one argument means `Map<String, V>`.**
-- **A key must be `String`, an integer, or `bool`.** The compiler generates the
-  key's hash and equality from `K`, so the set is closed: a float is refused
-  (`nan != nan` would make an inserted key unfindable) and a `datac`, container or
-  borrow is refused (v1 has no equality for them).
+- **A key must be keyable.** The compiler derives the key's hash and equality from `K`, so the derived set is `String`, an integer, `bool`, `char`, or a `datac`/`enum`/tuple whose every field, variant payload or position is itself keyable. A `datac` or `enum` the derivation refuses becomes a key by declaring both `fun T.hash().R: u64` and `fun T.eq(other: &T).R: bool`, which the map calls instead of a derived pair and never alongside one; both halves are required, the two signatures are fixed (a shared receiver, no type parameters, `eq` taking one `&T`), and a half or a signature the map cannot call is refused where it is declared. The key is still cloned into the entry, so the type has to be deep-copyable as well. A float is refused (`nan != nan` would make an inserted key unfindable), and a `Bytes`, container, view, borrow or `datac`/`enum` with a field outside those sets is refused with a message that names the field (or names the half of the pair that is missing). A tuple declares no method, so it is a key by derivation or not at all.
+- **A value is narrower than a list element.** The value set is a scalar,
+  `String`, `Bytes`, a `datac`/`enum` or a tuple, so `Map<String, List<i32>>` and
+  `Map<String, Box<i32>>` are refused; a value that holds a list wraps it in a
+  one-field `datac`.
 - `Map<K, V>` is neither a list element nor a map value, so
   `Map<String, Map<i32>>` is impossible.
 - A `String`-keyed map takes its key as a bare `str` in every method (the map
-  copies it in), while other key types take the key by value. That split is why
+  copies it in), a scalar key is passed by value, and a user key type is passed by
+  shared borrow. That split is why
   [`set`](/libraries/set) ships two types instead of one generic set.
 
 | Method | Returns |
@@ -144,7 +155,7 @@ print(runs.get(key = 7))
 | `get_or(key, fallback)` | the value or the fallback |
 | `has(key)` | `bool` |
 | `remove(key)` | the value, moved out; **panics** when the key is absent |
-| `keys()` / `values()` | `List<String>` / `List<V>`, insertion order |
+| `keys()` / `values()` | `List<K>` / `List<V>`, insertion order |
 | `clear()` | `Unit` |
 
 ## `Box<T>`
@@ -206,8 +217,8 @@ print(grid.get(i = 2).get(i = 1))
 - The length is a **compile-time constant**: a literal, another `const`, or an
   expression over them ([Constants](/language/passdowns) has the rules). A `val`
   computed at runtime is refused.
-- The element may be a scalar, `String`, `Bytes`, a `datac`, an `enum`, or
-  another array. It may not be a borrow or a `List`/`Map`/`Box`.
+- The element may be a scalar, `String`, `Bytes`, a `datac`, an `enum`, a tuple,
+  or another array. It may not be a borrow or a `List`/`Map`/`Box`.
 - The array is `Copy` when the element is. `[i32; 3]` is a value you can assign
   freely; `[String; 3]` owns its three strings, so assigning it moves it, and
   `set` frees the element it replaces.

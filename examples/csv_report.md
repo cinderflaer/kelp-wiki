@@ -82,8 +82,8 @@ fun main() {
     val text = "region,units\nnorth,12\nsouth,7\nnorth,5\n"
     val parsed = csv.parse(text)
     if let Ok(rows) = parsed {
-        // No owned local in this arm. A `&`-expression on a temporary is
-        // refused, but a parameter borrows one for free.
+        // An `&`-expression on a temporary is refused, but a parameter borrows
+        // one for free, so the map needs no binding of its own.
         render(totals_by_region(rows))
     }
 }

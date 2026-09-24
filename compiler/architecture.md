@@ -53,8 +53,8 @@ expression precedence. Three constructs do not survive parsing as themselves:
   implement.
 - A `when` whose scrutinee is not a place is desugared in `infer.rs`
   (`check_when_scrutinee`, under `WHEN_TEMP_PREFIX`) into the same block a
-  hand-written `val h = ...` would give, because the arms borrow a payload and
-  the borrow has to outlive them. Both desugarings stage the *root* of a field
+  hand-written `val h = ...` would give, because the arms have to read a payload
+  out of a place that outlives them. Both desugarings stage the *root* of a field
   chain (`ast::temporary_root`), so the whole temporary is freed once.
 
 `pretty.rs` is an AST printer and is dead code: a formatter cannot be built on
@@ -73,8 +73,17 @@ Multi-file loading and name resolution:
   written `caps(...)` on its own.
 - Paths are relative to `src/`, may not contain `..`, and may not reach outside the
   project.
-- Names are strictly module-qualified: module `m`'s items are reachable elsewhere
-  only as `m.Item`, and bare inside `m` itself.
+- Names are module-qualified across modules: module `m`'s items are reachable
+  elsewhere only as `m.Item` and only when `m` exports them with `pub`, and bare
+  inside `m` itself whether or not they are `pub` (syntax.md 13.4). The gate is
+  decided in `infer.rs` from a key set of exported items built once per program;
+  a compiler-shipped `std/...` module exports everything, transitionally.
+- The same export set backs the **private-in-public** rule (`check_pub_signatures`):
+  an exported declaration's signature may name only types its own module exports,
+  walked through containers, arrays, borrows, generic arguments and function
+  types. It runs once over the merged program before any body is checked, so the
+  order of two declarations in one file does not change the answer, and a private
+  declaration is never inspected.
 - **Capability gating happens here.** Each module has a capability-domain set
   computed from its incoming `caps(...)` grant; resolving `net.connect` in a
   module whose set lacks `net` is an undefined-name error, not a runtime check that
@@ -92,8 +101,9 @@ The largest pass (~7.6k lines). It owns:
 - **stdlib-only argument-type overloading** for `math.abs`/`min`/`max`/`clamp`;
 - resolving `datac`-typed parameters into `Ty::Ref` and synthesizing the borrow
   node at call sites: callers never write `&`;
-- the `when`/`if let` pattern rules, including that a payload binds as a copy when
-  it is `Copy` and as a shared borrow otherwise;
+- the `when`/`if let` pattern rules, including how a payload binds: a copy when
+  it is `Copy`, by value when it is owned and the scrutinee is an owned place,
+  and a shared borrow otherwise;
 - rejecting an `extern` that has no compiler-supplied body;
 - **compile-time evaluation** (A-19), which runs here rather than as a pass of its
   own: a `const` initializer and an array's `[T; N]` length are folded by a small
@@ -111,7 +121,7 @@ Two milestones in one pass, over the typed IR:
 
 | Rule | Detail |
 | --- | --- |
-| Moves | scalars and `&str` are `Copy`; a `datac` is not, so a bare identifier read moves it, while a `.field` read goes through the place chain without consuming anything |
+| Moves | scalars and `&str` are `Copy`; a `datac` is not, so a bare identifier read moves it, while a `.field` read through a borrow consumes nothing. A read by value directly off an owned local is a **partial move**: the field or `enum` payload moves out and its slot is cleared, so the local keeps the projections that stayed |
 | Borrows | a `datac` parameter is a shared borrow unless `mut`-marked; a borrow lives to the end of its scope, with a statement-sized exception for a borrow taken inside an initializer |
 | Drops | the pass produces a **drop plan** keyed by span, which the code generators consult: no second walk, and no lockstep between two passes |
 

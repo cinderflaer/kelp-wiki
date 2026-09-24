@@ -113,6 +113,9 @@ fun main() {
 
 - A passdown is module-scoped. Every function in the module may name it, and no
   other module can.
+- A `pd` never takes `pub`: `pub pd val x = 1` is refused where it is written,
+  because a passdown is module-scoped by design. A `fun` that reads the passdown
+  is what another module uses, and that function can be `pub`.
 - A local `val` or `var` of the same name shadows it inside that scope.
 - There is no spelling for reaching another module's passdown. A library therefore
   cannot tally into its caller's state: that is why [`testkit`](/libraries/testkit)

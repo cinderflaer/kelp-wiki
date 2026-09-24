@@ -25,10 +25,10 @@ datac Row(val cells: List<String>)
 datac Table(val headers: List<String>, var rows: List<Row>)
 ```
 
-Rows are `List<Row>` rather than `List<List<String>>` because a `List` cannot
-hold another `List` directly: no inline C representation for a nested container
-([syntax.md](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md) §12.1). Each row's cells are wrapped in a one-field `Row` `datac`,
-the same fix `listx`'s `Chunk<T>` uses.
+Rows are `List<Row>` rather than `List<List<String>>`: each row is a named
+one-field `datac`, which is what lets `add_row`, `column_widths` and `render`
+speak about a row. `List<List<String>>` is legal; the wrapper is the shape this
+library ships. The same fix `listx`'s `Chunk<T>` uses.
 
 ## Functions
 
