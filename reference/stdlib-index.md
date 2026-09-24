@@ -21,7 +21,10 @@ stage A2 of the same milestone) at `kelp` `eb836da`, for the same reason the
 rest of the page is hand-kept: the generator is not in the tree, so a new module
 has to be written into the page by hand rather than re-derived. The last batch is
 `std/ws`, the WebSocket client, at `kelp` `0d2c527`, with `encoding.sha1` beside
-it.
+it. The batch after it is the fallible dial at `kelp` `93d050f`:
+`net.try_connect` with `ConnectErr`, and `ws.try_connect` with `WsErr` beside the
+three helpers that keep the panicking `connect` wrappers honest (`handshake`,
+`refusal_text`, `fail_connect`).
 
 `std/rt` has no section: it ships inside the binary but is the compiler's own
 runtime module rather than part of the stdlib surface. `impl "std/rt"` resolves
@@ -306,10 +309,12 @@ Types:
 
 - `datac Socket(val fd: i32)`
 - `datac Listener(val fd: i32)`
+- `datac ConnectErr(val reason: String)`
 
 Functions:
 
 - `fun connect(host: &str, port: u16).R: Socket`
+- `fun try_connect(host: &str, port: u16).R: result.Result<Socket, ConnectErr>`
 - `fun listen(port: u16).R: Listener`
 - `fun accept(l: Listener).R: Socket`
 - `fun close(s: Socket)`
@@ -535,7 +540,11 @@ Holds `net` for the socket and `rand` for the sixteen bytes of
 `Sec-WebSocket-Key` and the masking key of every frame, so an import delegates
 both: `impl "std/ws" caps(net = ["host:port"], rand = [])`. The `net` half of
 the check is the host-and-port check `net.connect` gives, against the host as
-written, before name resolution.
+written, before name resolution. `ws.try_connect` is the fallible connect beside
+the panicking `ws.connect`: a refused dial comes back as `WsErr.Dial` and an
+answer that is not `101` as `WsErr.Handshake`, while a head that is not HTTP and a
+peer that closes mid-handshake still panic, because neither has a status to
+report.
 
 Types:
 
@@ -543,6 +552,7 @@ Types:
 - `datac Header(val name: String, val value: String)`
 - `datac Frame(val fin: bool, val opcode: u8, val data: Bytes)`
 - `datac Conn(val fd: i32, var buf: Bytes, var start: usize, var frag_opcode: u8, var frag_data: Bytes)`
+- `enum WsErr { Dial(val reason: String), Handshake(val status: i32, val reason: String) }`
 - `enum Msg { Text(val text: String), Binary(val data: Bytes), Ping(val data: Bytes), Pong(val data: Bytes), Close(val code: u16, val reason: String) }`
 
 Constants:
@@ -576,6 +586,10 @@ Functions:
 - `fun header_value(hs: List<Header>, name: &str).R: String`
 - `fun parse_status(head: &str).R: i32`
 - `fun status_code(text: &str).R: i32`
+- `fun try_connect(host: &str, port: u16, path: &str).R: result.Result<Conn, WsErr>`
+- `fun handshake(s: net.Socket, host: &str, port: u16, path: &str, key_text: &str, expected: &str).R: result.Result<Conn, WsErr>`
+- `fun refusal_text(e: move WsErr).R: String`
+- `fun fail_connect(e: move WsErr).R: Conn`
 - `fun connect(host: &str, port: u16, path: &str).R: Conn`
 - `fun Conn.send_frame(opcode: u8, data: &Bytes)`
 - `fun Conn.send_text(text: &str)`
@@ -609,9 +623,9 @@ layer under it. The whole surface is on [`std/ws`](/stdlib/ws).
 | `std/io` | 27 | 3 | — |
 | `std/fs` | 30 | 1 | fs |
 | `std/process` | 14 | 3 | process |
-| `std/net` | 17 | 2 | net |
+| `std/net` | 18 | 3 | net |
 | `std/http` | 54 | 13 | — |
-| `std/ws` | 28 | 17 | net, rand |
+| `std/ws` | 32 | 18 | net, rand |
 | `std/time` | 3 | 0 | time |
 | `std/rand` | 3 | 0 | rand |
 | `std/env` | 4 | 0 | env |
