@@ -43,13 +43,13 @@ discord = "Juniper/fpl/discord"
 ```
 
 ```kelp
-impl "deps/discord/lib" caps(net = ["*"], rand = [], time = [])
+impl "deps/discord/lib" caps(*)
 ```
 
-`caps(*)` is the short spelling of that clause: it grants the import every
-domain this module's own lines declare, which are `net`, `rand` and `time`. The
-explicit line above is what builds against a `kelpc` that does not accept
-`caps(*)` yet, and the two say the same thing.
+`caps(*)` is that clause in one line: it delegates the whole resource of every
+domain the importing module holds. A program's entry module holds all six, so it
+is the line to write here. The spelled-out form names the three domains one by
+one, `caps(net = ["*"], rand = [], time = [])`, and says the same thing.
 
 **A narrower grant cannot import this library.** Delegation may be smaller than
 what the caller holds, never larger, so `caps(net = ["discord.com:443"])` on this

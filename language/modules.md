@@ -12,6 +12,7 @@ A module **is** a file. `impl` names it, and optionally grants it authority.
 ```kelp
 impl "std/fs"                                        // the standard library
 impl "std/net" caps(net = ["api.example.com:443"])
+impl "deps/discord/lib" caps(*)                      // the whole set, one clause
 impl "shapes/circle"                                 // a file in this project
 impl "deps/json/lib"                                 // a dependency
 ```
