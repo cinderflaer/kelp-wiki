@@ -1,6 +1,6 @@
 ---
 title: "Set up your editor"
-description: "Lighthouse is the language server, and the compiler is the authority behind it - diagnostics come from a real kelpc run on open and on save. This page covers the IntelliJ setup, kelpc fmt, and what to do with no editor at all."
+description: "Lighthouse is the language server, and the compiler is the authority behind it - diagnostics come from a real kelpc run on open, on save and a moment after a change. This page covers the IntelliJ setup, kelpc fmt, and what to do with no editor at all."
 isPublished: true
 tags: "getting-started, tooling"
 ---
@@ -15,7 +15,7 @@ trust a squiggle:
 
 | Feature | Where the answer comes from |
 | --- | --- |
-| Diagnostics | `kelpc`, run on open and on save |
+| Diagnostics | `kelpc`, run on open, on save and once a change has settled |
 | Completion, hover, go-to-definition, symbols, rename, inlay hints | an index the server builds by reading the project's `.kp` files |
 
 `kelpc` is the authority on what compiles, and the index has no type checker. The
@@ -29,27 +29,36 @@ see and accept.
 | Piece | What it is |
 | --- | --- |
 | `server/` | the `lighthouse` binary: an LSP server over stdio, with no command-line flags |
-| `intellij/` | an IntelliJ plugin: `.kp` file type, the server, a Kelp project entry, a Coral run configuration |
+| `intellij/` | an IntelliJ plugin: `.kp` file type, the server's features through LSP4IJ, a Kelp project entry, a Coral run configuration for every Coral command |
 
 The server is a plain LSP server, so any editor whose LSP client can start it can
 drive it. The IntelliJ plugin is the client this project ships, and it is the
-only one. It is unpublished, so it is installed from a local build. See
+only one. It is not on the JetBrains Marketplace, so it is installed from a local
+build or from its own update feed. See
 [Lighthouse](/tooling/lighthouse) for what it contributes in full.
 
 ## IntelliJ
 
-**The plugin requires IntelliJ IDEA Ultimate.** It uses the LSP client API, which
-is not in Community builds.
+**The plugin needs LSP4IJ, and any IntelliJ flavour will do.** The LSP client is
+[LSP4IJ](https://plugins.jetbrains.com/plugin/23257-lsp4ij)
+(`com.redhat.devtools.lsp4ij`), Red Hat's free LSP client, which you install from
+the JetBrains Marketplace; it is not JetBrains' own LSP client, which is
+Ultimate-only. With LSP4IJ installed the server's features work in Community and
+Android Studio too. LSP4IJ needs IntelliJ Platform build `242` (2024.2) or later,
+and that is also the plugin's `sinceBuild`. LSP4IJ is optional: without it the
+plugin still loads and keeps its own pieces (the file type, the lexer, syntax
+highlighting, brace matching, the Coral run configurations, New Project and the
+settings page), and only the LSP features are absent.
 
 ```sh
 git clone https://homelabone.xenoo.dev/gittea/Juniper/lighthouse
 cd lighthouse/intellij
-./gradlew buildPlugin
+gradle buildPlugin
 ```
 
-Install the zip from **Settings ▸ Plugins ▸ ⚙ ▸ Install Plugin from Disk…**, or
-add the self-hosted update site once under **Settings ▸ Plugins ▸ ⚙ ▸ Manage
-Plugin Repositories**:
+Install the plugin's zip from **Settings ▸ Plugins ▸ ⚙ ▸ Install Plugin from
+Disk…**, or add the self-hosted update site once under **Settings ▸ Plugins ▸ ⚙ ▸
+Manage Plugin Repositories**:
 
 ```text
 https://homelabone.xenoo.dev/gittea/Juniper/lighthouse/raw/branch/main/intellij/updatePlugins.xml
@@ -58,10 +67,15 @@ https://homelabone.xenoo.dev/gittea/Juniper/lighthouse/raw/branch/main/intellij/
 Everything `lighthouse` offers arrives over LSP, so a feature the server gains
 needs no plugin update to appear in the editor. Beyond that, the plugin adds
 **File ▸ New ▸ Project ▸ Kelp**, which scaffolds a project with `coral init`, and
-a Coral run configuration with a gutter run icon on `fun main()`.
+a Coral run configuration for every Coral command, with a gutter run icon on
+`fun main()`.
 **Settings ▸ Languages & Frameworks ▸ Kelp** shows the project's `[toolchain]` pin
 and can install that compiler version in the background, so the IDE uses the
 compiler the project names.
+
+Diagnostics run on open, on save and once a change has settled, but `kelpc` reads
+the file on disk: a check after a change reports the last saved text, so save to
+bring the squiggles and the buffer back into step.
 
 ## Formatting
 
