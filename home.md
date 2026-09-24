@@ -62,7 +62,7 @@ by the first few lines of a file instead of by auditing it.
 
     [Libraries (fpl)](/libraries) is the first-party library catalogue:
     JSON, CSV, TOML, base64, dates, sets, bit packing, big integers, decimals,
-    HTTP helpers and more.
+    HTTP helpers, Discord bots and more.
 
 -   **Release history**
 

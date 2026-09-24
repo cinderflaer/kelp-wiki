@@ -1,11 +1,11 @@
 ---
 title: "Libraries (fpl)"
-description: "fpl is the first-party Kelp library catalogue - one folder per library in a single repository, twenty-seven of them at the time of writing."
+description: "fpl is the first-party Kelp library catalogue - one folder per library in a single repository, twenty-eight of them at the time of writing."
 isPublished: true
 tags: "library"
 ---
 `fpl` is the first-party Kelp library catalogue: one folder per library in a
-single repository, twenty-seven of them at the time of writing.
+single repository, twenty-eight of them at the time of writing.
 
 Unlike the standard library, which is compiled into `kelpc` and imported as
 `std/…`, every fpl library is a **dependency you fetch**: a folder from a git
@@ -64,6 +64,7 @@ impl "deps/lineproto/lib" caps(net = ["127.0.0.1:*"])
 | `log`, `benchkit` | `time` |
 | `term` | `env` (`NO_COLOR`) |
 | `lineproto` | `net` |
+| `discord` | `net`, `rand` and `time` |
 | everything else | nothing |
 
 ## Reading a library page
@@ -76,7 +77,7 @@ example whose output was checked against `kelpc`, and what it deliberately does
 
 ## Pages
 
-- [Catalogue](/libraries/catalogue): all twenty-seven, grouped by what they do
+- [Catalogue](/libraries/catalogue): all twenty-eight, grouped by what they do
 - [Writing a library](/libraries/writing-a-library): what a library has to be
 
 ## See also
