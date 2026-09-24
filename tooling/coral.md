@@ -93,6 +93,7 @@ commands:
 | `coral clean` | remove `build/` |
 | `coral fmt [paths...] [-w\|--check]` | format the project's sources, or one named file; `--check` exits nonzero on a file that is not already formatted |
 | `coral lint [paths...]` | print the compiler's lint warnings (a comment run, the `else if` link, the project's naming case); always exits zero |
+| `coral test [name-filter] [--json] [--valgrind]` | build and run every fixture under `tests/`, compare stdout, and check the fixtures marked as refused |
 | `coral toolchain kelp|coral ...` | list, installed, install, use, pin |
 | `coral version` / `coral --version` | print the release this binary was built from, as `coral 26.09.1`, padded the way the tag spells it |
 
@@ -106,6 +107,28 @@ path named they walk the project's own sources: `.kp` files under `src/` and
 `tests/`, skipping `src/deps` and `build/` so a fetched dependency is never
 rewritten. `coral bench` and `coral publish` are still
 unknown commands today, which is the "not here yet" list further down.
+
+A project's tests are fixtures under `tests/`, one `.kp` file each, with the
+expected outcome beside it:
+
+| File | What it says |
+| --- | --- |
+| `tests/<name>.kp` | the fixture itself |
+| `tests/<name>.expected` | the exact stdout the program must print |
+| `tests/<name>.exit` | the expected exit code, `0` when absent |
+| `tests/<name>.refused` | the fixture must fail to compile; no `.expected` beside it |
+| `tests/<name>.error` | the text the refusal message must contain |
+| `tests/<name>.flags` | extra flags for the `kelpc build` of that fixture |
+
+Each fixture is built and run in a staged project under `build/test/<name>/`
+whose `src/` mirrors the project's own, since the compiler refuses a `.kp` file
+that sits under a project but outside `src/` and the layout is not advisory. A
+fixture can therefore import the project's own modules; one that tests only the
+language stays self-contained, which is the common case. The staging tree stays
+where it is, so `coral clean` removes it and a failing run leaves what you read to
+find out why. `coral test --json` prints one machine-readable document instead of
+a line per fixture, and `--valgrind` runs each accepted fixture under valgrind,
+failing on a leak or a memory error.
 
 ## `coral docs`
 
@@ -582,9 +605,9 @@ pin rebuilds rather than replaying a cached artifact.
 
 ## What is not here yet
 
-Workspaces, `coral test`, `coral bench`, and publishing. `coral bench` and
-`coral publish` answer `unknown command`, which was checked; workspaces are
-absent from the command list rather than refused by name.
+Workspaces, `coral bench`, and publishing. `coral bench` and `coral publish`
+answer `unknown command`, which was checked; workspaces are absent from the command
+list rather than refused by name.
 
 `coral docs` reads text and nothing else, so it resolves no name: a
 `[docs(fun: nosuch)]` head is listed as written, and nothing reports that no such
