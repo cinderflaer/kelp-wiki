@@ -1,6 +1,6 @@
 ---
 title: "Runtime"
-description: "Most of what a program needs at run time is emitted by the code generator rather than linked - the Bytes/String heap routines, bounds checks, drop calls and the capability plumbing are C text held once in kelpc/runtime/kelp_rt.c, which codegen_c.rs emits into the generated program and the llvm backend links as a compiled object."
+description: "Most of what a program needs at run time is emitted by the code generator, not linked: the heap routines, bounds checks, drop calls and capability plumbing are C text in `kelpc/runtime/kelp_rt.c`."
 isPublished: true
 tags: "compiler"
 ---

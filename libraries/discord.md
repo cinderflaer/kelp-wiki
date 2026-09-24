@@ -1,6 +1,6 @@
 ---
 title: "`discord`: bots and webhooks over `std/http` and `std/ws`"
-description: "A Discord library with two halves and one file. The easy path is a bot or a webhook that works: a Bot value, payload builders that emit JSON, a gateway loop that identifies, heartbeats, resumes and reconnects, and webhook posting by URL or by token. The raw path is everything the easy path uses, exported: every opcode, close code, intent and component type as a named constant, the payload accessors, the REST request builders, the Session state machine on its own, and JsonObject for a field this library does not model."
+description: "A Discord library for bots and webhooks: payload builders that emit JSON, a gateway loop that identifies, heartbeats and resumes, webhooks by URL, and every opcode, close code and intent the raw path needs."
 isPublished: true
 tags: "library, networking"
 ---
