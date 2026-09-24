@@ -91,13 +91,21 @@ commands:
 | `coral task` | list the `[tasks]` entries |
 | `coral task <name>` | build and run one task |
 | `coral clean` | remove `build/` |
+| `coral fmt [paths...] [-w\|--check]` | format the project's sources, or one named file; `--check` exits nonzero on a file that is not already formatted |
+| `coral lint [paths...]` | print the compiler's lint warnings (a comment run, the `else if` link, the project's naming case); always exits zero |
 | `coral toolchain kelp|coral ...` | list, installed, install, use, pin |
 | `coral version` / `coral --version` | print the release this binary was built from, as `coral 26.09.1`, padded the way the tag spells it |
 
 `coral version` and `coral --version` are the same command, and neither reads a
-project: both answer outside a project too. `coral fmt`,
-`coral lint`, `coral bench` and `coral publish` are also unknown commands today,
-which is the "not here yet" list further down.
+project: both answer outside a project too.
+
+`coral fmt` and `coral lint` forward to `kelpc fmt` and `kelpc lint` rather than
+reimplementing either, so the style rules, the messages and the exit codes are
+the compiler's, and `coral.toml`'s `naming_case` needs no second reader. With no
+path named they walk the project's own sources: `.kp` files under `src/` and
+`tests/`, skipping `src/deps` and `build/` so a fetched dependency is never
+rewritten. `coral bench` and `coral publish` are still
+unknown commands today, which is the "not here yet" list further down.
 
 ## `coral docs`
 
@@ -574,9 +582,9 @@ pin rebuilds rather than replaying a cached artifact.
 
 ## What is not here yet
 
-Workspaces, `coral fmt`, `coral lint`, `coral bench`, and publishing. The last four
-answer `unknown command`, which was checked; workspaces and publishing are absent
-from the command list rather than refused by name.
+Workspaces, `coral test`, `coral bench`, and publishing. `coral bench` and
+`coral publish` answer `unknown command`, which was checked; workspaces are
+absent from the command list rather than refused by name.
 
 `coral docs` reads text and nothing else, so it resolves no name: a
 `[docs(fun: nosuch)]` head is listed as written, and nothing reports that no such
