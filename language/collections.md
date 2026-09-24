@@ -83,9 +83,9 @@ xs.sort()                 // by path, then by size
 A `List`, `Box`, `Map` or owned-array field has neither, so a record holding one
 is refused for both, and the diagnostic says which. `contains` still needs
 equality, which a `datac` does not have: a keyable `datac`'s derived equality is
-`Map`'s own, used to find a key, and it is not a `==` a program can write. `Map`'s
-`get_or`/`values` are still
-scalar-only.
+`Map`'s own, used to find a key, and it is not a `==` a program can write.
+`Map`'s `get_or` and `values` take the same clonable value set the `List`
+operations take, so a map of records copies its value out.
 
 Scalars sort too, and so do `f32`/`f64`: a float list with a `nan` in it has no
 meaningful order, which is why [`stats`](/libraries/stats) and
