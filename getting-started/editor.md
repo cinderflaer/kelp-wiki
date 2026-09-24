@@ -1,6 +1,6 @@
 ---
 title: "Set up your editor"
-description: "Lighthouse is the language server, and the compiler is the authority behind it - diagnostics come from a real kelpc run on open and on save. This page covers the VS Code and IntelliJ setups, kelpc fmt, and what to do with no editor at all."
+description: "Lighthouse is the language server, and the compiler is the authority behind it - diagnostics come from a real kelpc run on open and on save. This page covers the IntelliJ setup, kelpc fmt, and what to do with no editor at all."
 isPublished: true
 tags: "getting-started, tooling"
 ---
@@ -29,50 +29,12 @@ see and accept.
 | Piece | What it is |
 | --- | --- |
 | `server/` | the `lighthouse` binary: an LSP server over stdio, with no command-line flags |
-| `vscode/` | a VS Code extension: highlighting, the server, Coral commands as tasks, a run button |
 | `intellij/` | an IntelliJ plugin: `.kp` file type, the server, a Kelp project entry, a Coral run configuration |
 
-Both extensions are unpublished, so both are installed from a local build. See
-[Lighthouse](/tooling/lighthouse) for what each one contributes in full.
-
-## VS Code
-
-```sh
-git clone https://homelabone.xenoo.dev/gittea/Juniper/lighthouse
-cd lighthouse/server && cargo build --release -p lighthouse
-cd ../vscode
-npm install
-npx @vscode/vsce package
-code --install-extension kelp-lighthouse-0.2.0.vsix
-```
-
-The extension needs two things on `PATH`, or two settings that point at them:
-
-| Setting | What it points at |
-| --- | --- |
-| `kelp.lighthousePath` | the server binary, falling back to `$LIGHTHOUSE` and then `PATH` |
-| `kelp.kelpcPath` | the compiler, passed to the server as `$KELPC`, falling back to `PATH` |
-
-Both settings exist for a build you did not install anywhere. Pointing
-`kelp.kelpcPath` at `kelp/target/release/kelpc` from a checkout is the normal way
-to work on the compiler and use the language at the same time.
-
-What you get, in the order you will meet it:
-
-- diagnostics on open and on save, with the quick fix for a misspelled bare-call
-  name (`println` completes to `print`);
-- completion everywhere, including inside `impl "` for a module path;
-- accepting a completion for an unimported name writes the `impl` line for you;
-- hover, go-to-definition into project files and into the standard library,
-  signature help, outline, find references, rename, folding, inlay hints;
-- **Organize Imports** from the command palette, which sorts, de-duplicates and
-  drops unused `impl` lines.
-
-The extension also adds `Kelp: Coral: Build`, `Kelp: Coral: Run`,
-`Kelp: Coral: Check` and `Kelp: Coral: Clean` as commands and as VS Code tasks, so
-**Terminal ▸ Run Build Task** (`Ctrl+Shift+B`) offers `coral build` and parses its
-output into the Problems panel. The ▶ button in the editor title bar runs the
-current file.
+The server is a plain LSP server, so any editor whose LSP client can start it can
+drive it. The IntelliJ plugin is the client this project ships, and it is the
+only one. It is unpublished, so it is installed from a local build. See
+[Lighthouse](/tooling/lighthouse) for what it contributes in full.
 
 ## IntelliJ
 
@@ -93,11 +55,13 @@ Plugin Repositories**:
 https://homelabone.xenoo.dev/gittea/Juniper/lighthouse/raw/branch/main/intellij/updatePlugins.xml
 ```
 
-Beyond the server's features, the plugin adds **File ▸ New ▸ Project ▸ Kelp**,
-which scaffolds a project with `coral init`, and a Coral run configuration with a
-gutter run icon on `fun main()`. **Settings ▸ Languages & Frameworks ▸ Kelp** shows
-the project's `[toolchain]` pin and can install that compiler version in the
-background, so the IDE uses the compiler the project names.
+Everything `lighthouse` offers arrives over LSP, so a feature the server gains
+needs no plugin update to appear in the editor. Beyond that, the plugin adds
+**File ▸ New ▸ Project ▸ Kelp**, which scaffolds a project with `coral init`, and
+a Coral run configuration with a gutter run icon on `fun main()`.
+**Settings ▸ Languages & Frameworks ▸ Kelp** shows the project's `[toolchain]` pin
+and can install that compiler version in the background, so the IDE uses the
+compiler the project names.
 
 ## Formatting
 

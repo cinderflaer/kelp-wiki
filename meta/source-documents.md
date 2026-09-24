@@ -27,7 +27,7 @@ page here and its source disagree, the source is right and the page is a bug.
 | Repository | Role | Authority |
 | --- | --- | --- |
 | [`coral`](https://homelabone.xenoo.dev/gittea/Juniper/coral) | the build tool and package manager: manifest, tasks, build cache, dependencies | its `README.md` is the source for [Coral](/tooling/coral) |
-| [`lighthouse`](https://homelabone.xenoo.dev/gittea/Juniper/lighthouse) | IDE support: the LSP server, the VS Code extension, the IntelliJ plugin | its `README.md` is the source for [Lighthouse](/tooling/lighthouse) |
+| [`lighthouse`](https://homelabone.xenoo.dev/gittea/Juniper/lighthouse) | IDE support: the LSP server, the IntelliJ plugin | its `README.md` is the source for [Lighthouse](/tooling/lighthouse) |
 | [`fpl`](https://homelabone.xenoo.dev/gittea/Juniper/fpl) | the first-party library catalogue, one folder per library | each library's `lib.kp`, and its page in the [Libraries chapter](/libraries) |
 | [`kelp-wiki`](https://homelabone.xenoo.dev/gittea/Juniper/kelp-wiki) | this wiki's sources | this repository: one file per page, and the file path is the page path |
 

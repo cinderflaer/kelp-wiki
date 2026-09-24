@@ -12,7 +12,7 @@ anything itself.
 | --- | --- | --- |
 | `kelpc` | lexing, preprocessing, parsing, type inference, move and borrow checking, code generation | [Juniper/kelp](https://homelabone.xenoo.dev/gittea/Juniper/kelp) |
 | Coral | the project: manifest, tasks, build cache, dependencies, toolchains | [Juniper/coral](https://homelabone.xenoo.dev/gittea/Juniper/coral) |
-| Lighthouse | editor support: a language server plus a VS Code extension and an IntelliJ plugin | [Juniper/lighthouse](https://homelabone.xenoo.dev/gittea/Juniper/lighthouse) |
+| Lighthouse | editor support: a language server and an IntelliJ plugin | [Juniper/lighthouse](https://homelabone.xenoo.dev/gittea/Juniper/lighthouse) |
 
 The versions these pages were written against, as observed on the machine that
 built them, are `kelpc 26.09.0` and Coral `v26.09.0`. They are not part of the
@@ -71,7 +71,7 @@ one of the three that runs while you type.
   model, what a sync installs and fetches, the toolchain store, environment
   variables, and a transcript of a real session.
 - [Lighthouse](/tooling/lighthouse): the two sources of truth, the feature table, editor
-  setup for both integrations, the standard-library snapshot, the tests, and the
+  setup for the IntelliJ plugin, the standard-library snapshot, the tests, and the
   deliberate gaps.
 - [Coral changelog](/tooling/coral-changelog) and
   [Lighthouse changelog](/tooling/lighthouse-changelog): every tag in each repository, and

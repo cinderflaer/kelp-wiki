@@ -13,7 +13,7 @@ Four repositories, one language. Nothing here is a monorepo, and each project's
 | --- | --- |
 | [`kelp`](https://homelabone.xenoo.dev/gittea/Juniper/kelp) | `kelpc/src` (the compiler), `kelpc/std` (the standard library, in Kelp), `kelpc/runtime` (the reviewed C), `kelpc/tests` (fixtures and gates), `examples/`, `bench/speed/`, `plan/` (the design) |
 | [`coral`](https://homelabone.xenoo.dev/gittea/Juniper/coral) | the build tool and package manager |
-| [`lighthouse`](https://homelabone.xenoo.dev/gittea/Juniper/lighthouse) | `server/` (the LSP server), `vscode/`, `intellij/` |
+| [`lighthouse`](https://homelabone.xenoo.dev/gittea/Juniper/lighthouse) | `server/` (the LSP server), `intellij/` |
 | [`fpl`](https://homelabone.xenoo.dev/gittea/Juniper/fpl) | one folder per first-party library |
 | [`kelp-wiki`](https://homelabone.xenoo.dev/gittea/Juniper/kelp-wiki) | this documentation site |
 
@@ -80,9 +80,8 @@ the scheme is `26.09.0` in each repository, and it applies to all of them
   strings are compared as text (Coral refuses a release asset whose name spells a
   different version), so the padding has to be the same everywhere.
 - **Cargo and npm refuse a leading zero** in a version component, so a
-  `Cargo.toml` and the VS Code `package.json` carry `26.9.0` while everything a
-  person reads is padded back to `26.09.0`. Gradle takes the padded name as
-  written.
+  `Cargo.toml` carries `26.9.0` while everything a person reads is padded back to
+  `26.09.0`. Gradle takes the padded name as written.
 - **Nothing released before the scheme is renumbered.** A tag, its asset and its
   changelog entry keep the number they were cut with.
 - The release that first carries the scheme says so in one line of its changelog

@@ -10,7 +10,7 @@ than a reference: eight pages, each one a step you can run.
 1. **[Install and build](/getting-started/install)**: build `kelpc`, run a file, pick an
    optimization level, and what the toolchain needs from the machine.
 2. **[Set up your editor](/getting-started/editor)**: Lighthouse as a language server,
-   `kelpc fmt`, the VS Code and IntelliJ setups, and what to do with no editor at all.
+   `kelpc fmt`, the IntelliJ setup, and what to do with no editor at all.
 3. **[Your first program](/getting-started/first-program)**: a guided tour of Kelp's shape in
    one file, with output, and the Coral commands that build and run it.
 4. **[A first real tool](/getting-started/first-tool)**: a `head` you can use, written line

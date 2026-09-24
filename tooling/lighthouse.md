@@ -1,23 +1,24 @@
 ---
 title: "Lighthouse"
-description: "Lighthouse is the editor support for Kelp - a language server, plus the VS Code and IntelliJ integrations that talk to it. This page follows Lighthouse's README, which is the authority, and it..."
+description: "Lighthouse is the editor support for Kelp - a language server, plus the IntelliJ plugin that talks to it. This page follows Lighthouse's README, which is the authority, and it..."
 isPublished: true
 tags: "tooling"
 ---
-Lighthouse is the editor support for Kelp: a language server, plus the VS Code and
-IntelliJ integrations that talk to it. This page follows
+Lighthouse is the editor support for Kelp: a language server, plus the IntelliJ
+plugin that talks to it. This page follows
 [Lighthouse's README](https://homelabone.xenoo.dev/gittea/Juniper/lighthouse/src/branch/main/README.md),
 which is the authority, and it says where a claim comes from a run instead.
 
 | Piece | What it is |
 | --- | --- |
 | `server/` | the `lighthouse` language server: a Rust binary with no external crates, the same constraint `kelpc` and Coral hold themselves to |
-| `vscode/` | a VS Code extension: syntax highlighting, `lighthouse` wired up as the language client, Coral commands as VS Code tasks, and a run button |
 | `intellij/` | an IntelliJ plugin: `.kp` file type, everything the server offers, a Kelp project entry, a Coral run configuration, a gutter run icon on `fun main()`, and the project's compiler version in Settings |
 
 The server has no command-line flags: it reads no arguments in `server/src/main.rs`
 and speaks LSP over stdio, which is why the editor launches it and nothing else
-does. Running `lighthouse --help` prints nothing at all.
+does. Running `lighthouse --help` prints nothing at all. It is a plain LSP
+server, so any editor whose LSP client can start it can drive it; the IntelliJ
+plugin is the client this repository ships, and it is the only one.
 
 ## Two sources of truth
 
@@ -92,37 +93,6 @@ Go-to-definition into the standard library writes the sources to
 `~/.cache/lighthouse/stdlib/` on first use, because the server cannot point into a
 compiler binary.
 
-## Editor setup: VS Code
-
-```sh
-cd lighthouse/vscode
-npm install
-code --install-extension kelp-lighthouse-0.2.0.vsix
-```
-
-The extension activates `onLanguage:kelp` and needs, from the README:
-
-- `kelpc` and `coral` on `PATH`, or `kelp.kelpcPath` set;
-- `lighthouse` on `PATH`, or `$LIGHTHOUSE`, or `kelp.lighthousePath` set.
-
-Both settings exist for a development build that is not installed anywhere:
-
-| Setting | What it points at |
-| --- | --- |
-| `kelp.lighthousePath` | the server binary, falling back to `$LIGHTHOUSE` and then `PATH` |
-| `kelp.kelpcPath` | the compiler, passed to the server as `$KELPC`, falling back to `PATH` |
-
-What the extension contributes, from `vscode/package.json`:
-
-| Kind | Entries |
-| --- | --- |
-| Commands | `Coral: Build`, `Coral: Run`, `Coral: Check`, `Coral: Clean`, `Run File` |
-| Task type | `coral`, so the Coral commands appear as VS Code tasks and as a Run Build Task entry |
-| Editor affordance | a run button in the editor title bar for the current file |
-
-The extension is not on the Marketplace; it is installed from a `.vsix` built
-locally.
-
 ## Editor setup: IntelliJ
 
 **The plugin requires IntelliJ IDEA Ultimate.** The LSP client API is not in
@@ -193,11 +163,10 @@ not end the session.
   the call site spells the argument types, and a receiver reached through a chain
   of calls usually cannot be typed at all. The compiler holds the answer and does
   not share it.
-- **No semantic tokens.** Highlighting is the TextMate grammar in `vscode/` and the
-  hand-written lexer in `intellij/`; `kelpc`'s own lexer is the only authoritative
-  one, and nothing calls it.
-- **Neither extension is published to a marketplace.** VS Code installs from a
-  `.vsix` and IntelliJ from the self-hosted update site above.
+- **No semantic tokens.** Highlighting is the hand-written lexer in `intellij/`;
+  `kelpc`'s own lexer is the only authoritative one, and nothing calls it.
+- **The plugin is not published to the Marketplace.** It installs from the
+  self-hosted update site above.
 
 The README also lists "Formatting. No `kelpc fmt` exists to call" as missing, which
 is now half stale: `kelpc fmt` shipped, with `-w` and `--check` (see
