@@ -110,7 +110,7 @@ a bare number:
 ### The smallest bot
 
 ```kelp
-impl "deps/discord/lib" caps(net = ["*"], rand = [], time = [])
+impl "deps/discord/lib" caps(*)
 
 fun on_command(i: &discord.Interaction, bot: &discord.Bot) {
     val reply = discord.reply(discord.message_text("pong"))
@@ -153,7 +153,7 @@ set back to a no-op as easily as it was set.
 ### The smallest webhook post
 
 ```kelp
-impl "deps/discord/lib" caps(net = ["*"], rand = [], time = [])
+impl "deps/discord/lib" caps(*)
 
 fun main() {
     val hook = discord.webhook_default("WEBHOOK_ID", "WEBHOOK_TOKEN")
@@ -197,7 +197,7 @@ send. The same bot, driven by hand:
 ```kelp
 impl "std/ws"
 impl "std/time"
-impl "deps/discord/lib" caps(net = ["*"], rand = [], time = [])
+impl "deps/discord/lib" caps(*)
 
 fun main() {
     var bot = discord.bot_with_intents("TOKEN", discord.intents_all())
