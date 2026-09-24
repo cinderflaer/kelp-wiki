@@ -28,12 +28,57 @@ matches the release.
 
 | Release | Date | Headline |
 | --- | --- | --- |
+| [IntelliJ 26.09.2](#intellij-plugin-26092-2026-09-24) | 2026-09-24 | LSP4IJ, so Community works; the tooling knows the language; VS Code dropped |
+| [Language server 26.09.2](#language-server-26092-no-release) | 2026-09-24 | the vendored stdlib resync and the index; carried by the plugin release |
 | [Language server 26.09.1](#language-server-26091-no-release) | 2026-09-21 | the vendored stdlib resync, and `std/encoding`; no plugin release |
 | [IntelliJ 26.09.0](#intellij-plugin-26090-2026-09-20) | 2026-09-20 | the `YY.MM.N` scheme, for all three pieces |
 | [IntelliJ 0.2.1](#intellij-plugin-021-2026-09-19) | 2026-09-19 | the whole IDE arrives over LSP; `closure` and `'x'` in the highlighter |
 | [IntelliJ 0.2.0](#intellij-plugin-020-2026-09-19) | 2026-09-19 | the project's kelp version, from the project |
 | [IntelliJ 0.1.1](#intellij-plugin-011-2026-09-19) | 2026-09-19 | the auto-update feed, and the New Project entry |
 | [Lighthouse v1 (0.1.0)](#lighthouse-v1-no-release) | 2026-09-19 | first version: LSP diagnostics, VS Code extension, IntelliJ plugin |
+
+## IntelliJ plugin 26.09.2 (2026-09-24)
+
+[Release](https://homelabone.xenoo.dev/gittea/Juniper/lighthouse/releases/tag/intellij-v26.09.2)
+
+- The asset is `lighthouse-intellij-26.09.2.zip`, and `updatePlugins.xml` points
+  at it, so the self-hosted update feed offers it.
+- **The plugin reaches the free editions.** It talks to `lighthouse` through
+  LSP4IJ, Red Hat's free LSP client, instead of JetBrains' own LSP API, which is
+  an extension of the commercial IDEs only. LSP4IJ is an optional dependency:
+  with it installed the server's features (completion, hover, navigation,
+  diagnostics, inlay hints, quick fixes, folding, signature help, structure view)
+  work in Community and Android Studio as well as the commercial flavours;
+  without it the plugin still loads and keeps its lexer, highlighter, brace
+  matcher, Coral run configurations, New Project wizard and settings page. The
+  build targets Community again rather than Ultimate.
+- **The tooling knows the language**: `pub` on a top-level item, tuple
+  destructuring, `std/atomic`, `std/thread` and `std/ws` vendored and indexed,
+  the compiler's own `fence`/`spawn`/`join`, `encoding.sha1`, `View`, `Atomic`
+  and `Thread`, both capability clause forms, block comments masked, and checks
+  on a debounced change as well as on open and save, with the caveat that `kelpc`
+  reads the file on disk, so a check after a change reports the last saved text.
+- **The VS Code extension is dropped**, and IntelliJ is the only client. The
+  language server stays a plain LSP server that any client can drive.
+
+## Language server 26.09.2 (no release)
+
+No tag and no release: only the IntelliJ plugin has those, and the plugin's
+release above carries this server. This entry records the server version move,
+the way the rule at the top of this page says.
+
+- The vendored standard library snapshot is resynced, and `std/atomic`,
+  `std/thread` and `std/ws` are vendored now. It is kept in step with the
+  compiler by `server/tools/sync-stdlib.sh`, with drift tests, so it cannot
+  silently fall behind again.
+- The index reads `pub`, binds the tuple destructuring form, masks block
+  comments (a documented `fun` line in a module's header was being indexed as a
+  declaration that shadowed the real one), and offers the new keywords and type
+  spellings.
+- Diagnostics still come from `kelpc check --json`, now also a debounced moment
+  after a document changes.
+
+The server reports `26.09.2` in `serverInfo`.
 
 ## Language server 26.09.1 (no release)
 

@@ -27,6 +27,7 @@ spellings have to be the same one.
 
 | Version | Date | Headline |
 | --- | --- | --- |
+| [v26.09.2](#v26092-2026-09-24) | 2026-09-24 | `coral version`, `coral fmt`/`lint`, `coral test` |
 | [v26.09.1](#v26091-2026-09-21) | 2026-09-21 | the `coral docs` family: `get`, `list`, `search` |
 | [v26.09.0](#v26090-2026-09-20) | 2026-09-20 | the `YY.MM.N` scheme; `naming_case` and `http_pool`; an asset named for another version is refused |
 | [v0.5.4](#v054-2026-09-19) | 2026-09-19 | a dependency can name one folder inside a repo |
@@ -39,6 +40,33 @@ spellings have to be the same one.
 | [v0.2.1](#v021-2026-09-19) | 2026-09-19 | `find_kelpc` checks `~/.coral/bin/kelpc` before `PATH` |
 | [v0.2.0](#v020-2026-09-19) | 2026-09-19 | toolchain management: install and switch a kelp and a coral |
 | [v0.1.0](#v010-2026-09-19) | 2026-09-19 | Coral v1: init, build, run, check, clean, tasks, cache, deps |
+
+## v26.09.2 (2026-09-24)
+
+[Release](https://homelabone.xenoo.dev/gittea/Juniper/coral/releases/tag/v26.09.2)
+
+- The asset is `coral-26.09.2-linux-x86_64` beside the `v26.09.2` tag.
+- **`coral version`** (and `coral --version`) prints the release the binary was
+  built from, `coral 26.09.2`, padded the way the tag and the asset spell it.
+  Before this, both spellings were accepted as flags and then fell through to the
+  manifest lookup, so an installed binary answered `error: no coral.toml in this
+  directory or any parent` instead of naming itself.
+- **`coral fmt` and `coral lint`** forward to the compiler's own formatter and
+  linter. With no path named, both read the project's own sources (`.kp` files
+  under `src/` and `tests/`, skipping `src/deps` and `build/` so a fetched
+  dependency is never rewritten). `coral fmt --check` writes nothing and exits
+  nonzero on a file that is not formatted; `coral lint` exits zero on a warning,
+  and sends no setting of its own because `kelpc lint` already reads
+  `coral.toml`'s `naming_case`.
+- **`coral test`** runs a project's `tests/` fixtures: `<name>.expected` for the
+  exact stdout, an optional `<name>.exit` for the exit code, a `.refused` marker
+  for a fixture that must be refused (with `<name>.error` naming the text the
+  message must contain), and an optional `.flags` line. Each fixture is built and
+  run in a staged project under `build/test/<name>/` whose `src/` mirrors the
+  project's own, because the compiler refuses a `.kp` file under a project but
+  outside `src/`, so a fixture can import the project's modules. `--json` prints
+  one document instead of one line per fixture, and `--valgrind` runs each
+  accepted fixture under valgrind.
 
 ## v26.09.1 (2026-09-21)
 
