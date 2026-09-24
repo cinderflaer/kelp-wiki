@@ -127,7 +127,7 @@ to be updated when it moves.
 | Functions | `fun`, named arguments, function values and closures, receiver methods, stdlib-only argument-type overloading |
 | Modules | `impl "std/fs"`, local-file imports, aliases, `pd` passdowns |
 | Capabilities | `fs`, `net`, `process`, `env`, `time`, `rand` |
-| Stdlib | `mem` `str` `path` `math` `fmt` `io` `fs` `process` `net` `http` `time` `rand` `env` `list` `option` `result` |
+| Stdlib | `mem` `str` `path` `math` `fmt` `io` `fs` `process` `net` `http` `ws` `time` `rand` `env` `list` `option` `result` |
 | Toolchain | `kelpc` (compiler), [Coral](/tooling) (build tool and package manager), [Lighthouse](/tooling) (editor support) |
 
 There is deliberately **no** `unsafe`, no exceptions, no undefined-behaviour

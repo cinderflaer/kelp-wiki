@@ -19,7 +19,9 @@ finally `str.less`, `str.is_digit` and the whole `std/encoding` module. The
 added by hand at `kelp` `724cb67` and the `std/thread` name below (`fence`,
 stage A2 of the same milestone) at `kelp` `eb836da`, for the same reason the
 rest of the page is hand-kept: the generator is not in the tree, so a new module
-has to be written into the page by hand rather than re-derived.
+has to be written into the page by hand rather than re-derived. The last batch is
+`std/ws`, the WebSocket client, at `kelp` `0d2c527`, with `encoding.sha1` beside
+it.
 
 `std/rt` has no section: it ships inside the binary but is the compiler's own
 runtime module rather than part of the stdlib surface. `impl "std/rt"` resolves
@@ -190,6 +192,9 @@ Functions:
 - `fun is_unreserved(c: u8).R: bool`
 - `fun percent_encode(text: &str).R: String`
 - `fun percent_decode(text: &str).R: result.Result<String, DecodeErr>`
+- `fun rotl32(x: u32, n: u32).R: u32`
+- `fun sha1(data: &Bytes).R: Bytes`
+- `fun push_u32_be(out: mut Bytes, v: u32)`
 - `fun form_encode(text: &str).R: String`
 - `fun form_decode(text: &str).R: result.Result<String, DecodeErr>`
 
@@ -524,6 +529,73 @@ return type. `join` consumes the handle, so a handle is joined once, and hands
 back `Ok` with the worker's value or `Err` with a `ThreadErr`, whose `message`
 is the panic text. The whole surface is on [`std/thread`](/stdlib/thread).
 
+## `std/ws`
+
+Holds `net` for the socket and `rand` for the sixteen bytes of
+`Sec-WebSocket-Key` and the masking key of every frame, so an import delegates
+both: `impl "std/ws" caps(net = ["host:port"], rand = [])`. The `net` half of
+the check is the host-and-port check `net.connect` gives, against the host as
+written, before name resolution.
+
+Types:
+
+- `datac Url(val scheme: String, val host: String, val port: u16, val path: String)`
+- `datac Header(val name: String, val value: String)`
+- `datac Frame(val fin: bool, val opcode: u8, val data: Bytes)`
+- `datac Conn(val fd: i32, var buf: Bytes, var start: usize, var frag_opcode: u8, var frag_data: Bytes)`
+- `enum Msg { Text(val text: String), Binary(val data: Bytes), Ping(val data: Bytes), Pong(val data: Bytes), Close(val code: u16, val reason: String) }`
+
+Constants:
+
+- `const DEFAULT_PORT: u16 = 80`
+- `const DEFAULT_SCHEME: str = "ws"`
+- `const WS_GUID: str = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"`
+- `const MAX_FRAME: usize = 1048576`
+- `const MAX_HEAD: usize = 8192`
+- `const OP_CONTINUATION: u8 = 0`
+- `const OP_TEXT: u8 = 1`
+- `const OP_BINARY: u8 = 2`
+- `const OP_CLOSE: u8 = 8`
+- `const OP_PING: u8 = 9`
+- `const OP_PONG: u8 = 10`
+- `const CLOSE_NO_STATUS: u16 = 1005`
+
+Functions:
+
+- `fun parse_url(s: &str).R: Url`
+- `fun split_authority(rest: &str).R: Url`
+- `fun make_url(authority: String, path: &str).R: Url`
+- `fun parse_port(text: &str).R: u16`
+- `fun accept_for(key: &str).R: String`
+- `fun with_number(prefix: &str, n: u64, suffix: &str).R: String`
+- `fun build_head(host: &str, port: u16, path: &str, key: &str).R: String`
+- `fun find_head_end(b: Bytes).R: usize`
+- `fun head_text(b: Bytes, end: usize).R: String`
+- `fun name_eq(a: &str, b: &str).R: bool`
+- `fun split_head_headers(head: &str).R: List<Header>`
+- `fun header_value(hs: List<Header>, name: &str).R: String`
+- `fun parse_status(head: &str).R: i32`
+- `fun status_code(text: &str).R: i32`
+- `fun connect(host: &str, port: u16, path: &str).R: Conn`
+- `fun Conn.send_frame(opcode: u8, data: &Bytes)`
+- `fun Conn.send_text(text: &str)`
+- `fun Conn.send_binary(data: &Bytes)`
+- `fun Conn.ping(data: &Bytes)`
+- `fun Conn.pong(data: &Bytes)`
+- `fun sendable_close_code(code: u16).R: bool`
+- `fun Conn.close(code: u16, reason: &str)`
+- `fun mut Conn.read_head().R: String`
+- `fun mut Conn.read_exact(n: usize).R: Bytes`
+- `fun mut Conn.read_frame().R: Frame`
+- `fun data_msg(opcode: u8, data: move Bytes).R: Msg`
+- `fun close_msg(data: Bytes).R: Msg`
+- `fun mut Conn.recv().R: Msg`
+
+`recv` is the message layer: it assembles a text or binary message across as
+many continuation frames as the peer sends and returns one `Msg`, and it returns
+a `Ping`, a `Pong` or a `Close` rather than answering one. `read_frame` is the
+layer under it. The whole surface is on [`std/ws`](/stdlib/ws).
+
 ## Modules at a glance
 
 | Module | Functions | Types/constants | Domain |
@@ -533,12 +605,13 @@ is the panic text. The whole surface is on [`std/thread`](/stdlib/thread).
 | `std/path` | 12 | 0 | — |
 | `std/math` | 29 | 3 | — |
 | `std/fmt` | 10 | 0 | — |
-| `std/encoding` | 23 | 4 | — |
+| `std/encoding` | 26 | 4 | - |
 | `std/io` | 27 | 3 | — |
 | `std/fs` | 30 | 1 | fs |
 | `std/process` | 14 | 3 | process |
 | `std/net` | 17 | 2 | net |
 | `std/http` | 54 | 13 | — |
+| `std/ws` | 28 | 17 | net, rand |
 | `std/time` | 3 | 0 | time |
 | `std/rand` | 3 | 0 | rand |
 | `std/env` | 4 | 0 | env |

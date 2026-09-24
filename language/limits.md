@@ -103,6 +103,31 @@ These are deliberate, and each one has a workaround in this documentation.
   inside the compiler, so the function has to terminate on the values the
   constant gives it.
 
+## Networking
+
+- **No TLS, so no `https` and no `wss`.** `http.parse_url` refuses `https` by name
+  and `ws.parse_url` refuses `wss` by name
+  (`ws.parse_url: 'wss' is not supported: v1 has no TLS, so only 'ws://' is
+  reachable`), rather than parsing the URL and failing later. The framing of a
+  WebSocket does not depend on the transport, which is why the client shipped
+  before TLS.
+- **`std/ws` is a client, not a server.** Deliberately absent: a WebSocket
+  server, extensions (`Sec-WebSocket-Extensions`, so `permessage-deflate` and the
+  `zlib-stream` transport a compressed gateway asks for), subprotocols
+  (`Sec-WebSocket-Protocol`), redirects, automatic reconnect, and waiting for the
+  peer's answering `Close` inside `close`. A caller that wants that answer reads
+  until it sees `Msg.Close` or end of file first, because waiting would block on
+  a peer that has already gone and v1 has no way to time that out.
+- **`ws.parse_url` splits the port at the first `:`**, so an IPv6 literal is not
+  expressible, the same rule `net`'s capability patterns follow.
+- A WebSocket frame above `MAX_FRAME` (1048576 bytes) is a protocol error rather
+  than an allocation of whatever the peer announced, and a response head above
+  `MAX_HEAD` (8192 bytes) is refused the same way.
+
+The two clients carry these limits by decision, not by accident: `std/http` is
+[`syntax.md` §16.12](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md)
+and `std/ws` is §16.18 of the same document.
+
 ## Concurrency
 
 - **Real threads exist, with a move-only crossing rule.** `thread.spawn(entry,
