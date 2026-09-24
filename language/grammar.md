@@ -13,8 +13,11 @@ builtin type name like `str` or `String`, not a keyword.
 program      := line* EOF
 line         := impl | const | pd | datac | enum | fun
 
-impl         := "impl" string [ "with" "caps" "(" grant ("," grant)* ")" ]
-                // `as name` was removed: the parser refuses the clause by name
+impl         := "impl" string [ "caps" "(" ( grant ( "," grant )* | "*" ) ")" ]
+                // `caps(*)` (15.2) delegates the whole resource of every domain and
+                // stands alone: a named domain beside the `*` is refused by name.
+                // `as name` was removed (13.1) and `with caps(...)` with it (15.2):
+                // the parser refuses each by name, and `as` stays a keyword
 grant        := ident "=" "[" string ("," string)* "]"
 const        := [ "pub" ] "const" ident ":" type "=" expr
 pd           := "pd" ("val" | "var") ident [ ":" type ] "=" expr
@@ -84,6 +87,10 @@ chain        := [ "elif" expr block chain
 
 - `line` is what a top-level file holds, and the parser enforces the order the
   productions appear in: imports first, then declarations.
+- `impl` carries the optional grant: `caps(domain = [pattern, ...])`, or the
+  single `caps(*)` that delegates the whole resource of every domain the
+  importing module holds. The `*` stands alone; a named domain beside it is
+  refused by name (15.2).
 - A leading `pub` is accepted on a top-level `const`, `datac`, `enum`, `fun` and
   `extern fun`, and nowhere else (13.4): a `pd` is module-scoped by design, an
   `impl` is not an item, and a method's reachability follows its declaring type.
