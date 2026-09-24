@@ -92,9 +92,10 @@ commands:
 | `coral task <name>` | build and run one task |
 | `coral clean` | remove `build/` |
 | `coral toolchain kelp|coral ...` | list, installed, install, use, pin |
+| `coral version` / `coral --version` | print the release this binary was built from, as `coral 26.09.1`, padded the way the tag spells it |
 
-There is **no `coral --version`**: it is not a command, and the binary answers
-`unknown command '--version'`. Ask the toolchain subcommand instead. `coral fmt`,
+`coral version` and `coral --version` are the same command, and neither reads a
+project: both answer outside a project too. `coral fmt`,
 `coral lint`, `coral bench` and `coral publish` are also unknown commands today,
 which is the "not here yet" list further down.
 

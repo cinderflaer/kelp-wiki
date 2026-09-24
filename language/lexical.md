@@ -155,7 +155,9 @@ val i = b'x'            // byte literal
   A literal that does not fit the type its context asks for is refused at its own
   line, with a message naming a type that holds it: `val big = 4294967295` is an
   error, because nothing gives the literal a type and `i32` cannot hold it, so it
-  is written `val big: u64 = 4294967295`. The same applies to a literal receiver,
+  is written `val big: u64 = 4294967295`. The widest literal that can be written
+  is `u64::MAX`, `18446744073709551615`, because the scanner holds the whole
+  `u64` range; a literal above it is refused by name rather than truncated. The same applies to a literal receiver,
   where the call supplies no expected type: `4294967295.to_u64()` is refused.
   There is no suffix (`5u8` is an error: the width comes from where the literal
   sits) and no digit separator, and there is no octal form. A malformed one is

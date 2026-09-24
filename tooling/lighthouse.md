@@ -182,11 +182,12 @@ not end the session.
 
 ## Deliberate gaps
 
-- **Diagnostics are prose, not data.** The server parses what `kelpc` prints on
-  stderr. `kelpc check --json` exists now and hands back a severity, a message and
-  a 1-based range per finding, so the spans and the categories are reachable; the
-  parser is what would go away once the server reads the JSON instead.
-  `server/src/diagnostics.rs` is that parser.
+- **Diagnostics come from `kelpc check --json`.** The server runs the compiler
+  with `--json` and reads one document, so every finding carries its own 1-based
+  range (turned into LSP's 0-based positions on the way out) and its severity:
+  `error`, `warning` or `outdated`. A `kelpc` older than 26.09.1 still has its
+  prose read by `server/src/diagnostics.rs`, which is the fallback that goes away
+  once no supported compiler predates the flag.
 - **No whole-program resolution.** The index reads one file at a time and has no
   type checker, so a generic receiver (`fun Pair<A, B>.first`) resolves only when
   the call site spells the argument types, and a receiver reached through a chain
