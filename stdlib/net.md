@@ -80,7 +80,8 @@ fun main() {
   implementing your own back-pressure.
 - Blocking is the default. `set_timeout` and `wait_readable` are how a caller gets
   a bounded wait.
-- There is no TLS: `http.parse_url` refuses `https` by name rather than pretending.
+- There is no TLS: `http.parse_url` refuses `https` and `ws.parse_url` refuses
+  `wss`, both by name rather than pretending.
 - Errors panic rather than returning `Result`.
 
 ## See also

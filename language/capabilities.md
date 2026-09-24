@@ -112,6 +112,18 @@ example: it only builds and reads plain data, but importing `std/http` needs
 `net` delegated, so `httpx` writes `caps(net = [])` internally: the smallest
 grant that compiles, and it never dials.
 
+`std/ws` is the two-domain case, and both domains are used. Its text names
+`std/net` for the socket and `std/rand` for the sixteen bytes of
+`Sec-WebSocket-Key` and the masking key of every frame, so a consumer writes both
+on the line:
+
+```kelp
+impl "std/ws" caps(net = ["gateway.example.com:80"], rand = [])
+```
+
+A program that leaves `rand` off does not build: a module holds exactly what its
+importer granted it, and the refusal names the call inside `std/ws`.
+
 When that delegation is missing and the failing module is **not** the one you
 wrote the call in, the diagnostic points at the link that broke: it names the
 `impl` line that imported the module with no `caps(...)` clause, and that line is
@@ -160,5 +172,6 @@ failure as a panic from the gated call.
 
 - [Capability patterns](/reference/capability-patterns): the pattern grammar in full
 - [`std/fs`](/stdlib/fs), [`std/net`](/stdlib/net), [`std/process`](/stdlib/process),
-  [`std/env`](/stdlib/env), [`std/time`](/stdlib/time), [`std/rand`](/stdlib/rand)
+  [`std/env`](/stdlib/env), [`std/time`](/stdlib/time), [`std/rand`](/stdlib/rand),
+  [`std/ws`](/stdlib/ws)
 - [Compiler](/compiler): how the check is implemented
