@@ -12,7 +12,7 @@ which is the authority, and it says where a claim comes from a run instead.
 | Piece | What it is |
 | --- | --- |
 | `server/` | the `lighthouse` language server: a Rust binary with no external crates, the same constraint `kelpc` and Coral hold themselves to |
-| `intellij/` | an IntelliJ plugin: `.kp` file type, everything the server offers, a Kelp project entry, a Coral run configuration, a gutter run icon on `fun main()`, and the project's compiler version in Settings |
+| `intellij/` | an IntelliJ plugin: `.kp` file type and syntax highlighting, everything the server offers through LSP4IJ, a Kelp project entry, a Coral run configuration for every Coral command, a gutter run icon on `fun main()`, and the project's compiler version in Settings |
 
 The server has no command-line flags: it reads no arguments in `server/src/main.rs`
 and speaks LSP over stdio, which is why the editor launches it and nothing else
@@ -25,9 +25,12 @@ plugin is the client this repository ships, and it is the only one.
 The split explains what the server can and cannot do, and it is worth reading
 before trusting a squiggle or a completion.
 
-**`kelpc` is the authority on what compiles.** On open and on save, the server
-builds the current file's project and turns whatever `kelpc` prints on stderr into
-diagnostics, grouped by the file each error points at. It finds the compiler
+**`kelpc` is the authority on what compiles.** On open, on save, and a debounced
+moment after a document changes, the server runs `kelpc check --json` on the
+current file's project and turns each finding into a diagnostic, with the span
+`kelpc` reports and the kind it reports it as (`error`, `warning` or `outdated`),
+grouped by the file each finding actually points at. `kelpc` reads the file on
+disk, so a check after a change reports the last saved text. It finds the compiler
 through `$KELPC` first (`server/src/diagnostics.rs`), which is what makes a
 development build of the compiler usable with a release build of the server.
 
@@ -40,7 +43,7 @@ What that means per feature:
 
 | Feature | Where the answer comes from | What a wrong answer costs |
 | --- | --- | --- |
-| Diagnostics | `kelpc`, run on open and on save | none: the compiler is the authority |
+| Diagnostics | `kelpc`, run on open, on save and once a change has settled | none: the compiler is the authority |
 | Completion | the index | a missing or lower-ranked item |
 | Hover, inlay hints | the index, including the little it can infer | an absent or less precise type |
 | Go-to-definition, symbols | the index | a jump that is not offered |
@@ -63,9 +66,9 @@ file's own `fun` declarations plus the free-standing builtins (`print`, `print!`
 
 | Feature | What it does |
 | --- | --- |
-| Completion | names in scope, this file's declarations, imported namespaces, builtins and keywords; after a `.` it offers a `datac`'s fields, an `enum`'s variants, `fun Type.method` declarations, and the compiler's own methods on `List`, `Map`, `Box`, `String` and `Bytes` |
+| Completion | names in scope, this file's declarations, imported namespaces, builtins and keywords (`pub`, `move`, `if let`, the tuple and array type spellings, both capability-clause forms); after a `.` it offers a `datac`'s fields, an `enum`'s variants, `fun Type.method` declarations, and the compiler's own methods on `List`, `Map`, `Box`, `String`, `Bytes`, `Atomic` and `View`; the compiler's own `fence`, `spawn`, `join` and `encoding.sha1` complete like any declaration |
 | Auto-import | `str.con` completes to `concat`, and accepting it writes `impl "std/str"` at the top of the file; the same fix is a code action on a name that resolves nowhere (`Import "shapes/circle" and qualify as circle.Circle`), and `impl "` completes module paths |
-| Hover | the declaration as written, its `///` documentation, and where it came from; a binding shows the type the index could infer |
+| Hover | the declaration as written, its `///` documentation, and where it came from; `fence`, `spawn`, `join` and `encoding.sha1` hover like any declaration, and a binding shows the type the index could infer |
 | Go-to-definition | into a project file or into the standard library, from a vendored copy of the shipped sources |
 | Signature help | parameter names and types with the active argument tracked, including named arguments |
 | Symbols and folding | document outline with `datac` fields and `enum` variants as children, workspace symbol search, brace and comment folding |
@@ -78,9 +81,10 @@ file's own `fun` declarations plus the free-standing builtins (`print`, `print!`
 
 `kelpc` embeds its standard library in the binary rather than shipping `.kp` files,
 so the server carries its own copy: `server/stdlib/`, one `.kp` per shipped
-module except `std/rt` (17 modules today), regenerated from a
-kelp checkout by `server/tools/sync-stdlib.sh`. That copy is what go-to-definition
-into the standard library and completion of `str.*` are answered from.
+module except `std/rt` (20 modules today, `std/atomic`, `std/thread` and `std/ws`
+among them), regenerated from a kelp checkout by `server/tools/sync-stdlib.sh` and
+checked against it by drift tests. That copy is what go-to-definition into the
+standard library and completion of `str.*` are answered from.
 
 Two environment variables change that:
 
@@ -95,20 +99,31 @@ compiler binary.
 
 ## Editor setup: IntelliJ
 
-**The plugin requires IntelliJ IDEA Ultimate.** The LSP client API is not in
-Community builds, and the README records that the classes are absent from a real
-Community distribution. Everything else in the plugin is ordinary, but building
-against Ultimate is what lets it use the server at all.
+**The plugin needs LSP4IJ, and any IntelliJ flavour will do.** The LSP client is
+[LSP4IJ](https://plugins.jetbrains.com/plugin/23257-lsp4ij)
+(`com.redhat.devtools.lsp4ij`), Red Hat's free LSP client, which the user installs
+from the JetBrains Marketplace; it is not JetBrains' own `com.intellij.modules.lsp`,
+which is Ultimate-only. With LSP4IJ installed the server's features work in IntelliJ
+IDEA Community, Android Studio and every other flavour. LSP4IJ needs IntelliJ
+Platform build `242` (2024.2) or later, and that is also this plugin's `sinceBuild`.
+`plugin.xml` declares LSP4IJ as an *optional* dependency, so without it the plugin
+still loads and keeps its own pieces (file type, lexer, syntax highlighting, brace
+matcher, quote handler, Coral run configurations, New Project, the Kelp settings
+page) and only the LSP features are absent. `lsp4ij.xml` binds the three features
+LSP4IJ routes through a per-language extension point (folding, signature help and
+the document outline in the Structure tool window); the rest it registers itself.
+A user with no Kelp plugin at all can point LSP4IJ at `lighthouse` by hand under
+**Settings ▸ Languages & Frameworks ▸ Language Servers ▸ [+]**.
 
 ```sh
 cd lighthouse/intellij
-./gradlew buildPlugin     # the plugin zip
-./gradlew runIde          # a sandboxed IDE with the plugin loaded
+gradle buildPlugin     # the plugin zip
+gradle runIde          # a sandboxed IDE with the plugin loaded
 ```
 
 Install one of two ways:
 
-1. **From disk**: `./gradlew buildPlugin`, then **Settings ▸ Plugins ▸ ⚙ ▸ Install
+1. **From disk**: `gradle buildPlugin`, then **Settings ▸ Plugins ▸ ⚙ ▸ Install
    Plugin from Disk…**.
 2. **From the self-hosted update site**, added once under **Settings ▸ Plugins ▸ ⚙
    ▸ Manage Plugin Repositories**:
@@ -118,17 +133,17 @@ Install one of two ways:
    ```
 
    A published version then shows up as an ordinary update. To publish one, bump
-   `version` in `build.gradle.kts`, run `./gradlew buildPlugin`, and copy the zip
+   `version` in `build.gradle.kts`, run `gradle buildPlugin`, and copy the zip
    and the refreshed `updatePlugins.xml` to the update site.
 
 What the plugin adds:
 
 | Piece | What it does |
 | --- | --- |
-| `.kp` file type and highlighting | a hand-written lexer, not the server's |
-| Everything in the feature table | through the LSP client |
+| `.kp` file type and highlighting | a hand-written lexer, not the server's; it reads `pub`, `for`, block comments and byte literals |
+| Everything in the feature table | over LSP, through LSP4IJ |
 | **File ▸ New ▸ Project ▸ Kelp** | scaffolds a project with `coral init`, with a version field and a **Kelp version** field for the `[toolchain]` pin |
-| A Coral run configuration type | build and run a project from the IDE |
+| A Coral run configuration type | one command at a time from every command Coral has (`build`/`run`/`check`/`clean`/`test`/`fmt`/`lint`/`docs`/`task`), each with an arguments field |
 | A gutter run icon | on `fun main()` |
 | **Settings ▸ Languages & Frameworks ▸ Kelp** | the project's compiler version, which is the `[toolchain] pin` in `coral.toml`, and which can install a version with `coral toolchain kelp install <ver>` in the background |
 
@@ -158,6 +173,12 @@ not end the session.
   `error`, `warning` or `outdated`. A `kelpc` older than 26.09.1 still has its
   prose read by `server/src/diagnostics.rs`, which is the fallback that goes away
   once no supported compiler predates the flag.
+- **No diagnostics for an unsaved buffer.** The server asks `kelpc` again once a
+  change has settled, but `kelpc` reads the file on disk, so after a change the
+  spans are the last saved file's and a save is what makes them match the buffer.
+  Until the compiler can be handed a buffer (`kelpc check --json --text <path>`),
+  syntax-level mistakes in an unsaved buffer are the editor's own lexer's business
+  and semantic ones wait for the save.
 - **No whole-program resolution.** The index reads one file at a time and has no
   type checker, so a generic receiver (`fun Pair<A, B>.first`) resolves only when
   the call site spells the argument types, and a receiver reached through a chain
@@ -168,10 +189,10 @@ not end the session.
 - **The plugin is not published to the Marketplace.** It installs from the
   self-hosted update site above.
 
-The README also lists "Formatting. No `kelpc fmt` exists to call" as missing, which
-is now half stale: `kelpc fmt` shipped, with `-w` and `--check` (see
-[`kelpc` CLI](/tooling/kelpc-cli#fmt)). What is still missing is the server *calling* it,
-so an editor still has nothing to invoke for format-on-save.
+The README lists formatting as missing too: `kelpc fmt` has existed since
+`kelpc 0.2.3`, with `-w` and `--check` (see [`kelpc` CLI](/tooling/kelpc-cli#fmt)),
+but the plugin registers no document-formatting provider, so an editor still has
+nothing to invoke for format-on-save.
 
 ## See also
 

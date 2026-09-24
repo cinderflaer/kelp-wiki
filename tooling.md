@@ -35,10 +35,10 @@ dependencies), decides whether a build is up to date, and then runs `kelpc` on t
 entry point. That is why "how do I build?" and "how do I name a dependency?" are
 two different pages: one is a command, the other is a manifest line.
 
-**Lighthouse never builds your artifacts.** It runs `kelpc` on open and on save to
-learn what does not compile, and answers editor questions (completion, hover,
-go-to-definition, rename) from a text-level index it builds itself. It is the only
-one of the three that runs while you type.
+**Lighthouse never builds your artifacts.** It runs `kelpc` on open, on save and
+once a change has settled to learn what does not compile, and answers editor
+questions (completion, hover, go-to-definition, rename) from a text-level index it
+builds itself. It is the only one of the three that runs while you type.
 
 ## When `kelpc` alone is enough
 
