@@ -50,6 +50,10 @@ datac Node(val value: i32, val next: Box<Node>)
   that would produce two owners of the same buffer: borrow it instead, or hold
   it in a `Box` and `take()` it out.
 - `datac` values are dropped at the end of the owning scope, fields recursively.
+- **A tuple is a record too.** `(i32, String)` is a record with positional
+  fields: it needs no declaration, it is a legal `datac` field and a legal
+  `enum` payload, and it obeys every rule above. Its positions are read by
+  destructuring, because there is no `.0` ([Types](/language/types)).
 
 ## `enum`
 

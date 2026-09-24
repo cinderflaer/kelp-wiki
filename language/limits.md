@@ -22,6 +22,12 @@ These are deliberate, and each one has a workaround in this documentation.
 
 ## Data and generics
 
+- **A tuple is read by destructuring and nothing else.** There is no positional
+  access on a value (`t.0`), no tuple pattern in `when`, no destructuring `for`
+  binding, and no tuple value in a `const` initializer. A tuple has two or more
+  elements, so there is no one-element tuple: `(T)` is the type `T`, and `()` is
+  refused by name. Bind the whole tuple to a `val` when its positions need to be
+  visible separately. See [Types](/language/types).
 - **No extra type parameters on a method.** A `datac`, an `enum` and a `fun` may
   each declare type parameters, but a receiver on a generic type must write the
   type's own parameters, in order: `fun Pair<A, B>.first()`. A method cannot add
@@ -33,13 +39,13 @@ These are deliberate, and each one has a workaround in this documentation.
   `Option` and `Result` are free functions because those two are generic.
 - **A `Map` key must be keyable.** The compiler derives the key's hash and
   equality from the fields, so the derived set is `String`, an integer, `bool`,
-  `char`, or a `datac`/`enum` whose every field (or every variant payload) is
-  itself keyable. A `datac` or `enum` outside that set becomes a key by declaring
-  both `fun T.hash().R: u64` and `fun T.eq(other: &T).R: bool`, which the map
-  calls instead of a derived pair; the key is still cloned into the entry, so the
-  type has to be deep-copyable. A float is refused (`nan`), and a `Bytes`,
-  container, view, borrow or `datac`/`enum` with a field outside the set is
-  refused with a message naming that field or the half of the pair that is
+  `char`, or a `datac`/`enum`/tuple whose every field, variant payload or
+  position is itself keyable. A `datac` or `enum` outside that set becomes a key
+  by declaring both `fun T.hash().R: u64` and `fun T.eq(other: &T).R: bool`,
+  which the map calls instead of a derived pair; the key is still cloned into the
+  entry, so the type has to be deep-copyable. A float is refused (`nan`), and a
+  `Bytes`, container, view, borrow or `datac`/`enum` with a field outside the set
+  is refused with a message naming that field or the half of the pair that is
   missing.
 - **No user overloading**, and no user `extern` bodies: `extern fun` is reserved
   for compiler-shipped stdlib modules. (`abs`, `min`, `max`, `clamp` are the only
@@ -51,7 +57,9 @@ These are deliberate, and each one has a workaround in this documentation.
   moves that field out of an owned `val`/`var` local or a `move T` parameter, and
   the binding keeps the fields that stayed. An owned `enum` payload read by value
   out of an owned place is the same partial move, which is what a `when`/`if let`
-  over an owned place does with the payload it binds. A projection read out of a
+  over an owned place does with the payload it binds. A position of a tuple read
+  out of an owned binding is the same partial move, and read out of a borrow it
+  is refused. A projection read out of a
   borrowed structure or out of a nested place is still refused.
 - **The helpers whose receiver stays a borrow are `Copy`-only.** `option.unwrap`
   on an `Option<String>` and `result.map` over a `Result<T, MyErr>` take their

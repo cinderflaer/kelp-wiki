@@ -32,14 +32,17 @@ body         := "=" expr | block | <nothing for extern>
 
 type         := [ "&" ] ( ident [ "<" type ("," type)* ">" ] [ "." ident ]
                        | "fun" "(" [ fparam ("," fparam)* ] ")" [ ".R" ":" type ]
-                       | "[" type ";" expr "]" )        // a fixed-size array: [T; N]
+                       | "[" type ";" expr "]"        // a fixed-size array: [T; N]
+                       | "(" type "," type ("," type)* ")" )  // a tuple: (A, B)
 fparam       := [ "mut" | "move" ] type
 ```
 
 ```
 stmt         := "val" | "var" | "while" | "for" | "return" | expr
-val          := "val" ident [ ":" type ] "=" expr
-var          := "var" ident [ ":" type ] "=" expr
+val          := "val" ( ident [ ":" type ] | pattern ) "=" expr
+var          := "var" ( ident [ ":" type ] | pattern ) "=" expr
+pattern      := "(" position "," position ("," position)* ")"
+position     := ident | "_" | pattern
 while        := "while" expr block
 for          := "for" ident "in" expr block   // the `in` is contextual, not a keyword
 return       := "return" [ expr ]
@@ -58,6 +61,7 @@ primary      := int | float | string | char | template | "true" | "false"
                 ( "=" expr | block )
               | "[" expr ("," expr)* "]"       // an array literal: length is the count
               | "[" expr ";" expr "]"          // a repeat: [0; 4096]
+              | "(" expr "," expr ("," expr)* ")"   // a tuple value: (lo, hi)
               | ident [ typeargs ] [ "(" args ")" ] | "(" expr ")" | block
               | "if" expr block chain
               | "if" "let" ident [ "(" (ident | "_") ("," (ident | "_"))* ")" ] "=" expr
@@ -90,6 +94,11 @@ chain        := [ "elif" expr block chain
   is why `f(x)?` and `a.b.c(1)` both parse.
 - `primary` includes `block` and `if`/`when` as expressions, which is how
   `val label: String = if flag { "yes" } else { "no" }` works.
+- `(T)` is the parenthesized type `T`, and `(e)` is the parenthesized expression
+  `e`, so a tuple has two or more positions and there is no one-element tuple;
+  `()` is neither a type nor a value, because the absent value's type is `unit`.
+  A tuple value is read by a destructuring `val`/`var` and by nothing else
+  ([Bindings and assignment](/language/bindings)).
 - `chain` is what follows the first block of an `if` or an `if let`: nothing, an
   `else` block, or another link. A link is written `elif` (the preferred
   spelling) or `else if`, so a chain may mix the two; a chain that produces a

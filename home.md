@@ -121,7 +121,7 @@ to be updated when it moves.
 | | |
 | --- | --- |
 | Types | `i32` `i64` `u8` `u16` `u32` `u64` `usize` `isize` `f32` `f64` `bool` `char`, plus borrowed text as `str` and `View` |
-| Data | `datac` records with `val`/`var` fields, `enum` tagged unions, exhaustive `when`, `if let`, type parameters, `const`, `pd` passdowns |
+| Data | `datac` records with `val`/`var` fields, tuple types read by a destructuring binding, `enum` tagged unions, exhaustive `when`, `if let`, type parameters, `const`, `pd` passdowns |
 | Ownership | owned builtins `String`, `Bytes`, `List<T>`, `Map<K, V>`, `Box<T>` and the fixed-size array `[T; N]`; moves, shared and `mut` borrows, drops at end of scope, no garbage collector |
 | Errors | `Option`, `Result`, the `?` operator, `panic`/`assert` |
 | Functions | `fun`, named arguments, function values and closures, receiver methods, stdlib-only argument-type overloading |

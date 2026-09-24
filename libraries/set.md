@@ -145,7 +145,8 @@ ada
 ## Notes
 
 - A `float` cannot be a `Set` key: the compiler's `Map` key set is `String`,
-  the integers, `bool`, `char`, or a keyable `datac`/`enum`; `nan != nan` would
+  the integers, `bool`, `char`, a keyable `datac`/`enum`, or a tuple whose
+  positions are all keyable; `nan != nan` would
   make an inserted key unfindable.
 - A `datac` or `enum` is a `Map` key when its fields are keyable, or when it
   declares `hash` and `eq` (see [Collections](/language/collections)); this
