@@ -97,20 +97,30 @@ These are deliberate, and each one has a workaround in this documentation.
 
 ## Concurrency
 
-- **No threads, no async, no coroutines.** Concurrency is a later milestone; the
-  standard library reaches the outside world by processes and by `poll`-style
-  readiness (`wait_readable`) instead. A program that needs two things at once
-  spawns a process. [Concurrency in v1](/language/concurrency) has the model as
-  it stands.
-- **An atomic cell and a standalone fence exist, and neither carries a thread by
-  itself.** `Atomic<T>` in [`std/atomic`](/stdlib/atomic) is one location every
-  access to which is a single atomic operation, and `thread.fence(order)` in
-  [`std/thread`](/stdlib/thread) joins the total order while naming no location.
-  The single ordering v1 has is `SeqCst`, and the fence changes nothing a
-  single-threaded program can observe. There is no `thread.spawn` and no
-  `thread.join` yet, so nothing shares the cell across threads today; a shared
-  counter is a `pd val` atomic, which is the declaration that will let a second
-  thread hold the borrow.
+- **Real threads exist, with a move-only crossing rule.** `thread.spawn(entry,
+  arg)` in [`std/thread`](/stdlib/thread) starts an OS thread, and
+  `thread.join(handle)` waits for it and consumes the handle, handing back `Ok`
+  with the worker's value or `Err` with the panic text. An owned argument is
+  **moved** into the worker, and the single borrow that may cross is a shared
+  borrow of a `pd` whose pointee has no reachable `var` field. `Atomic<T>` in
+  [`std/atomic`](/stdlib/atomic) is one location every access to which is a
+  single atomic operation, and it satisfies that rule by construction, so a
+  `pd val` atomic is the shared counter a worker and its joiner both reach. A
+  `&mut T`, a `str`, a `View`, a frame local's `&T` and a `datac` with a
+  reachable `var` field are all refused. The workers are OS threads rather than
+  green ones, and a program that needs isolation rather than sharing still
+  spawns a process.
+- **One ordering, and nothing else around it.** The single ordering v1 has is
+  `SeqCst`; `Relaxed`, `Acquire` and `Release` are reserved, not shipped. There
+  are no channels, no `Mutex`, and no thread-local storage, and no async or
+  coroutines. Two leaks are admitted: a panicking worker's frame is abandoned,
+  and a handle nobody joins is detached with its worker record leaked, because
+  v1 has no `must_use` and no user `Drop`. A worker that returns `unit` cannot
+  be joined at all yet, which `KelpLANG/ISSUES.md` records as `MISSING-r7Wqb`.
+  `thread.fence(order)` in [`std/thread`](/stdlib/thread) joins the total order
+  while naming no location, and changes nothing a single-threaded program can
+  observe. [Concurrency in v1](/language/concurrency) has the model as it
+  stands and what it still does not have.
 
 ## Text
 

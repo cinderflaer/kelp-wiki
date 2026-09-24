@@ -1,33 +1,180 @@
 ---
 title: "`std/thread`"
-description: "`fence(order)`, the standalone fence, and where `spawn` and `join` will land. Ungated."
+description: "`spawn`, `join` and `fence(order)`: real threads, the shared borrow that may cross one, and the per-thread panic policy. Ungated."
 isPublished: true
 tags: "stdlib, concurrency"
 ---
-`fence(order)`, the standalone fence, and where `spawn` and `join` will land.
-Ungated.
+`spawn`, `join` and `fence(order)`: real threads, the shared borrow that may
+cross one, and the per-thread panic policy. Ungated.
 
 ```kelp
 impl "std/thread"
 ```
 
-`std/thread` ships one name, and it is a **compiler builtin**:
+`std/thread` ships four names: three **compiler builtins** and one `datac`.
 
 ```kelp
+fun spawn(entry: <a declared `fun`, a `fun` literal, or a capturing closure, taking one parameter>, arg: move A).R: Thread<T>
+fun join(handle: move Thread<T>).R: Result<T, ThreadErr>
 fun fence(order: Ordering)
+
+datac ThreadErr(val message: String)
 ```
 
-There is no way to write a fence in Kelp, so
+`spawn` and `join` are not in the builtin signature table: what crosses the
+thread boundary decides their types, so the checker builds the signature at each
+call site. Neither call, and not the fence either, can be written in Kelp, so
 [`kelpc/std/thread.kp`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/kelpc/std/thread.kp)
-declares nothing: its header documents the surface, exactly as `std/atomic`
-documents the atomic methods it declares nowhere. The compiler lowers the call
-to one instruction, so the module needs no `.kp` body.
+declares none of them: its header documents the surface, exactly as
+`std/atomic` documents the atomic methods it declares nowhere. The compiler
+lowers `spawn` and `join` through the pthread machinery of
+`kelpc/runtime/kelp_rt.c` and one generated worker body per call signature.
+
+`ThreadErr` is the module's **only `.kp` declaration**: a plain `datac` with one
+owned `String` field, built by the worker's panic and read by whoever joins it.
 
 ## Functions
 
 | Function | Returns | Notes |
 | --- | --- | --- |
+| `thread.spawn(entry, arg)` | `Thread<T>` | starts a worker; `entry` takes exactly one parameter, `arg` is moved into it, and `T` is `entry`'s **return** type |
+| `thread.join(handle: move Thread<T>)` | `Result<T, ThreadErr>` | waits for the worker and consumes the handle |
 | `thread.fence(order: Ordering)` | `Unit` | one instruction; no cell, no receiver |
+
+## Starting a worker
+
+`entry` is an ordinary function value or closure: a declared `fun`, a `fun`
+literal and a capturing closure all work, and a plain function value is widened
+where a closure is expected, so the three spellings are one value. Its single
+parameter's type is the type of `arg`.
+
+```kelp
+impl "std/thread"
+impl "std/atomic"
+impl "std/result"
+
+pd val counter: AtomicI64 = AtomicI64.new(0)
+
+fun bump(c: &AtomicI64).R: i64 {
+    c.fetch_add(value = 1, order = atomic.Ordering.SeqCst)
+    0
+}
+
+fun main() {
+    val h = thread.spawn(bump, &counter)      // Thread<i64>
+    when thread.join(h) {
+        Ok(v) -> print(v)                     // the value the worker returned
+        Err(e) -> print(e.message)            // why it ended without one
+    }
+}
+```
+
+`arg` is **moved** into the worker, so the worker owns it for as long as it
+holds it: a `&mut T` argument is refused, because an exclusive borrow promises
+that no other path reaches the value and the worker outlives the frame that made
+the borrow.
+
+A worker that returns nothing gives `Thread<unit>`, and a `Thread<unit>` handle
+**cannot be joined yet**: neither backend can lay out `Result<unit, ThreadErr>`.
+`KelpLANG/ISSUES.md` records that gap as `MISSING-r7Wqb`. Give the entry point a
+return type until it is closed.
+
+## Joining it
+
+`thread.join` waits for the worker and **consumes the handle**: a handle is
+joined once. `Ok` carries the value the worker returned, and `Err` carries a
+`ThreadErr`, this module's failure type (below), whose `message` is the panic
+text the worker died with. A join is a barrier: what the worker wrote to an
+atomic is visible to the joiner once its own join has returned.
+
+A join hands back `Result<T, ThreadErr>`, so a program that writes one also
+needs `impl "std/result"`, exactly as `Atomic.compare_exchange`'s `Result<T, T>`
+does ([`std/result`](/stdlib/result)).
+
+## The one borrow that may cross
+
+**A shared borrow crosses only from a `pd` whose pointee has no reachable `var`
+field.** That is the whole of v1's thread-shared data, and both clauses are
+structural and builtin: there is no `Send`/`Sync` marker, and each refusal names
+its own reason.
+
+- The first clause is checkable because a `pd` global's lifetime is the process
+  and a frame local's is not.
+- The second is the `Sync`-shaped rule: a `&mut` path reachable from the borrow
+  would let two threads write one location through the same borrow.
+
+An [`Atomic<T>`](/stdlib/atomic) satisfies both by construction, because every
+access to one is an atomic operation through a shared borrow, which leaves the
+type **no `&mut` path**. That is what makes `thread.spawn(bump, &counter)` with
+`pd val counter: AtomicI64` the shared counter.
+
+Refused, each with its own reason:
+
+- a `&mut T` argument, and a `&T` borrow of a frame local: the lifetime is the
+  sending frame's, and the thread outlives it;
+- a `&T` borrow of a `datac` with a reachable `var` field: two threads could
+  write it through the same borrow;
+- a `str` or a `View` argument: borrowed text with no place of its own.
+
+## The panic policy
+
+**A panic ends the thread it happened in.** A worker that panics is seen as
+`Err` by its joiner and the process survives, so one worker's failure does not
+take the other workers with it.
+
+The main thread keeps the older behaviour: a panic in `main`, or in a worker
+nothing joins before the process ends, still ends the process with `exit(1)`.
+The rule is "a panic ends the thread it happened in", and the process ends when
+`main` ends.
+
+## The two admitted leaks
+
+v1 has no unwinding, no user `Drop` and no `must_use`, and two leaks follow from
+that. Both are deliberate, and both are recorded in
+[`plan/mk9-memory-model.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk9-memory-model.md)
+section 5:
+
+- **A panicking worker's frame is abandoned.** A panic ends the worker by
+  `pthread_exit`, so the owned values the abandoned frame held are never
+  dropped. Unwinding needs the `Drop` story the language does not have, and
+  aborting the process is what the panic policy removes.
+- **A handle nobody joins is detached.** Dropping a handle whose worker is
+  still running cannot free the worker record, the argument slot or the result
+  slot, because the worker writes through them, so the drop detaches the worker,
+  which keeps running, and **leaks its record** rather than freeing it under the
+  worker. That is one record per handle a program drops without joining.
+  Refusing to drop a handle is a rule the language does not have, and blocking
+  the drop on the worker would turn a scope exit into a join nobody asked for.
+  MK9-S6-M1 (user `Drop`, `defer`, panic-path cleanup) is where the leak is
+  closed.
+
+A handle that **is** joined is freed properly by the join itself.
+
+## `ThreadErr`
+
+The module's only `.kp` declaration, and the failure a join hands back:
+
+```kelp
+datac ThreadErr(val message: String)
+```
+
+One owned `String` field carrying the panic text the worker died with. The panic
+text already names the `.kp` line, so the joiner can report where the worker
+died, and the compiler names `ThreadErr` through this module's key exactly as an
+`Atomic<T>` signature names `Ordering` through `std/atomic`:
+
+```kelp
+impl "std/thread"
+impl "std/result"
+
+when thread.join(h) {
+    Ok(v) -> print(v)
+    Err(e) -> print(e.message)   // the panic text, which already names the line
+}
+```
+
+`Thread<T>` itself is the builtin type the handle takes, in the shape
+`Atomic<T>` has ([Types](/language/types)).
 
 ## Why it is a free function
 
@@ -40,8 +187,8 @@ on the C backend and `fence seq_cst` on the LLVM one, and a single-threaded
 program cannot observe it at all.
 
 The fence lives in this module rather than beside the atomic cell so that the
-whole thread surface is one module: stage C1 of MK6-S1-M1 adds `spawn` and
-`join` here instead of inventing a module around one function.
+whole thread surface is one module: `spawn` and `join` were added here beside
+it, rather than a second module invented around them.
 
 ## The ordering comes from `std/atomic`
 
@@ -75,6 +222,9 @@ ordering means is [Concurrency in v1](/language/concurrency).
 ```kelp
 impl "std/thread"
 impl "std/atomic"
+impl "std/result"
+
+fun work(x: move i64).R: i64 = x + 1
 
 // A fence is the one operation that joins the total order without naming a
 // location, so it has no receiver, takes nothing but the ordering, and returns
@@ -93,24 +243,37 @@ fun main() {
     // the slot for the orderings v1 does not have yet.
     thread.fence(atomic.Ordering.SeqCst)
     print(cell.load(order = atomic.Ordering.SeqCst))   // 1
+
+    // A fence exists beside the two calls that do start and join a worker.
+    // `thread.spawn(entry, arg)` starts one and `thread.join(handle)` waits for
+    // it, consuming the handle; both are detailed above.
+    val h = thread.spawn(work, 41)
+    when thread.join(h) {
+        Ok(v) -> print(v)                              // 42
+        Err(e) -> print(e.message)
+    }
 }
 ```
 
 ## Notes
 
-- **One instruction, no cell.** The fence is a compiler builtin with no `.kp`
-  body and no storage: it lowers to a thread fence and nothing else. It is the
-  one operation that joins the total order while naming no location, which is
-  the difference between it and every operation of
-  [`std/atomic`](/stdlib/atomic).
-- **Threads do not exist yet.** v1 has no `thread.spawn` and no `thread.join`, so
-  nothing shares a cell across threads today and nothing can race.
-  `std/thread` is the module those names will land in, which makes `fence` this
-  module's first name and not its last. [Limits in v1](/language/limits) records
-  what concurrency does not exist yet.
+- **Three builtins, one declaration.** `fence`, `spawn` and `join` are compiler
+  builtins with no `.kp` body: their signatures are generic in what crosses the
+  thread boundary, so the compiler builds each signature at the call site. The
+  module's only declared name is `ThreadErr`.
+- **A worker is a real OS thread.** `thread.spawn` starts one and `thread.join`
+  waits for it; nothing here is green, pooled or scheduled by the language.
+  [Limits in v1](/language/limits) records what the thread surface still does
+  not have: no `Relaxed`/`Acquire`/`Release`, no channels, no `Mutex`, no
+  thread-local storage, and no async or coroutines.
+- **`SeqCst` orders the atomics, not the threads.** A worker's writes are
+  visible to its joiner because `thread.join` is a barrier, and nothing else
+  orders two threads' ordinary memory without an atomic operation or a fence
+  between them.
 
 ## See also
 
-- [`std/atomic`](/stdlib/atomic) for `Ordering` and the atomic cell a fence orders around
-- [Concurrency in v1](/language/concurrency) for the model the fence is part of
+- [`std/atomic`](/stdlib/atomic) for `Ordering`, `Atomic<T>` and the shared cell a worker and its joiner both reach
+- [Concurrency in v1](/language/concurrency) for the model `spawn`, `join` and the fence are part of
+- [Types](/language/types) for `Thread<T>` in the builtin type table
 - [Limits in v1](/language/limits) for the concurrency that is not there yet

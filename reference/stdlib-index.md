@@ -504,11 +504,25 @@ The `fetch_*` set exists on the integer instantiations only, never on
 
 ## `std/thread`
 
-Functions (the fence is a compiler builtin rather than a declaration in
-`std/thread.kp`; the module declares nothing, and the `Ordering` it takes is
-`std/atomic`'s type):
+Types:
 
+- `datac ThreadErr(val message: String)`
+
+Functions (all three are compiler builtins rather than declarations in
+`std/thread.kp`; the module's only `.kp` declaration is `ThreadErr`, and the
+`Ordering` the fence takes is `std/atomic`'s type):
+
+- `fun spawn(entry, arg: move A).R: Thread<T>`
+- `fun join(handle: move Thread<T>).R: result.Result<T, ThreadErr>`
 - `fun fence(order: Ordering)`
+
+`spawn` and `join` are not in the builtin signature table: what crosses the
+thread boundary decides their types, so the checker builds the signature at the
+call site. `entry` is a declared `fun`, a `fun` literal or a capturing closure
+taking one parameter; `arg` is moved into the worker; and `T` is `entry`'s
+return type. `join` consumes the handle, so a handle is joined once, and hands
+back `Ok` with the worker's value or `Err` with a `ThreadErr`, whose `message`
+is the panic text. The whole surface is on [`std/thread`](/stdlib/thread).
 
 ## Modules at a glance
 
@@ -532,7 +546,7 @@ Functions (the fence is a compiler builtin rather than a declaration in
 | `std/option` | 9 | 1 | — |
 | `std/result` | 12 | 1 | — |
 | `std/atomic` | 10 | 1 | - |
-| `std/thread` | 1 | 0 | - |
+| `std/thread` | 3 | 1 | - |
 
 ## Not part of the stdlib surface
 

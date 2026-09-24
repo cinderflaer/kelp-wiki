@@ -1,15 +1,16 @@
 ---
 title: "Concurrency in v1"
-description: "One ordering, SeqCst, and no threads yet. The model is stated by syntax.md section 12.6."
+description: "One ordering, SeqCst, real threads, and the single shared borrow that may cross one. The model is stated by syntax.md section 12.6."
 isPublished: true
 tags: "language, concurrency"
 ---
 Source section:
 [`syntax.md` §12.6](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
 
-v1 has one ordering and no threads. What ships today is a memory model with a
-single ordering and an atomic cell: the cell is what two threads **would**
-share, and there is no second thread for anything to race with yet.
+v1 has one ordering and real threads. What ships is a memory model with a single
+ordering, an atomic cell, a fence, and `thread.spawn`/`thread.join`: the cell is
+what a worker and its joiner **do** share, and the way it is shared is a rule of
+the checker rather than a runtime instrument.
 
 ## One ordering: `SeqCst`
 
@@ -40,7 +41,7 @@ for `Relaxed`, `Acquire` and `Release` later. Adding one widens the `Ordering`
 enum and changes no signature, so no v1 program breaks and no call site moves;
 naming one that does not exist yet is the ordinary unknown-variant error.
 
-## The cell two threads would share
+## The cell two threads share
 
 An [`Atomic<T>`](/stdlib/atomic) is one location every access to which is a
 single atomic operation. A shared counter is declared **`pd val`**, because a
@@ -52,17 +53,30 @@ borrow a function takes when it assigns to the passdown itself, and that borrow
 may not cross to a thread. That is the same rule that keeps a `&mut T` from being sent anywhere
 ([Ownership and borrowing](/language/ownership)).
 
-## No threads yet, so nothing can race
+## The threads that exist
 
-v1 has no `thread.spawn` and no `thread.join`: [`std/thread`](/stdlib/thread)
-holds only the standalone fence, `thread.fence(order)`. Nothing shares a cell
-across threads, so nothing can race, and until a second thread exists the model
-above has no observable difference from no model at all. The fence is worth
-having on its own anyway: it is one instruction, and it is where the
-cross-thread ordering story will attach.
+`thread.spawn(entry, arg)` starts a real OS thread and
+`thread.join(handle)` waits for it, both in [`std/thread`](/stdlib/thread). The
+race is removed at compile time rather than at run time, by the two rules the
+checker applies to a `spawn` call:
 
-What v1 does not have is listed in [Limits in v1](/language/limits): no threads,
-no async, no coroutines.
+- **an owned value is moved in**, so the worker owns it: a `&mut T` argument is
+  refused, because the worker outlives the frame that made the borrow;
+- **a shared borrow crosses only from a `pd` whose pointee has no reachable
+  `var` field**, which an `Atomic<T>` satisfies by construction, since it has no
+  `&mut` path. That is the single borrow v1 lets two threads hold at once, so
+  `thread.spawn(bump, &counter)` with `pd val counter: AtomicI64` is the shared
+  counter and a `datac` with a reachable `var` field is the refused case.
+
+`thread.join` consumes the handle and hands back `Ok` with the value the worker
+returned or `Err` with a [`ThreadErr`](/stdlib/thread) carrying the panic text.
+A join is a barrier, so a worker's writes are visible to its joiner once its own
+join has returned. A panic ends the thread it happened in and the process
+survives it; a panic in `main` still exits.
+
+What a thread does **not** have in v1 is listed in
+[Limits in v1](/language/limits): one ordering, no channels, no `Mutex`, no
+thread-local storage, no async and no coroutines.
 
 ## Where the definition lives
 
@@ -74,6 +88,6 @@ publishing it.
 ## See also
 
 - [`std/atomic`](/stdlib/atomic) for `Atomic<T>` and the `Ordering` enum
-- [`std/thread`](/stdlib/thread) for `fence(order)`
-- [Limits in v1](/language/limits) for the concurrency that does not exist yet
+- [`std/thread`](/stdlib/thread) for `spawn`, `join` and `fence(order)`
+- [Limits in v1](/language/limits) for the concurrency that is not there yet
 - [Ownership and borrowing](/language/ownership) for the borrow rules a thread argument has to obey
