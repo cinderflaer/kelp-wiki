@@ -173,12 +173,14 @@ not end the session.
   `error`, `warning` or `outdated`. A `kelpc` older than 26.09.1 still has its
   prose read by `server/src/diagnostics.rs`, which is the fallback that goes away
   once no supported compiler predates the flag.
-- **No diagnostics for an unsaved buffer.** The server asks `kelpc` again once a
-  change has settled, but `kelpc` reads the file on disk, so after a change the
-  spans are the last saved file's and a save is what makes them match the buffer.
-  Until the compiler can be handed a buffer (`kelpc check --json --text <path>`),
-  syntax-level mistakes in an unsaved buffer are the editor's own lexer's business
-  and semantic ones wait for the save.
+- **Diagnostics for an unsaved buffer, once typing settles.** The debounced
+  check after a `didChange` now reads the open buffer with `kelpc check --json
+  --text` (`MISSING-b6Ytr`, fixed), rooted at the file itself rather than the
+  project's entry, so its findings are the buffer's, not the last save's.
+  `didOpen`/`didSave` still run the wider, disk-based check across the whole
+  project, since at those two moments the buffer and disk already agree. A
+  `kelpc` too old to know `--text` falls back to the disk-based check, the
+  same one it always ran.
 - **No whole-program resolution.** The index reads one file at a time and has no
   type checker, so a generic receiver (`fun Pair<A, B>.first`) resolves only when
   the call site spells the argument types, and a receiver reached through a chain

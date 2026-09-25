@@ -24,7 +24,9 @@ has to be written into the page by hand rather than re-derived. The last batch i
 it. The batch after it is the fallible dial at `kelp` `93d050f`:
 `net.try_connect` with `ConnectErr`, and `ws.try_connect` with `WsErr` beside the
 three helpers that keep the panicking `connect` wrappers honest (`handshake`,
-`refusal_text`, `fail_connect`).
+`refusal_text`, `fail_connect`). The batch after that is `thread.sleep_ms` and
+`thread.current_id` (MK9-S3-M1 stage C2, `kelp` `54d3bdb`), the module's first
+two names that are ordinary `.kp` signatures rather than compiler builtins.
 
 `std/rt` has no section: it ships inside the binary but is the compiler's own
 runtime module rather than part of the stdlib surface. `impl "std/rt"` resolves
@@ -518,13 +520,17 @@ Types:
 
 - `datac ThreadErr(val message: String)`
 
-Functions (all three are compiler builtins rather than declarations in
-`std/thread.kp`; the module's only `.kp` declaration is `ThreadErr`, and the
-`Ordering` the fence takes is `std/atomic`'s type):
+Functions (`spawn`, `join` and `fence` are compiler builtins rather than
+declarations in `std/thread.kp`; `sleep_ms` and `current_id` are ordinary `.kp`
+signatures over an `extern fun` body, MK9-S3-M1 stage C2; the module's only
+`.kp` declaration is `ThreadErr`, and the `Ordering` the fence takes is
+`std/atomic`'s type):
 
 - `fun spawn(entry, arg: move A).R: Thread<T>`
 - `fun join(handle: move Thread<T>).R: result.Result<T, ThreadErr>`
 - `fun fence(order: Ordering)`
+- `fun sleep_ms(ms: u64)`
+- `fun current_id().R: u64`
 
 `spawn` and `join` are not in the builtin signature table: what crosses the
 thread boundary decides their types, so the checker builds the signature at the
@@ -532,7 +538,10 @@ call site. `entry` is a declared `fun`, a `fun` literal or a capturing closure
 taking one parameter; `arg` is moved into the worker; and `T` is `entry`'s
 return type. `join` consumes the handle, so a handle is joined once, and hands
 back `Ok` with the worker's value or `Err` with a `ThreadErr`, whose `message`
-is the panic text. The whole surface is on [`std/thread`](/stdlib/thread).
+is the panic text. `sleep_ms` sleeps the calling thread and takes no
+capability, the same as `time.sleep_ms`; `current_id` returns a `u64` stable
+for the calling thread's lifetime, backed by `pthread_self`. The whole surface
+is on [`std/thread`](/stdlib/thread).
 
 ## `std/ws`
 
@@ -633,7 +642,7 @@ layer under it. The whole surface is on [`std/ws`](/stdlib/ws).
 | `std/option` | 9 | 1 | — |
 | `std/result` | 12 | 1 | — |
 | `std/atomic` | 10 | 1 | - |
-| `std/thread` | 3 | 1 | - |
+| `std/thread` | 5 | 1 | - |
 
 ## Not part of the stdlib surface
 

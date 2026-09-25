@@ -38,6 +38,7 @@ this page is the index to it.
 
 | Version | Date | Headline |
 | --- | --- | --- |
+| [26.09.3](#26093-2026-09-25) | 2026-09-25 | `thread.sleep_ms`/`current_id`; a unit-returning worker can be joined; concurrent downloads; the memory model published; `kelpc check --text` |
 | [26.09.2](#26092-2026-09-24) | 2026-09-24 | `pub` and private by default; tuples; threads; `std/ws`; `caps(*)`; `try_connect` |
 | [26.09.1](#26091-2026-09-21) | 2026-09-21 | `llvm` is the compiler; `as name` and `with caps` removed; `-O0` to `-Os` |
 | [26.09.0](#26090-2026-09-20) | 2026-09-20 | the `YY.MM.N` scheme; `try_to_<T>`; `std/encoding`; the outdated-syntax register |
@@ -47,6 +48,34 @@ this page is the index to it.
 | [0.1.2](#012-2026-09-19) | 2026-09-19 | `View`, `char` literals, bitwise operators, `str` to `String` coercion |
 | [0.1.1](#011-2026-09-19) | 2026-09-19 | the `for` loop, `spawn_in`/`run_in`, fallible `try_run`, `fs.symlink` |
 | [0.1.0](#010-no-release) | 2026-09-19 | first tag: the core language, modules, containers, capabilities, stdlib |
+
+## 26.09.3 (2026-09-25)
+
+[Release](https://homelabone.xenoo.dev/gittea/Juniper/kelp/releases/tag/v26.09.3)
+· 15 commits · 203 unit tests, 465 end-to-end green.
+
+**`thread.sleep_ms` and `thread.current_id`.** MK9-S3-M1 stage C2: two ordinary
+functions over `extern fun` bodies rather than checker builtins, a worker-shaped
+backoff and a stable id distinct between the main thread and any worker.
+
+**A worker that returns `unit` can be joined.** `thread.join` on a
+`Thread<unit>` used to fail in codegen on both backends. `Ok`/`Some`
+instantiated with `unit` now lay out payload-less, the same shape `None`
+already had, a general fix that also covers a hand-written `Result<unit, E>`
+or `Option<unit>`.
+
+**Concurrent downloads, and the memory model published.** `examples/download_pool.kp`
+shows four worker threads, each with its own keep-alive `http.Pool` for the
+run's one host, never shared; no language or stdlib change was needed, since a
+`Pool`'s mutable state staying inside its owning thread falls straight out of
+the crossing rule threads already shipped with. The memory model is now
+published as the language's own at
+[Concurrency in v1](/language/concurrency), closing MK9-S3-M1.
+
+**`kelpc check --text`.** Reads the entry file's content from stdin instead of
+from disk, so a caller (an editor) can ask about an unsaved buffer and get a
+real diagnostic instead of the last save's. [Lighthouse](/tooling/lighthouse)'s
+debounced re-check uses it.
 
 ## 26.09.2 (2026-09-24)
 

@@ -1,22 +1,25 @@
 ---
 title: "`std/thread`"
-description: "`spawn`, `join` and `fence(order)`: real threads, the shared borrow that may cross one, and the per-thread panic policy. Ungated."
+description: "`spawn`, `join`, `fence(order)`, `sleep_ms` and `current_id`: real threads, the panic policy, and the two calls a worker pool needs. Ungated."
 isPublished: true
 tags: "stdlib, concurrency"
 ---
-`spawn`, `join` and `fence(order)`: real threads, the shared borrow that may
-cross one, and the per-thread panic policy. Ungated.
+`spawn`, `join`, `fence(order)`, `sleep_ms` and `current_id`: real threads, the
+shared borrow that may cross one, and the per-thread panic policy. Ungated.
 
 ```kelp
 impl "std/thread"
 ```
 
-`std/thread` ships four names: three **compiler builtins** and one `datac`.
+`std/thread` ships six names: three **compiler builtins**, two ordinary
+functions, and one `datac`.
 
 ```kelp
 fun spawn(entry: <a declared `fun`, a `fun` literal, or a capturing closure, taking one parameter>, arg: move A).R: Thread<T>
 fun join(handle: move Thread<T>).R: Result<T, ThreadErr>
 fun fence(order: Ordering)
+fun sleep_ms(ms: u64)
+fun current_id().R: u64
 
 datac ThreadErr(val message: String)
 ```
@@ -33,6 +36,11 @@ lowers `spawn` and `join` through the pthread machinery of
 `ThreadErr` is the module's **only `.kp` declaration**: a plain `datac` with one
 owned `String` field, built by the worker's panic and read by whoever joins it.
 
+`sleep_ms` and `current_id` are **ordinary functions**, not checker builtins:
+unlike `spawn`, `join` and `fence`, neither one's type depends on what crosses
+the thread boundary, so each has a plain `.kp` signature over an `extern fun`
+body, the way [`std/time`](/stdlib/time) and [`std/rand`](/stdlib/rand) work.
+
 ## Functions
 
 | Function | Returns | Notes |
@@ -40,6 +48,8 @@ owned `String` field, built by the worker's panic and read by whoever joins it.
 | `thread.spawn(entry, arg)` | `Thread<T>` | starts a worker; `entry` takes exactly one parameter, `arg` is moved into it, and `T` is `entry`'s **return** type |
 | `thread.join(handle: move Thread<T>)` | `Result<T, ThreadErr>` | waits for the worker and consumes the handle |
 | `thread.fence(order: Ordering)` | `Unit` | one instruction; no cell, no receiver |
+| `thread.sleep_ms(ms: u64)` | `Unit` | sleeps the calling thread; takes no capability |
+| `thread.current_id()` | `u64` | a stable id for the calling thread, main or worker |
 
 ## Starting a worker
 
@@ -74,10 +84,11 @@ holds it: a `&mut T` argument is refused, because an exclusive borrow promises
 that no other path reaches the value and the worker outlives the frame that made
 the borrow.
 
-A worker that returns nothing gives `Thread<unit>`, and a `Thread<unit>` handle
-**cannot be joined yet**: neither backend can lay out `Result<unit, ThreadErr>`.
-`KelpLANG/ISSUES.md` records that gap as `MISSING-r7Wqb`. Give the entry point a
-return type until it is closed.
+A worker that returns nothing gives `Thread<unit>`, and joining one hands back
+`Result<unit, ThreadErr>` whose `Ok` carries nothing: an `Ok` (or `Some`)
+instantiated with `unit` lays out payload-less, the same shape `None` already
+has, so the join succeeds and `Ok(v) -> ...` binds `v` to a value with nothing
+in it.
 
 ## Joining it
 
@@ -217,6 +228,32 @@ error: 'Acquire' is not a variant of enum 'std.atomic.Ordering'
 and adding it widens the enum instead of changing this signature. The model the
 ordering means is [Concurrency in v1](/language/concurrency).
 
+## Sleeping and naming a thread
+
+`thread.sleep_ms(ms)` sleeps the calling thread, main or a worker, for at least
+`ms` milliseconds. Sleeping takes no capability here for the same reason it
+takes none in [`std/time`](/stdlib/time): it is authority over nothing shared.
+`std/thread` carries its own copy rather than re-exporting `time.sleep_ms`, so a
+worker pool's backoff between empty pulls from a queue does not need
+`impl "std/time"`, a namespace named for a wall clock the pool never reads.
+
+```kelp
+impl "std/thread"
+
+fun poll_worker(queue_id: move i64) {
+    // ... try to pull work, then, if there was none:
+    thread.sleep_ms(10)
+}
+```
+
+`thread.current_id()` returns a `u64` that identifies the calling thread: stable
+across every call made from inside one thread, for that thread's whole
+lifetime, and distinct between the main thread and any worker `thread.spawn`
+starts. It names *which thread this is*, not *which Nth worker was spawned*
+nothing in v1 hands out sequential pool slots, and a detached, unjoined
+worker's id does not change either. It is backed by `pthread_self`, one
+instruction with no syscall behind it.
+
 ## Example
 
 ```kelp
@@ -248,6 +285,12 @@ fun main() {
     // `thread.spawn(entry, arg)` starts one and `thread.join(handle)` waits for
     // it, consuming the handle; both are detailed above.
     val h = thread.spawn(work, 41)
+
+    // Sleeping and naming a thread work from either side of the join: the
+    // main thread's id here differs from `work`'s if it printed its own.
+    thread.sleep_ms(1)
+    print(thread.current_id() == thread.current_id())   // true
+
     when thread.join(h) {
         Ok(v) -> print(v)                              // 42
         Err(e) -> print(e.message)
@@ -257,15 +300,20 @@ fun main() {
 
 ## Notes
 
-- **Three builtins, one declaration.** `fence`, `spawn` and `join` are compiler
-  builtins with no `.kp` body: their signatures are generic in what crosses the
-  thread boundary, so the compiler builds each signature at the call site. The
-  module's only declared name is `ThreadErr`.
+- **Three builtins, two ordinary functions, one declaration.** `fence`, `spawn`
+  and `join` are compiler builtins with no `.kp` body: their signatures are
+  generic in what crosses the thread boundary, so the compiler builds each
+  signature at the call site. `sleep_ms` and `current_id` are plain `.kp`
+  signatures over an `extern fun` body, because neither one's type depends on
+  the boundary. The module's only declared `datac` is `ThreadErr`.
 - **A worker is a real OS thread.** `thread.spawn` starts one and `thread.join`
   waits for it; nothing here is green, pooled or scheduled by the language.
   [Limits in v1](/language/limits) records what the thread surface still does
   not have: no `Relaxed`/`Acquire`/`Release`, no channels, no `Mutex`, no
   thread-local storage, and no async or coroutines.
+- **`current_id` names a thread, not a pool slot.** v1 hands out no sequential
+  worker numbers; a program that wants "worker 3 of 8" has to track that itself,
+  keyed by the id if it needs a stable key.
 - **`SeqCst` orders the atomics, not the threads.** A worker's writes are
   visible to its joiner because `thread.join` is a barrier, and nothing else
   orders two threads' ordinary memory without an atomic operation or a fence

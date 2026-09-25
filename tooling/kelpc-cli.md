@@ -1,6 +1,6 @@
 ---
 title: "`kelpc` CLI"
-description: "The compiler's command line, quoted from runs against release builds: `build`, `run`, `check` (with `--json`), `fmt`, `lint` and `--deny-outdated`."
+description: "The compiler's command line, quoted from runs against release builds: `build`, `run`, `check` (with `--json` and `--text`), `fmt`, `lint` and `--deny-outdated`."
 isPublished: true
 tags: "tooling, cli"
 ---
@@ -15,7 +15,7 @@ after it (`kelpc lint` below, the comment-run and naming-case findings, the
 ```text
 usage: kelpc build <file.kp> [-o <out>] [-O0|-O1|-O2|-O3|-Os] [--deny-outdated]
        kelpc run <file.kp> [-O0|-O1|-O2|-O3|-Os] [--deny-outdated]
-       kelpc check <file.kp> [--json] [--deny-outdated]
+       kelpc check <file.kp> [--json] [--deny-outdated] [--text]
        kelpc fmt <file.kp>
        kelpc fmt -w <path>...
        kelpc fmt --check <path>...
@@ -35,6 +35,7 @@ above, and `kelpc version` is the version query.
 | `kelpc run <file.kp>` | compiles and executes, forwarding stdout, stderr and the program's exit code | the program's own status |
 | `kelpc check <file.kp>` | runs the front end (load, type check, borrow check) with no code generation and writes no artifact; takes a project directory too | 0 on success, 1 on a diagnostic; an outdated finding on its own stays 0 |
 | `kelpc check <file.kp> --json` | the same, with the findings as one JSON document on stdout | as above |
+| `kelpc check <file.kp> --text` | the same, reading `<file.kp>`'s content from stdin instead of from disk; refused for a project directory | as above |
 | `kelpc build <file.kp> --deny-outdated` | the same build, with a deprecation turned into an error | 1 if the program uses outdated syntax |
 | `kelpc fmt <file.kp>` | prints the formatted source to stdout | 0, or 1 on a parse error |
 | `kelpc fmt -w <path>...` | rewrites files in place | 1 if any input fails to parse |
@@ -117,6 +118,31 @@ This is the interface [Lighthouse](/tooling/lighthouse)'s server was blocked on,
 and the one Coral's design names as what a build tool reads instead of scraping
 stderr. What Lighthouse also wants and does not have yet is whole-program
 resolution, which is the compiler's own answer to keep or to publish.
+
+### `--text`
+
+`kelpc check <file.kp> --text` reads `<file.kp>`'s content from stdin instead of
+from disk, while `<file.kp>` still names the real path: module resolution, the
+`src/` layout rule, and every finding's `file`/`module` are the ones a caller
+expects. It exists for an editor that wants to ask about an unsaved buffer
+(`MISSING-b6Ytr`): a plain `kelpc check` can only ever see the last save, so a
+mistake made since then reports nothing until the file is saved again.
+
+```text
+$ printf 'fun main() {\n    prin("broken")\n}\n' | kelpc check /tmp/check/main.kp --text --json
+{"schema":1,"ok":false,"diagnostics":[{"severity":"error","message":"call to undefined function 'prin'","module":"main","file":"/tmp/check/main.kp","line":2,"column":5,"end_line":2,"end_column":19,"notes":[]}]}
+$ cat /tmp/check/main.kp
+fun main() {
+    print("saved")
+}
+```
+
+The file on disk is untouched by the call above: `--text` only changes what
+`<file.kp>` is checked *as*, never what is written back. It is refused for a
+project directory, since a buffer is always one open file, not a whole project.
+[Lighthouse](/tooling/lighthouse)'s server uses it for the check that runs a
+short debounce after a keystroke, with `didOpen`/`didSave` still reading from
+disk.
 
 ## Where the artifacts land
 

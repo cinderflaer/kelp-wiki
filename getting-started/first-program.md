@@ -4,9 +4,11 @@ description: "A guided tour of Kelp's shape in one file, with output - run throu
 isPublished: true
 tags: "getting-started"
 ---
-The Kelp repository ships three examples: `examples/hello.kp`, `examples/fib.kp`
-and `examples/download.kp`. This page walks the first two, then adds the pieces a
-real program needs.
+The Kelp repository ships four examples: `examples/hello.kp`, `examples/fib.kp`,
+`examples/download.kp` and `examples/download_pool.kp` (the last one fetches
+several URLs concurrently with one worker thread per connection pool — see
+[Concurrency in v1](/language/concurrency)). This page walks the first two,
+then adds the pieces a real program needs.
 
 Every command here is shown twice, once as bare `kelpc` and once through
 [Coral](/tooling/coral). Both work. Start with Coral anyway: it costs one
