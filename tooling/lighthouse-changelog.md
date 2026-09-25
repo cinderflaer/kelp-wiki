@@ -9,25 +9,28 @@ pieces move at their own speed, so each entry says which one it is.
 
 | Piece | Where it is | Version today | How it is published |
 | --- | --- | --- | --- |
-| IntelliJ plugin | `intellij/` | 26.09.0 | Gitea releases, tag `intellij-v<version>`, plus a self-hosted update site |
-| VS Code extension | `vscode/` | 26.9.0 | a `.vsix` built locally with `@vscode/vsce`; not on the Marketplace |
-| Language server | `server/` | 26.9.1 (`26.09.1` in `serverInfo`) | `cargo build --release -p lighthouse`; no release assets |
+| IntelliJ plugin | `intellij/` | 26.09.2 | Gitea releases, tag `intellij-v<version>`, plus a self-hosted update site |
+| Language server | `server/` | 26.9.3 (`26.09.3` in `serverInfo`) | `cargo build --release -p lighthouse`; no release assets |
 
-Only the IntelliJ plugin has releases and tags. The other two carry their
-version in `package.json` and `Cargo.toml`, and an entry here records the
-version they were at when a release was cut.
+The VS Code extension was dropped on 2026-09-24: IntelliJ is the only client
+today, and `vscode/` is gone from the repository. Its entries below stay, since
+they are history, but the table above no longer lists it.
 
-**Numbering.** All three pieces are numbered `YY.MM.N`, and the first under the
+Only the IntelliJ plugin has releases and tags. The language server carries its
+version in `Cargo.toml`, and an entry here records the version it was at when a
+release was cut.
+
+**Numbering.** Both pieces are numbered `YY.MM.N`, and the first under the
 scheme is `26.09.0`. Gradle takes the padded name as written, so the plugin's
 version, the tag (`intellij-v26.09.0`) and the asset
-(`lighthouse-intellij-26.09.0.zip`) are the same text. Cargo and npm both
-refuse a leading zero in a version component, so the server's `Cargo.toml` and
-the extension's `package.json` carry the semver-legal spelling, while the
-server's `serverInfo` reports the padded name, so the string an editor shows
-matches the release.
+(`lighthouse-intellij-26.09.0.zip`) are the same text. Cargo refuses a leading
+zero in a version component, so the server's `Cargo.toml` carries the
+semver-legal spelling while its `serverInfo` reports the padded name, so the
+string an editor shows matches the release.
 
 | Release | Date | Headline |
 | --- | --- | --- |
+| [Language server 26.09.3](#language-server-26093-no-release) | 2026-09-25 | the debounced re-check reads the open buffer with `kelpc check --text` |
 | [IntelliJ 26.09.2](#intellij-plugin-26092-2026-09-24) | 2026-09-24 | LSP4IJ, so Community works; the tooling knows the language; VS Code dropped |
 | [Language server 26.09.2](#language-server-26092-no-release) | 2026-09-24 | the vendored stdlib resync and the index; carried by the plugin release |
 | [Language server 26.09.1](#language-server-26091-no-release) | 2026-09-21 | the vendored stdlib resync, and `std/encoding`; no plugin release |
@@ -36,6 +39,23 @@ matches the release.
 | [IntelliJ 0.2.0](#intellij-plugin-020-2026-09-19) | 2026-09-19 | the project's kelp version, from the project |
 | [IntelliJ 0.1.1](#intellij-plugin-011-2026-09-19) | 2026-09-19 | the auto-update feed, and the New Project entry |
 | [Lighthouse v1 (0.1.0)](#lighthouse-v1-no-release) | 2026-09-19 | first version: LSP diagnostics, VS Code extension, IntelliJ plugin |
+
+## Language server 26.09.3 (no release)
+
+No tag and no release: only the IntelliJ plugin has those, and nothing about
+the plugin changed here. This entry records the server version move, the way
+the rule at the top of this page says.
+
+- **The debounced re-check after a `didChange` reads the open buffer with
+  `kelpc check --text`** instead of the file on disk (`MISSING-b6Ytr`), so an
+  unsaved edit gets a real diagnostic instead of the last save's. It is rooted
+  at the edited file itself rather than the project's entry, since it answers
+  "is what I am looking at right now clean" rather than "is the whole
+  project"; `didOpen` and `didSave` still run the wider, disk-based check,
+  since at those two moments the buffer and disk already agree. A `kelpc` too
+  old to know `--text` falls back to the disk-based check it always ran.
+
+The server reports `26.09.3` in `serverInfo`.
 
 ## IntelliJ plugin 26.09.2 (2026-09-24)
 
