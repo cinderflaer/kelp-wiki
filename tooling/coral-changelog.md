@@ -27,6 +27,7 @@ spellings have to be the same one.
 
 | Version | Date | Headline |
 | --- | --- | --- |
+| [v26.09.3](#v26093-2026-09-25) | 2026-09-25 | a second implementation, written in Kelp, ships beside the Rust one |
 | [v26.09.2](#v26092-2026-09-24) | 2026-09-24 | `coral version`, `coral fmt`/`lint`, `coral test` |
 | [v26.09.1](#v26091-2026-09-21) | 2026-09-21 | the `coral docs` family: `get`, `list`, `search` |
 | [v26.09.0](#v26090-2026-09-20) | 2026-09-20 | the `YY.MM.N` scheme; `naming_case` and `http_pool`; an asset named for another version is refused |
@@ -40,6 +41,28 @@ spellings have to be the same one.
 | [v0.2.1](#v021-2026-09-19) | 2026-09-19 | `find_kelpc` checks `~/.coral/bin/kelpc` before `PATH` |
 | [v0.2.0](#v020-2026-09-19) | 2026-09-19 | toolchain management: install and switch a kelp and a coral |
 | [v0.1.0](#v010-2026-09-19) | 2026-09-19 | Coral v1: init, build, run, check, clean, tasks, cache, deps |
+
+## v26.09.3 (2026-09-25)
+
+[Release](https://homelabone.xenoo.dev/gittea/Juniper/coral/releases/tag/v26.09.3)
+
+- The asset is `coral-26.09.3-linux-x86_64` beside the `v26.09.3` tag; the Rust
+  binary this release ships is unchanged from `26.09.2`.
+- **A second implementation of Coral, written in Kelp, ships beside the Rust
+  one** at `kelp/` in the repository (a `coral.toml` plus `src/*.kp`): the two
+  coexist, and the Rust binary is still the released tool. `init`, `build`,
+  `run`, `check`, `clean`, `task`, `fmt`, `lint`, `sync`, `docs get`/`list`/
+  `search` and `test` all work against the ordinary path, verified end to end
+  with the released `kelpc`. No language or stdlib change was needed for any
+  of it. `PORT_REPORT.md` in the repository carries the lane board.
+- Nine small gaps were found and filed while porting, none of which block
+  using either implementation today: no fallible form of the `std/fs`
+  mutators, no way to set a file's executable bit, no compile-time target
+  OS/architecture value, a literal `$` cannot be written in a string literal,
+  no way to construct `Result<unit, E>`'s success value, a child process
+  cannot inherit the parent's stdio, no way to tell a signal-killed child from
+  one that exited with that code, and one Rust-side bug, a dependency value
+  cannot carry the documented `#folder` fragment.
 
 ## v26.09.2 (2026-09-24)
 
