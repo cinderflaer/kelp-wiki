@@ -1,12 +1,16 @@
 ---
 title: "Limits in v1"
-description: "Source section - syntax.md \u00a717. These are deliberate, and each one has a workaround in this documentation."
+description: "Source section - syntax.md \u00a717. Most are settled for good; a few are open work tracked on the roadmap, marked (open) below."
 isPublished: true
 tags: "language"
 ---
 Source section:
 [`syntax.md` §17](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
-These are deliberate, and each one has a workaround in this documentation.
+Most of these are settled design decisions, each with a workaround in this
+documentation. A few are gaps nobody has ruled out for good, they are tracked
+on [the roadmap](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/roadmap.md)
+and may ship later. Those are marked **(open)**, with the item that tracks
+them.
 
 ## Control flow
 
@@ -47,9 +51,13 @@ These are deliberate, and each one has a workaround in this documentation.
   `Bytes`, container, view, borrow or `datac`/`enum` with a field outside the set
   is refused with a message naming that field or the half of the pair that is
   missing.
-- **No user overloading**, and no user `extern` bodies: `extern fun` is reserved
-  for compiler-shipped stdlib modules. (`abs`, `min`, `max`, `clamp` are the only
-  overloads in the language, and they are stdlib-only.)
+- **No user overloading** (permanent: `abs`, `min`, `max`, `clamp` are the
+  only overloads in the language, and they are stdlib-only). **(open, backlog
+  B-1)** No user `extern` bodies: `extern fun` is reserved for
+  compiler-shipped stdlib modules today, but user-declarable FFI is a named
+  backlog item waiting on a capability-interaction design (a user extern could
+  otherwise reach a syscall straight past `caps(...)`), not a permanent
+  refusal.
 
 ## Ownership
 
@@ -87,8 +95,12 @@ These are deliberate, and each one has a workaround in this documentation.
   is the one array shape a `datac` element cannot take: write the elements out,
   or start from a literal and `set` each one. An array cannot be a `List` or
   `Map` element, and an array element cannot be a `List`, `Map` or `Box`.
-- No iteration protocol: `for` is a desugared index walk over a `List` or an
-  array, and a `Map` has no iterator: iterate `keys()` and look up.
+- **(open, roadmap A-5)** No iteration protocol: `for` is a desugared index
+  walk over a `List` or an array, and a `Map` has no iterator: iterate
+  `keys()` and look up. A reusable `iter`/`next` protocol is an open question
+  with no schedule, not a closed decision: the cheap `for` shipped in
+  MK8-S1-M3 and has been enough so far, and nothing has asked for the more
+  expensive protocol yet.
 
 ## Compile-time evaluation
 
@@ -105,19 +117,22 @@ These are deliberate, and each one has a workaround in this documentation.
 
 ## Networking
 
-- **No TLS, so no `https` and no `wss`.** `http.parse_url` refuses `https` by name
-  and `ws.parse_url` refuses `wss` by name
-  (`ws.parse_url: 'wss' is not supported: v1 has no TLS, so only 'ws://' is
-  reachable`), rather than parsing the URL and failing later. The framing of a
-  WebSocket does not depend on the transport, which is why the client shipped
-  before TLS.
-- **`std/ws` is a client, not a server.** Deliberately absent: a WebSocket
-  server, extensions (`Sec-WebSocket-Extensions`, so `permessage-deflate` and the
-  `zlib-stream` transport a compressed gateway asks for), subprotocols
-  (`Sec-WebSocket-Protocol`), redirects, automatic reconnect, and waiting for the
-  peer's answering `Close` inside `close`. A caller that wants that answer reads
-  until it sees `Msg.Close` or end of file first, because waiting would block on
-  a peer that has already gone and v1 has no way to time that out.
+- **(open, roadmap item 37 / MK5-S4b-M1)** No TLS, so no `https` and no
+  `wss`. `http.parse_url` refuses `https` by name and `ws.parse_url` refuses
+  `wss` by name (`ws.parse_url: 'wss' is not supported: v1 has no TLS, so only
+  'ws://' is reachable`), rather than parsing the URL and failing later. This
+  is not a permanent stance: the plan calls it a **decision that has not been
+  made** (link the system TLS library, or stay `http`-only for good), not
+  missing work, and the two clients shipped ahead of it because the framing of
+  a WebSocket does not depend on the transport.
+- **`std/ws` is a client, not a server.** Not scheduled anywhere on the
+  roadmap: a WebSocket server, extensions (`Sec-WebSocket-Extensions`, so
+  `permessage-deflate` and the `zlib-stream` transport a compressed gateway
+  asks for), subprotocols (`Sec-WebSocket-Protocol`), redirects, automatic
+  reconnect, and waiting for the peer's answering `Close` inside `close`. A
+  caller that wants that answer reads until it sees `Msg.Close` or end of file
+  first, because waiting would block on a peer that has already gone and v1
+  has no way to time that out.
 - **`ws.parse_url` splits the port at the first `:`**, so an IPv6 literal is not
   expressible, the same rule `net`'s capability patterns follow.
 - A WebSocket frame above `MAX_FRAME` (1048576 bytes) is a protocol error rather
@@ -145,8 +160,14 @@ and `std/ws` is §16.18 of the same document.
   spawns a process.
 - **One ordering, and nothing else around it.** The single ordering v1 has is
   `SeqCst`; `Relaxed`, `Acquire` and `Release` are reserved, not shipped. There
-  are no channels, no `Mutex`, and no thread-local storage, and no async or
-  coroutines. Two leaks are admitted: a panicking worker's frame is abandoned,
+  are no channels, no async and no coroutines, with no roadmap item tracking
+  any of the three yet. **(open)** `Mutex` and thread-local/per-CPU storage
+  are different: both are named backlog items (`Mutex` alongside the threads
+  work; thread-local storage as B-11, MK9-S3-M3) rather than ruled out, they
+  are simply not built. Today's one shared-mutable shape is `Atomic<T>`; a
+  worker that needs to share something bigger takes its own copy instead, the
+  way `examples/download_pool.kp` gives each thread its own `http.Pool`. Two
+  leaks are admitted: a panicking worker's frame is abandoned,
   and a handle nobody joins is detached with its worker record leaked, because
   v1 has no `must_use` and no user `Drop`. A worker that returns `unit` joins
   to `Result<unit, ThreadErr>` with nothing in its `Ok`, the same shape
@@ -166,10 +187,33 @@ and `std/ws` is §16.18 of the same document.
 
 ## Not present at all
 
-No `unsafe`, no exceptions, no garbage collector, no macros, no traits, no
-interfaces, no operator overloading, no `dyn` dispatch, no lifetime syntax, no
-closures that capture a borrow, no named nested functions, and no undefined
-behaviour escape hatch.
+**Settled for good**, with no roadmap item working toward them: no
+exceptions, no garbage collector, no macros, no operator overloading. These
+are the headline design, not gaps: ownership without a GC, `Result` instead
+of throwing, and text substitution (`kelpc`'s aliases) instead of a hygienic
+macro system.
+
+**(open)** The rest of this list is absent from v1 today but is either an
+active roadmap item or a named future milestone, not a closed decision:
+
+- **`unsafe`, raw pointers, pointer arithmetic, casts.** Backlog item B-3,
+  MK9-S2-M1. Without it there is no kernel, no driver, no allocator, no FFI:
+  the one structural reason systems work is out of reach today.
+- **Traits, interfaces, `dyn` dispatch.** A-12. Slice 1 already shipped (a
+  `datac`/`enum` can declare its own `hash`/`eq` pair, and a concrete `enum`
+  can declare a receiver method); named traits, user `Drop` and dynamic
+  dispatch are slice 2 and beyond, unscheduled but named.
+- **Lifetime syntax, and the borrows it would allow in fields.** A-11/A-8.
+  This is why a `str`/`View` cannot be a `datac` field or an `enum` payload
+  today, and why a closure cannot capture a borrow: both need a way to say
+  what a stored borrow is tied to, which v1 does not have yet.
+- No undefined-behaviour escape hatch: this one stays true even once
+  `unsafe` ships, the same way Rust's `unsafe` does not mean "UB is allowed."
+- **Named nested functions.** No roadmap item names this one at all, closures
+  (a `fun` literal capturing a binding) shipped instead and cover most of
+  what a nested function would be for; a named one that can recurse or be
+  referenced before its own definition is simply an unanswered question
+  rather than a decision either way.
 
 ## See also
 
