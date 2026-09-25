@@ -74,6 +74,11 @@ A join is a barrier, so a worker's writes are visible to its joiner once its own
 join has returned. A panic ends the thread it happened in and the process
 survives it; a panic in `main` still exits.
 
+`thread.sleep_ms(ms)` and `thread.current_id()` sit beside `spawn`/`join` for a
+worker pool to use: sleeping backs off between empty pulls, and the id names
+which thread is running without the language handing out pool slots. Neither
+one touches the ordering model above they order nothing and share no cell.
+
 What a thread does **not** have in v1 is listed in
 [Limits in v1](/language/limits): one ordering, no channels, no `Mutex`, no
 thread-local storage, no async and no coroutines.
@@ -88,6 +93,6 @@ publishing it.
 ## See also
 
 - [`std/atomic`](/stdlib/atomic) for `Atomic<T>` and the `Ordering` enum
-- [`std/thread`](/stdlib/thread) for `spawn`, `join` and `fence(order)`
+- [`std/thread`](/stdlib/thread) for `spawn`, `join`, `fence(order)`, `sleep_ms` and `current_id`
 - [Limits in v1](/language/limits) for the concurrency that is not there yet
 - [Ownership and borrowing](/language/ownership) for the borrow rules a thread argument has to obey
