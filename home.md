@@ -77,7 +77,7 @@ by the first few lines of a file instead of by auditing it.
 <!-- roadmap:start -->
 ## Roadmap
 
-Of the 11 marks, **4 are done**, **5 in progress** (MK5, MK6, MK7, MK8, MK9), **0 not started** and 2 proposed. The critical path is at **MK6-S1-M1**: process threads, whose `thread.spawn`/`thread.join` half shipped and whose `thread.sleep_ms`/`thread.current_id` half (stage C2) has shipped too, so what is next is **MK6-S2-M1**, multithreaded downloads. No dates: the milestones are ordered by dependency, not by calendar. A
+Of the 11 marks, **4 are done**, **5 in progress** (MK5, MK6, MK7, MK8, MK9), **0 not started** and 2 proposed. The critical path's threads-and-downloads pair are both done: **MK6-S1-M1** (`thread.spawn`/`thread.join`, then `thread.sleep_ms`/`thread.current_id` as stage C2) and **MK6-S2-M1**, concurrent downloads with one connection pool per worker thread (`examples/download_pool.kp`). No dates: the milestones are ordered by dependency, not by calendar. A
 mark moves when its prerequisites land, and `plan/roadmap.md` is the record.
 
 ```mermaid

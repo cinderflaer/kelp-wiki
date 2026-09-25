@@ -83,6 +83,30 @@ What a thread does **not** have in v1 is listed in
 [Limits in v1](/language/limits): one ordering, no channels, no `Mutex`, no
 thread-local storage, no async and no coroutines.
 
+## A worked example: concurrent downloads
+
+`examples/download_pool.kp` (MK6-S2-M1) is the payoff of the rules above: N
+paths fetched from one host by four worker threads, each holding its own
+[`http.Pool`](/stdlib/http) and never sharing it with another thread. A pool's
+`var idle` field is exactly the shared mutable state a `thread.spawn` argument
+is refused for, so the only way to give a worker a keep-alive pool is to let it
+build its own the moment it starts, which is what each of the four does with
+`http.pool(host, port)`.
+
+The path list is split across the four workers by a static round robin
+*before* any of them is spawned, not pulled from a shared queue while they run:
+`Thread<T>` cannot be a `List`, `Map`, `Box` or array element (a handle is
+joined once, while a container's own routines copy and drop an element like a
+plain location), and v1 has no `Mutex` and no channel to protect a shared queue
+with even if one could be built. Four workers are therefore four named
+`Thread<Outcome>` locals, joined in a fixed order, the same shape
+[`std/thread`'s stress test](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/kelpc/tests/fixtures/thread_stress.kp)
+uses for its eight.
+
+No language or stdlib change was needed for this milestone: everything it
+uses (`thread.spawn`/`thread.join`, an explicit `Pool`, `List`) already existed
+once threads did.
+
 ## Where the definition lives
 
 The definition of the model on record is `plan/mk9-memory-model.md` section 3
