@@ -1,24 +1,78 @@
 ---
 title: "Concurrency in v1"
-description: "One ordering, SeqCst, real threads, and the single shared borrow that may cross one. The model is stated by syntax.md section 12.6."
+description: "The language's own memory model: why a data race does not compile, one ordering (SeqCst), the one borrow that may cross a thread, and the panic policy."
 isPublished: true
 tags: "language, concurrency"
 ---
-Source section:
-[`syntax.md` §12.6](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
+This page is the model's own definition (MK9-S3-M2), not a pointer to one:
+what a data race is, why v1 refuses to let one compile, what a thread may
+share, and what happens when one panics. `plan/mk9-memory-model.md` is the
+design record it was decided from, kept for the reasoning that did not need to
+survive into this page, and `syntax.md` §12.5-12.6 is the syntax authority for
+the surface this page describes.
 
-v1 has one ordering and real threads. What ships is a memory model with a single
-ordering, an atomic cell, a fence, and `thread.spawn`/`thread.join`: the cell is
-what a worker and its joiner **do** share, and the way it is shared is a rule of
-the checker rather than a runtime instrument.
+v1 has one ordering and real threads. What ships is a memory model with a
+single ordering, an atomic cell, a fence, and `thread.spawn`/`thread.join`: the
+cell is what a worker and its joiner **do** share, and the way it is shared is
+a rule of the checker rather than a runtime instrument.
+
+## Why a data race does not compile
+
+A race needs four things at once: one location, two threads, at least one
+write, and no ordering between them. v1 removes them one at a time, at compile
+time, rather than catching one at run time or leaving the discipline to a
+library type:
+
+- **A `&mut T` never crosses a thread boundary.** A borrow's lifetime in v1 is
+  lexical in the frame that made it, so the checker cannot prove the sender
+  stays out of the value while the thread runs. A `thread.spawn` argument is
+  therefore always an owned value, moved in, or the one shared shape below.
+- **A shared borrow (`&T`) crosses in exactly one shape**: only from a `pd`
+  whose pointee has no reachable `var` field. The first clause is checkable
+  lexically, because a `pd` global's lifetime is the process and a frame
+  local's is not. The second is the same rule `Sync` states: an `Atomic<T>`
+  has no `&mut` path by construction, so a `&AtomicI64` may be shared across
+  threads, and a `datac` with a reachable `var` field may not, because two
+  threads could otherwise write it through the same shared borrow.
+- **Everything else crosses by being moved**, the same rule that already
+  governs a `move T` parameter: a value moved to a thread is owned by that
+  thread for as long as it holds it.
+- **A moved value may not contain a borrow.** This is not a new rule:
+  `types::is_borrowed_field_ty` already refuses a `&T`, `str` or `View` in a
+  `datac` field, an enum payload, a `List` element or a `Map` value, so no such
+  value could be constructed in the first place.
+
+Three alternatives were considered and rejected, each for a reason worth
+keeping on record:
+
+- **Not a runtime race detector.** A ThreadSanitizer-shaped check turns a race
+  into a failure at run time when the language's promise is that the *program
+  does not compile*; it also needs a runtime that a freestanding target does
+  not have, and it makes "correct" a property of the test run rather than of
+  the source. A dynamic checker is still wanted as a *testing instrument*
+  (a Miri-equivalent, proposed for MK11-S2-M1) — evidence about the checker,
+  not the enforcement mechanism.
+- **Not channels-only.** A channel is a value type a program may use, and a
+  reasonable one to add later, but it cannot be *the* mechanism: a
+  channel-only model still lets two threads hold a `&mut T` to one location if
+  nothing refuses it. The rule above is what makes the race unwritable; a
+  channel would be one of the ways to obey it.
+- **Not `Mutex`-only, for the same reason.** A lock is a library type that
+  needs the same checker rule to be sound underneath it, so the rule comes
+  first and a lock is a later convenience, not the foundation.
+
+Neither a channel nor a `Mutex` ships in v1 (see [Limits in v1](/language/limits)):
+the rule above is what a program has today, and it is enough to share one
+scalar through an atomic.
 
 ## One ordering: `SeqCst`
 
 `SeqCst` means what C11, C++11 and LLVM `seq_cst` mean: **one total order over
 every sequentially consistent operation, with each operation ordered
 consistently with that total order and with program order**, and with no data
-race among the atomic operations themselves. That is the whole claim: v1 does
-not invent a model, it borrows one and names it.
+race among the atomic operations themselves. v1 does not invent a new model
+here: it takes the one three other systems already define and states it as
+its own.
 
 Every atomic operation and the fence take the ordering as an argument:
 
@@ -35,11 +89,24 @@ fun main() {
 }
 ```
 
-v1 has **exactly one** ordering, so `SeqCst` is the only value that argument can
-take. The argument is not ceremony: it is the slot that reserves the position
-for `Relaxed`, `Acquire` and `Release` later. Adding one widens the `Ordering`
-enum and changes no signature, so no v1 program breaks and no call site moves;
-naming one that does not exist yet is the ordinary unknown-variant error.
+v1 has **exactly one** ordering, so `SeqCst` is the only value that argument
+can take. The argument is not ceremony: it is the slot that reserves the
+position for `Relaxed`, `Acquire` and `Release` later. Adding one widens the
+`Ordering` enum and changes no signature, so no v1 program breaks and no call
+site moves; naming one that does not exist yet is the ordinary unknown-variant
+error. `Ordering` is a **builtin `enum`**, not a constant, so the exhaustiveness
+check applies to it: the day a second variant exists, every `when` over an
+ordering is re-checked, and the compiler names the missing arms instead of
+silently falling into a default.
+
+On x86-64 the `SeqCst` cost is real but narrow (extra cost only on a store,
+roughly 3.5 ns against 0.2 ns, an `XCHG` or `MFENCE` instead of a plain `MOV`;
+a load or a read-modify-write such as `fetch_add`/`compare_exchange` costs the
+same at any ordering). On ARM and RISC-V the gap would be larger, since even
+acquire and release need real barriers there. What the weaker orderings buy is
+lock-free structures and spinlocks for kernel-grade code, which is not v1's
+target — so v1 ships the one ordering everything else can be checked against,
+and leaves the others to be added, not designed around, later.
 
 ## The cell two threads share
 
@@ -71,17 +138,33 @@ checker applies to a `spawn` call:
 `thread.join` consumes the handle and hands back `Ok` with the value the worker
 returned or `Err` with a [`ThreadErr`](/stdlib/thread) carrying the panic text.
 A join is a barrier, so a worker's writes are visible to its joiner once its own
-join has returned. A panic ends the thread it happened in and the process
-survives it; a panic in `main` still exits.
+join has returned.
 
 `thread.sleep_ms(ms)` and `thread.current_id()` sit beside `spawn`/`join` for a
 worker pool to use: sleeping backs off between empty pulls, and the id names
 which thread is running without the language handing out pool slots. Neither
 one touches the ordering model above they order nothing and share no cell.
 
-What a thread does **not** have in v1 is listed in
-[Limits in v1](/language/limits): one ordering, no channels, no `Mutex`, no
-thread-local storage, no async and no coroutines.
+### The panic policy
+
+**A panic ends the thread it happened in, and the process survives.** A worker
+that panics is seen as `Err` by its joiner, carrying the panic text (which
+already names the `.kp` line it died at), and every other worker keeps
+running: one bad URL in a download pool does not take the other workers with
+it. The main thread keeps the older behaviour, since nothing has changed for a
+program that spawns nothing: a panic in `main`, or in a worker nothing joins
+before the process ends, still ends the process with `exit(1)`.
+
+**v1 has no unwinding, and the consequence is admitted rather than hidden.**
+Kelp has no exceptions, no `catch` and no user `Drop` yet, so a panicking
+worker's frame is abandoned: the owned values it held are never dropped. That
+is a deliberate trade against the two alternatives, both worse here: real
+unwinding needs a `Drop` story the language does not have, and aborting the
+whole process is exactly what this policy removes. A handle nobody joins is
+the same shape: dropping it detaches the worker, which keeps running, and its
+result slot is leaked rather than freed out from under it. Both leaks close
+when user `Drop` ships (MK9-S6-M1); until then, a program that spawns threads
+accepts them as the cost of surviving a single worker's failure.
 
 ## A worked example: concurrent downloads
 
@@ -107,12 +190,21 @@ No language or stdlib change was needed for this milestone: everything it
 uses (`thread.spawn`/`thread.join`, an explicit `Pool`, `List`) already existed
 once threads did.
 
-## Where the definition lives
+## What is still open
 
-The definition of the model on record is `plan/mk9-memory-model.md` section 3
-until **MK9-S3-M2** states it as the language's own. `syntax.md` §12.6 is the
-interim statement, and it borrows the definition by reference rather than
-publishing it.
+Four questions were deliberately left for when they actually come up, rather
+than decided speculatively; none of them blocks anything above:
+
+- **`compare_exchange`, strong form only, or a `_weak` alongside it?** The weak
+  form only helps inside a loop that retries anyway.
+- **A `pd` atomic inside a capability-gated module** is a capability question
+  as well as a memory-model one, scoped to MK10-S1 (capability model
+  extensions), where the vocabulary for it lives.
+- **`Relaxed`, `Acquire` and `Release`** are reserved argument values, not
+  shipped: see "One ordering" above.
+- **Channels and a `Mutex`** are reasonable additions once a program wants
+  more than one shared scalar, and neither changes the rule above; they would
+  be built on it.
 
 ## See also
 
