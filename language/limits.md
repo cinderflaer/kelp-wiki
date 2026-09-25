@@ -148,8 +148,9 @@ and `std/ws` is §16.18 of the same document.
   are no channels, no `Mutex`, and no thread-local storage, and no async or
   coroutines. Two leaks are admitted: a panicking worker's frame is abandoned,
   and a handle nobody joins is detached with its worker record leaked, because
-  v1 has no `must_use` and no user `Drop`. A worker that returns `unit` cannot
-  be joined at all yet, which `KelpLANG/ISSUES.md` records as `MISSING-r7Wqb`.
+  v1 has no `must_use` and no user `Drop`. A worker that returns `unit` joins
+  to `Result<unit, ThreadErr>` with nothing in its `Ok`, the same shape
+  `None` already has.
   `thread.fence(order)` in [`std/thread`](/stdlib/thread) joins the total order
   while naming no location, and changes nothing a single-threaded program can
   observe. [Concurrency in v1](/language/concurrency) has the model as it

@@ -84,10 +84,11 @@ holds it: a `&mut T` argument is refused, because an exclusive borrow promises
 that no other path reaches the value and the worker outlives the frame that made
 the borrow.
 
-A worker that returns nothing gives `Thread<unit>`, and a `Thread<unit>` handle
-**cannot be joined yet**: neither backend can lay out `Result<unit, ThreadErr>`.
-`KelpLANG/ISSUES.md` records that gap as `MISSING-r7Wqb`. Give the entry point a
-return type until it is closed.
+A worker that returns nothing gives `Thread<unit>`, and joining one hands back
+`Result<unit, ThreadErr>` whose `Ok` carries nothing: an `Ok` (or `Some`)
+instantiated with `unit` lays out payload-less, the same shape `None` already
+has, so the join succeeds and `Ok(v) -> ...` binds `v` to a value with nothing
+in it.
 
 ## Joining it
 
