@@ -196,6 +196,10 @@ the repository's own Kelp sources.
 
 ## Benchmarks
 
+The kernels below are the compiler's own speed gates, written in Kelp, Rust, C++
+and Python. The C++/Rust/Kelp suite over the standard problem set is a different
+thing and lives at [Benchmarks](/compiler/benchmarks).
+
 Two benchmarks under `bench/`, each with a recorded `results.txt`:
 
 | Benchmark | What it measures |
