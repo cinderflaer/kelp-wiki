@@ -145,10 +145,19 @@ print(runs.get(key = 7))
   copies it in), a scalar key is passed by value, and a user key type is passed by
   shared borrow. That split is why
   [`set`](/libraries/set) ships two types instead of one generic set.
+- **`Map.with_capacity(n)` sizes both buffers up front.** The count is a hint and
+  never a fence: the index and the entry array start with room for `n` entries, a
+  map that outgrows it grows exactly like one that started empty, and insertion
+  order, `keys()` order and tombstone reuse are unchanged. It is the constructor
+  for a caller that knows how many entries it is about to insert, and the only
+  way to pay the growth once rather than as a series of rebuilds. The argument
+  takes the binding's written types for `K` and `V`, as `Map.new()` does, because
+  it is a count and not an element.
 
 | Method | Returns |
 | --- | --- |
 | `Map.new()` / `Map.empty()` | an empty map; key and value types from the binding, or from the first `insert` |
+| `Map.with_capacity(n)` | the same empty map with room for `n` entries; `n` is a `usize` or an `i64` |
 | `len()` / `is_empty()` | `usize` / `bool` |
 | `insert(key, v)` | `Unit`; stores `true`-style upsert |
 | `get(key)` | the value, or a borrow of it; panics when absent |
