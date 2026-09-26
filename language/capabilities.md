@@ -37,8 +37,13 @@ instead of by auditing it.
   gate, and a gated item **cannot be named as a function value at all**: the
   compiler refuses `val f = fs.read` and `val f = fs.read_raw` by name, whether
   the naming module holds the domain or not.
-- **The entry module holds the wildcard for every domain**, so a single-file
-  program needs no grant for its own calls.
+- **The entry module holds the wildcard for every domain** by default, so a
+  single-file program needs no grant for its own calls. A project's
+  `coral.toml` can narrow this with a `[caps]` section (see
+  [Coral: the manifest](/tooling/coral#the-manifest)), which is the only way
+  to give the entry module itself less than everything: a `caps(...)` clause
+  on one of the entry module's own `impl` lines still grants the *imported*
+  module, never the entry module.
 - **Every other module holds exactly what its importer granted it, and nothing
   else.** A module can delegate less than it holds, never more: granting a pattern
   the importer does not hold is an error.
@@ -195,7 +200,11 @@ value.
 
 ## Testing a restriction
 
-The entry module holds everything, so the interesting module sits one level down:
+The entry module holds everything by default, so the interesting module has
+traditionally sat one level down; `coral.toml`'s `[caps]` section can restrict
+the entry module itself instead (see
+[Coral: the manifest](/tooling/coral#the-manifest)). The one-level-down shape
+below still works and is the simpler option for a quick test:
 
 ```kelp
 // sandbox.kp — a module with exactly one directory
