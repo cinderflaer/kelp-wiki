@@ -48,6 +48,7 @@ archived in
 - [Backends](/compiler/backends): `llvm`, the one backend, and why `c` stays the oracle
 - [Runtime](/compiler/runtime): the C that is still C, and the capability matcher
 - [Tests](/compiler/tests): the fixture suite, the differential sweeps, the memory gate
+- [Benchmarks](/compiler/benchmarks): the C++/Rust/Kelp suite, its current table, and what it has changed
 
 ## See also
 

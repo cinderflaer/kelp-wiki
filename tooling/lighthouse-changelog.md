@@ -10,7 +10,7 @@ pieces move at their own speed, so each entry says which one it is.
 | Piece | Where it is | Version today | How it is published |
 | --- | --- | --- | --- |
 | IntelliJ plugin | `intellij/` | 26.09.2 | Gitea releases, tag `intellij-v<version>`, plus a self-hosted update site |
-| Language server | `server/` | 26.9.3 (`26.09.3` in `serverInfo`) | `cargo build --release -p lighthouse`; no release assets |
+| Language server | `server/` | 26.9.4 (`26.09.4` in `serverInfo`) | `cargo build --release -p lighthouse`; no release assets |
 
 The VS Code extension was dropped on 2026-09-24: IntelliJ is the only client
 today, and `vscode/` is gone from the repository. Its entries below stay, since
@@ -39,6 +39,24 @@ string an editor shows matches the release.
 | [IntelliJ 0.2.0](#intellij-plugin-020-2026-09-19) | 2026-09-19 | the project's kelp version, from the project |
 | [IntelliJ 0.1.1](#intellij-plugin-011-2026-09-19) | 2026-09-19 | the auto-update feed, and the New Project entry |
 | [Lighthouse v1 (0.1.0)](#lighthouse-v1-no-release) | 2026-09-19 | first version: LSP diagnostics, VS Code extension, IntelliJ plugin |
+
+## Language server 26.09.4 (no release)
+
+No tag and no release: only the IntelliJ plugin has those, and nothing about the
+plugin changed here. This entry records the server version move, the way the rule
+at the top of this page says.
+
+- **The debounced re-check after a change waits 150ms instead of 300ms**, so an
+error shows up sooner while still typing.
+- **`kelpc lint` findings publish as `Hint`-severity diagnostics** on open and
+save: the `else if` that wants to be `elif`, and a run of `//` comments that
+wants to be one `/* ... */` block, both offered as quick fixes.
+- **The auto-import quick fix fires from `kelpc`'s own "call to undefined
+function"/"unknown type" diagnostic too**, not only from the server's own
+text-level resolution, so a name the index missed as unresolved still gets the
+fix.
+
+The server reports `26.09.4` in `serverInfo`.
 
 ## Language server 26.09.3 (no release)
 

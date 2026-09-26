@@ -26,13 +26,21 @@ The split explains what the server can and cannot do, and it is worth reading
 before trusting a squiggle or a completion.
 
 **`kelpc` is the authority on what compiles.** On open, on save, and a debounced
-moment after a document changes, the server runs `kelpc check --json` on the
+moment after a document changes (150ms), the server runs `kelpc check --json` on the
 current file's project and turns each finding into a diagnostic, with the span
 `kelpc` reports and the kind it reports it as (`error`, `warning` or `outdated`),
 grouped by the file each finding actually points at. `kelpc` reads the file on
 disk, so a check after a change reports the last saved text. It finds the compiler
 through `$KELPC` first (`server/src/diagnostics.rs`), which is what makes a
 development build of the compiler usable with a release build of the server.
+
+On open and on save the server also runs `kelpc lint` on the file and publishes
+its findings — `elif` preferred over `else if`, a run of `//` lines preferred as
+one `/* ... */` block — as `Hint`-severity diagnostics, one step milder than
+`outdated`. Two of them are quick fixes too: the `else if` finding rewrites to
+`elif`, and the comment-run finding merges the run into one block comment.
+`kelpc lint` has no `--text` mode, so these tips see the last saved text, the
+same limitation `check` has before a save.
 
 **Everything else comes from an index the server builds itself.** `kelpc` has no
 way to be asked about a symbol, so `server/src/index.rs`
@@ -43,7 +51,7 @@ What that means per feature:
 
 | Feature | Where the answer comes from | What a wrong answer costs |
 | --- | --- | --- |
-| Diagnostics | `kelpc`, run on open, on save and once a change has settled | none: the compiler is the authority |
+| Diagnostics | `kelpc check`, run on open, on save and once a change has settled; `kelpc lint`'s style tips, run on open and save, at `Hint` severity | none: the compiler is the authority |
 | Completion | the index | a missing or lower-ranked item |
 | Hover, inlay hints | the index, including the little it can infer | an absent or less precise type |
 | Go-to-definition, symbols | the index | a jump that is not offered |
@@ -67,7 +75,7 @@ file's own `fun` declarations plus the free-standing builtins (`print`, `print!`
 | Feature | What it does |
 | --- | --- |
 | Completion | names in scope, this file's declarations, imported namespaces, builtins and keywords (`pub`, `move`, `if let`, the tuple and array type spellings, both capability-clause forms); after a `.` it offers a `datac`'s fields, an `enum`'s variants, `fun Type.method` declarations, and the compiler's own methods on `List`, `Map`, `Box`, `String`, `Bytes`, `Atomic` and `View`; the compiler's own `fence`, `spawn`, `join` and `encoding.sha1` complete like any declaration |
-| Auto-import | `str.con` completes to `concat`, and accepting it writes `impl "std/str"` at the top of the file; the same fix is a code action on a name that resolves nowhere (`Import "shapes/circle" and qualify as circle.Circle`), and `impl "` completes module paths |
+| Auto-import | `str.con` completes to `concat`, and accepting it writes `impl "std/str"` at the top of the file; the same fix is a code action on a name that resolves nowhere (`Import "shapes/circle" and qualify as circle.Circle`), and `impl "` completes module paths; it also fires from `kelpc`'s own "undefined function"/"unknown type" diagnostic, not only from the index's own resolution |
 | Hover | the declaration as written, its `///` documentation, and where it came from; `fence`, `spawn`, `join` and `encoding.sha1` hover like any declaration, and a binding shows the type the index could infer |
 | Go-to-definition | into a project file or into the standard library, from a vendored copy of the shipped sources |
 | Signature help | parameter names and types with the active argument tracked, including named arguments |

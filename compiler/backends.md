@@ -160,20 +160,38 @@ measurement over the corpus, not as a promise that the backend can never refuse.
   semantics mapped onto LLVM's model, which includes the new UB surface: no
   `nsw`/`nuw`, no `inbounds`, and `noalias` only where the borrow checker proves
   it. `-fwrapv` stops being a flag on the C path and becomes "we never write the
-  flag that would make overflow undefined".
+  flag that would make overflow undefined". A `while` whose condition states an
+  upper bound as a literal of 16 or less is marked `llvm.loop.unroll.full`, so
+  the tiny index loops become straight-line code and the SLP vectorizer can pack
+  them; the `pd` hidden parameter is the one parameter that is never `noalias`,
+  because a callee holding the global's own address writes memory the attribute
+  would claim nobody else touches.
 - **The runtime's one home:** `kelpc/runtime/kelp_rt.c` holds the
   bytes/string routines, `kelp_panic`/`kelp_assert`, the allocation helpers and
   `kelp_argc`/`kelp_argv`. `codegen_c.rs` still emits that text into every
   generated C program, byte for byte; the `llvm` path links it as an object that
   `kelpc/build.rs` compiles from the same file. One source, so the panic text
   and the `Bytes`/`String` invariants cannot drift between the backends.
+- **The small builtin bodies are in the module too, and the object stays the
+  copy of record:** `codegen_llvm.rs` emits bodies for `Bytes`, `String` and
+  `View`'s `len`, `is_empty`, `get`, `set`, `push`, `push_str` and `reserve` with
+  internal linkage, so the module's own `-O2` inlines them at the call site the
+  way the C backend's spliced copy already is, and crosses into the object only
+  when a buffer really has to grow. Both definitions exist and never meet, since
+  an internal definition is no link-time name. Nothing observable moves: the
+  bodies, their bounds checks and their panic strings are the runtime file's own,
+  and the runtime object and the C backend still define every one of them.
 - **The `extern fun` bodies are the C backend's own text too:** `externs.rs` holds
   the C for every compiler-supplied `extern fun`, and `codegen_c.rs` writes it
   into every generated C program. The `llvm` path writes the same text to
   `<out>.externs.c`, with the C backend's own includes, typedefs and prototypes,
   and links the object it compiles between the IR object and `-lm`. A fixed
   object cannot work, because one body calls a `std/path` function only the
-  resolver injects and another names a per-program container typedef.
+  resolver injects and another names a per-program container typedef. One extern
+  is declared rather than called: `std/math`'s `sqrt_raw` is `llvm.sqrt.f64` in
+  the LLVM backend, so its C text is still written and linked but the object no
+  longer calls it. That is not cosmetic for the vectorizer, which will not pack a
+  loop whose body contains a real call.
 - **Where it stands:** S6 (the optimization-level decision) and S7 (the flip)
   landed on 2026-09-21, so `build` and `run` take `-O0`, `-O1`, `-O2`, `-O3` or
   `-Os`, with `-O2` the default, and `llvm` is the one backend a person can build

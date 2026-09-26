@@ -16,7 +16,11 @@ it as an object `kelpc/build.rs` compiles from the same file. One source, so the
 panic text and the `Bytes`/`String` invariants cannot drift between the two
 backends. `kelpc/runtime/` holds the runtime pieces that are not spliced in as
 text: the C that stayed, the C references kept as oracles, and the newest pair,
-a parser written in Kelp with its C reference beside it.
+a parser written in Kelp with its C reference beside it. The LLVM backend also
+emits the small `Bytes`/`String`/`View` bodies into the module it is compiling,
+with internal linkage, so they inline there instead of crossing into the object;
+the object keeps every definition for the paths that stay out of line, and the C
+backend is unchanged.
 
 Since MK7 stage S3A the compiler-supplied `extern fun` bodies are compiled the
 same way: `externs.rs` holds that C text, `codegen_c.rs` writes it into every
@@ -24,7 +28,9 @@ generated program, and the `llvm` path writes the same text to `<out>.externs.c`
 and links the object it compiles, beside the runtime object and before `-lm`. It
 is built per program rather than shipped fixed, because one body calls a
 `std/path` function only the resolver injects and another names a per-program
-container typedef.
+container typedef. `std/math`'s `sqrt_raw` is the one body the LLVM backend does
+not call: it declares `llvm.sqrt.f64` in its place, so the C text is written and
+linked and simply unreferenced on that path.
 
 | File | Status | Role |
 | --- | --- | --- |

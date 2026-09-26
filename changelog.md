@@ -49,6 +49,51 @@ this page is the index to it.
 | [0.1.1](#011-2026-09-19) | 2026-09-19 | the `for` loop, `spawn_in`/`run_in`, fallible `try_run`, `fs.symlink` |
 | [0.1.0](#010-no-release) | 2026-09-19 | first tag: the core language, modules, containers, capabilities, stdlib |
 
+## 26.09.4 (2026-09-26)
+
+[Release](https://homelabone.xenoo.dev/gittea/Juniper/kelp/releases/tag/v26.09.4)
+· 37 commits · 203 unit tests, 473 end-to-end green.
+
+**The small builtin bodies are inlined.** `Bytes`, `String` and `View`'s `len`,
+`is_empty`, `get`, `set`, `push`, `push_str` and `reserve` were calls into a
+separately linked runtime object, while the C backend splices the same text into
+its own translation unit and lets clang inline it. The LLVM backend now emits
+those bodies as IR with internal linkage, so its own `-O2` inlines them, and
+crosses into the object only when a buffer really has to grow. The bodies, their
+bounds checks and their panic strings are the runtime file's own, and the
+runtime object and the C backend still define every one of them. The `strings`
+category went from 20.9ms to 9.3ms.
+
+**`Map`'s index is half the size, and `Map.with_capacity(n)` exists.** An index
+slot was an `i64` under a `4x len` growth policy, which for three million entries
+meant a 134MB index rebuilt about twenty times, with every probe touching that
+footprint. The slot is now `u32`, the container function sets carry internal
+linkage too, and the new constructor sizes both buffers up front from the
+binding's written types, taking its count as a `usize` or an `i64`. The count is
+a hint, never a fence: a map that outgrows it grows exactly like one that
+started empty.
+
+**Small constant-bound loops unroll, `mut` parameters are `noalias`, and `sqrt`
+is the intrinsic.** LLVM's reasons for refusing an N-body pair loop were "call
+instruction cannot be vectorized" and then "unsafe dependent memory operations
+in loop": `std/math`'s `sqrt_raw` is now `llvm.sqrt.f64` in the LLVM backend, a
+parameter an exclusive borrow proves exclusive is marked `noalias` (never the
+`pd` hidden parameter, since a callee holding the global's own address writes
+memory the attribute would claim nobody else touches), and a `while` whose
+condition states a literal upper bound of 16 or less is marked
+`llvm.loop.unroll.full`, which turns the inner index loops into straight-line
+code the SLP vectorizer packs into `sqrtpd`/`divpd`. Instructions per step in
+that kernel fell from 835 to 449, against the C reference's 487.
+
+**The benchmark suite is published.** Thirteen categories over three languages,
+every program's stdout compared byte for byte before its timing is trusted, six
+of them ports of the Computer Language Benchmarks Game problems whose C++ and
+Rust files are the published submissions. Kelp is first in seven categories,
+ahead of the C++ reference outright in `fasta` at 633ms against 679ms over
+25,000,000 characters, and 3.06x ahead of C++ in `collections` on identical
+keys. The table, the method and the caveats are at
+[Benchmarks](/compiler/benchmarks).
+
 ## 26.09.3 (2026-09-25)
 
 [Release](https://homelabone.xenoo.dev/gittea/Juniper/kelp/releases/tag/v26.09.3)
