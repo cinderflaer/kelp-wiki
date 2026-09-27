@@ -30,7 +30,8 @@ The domain each module needs comes from the compiler's own table
 | `std/fs` | `fs` | read, write, walk, metadata |
 | `std/process` | `process` | `args`, `spawn`, `run`, `exit` |
 | `std/net` | `net` | TCP connect/listen/accept, `send`/`recv` |
-| `std/http` | `net` (held) | an HTTP/1.1 client; ungated itself, but importing it needs `net` delegated |
+| `std/http` | `net` (held) | an HTTP/1.1 client, `http` and `https`; ungated itself, but importing it needs `net` delegated |
+| `std/tls` | `net` (held) | client-side TLS for `https`; wraps a connection `std/http` already opened, never dials its own |
 | `std/ws` | `net`, `rand` (both held) | a WebSocket client (RFC 6455) over `ws://`; importing it needs both delegated, `net` for the socket and `rand` for the handshake key and every masking key |
 | `std/time` | `time` | `now_unix`, `now_mono_ns`, `sleep_ms` |
 | `std/rand` | `rand` | unseeded `u64`, `below`, `bytes` |
@@ -74,6 +75,7 @@ The builtins are described in [Text](/language/text) and
 | `process` | [`std/process`](/stdlib/process) |
 | `net` | [`std/net`](/stdlib/net) |
 | `http` | [`std/http`](/stdlib/http) |
+| `tls` | [`std/tls`](/stdlib/tls) |
 | `ws` | [`std/ws`](/stdlib/ws) |
 | `time` | [`std/time`](/stdlib/time) |
 | `rand` | [`std/rand`](/stdlib/rand) |

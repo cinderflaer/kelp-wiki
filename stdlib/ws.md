@@ -210,9 +210,11 @@ fun main() {
 
 ## Notes
 
-- **`wss://` is refused by name**, because v1 has no TLS; `std/http`'s client has
-  the same limit for `https`. Nothing about the framing depends on the transport,
-  which is why the client ships first.
+- **`wss://` is refused by name.** `std/http` no longer shares this limit
+  (MK5-S4b-M1 shipped [`std/tls`](/stdlib/tls) for `https`), but
+  WebSocket-over-TLS is a separate, unscheduled milestone: nothing about the
+  framing depends on the transport, which is why the plain client shipped
+  first either way.
 - **A refused dial is a value, a head that is not HTTP is not.**
   `ws.try_connect` returns `WsErr.Dial` for a dial that failed and
   `WsErr.Handshake` for a peer that answered something other than `101`, so a

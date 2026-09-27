@@ -293,6 +293,7 @@ does not know yet.
 | Section | Shape | Notes |
 | --- | --- | --- |
 | `[caps]` | `domain = ["pattern", ...]` | read by `kelpc`, not Coral — restricts the entry module's own capability grant; see [below](#caps-the-entry-modules-own-grant) |
+| `[extern."<module id>"]` | `domain`/`library`/`symbols` | read by `kelpc`, not Coral — assigns a user module a capability domain and a native FFI surface; see [below](#extern-user-modules-that-bind-a-native-symbol) |
 | `[tasks]` | `name = "path/to/file.kp"` | each task compiles as its own unit, and `src/tasks/` is where `init` puts them |
 | `[dependencies]` | `name = "owner/repo[/folder]"` | see [Dependencies](#dependencies) |
 | `[toolchain]` | `kelp = "v0.1.4"` | written by `coral toolchain kelp pin`, a line edit that leaves comments and section order alone |
@@ -354,6 +355,63 @@ net = ["api.example.com:443"]
   delegate less than it has, never more") now has a real ceiling to check
   `main`'s own delegations against, instead of the wildcard always satisfying
   it.
+
+### `[extern."<module id>"]`: user modules that bind a native symbol
+
+`extern fun` used to be compiler-only: user code got "only compiler-shipped
+stdlib modules may declare 'extern fun'", because a raw `extern fun` bypasses
+`caps(...)` by construction — nothing would check what it actually reaches.
+MK9-S1-M1 (roadmap B-1) opened that door for a manifest-declared module
+instead of removing the check: `coral.toml` assigns a user `.kp` module one of
+the **six existing capability domains** (`fs`, `net`, `process`, `env`,
+`time`, `rand`, no new domain vocabulary) plus the native `library` and the
+exact `symbols` its `extern fun` declarations may bind to. Once assigned, the
+module is gated exactly like a stdlib one: an importer writes
+`impl "sys" caps(process = [pattern])` the same as it would for `std/process`.
+
+```toml
+# myproject/coral.toml
+name = "myproject"
+entry = "src/main.kp"
+
+[extern."sys"]
+domain = "process"
+library = "c"
+symbols = ["getpid"]
+```
+
+```kelp
+// src/sys.kp
+pub extern fun getpid().R: i32
+```
+
+```kelp
+// src/main.kp
+impl "sys" caps(process = ["/**"])
+
+fun main() {
+    print(sys.getpid() > 0)
+}
+```
+
+- **The section header names the module by its id** (the path Kelp imports it
+  under, `"sys"` for `src/sys.kp`), quoted, as `[extern."<module id>"]` — a
+  bare `[extern.sys]` is refused, since the header has to carry an arbitrary
+  module id rather than a bare TOML key.
+- **`domain`** must be one of the six existing names; an unknown one is the
+  same error an unknown domain gives on a `caps(...)` clause. **`library`** is
+  linked (`-l<library>`) on both backends' link lines, the same "an unused
+  library is free to link" reasoning `-lm`/`-lssl` already use. **`symbols`**
+  is the allowlist: an `extern fun` in that module typechecks only if its bare
+  name is in the list, and user FFI stays a 1:1 name mapping (no rename or
+  alias vocabulary in v1) — the symbol `codegen_c.rs` calls is the function's
+  own name.
+- **A module gets at most one `[extern.*]` entry**, and it must appear before
+  any other section that isn't `[caps]` (the same manifest-ordering rule
+  `[caps]` follows).
+- **What's not here yet**: `extern "C"` block syntax, variadics,
+  function-pointer types for user externs, and any link-flag/library-path
+  vocabulary beyond one `library` name per section.
 
 ## A worked session
 

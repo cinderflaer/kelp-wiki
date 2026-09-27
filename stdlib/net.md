@@ -157,8 +157,10 @@ fun main() {
   implementing your own back-pressure.
 - Blocking is the default. `set_timeout` and `wait_readable` are how a caller gets
   a bounded wait.
-- There is no TLS: `http.parse_url` refuses `https` and `ws.parse_url` refuses
-  `wss`, both by name rather than pretending.
+- `std/net` itself is plain TCP; TLS lives one layer up in
+  [`std/tls`](/stdlib/tls), which `http.parse_url` now uses for `https`
+  (MK5-S4b-M1). `ws.parse_url` still refuses `wss` by name: WebSocket-over-TLS
+  is not this milestone.
 - Errors panic rather than returning `Result`, with the one exception of
   `try_connect`, whose dial failure is the `Err` it exists to hand back.
 

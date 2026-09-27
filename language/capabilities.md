@@ -25,7 +25,12 @@ instead of by auditing it.
 - Six domains: **`fs`**, **`net`**, **`process`**, **`env`**, **`time`**,
   **`rand`**.
 - Each has a corresponding bare built-in namespace, and the *only* way to reach
-  the outside is through a stdlib module that holds it (`kelpc/src/stdlib.rs`).
+  the outside is through a stdlib module that holds it (`kelpc/src/stdlib.rs`)
+  — or, since MK9-S1-M1 (roadmap B-1), a **user** module a project's
+  `coral.toml` assigns one of these same six domains to, plus a native
+  library and an allowlisted symbol set, so its own `extern fun` declarations
+  can bind to a real C symbol. See [Coral: the manifest](/tooling/coral#extern-user-modules-that-bind-a-native-symbol).
+  No new domain names exist for this: the six above are still the whole set.
 - **Every item a gated module declares is gated**, not only the wrapper
   functions a program normally calls: the `extern fun` primitives behind them
   and the module's receiver methods are gated names too, so `fs.read_raw` and
@@ -169,6 +174,17 @@ impl "std/ws" caps(net = ["gateway.example.com:80"], rand = [])
 A program that leaves `rand` off does not build: a module holds exactly what its
 importer granted it, and the refusal names the call inside `std/ws`.
 
+`std/tls` is a sharper version of the same subtlety: its own `impl "std/net"`
+line carries **no** `caps()` clause at all, not even `caps(net = [])`. A
+grant is resolved one hop from the *importing program's* own `impl` line, so
+`net.connect` inside `std/http` is checked against whatever the program wrote
+on `impl "std/http" caps(net = [...])`; a `net.connect` written inside
+`std/tls` instead would be checked against `std/tls`'s own slot, which its
+bare `impl` line leaves permanently empty. `std/tls` avoids this by never
+dialing: `handshake` takes an already-connected `net.Socket` from `std/http`,
+so its bare `impl "std/net"` line exists only to name the type, not to call
+anything gated. See [`std/tls`](/stdlib/tls).
+
 When that delegation is missing and the failing module is **not** the one you
 wrote the call in, the diagnostic points at the link that broke: it names the
 `impl` line that imported the module with no `caps(...)` clause, and that line is
@@ -222,5 +238,7 @@ failure as a panic from the gated call.
 - [Capability patterns](/reference/capability-patterns): the pattern grammar in full
 - [`std/fs`](/stdlib/fs), [`std/net`](/stdlib/net), [`std/process`](/stdlib/process),
   [`std/env`](/stdlib/env), [`std/time`](/stdlib/time), [`std/rand`](/stdlib/rand),
-  [`std/ws`](/stdlib/ws)
+  [`std/ws`](/stdlib/ws), [`std/tls`](/stdlib/tls)
+- [Coral: the manifest](/tooling/coral#extern-user-modules-that-bind-a-native-symbol):
+  assigning a domain to a user FFI module
 - [Compiler](/compiler): how the check is implemented

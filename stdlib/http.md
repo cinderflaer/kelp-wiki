@@ -1,12 +1,12 @@
 ---
 title: "`std/http`"
-description: "An HTTP/1.1 client. Ungated itself, but it holds net - importing it requires delegating net on the impl line, and the grant the consumer writes is what governs every connection it makes."
+description: "An HTTP/1.1 client, http and https both. Ungated itself, but it holds net - importing it requires delegating net on the impl line, and the grant the consumer writes is what governs every connection it makes."
 isPublished: true
 tags: "stdlib, networking"
 ---
-An HTTP/1.1 client. Ungated itself, but it **holds `net`**: importing it requires
-delegating `net` on the `impl` line, and the grant the consumer writes is what
-governs every connection it makes.
+An HTTP/1.1 client, **`http` and `https` both**. Ungated itself, but it **holds
+`net`**: importing it requires delegating `net` on the `impl` line, and the
+grant the consumer writes is what governs every connection it makes.
 
 ```kelp
 impl "std/http" caps(net = ["api.example.com:443"])
@@ -14,7 +14,9 @@ impl "std/http" caps(net = ["api.example.com:443"])
 
 Naming `net.connect` needs the `net` domain, so a project that imports this module
 without delegating gets a compile error naming the module: not a client that
-fails at runtime.
+fails at runtime. `https://` needs nothing extra: the same grant covers it,
+because [`std/tls`](/stdlib/tls) never dials a socket itself, only wraps one
+this module already opened.
 
 ## Types
 
@@ -22,34 +24,75 @@ fails at runtime.
 datac Url(val scheme: String, val host: String, val port: u16, val path: String)
 datac Header(val name: String, val value: String)
 datac Response(val status: i32, val headers: List<Header>, val body: Bytes, val reusable: bool)
+datac RateLimit(
+    val limit: Option<u64>,
+    val remaining: Option<u64>,
+    val reset: Option<f64>,
+    val reset_after: Option<f64>,
+    val bucket: Option<String>,
+)
 datac Request(val method: String, val url: String, val headers: List<Header>, val body: Bytes)
 datac Client(val timeout_ms: u64, val max_redirects: i32, val follow_redirects: bool)
-datac Pool(val host: String, val port: u16, val size: usize, val timeout_ms: u64, var idle: List<i32>)
-datac Lease(val fd: i32, val reused: bool)
+datac Pool(val host: String, val port: u16, val size: usize, val timeout_ms: u64, var idle: List<Conn>)
+datac Lease(val fd: i32, val tls_handle: usize, val reused: bool)
+datac Conn(val fd: i32, val tls_handle: usize)
 ```
 
-Constants: `DEFAULT_SCHEME` (`http`), `DEFAULT_PORT` (`80`), `DEFAULT_TIMEOUT_MS`
-(`30000`), `DEFAULT_MAX_REDIRECTS` (`5`), and `pool_size`: spliced in by the
-compiler from the project's `http_pool` setting in `coral.toml` (default 4, `0`
-disables pooling).
+`Conn` is one open connection, plain or TLS, and replaces the bare `net.Socket`
+everywhere in this module: the dial, the pool, redirect-following and the
+framing reader dispatch on it without needing to know which kind they were
+handed. `tls_handle` is `0` for a plain connection (never a real handshake
+result).
+
+Constants: `DEFAULT_PORT` (`80`), `DEFAULT_HTTPS_PORT` (`443`),
+`DEFAULT_TIMEOUT_MS` (`30000`), `DEFAULT_MAX_REDIRECTS` (`5`), and `pool_size`:
+spliced in by the compiler from the project's `http_pool` setting in
+`coral.toml` (default 4, `0` disables pooling).
 
 ## Requests
 
 | Function | Returns | Notes |
 | --- | --- | --- |
-| `parse_url(s)` | `Url` | refuses `https` by name |
+| `parse_url(s)` | `Url` | accepts both `http://` and `https://`; the latter defaults to port 443 |
 | `default_client()` | `Client` | 30 s timeout, 5 redirects, following them |
-| `Client.send(req)` | `Response` | the whole exchange |
+| `Client.send(req)` | `Response` | the whole exchange, scheme decides plain or TLS |
 | `empty_headers()` | `List<Header>` | |
 | `Response.is_ok()` | `bool` | status in `200..299` |
 | `Response.text()` | `String` | the body as text |
 | `Response.has_header(name)` / `Response.header(name)` | `bool` / `String` | |
+| `Response.retry_after()` | `Option<u64>` | the `Retry-After` header, seconds form only (see below) |
+| `Response.rate_limit()` | `RateLimit` | the `X-RateLimit-*` bucket headers, each field `Option` |
 | `send_fresh(...)`, `exchange(...)`, `one_exchange(...)` | `Response` | the lower-level steps, if you need them |
 
 Response header lookup is case-insensitive (`name_eq`). The body framing handles
 **all four** cases: `Content-Length`, `Transfer-Encoding: chunked`, a bodyless
 response, and the read-to-end-of-file fallback: the last is the only one that
-costs a connection.
+costs a connection. A redirect that changes host or port re-resolves the scheme
+from the `Location` header, so a plain-to-TLS (or TLS-to-plain) hop across a
+redirect is not stuck on the original connection's kind.
+
+### Rate limits
+
+`Response.retry_after()` parses the `Retry-After` header's **seconds form**
+only (`Retry-After: 2`); the rarer HTTP-date form reads as `None` rather than
+being parsed, because turning a date into a delay needs a clock, and giving
+every `std/http` program a second capability (`time`) just for the rare 429
+case was rejected as too costly for what it buys. `Response.rate_limit()`
+reads `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`,
+`X-RateLimit-Reset-After` and `X-RateLimit-Bucket` into a `RateLimit`, each
+field `None` when the server didn't send that header. Neither method sleeps
+or retries: the client hands the caller the parsed values and leaves the
+policy (back off, queue, fail) to them.
+
+```kelp
+val resp = client.send(req)
+if resp.status == 429 {
+    when resp.retry_after() {
+        is Some(secs) -> print("retry after " + secs.to_str() + "s")
+        is None -> print("no Retry-After header")
+    }
+}
+```
 
 ## Keep-alive and the pool
 
@@ -66,11 +109,15 @@ its pool was small.
 | Function | Returns |
 | --- | --- |
 | `pool(host, port)` | `Pool` |
-| `Pool.warm()` | `Unit` (`mut`) |
-| `Pool.checkout()` | `Lease` (`mut`) |
+| `Pool.warm(use_tls: bool)` | `Unit` (`mut`) |
+| `Pool.checkout(use_tls: bool)` | `Lease` (`mut`) |
 | `Pool.release(lease, reusable: bool)` | `Unit` (`mut`) |
 | `Pool.size()` / `Pool.len()` | `usize`: the keep count, and how many are idle |
-| `Lease.socket()` | `net.Socket` |
+| `Lease.conn()` | `Conn` |
+
+`warm`/`checkout` take `use_tls` because a pool is keyed on `host:port` alone,
+and the same address could in principle be dialed either way; the caller (which
+already knows the URL's scheme) says which.
 
 A `Lease` is a **ticket, not an owner**: the pool holds every descriptor, a lease
 is permission to use one for one exchange, and `release` consumes it. Since a
@@ -80,14 +127,14 @@ compile error: the ownership check is free.
 ## Example
 
 ```kelp
-impl "std/http" caps(net = ["127.0.0.1:*"])
+impl "std/http" caps(net = ["127.0.0.1:*", "api.example.com:443"])
 impl "std/str"
 
 fun main() {
     val client = http.default_client()
     val req = http.Request(
         method = "GET",
-        url = "http://127.0.0.1:8000/",
+        url = "https://api.example.com/",
         headers = http.empty_headers(),
         body = Bytes.empty(),
     )
@@ -98,16 +145,18 @@ fun main() {
 }
 ```
 
-Start a server first (`python3 -m http.server 8000`, or the same program with
-`net.listen`), because `send` panics when the connection fails.
+`send` panics when the connection or the TLS handshake fails; a mismatched or
+self-signed certificate is a handshake failure too, since [`std/tls`](/stdlib/tls)
+verifies unconditionally.
 
 ## Notes
 
 - **Not here, deliberately:** gzip, HTTP/2, cookies, proxies,
-  `Expect: 100-continue`, idle reaping, and `https`: TLS is a later milestone,
-  and `parse_url` refuses it by name rather than pretending.
+  `Expect: 100-continue`, and idle reaping.
+- **`https` works** (MK5-S4b-M1): TLS is [`std/tls`](/stdlib/tls), gated under
+  the same `net` domain this module already holds, no new capability needed.
 - Redirects: `max_redirects` and `follow_redirects` on the `Client`. A 307/308
-  keeps the body; other redirects drop it.
+  keeps the body; other redirects drop it. A redirect can cross schemes.
 - Only `GET` and text-body `POST` ship as helpers. `PUT`, `DELETE` and `PATCH`
   are built by [`httpx`](/libraries/httpx), which also has the query-string
   builder, Basic Auth and `Set-Cookie` parsing.
@@ -116,6 +165,7 @@ Start a server first (`python3 -m http.server 8000`, or the same program with
 
 ## See also
 
+- [`std/tls`](/stdlib/tls)
 - [`httpx`](/libraries/httpx)
 - [`std/net`](/stdlib/net)
 - [Capability patterns](/reference/capability-patterns)

@@ -52,12 +52,16 @@ them.
   is refused with a message naming that field or the half of the pair that is
   missing.
 - **No user overloading** (permanent: `abs`, `min`, `max`, `clamp` are the
-  only overloads in the language, and they are stdlib-only). **(open, backlog
-  B-1)** No user `extern` bodies: `extern fun` is reserved for
-  compiler-shipped stdlib modules today, but user-declarable FFI is a named
-  backlog item waiting on a capability-interaction design (a user extern could
-  otherwise reach a syscall straight past `caps(...)`), not a permanent
-  refusal.
+  only overloads in the language, and they are stdlib-only). User `extern`
+  bodies are no longer refused outright (MK9-S1-M1, roadmap B-1): a
+  `coral.toml` `[extern."<module id>"]` section assigns a user module one of
+  the six existing capability domains plus a native library and an
+  allowlisted symbol set, so its `extern fun` declarations bind to a real
+  symbol instead of a compiler-supplied body, gated exactly like a stdlib
+  module — see [Coral: the manifest](/tooling/coral#extern-user-modules-that-bind-a-native-symbol).
+  **(still open)** `extern "C"` block syntax, variadics, function-pointer
+  types for user externs, and link-flag/library-path vocabulary beyond one
+  `library` name per section.
 
 ## Ownership
 
@@ -117,14 +121,13 @@ them.
 
 ## Networking
 
-- **(open, roadmap item 37 / MK5-S4b-M1)** No TLS, so no `https` and no
-  `wss`. `http.parse_url` refuses `https` by name and `ws.parse_url` refuses
-  `wss` by name (`ws.parse_url: 'wss' is not supported: v1 has no TLS, so only
-  'ws://' is reachable`), rather than parsing the URL and failing later. This
-  is not a permanent stance: the plan calls it a **decision that has not been
-  made** (link the system TLS library, or stay `http`-only for good), not
-  missing work, and the two clients shipped ahead of it because the framing of
-  a WebSocket does not depend on the transport.
+- **(decided 2026-09-26, roadmap item 37; done, MK5-S4b-M1)** TLS shipped:
+  [`std/tls`](/stdlib/tls) links the system OpenSSL, and `http.parse_url` now
+  accepts `https`. `ws.parse_url` still refuses `wss` by name
+  (`ws.parse_url: 'wss' is not supported: v1 has no TLS, so only 'ws://' is
+  reachable`), rather than parsing the URL and failing later: WebSocket-over-TLS
+  was not this milestone, and the two clients shipped ahead of TLS because the
+  framing of a WebSocket does not depend on the transport.
 - **`std/ws` is a client, not a server.** Not scheduled anywhere on the
   roadmap: a WebSocket server, extensions (`Sec-WebSocket-Extensions`, so
   `permessage-deflate` and the `zlib-stream` transport a compressed gateway
