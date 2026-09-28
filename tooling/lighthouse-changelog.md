@@ -10,7 +10,7 @@ pieces move at their own speed, so each entry says which one it is.
 | Piece | Where it is | Version today | How it is published |
 | --- | --- | --- | --- |
 | IntelliJ plugin | `intellij/` | 26.09.2 | Gitea releases, tag `intellij-v<version>`, plus a self-hosted update site |
-| Language server | `server/` | 26.9.4 (`26.09.4` in `serverInfo`) | `cargo build --release -p lighthouse`; no release assets |
+| Language server | `server/` | 26.9.5 (`26.09.5` in `serverInfo`) | `cargo build --release -p lighthouse`; no release assets |
 
 The VS Code extension was dropped on 2026-09-24: IntelliJ is the only client
 today, and `vscode/` is gone from the repository. Its entries below stay, since
@@ -30,6 +30,8 @@ string an editor shows matches the release.
 
 | Release | Date | Headline |
 | --- | --- | --- |
+| [Language server 26.09.5](#language-server-26095-no-release) | 2026-09-28 | the vendored stdlib resync for kelp 26.09.5: `std/tls` and `https` |
+| [Language server 26.09.4](#language-server-26094-no-release) | 2026-09-26 | the debounced re-check waits less; `kelpc lint` findings become hints |
 | [Language server 26.09.3](#language-server-26093-no-release) | 2026-09-25 | the debounced re-check reads the open buffer with `kelpc check --text` |
 | [IntelliJ 26.09.2](#intellij-plugin-26092-2026-09-24) | 2026-09-24 | LSP4IJ, so Community works; the tooling knows the language; VS Code dropped |
 | [Language server 26.09.2](#language-server-26092-no-release) | 2026-09-24 | the vendored stdlib resync and the index; carried by the plugin release |
@@ -39,6 +41,22 @@ string an editor shows matches the release.
 | [IntelliJ 0.2.0](#intellij-plugin-020-2026-09-19) | 2026-09-19 | the project's kelp version, from the project |
 | [IntelliJ 0.1.1](#intellij-plugin-011-2026-09-19) | 2026-09-19 | the auto-update feed, and the New Project entry |
 | [Lighthouse v1 (0.1.0)](#lighthouse-v1-no-release) | 2026-09-19 | first version: LSP diagnostics, VS Code extension, IntelliJ plugin |
+
+## Language server 26.09.5 (no release)
+
+No tag and no release: only the IntelliJ plugin has those, and nothing about the
+plugin changed here. This entry records the server version move, the way the rule
+at the top of this page says.
+
+- **The vendored stdlib is resynced for kelp 26.09.5.** `std/tls` joins the
+  shipped table the index embeds, so completion, hover, the outline and
+  auto-import know the module the `https` path uses, and the modules that moved
+  with it (`std/http` and `std/net` for TLS and the rate-limit headers, plus
+  `std/ws`, `std/str`, `std/path`, `std/fmt`, `std/encoding` and `std/thread`)
+  are refreshed. The sync script and the shipped table both list `tls` now, which
+  is what the drift test checks.
+
+The server reports `26.09.5` in `serverInfo`.
 
 ## Language server 26.09.4 (no release)
 
