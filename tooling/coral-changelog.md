@@ -27,6 +27,7 @@ spellings have to be the same one.
 
 | Version | Date | Headline |
 | --- | --- | --- |
+| [v26.09.4](#v26094-2026-09-28) | 2026-09-28 | a quoted `#folder` dependency value parses again; an official Nix flake |
 | [v26.09.3](#v26093-2026-09-25) | 2026-09-25 | a second implementation, written in Kelp, ships beside the Rust one |
 | [v26.09.2](#v26092-2026-09-24) | 2026-09-24 | `coral version`, `coral fmt`/`lint`, `coral test` |
 | [v26.09.1](#v26091-2026-09-21) | 2026-09-21 | the `coral docs` family: `get`, `list`, `search` |
@@ -41,6 +42,25 @@ spellings have to be the same one.
 | [v0.2.1](#v021-2026-09-19) | 2026-09-19 | `find_kelpc` checks `~/.coral/bin/kelpc` before `PATH` |
 | [v0.2.0](#v020-2026-09-19) | 2026-09-19 | toolchain management: install and switch a kelp and a coral |
 | [v0.1.0](#v010-2026-09-19) | 2026-09-19 | Coral v1: init, build, run, check, clean, tasks, cache, deps |
+
+## v26.09.4 (2026-09-28)
+
+[Release](https://homelabone.xenoo.dev/gittea/Juniper/coral/releases/tag/v26.09.4)
+
+- The asset is `coral-26.09.4-linux-x86_64` beside the `v26.09.4` tag.
+- **A quoted dependency value keeps its `#folder` fragment** (BUG-v2Tqm). The
+  `#`-starts-a-comment rule is quote-aware now, so the documented full-URL form
+  `local = "file:///srv/git/fpl#other"` parses into the value instead of being
+  truncated at the `#` and refused as an unterminated string. A `#` outside
+  quotes still starts a comment.
+- **The repository carries an official `flake.nix`.** `nix build` produces
+  `result/bin/coral` from a pinned `nixos-26.05`, reads the package version from
+  `Cargo.toml` so a release bump moves it, and runs the 65 unit tests as part of
+  the build (`git` is a build input: the `deps` tests build a scratch
+  repository). `nix develop` opens a shell with the same `cargo` and `rustc`.
+  The flake carries no `kelpc` on purpose, since the compiler is installed
+  through `coral toolchain kelp`. See
+  [Install and build](/getting-started/install#install-coral-with-nix).
 
 ## v26.09.3 (2026-09-25)
 

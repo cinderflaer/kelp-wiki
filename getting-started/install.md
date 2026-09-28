@@ -63,9 +63,15 @@ nix build git+https://homelabone.xenoo.dev/gittea/Juniper/coral
 ./result/bin/coral version
 ```
 
-A tag is a flake ref like any other, and the file fetches the source it is built
-from: `nix build git+https://homelabone.xenoo.dev/gittea/Juniper/coral?ref=v26.09.4`
-builds that release. From a checkout, `.` is the same flake:
+A tag is a flake ref too, but the full ref path is what resolves, since a short
+name is looked for under `refs/heads/` only:
+
+```sh
+nix build git+https://homelabone.xenoo.dev/gittea/Juniper/coral?ref=refs/tags/v26.09.4
+```
+
+With no `ref` the default branch is used, so the two commands above take `main`.
+From a checkout, `.` is the same flake:
 
 ```sh
 nix build .#coral              # result/bin/coral
