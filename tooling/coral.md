@@ -35,6 +35,11 @@ coral toolchain kelp use v0.1.4         # ~/.coral/bin/kelpc -> that build
 `~/.coral/bin` is not put on `PATH` for you. `use` prints a one-time reminder if
 it is missing, the same way rustup treats `~/.cargo/bin`.
 
+To get Coral itself from a checkout rather than a release asset, the repository
+carries a flake: `nix build .#coral`, or `nix run . -- version`. It builds Coral
+only, since the compiler is this page's business (see
+[Install and build](/getting-started/install#install-coral-with-nix)).
+
 ## The command surface
 
 Run `coral` with no arguments inside a project and it prints this list. The
@@ -292,8 +297,8 @@ does not know yet.
 
 | Section | Shape | Notes |
 | --- | --- | --- |
-| `[caps]` | `domain = ["pattern", ...]` | read by `kelpc`, not Coral — restricts the entry module's own capability grant; see [below](#caps-the-entry-modules-own-grant) |
-| `[extern."<module id>"]` | `domain`/`library`/`symbols` | read by `kelpc`, not Coral — assigns a user module a capability domain and a native FFI surface; see [below](#extern-user-modules-that-bind-a-native-symbol) |
+| `[caps]` | `domain = ["pattern", ...]` | read by `kelpc`, not Coral: it restricts the entry module's own capability grant; see [below](#caps-the-entry-modules-own-grant) |
+| `[extern."<module id>"]` | `domain`/`library`/`symbols` | read by `kelpc`, not Coral: it assigns a user module a capability domain and a native FFI surface; see [below](#extern-user-modules-that-bind-a-native-symbol) |
 | `[tasks]` | `name = "path/to/file.kp"` | each task compiles as its own unit, and `src/tasks/` is where `init` puts them |
 | `[dependencies]` | `name = "owner/repo[/folder]"` | see [Dependencies](#dependencies) |
 | `[toolchain]` | `kelp = "v0.1.4"` | written by `coral toolchain kelp pin`, a line edit that leaves comments and section order alone |
@@ -309,9 +314,9 @@ coral toolchain kelp pin --clear   # drop it, back to the global default
 
 ### `[caps]`: the entry module's own grant
 
-The entry module (`main`) cannot write a `caps(...)` clause on itself — a
+The entry module (`main`) cannot write a `caps(...)` clause on itself (a
 clause on one of its own `impl` lines grants the *imported* module, never
-`main` (see [Capabilities](/language/capabilities)) — so restricting what
+`main`; see [Capabilities](/language/capabilities)), so restricting what
 `main` itself may touch has no home on an `impl` line at all. `[caps]` is that
 home: a section in `coral.toml`, read by `kelpc` rather than skipped over for
 Coral, that sets the entry module's own capability set instead of the implicit
@@ -338,7 +343,7 @@ net = ["api.example.com:443"]
   resource of every domain (`/**` for a path domain, `*` for a name domain),
   exactly as before this section existed. A `coral.toml` written before
   `[caps]` shipped, or one that has no reason to restrict its own entry point,
-  keeps behaving exactly as it always did — the section is opt-in.
+  keeps behaving exactly as it always did: the section is opt-in.
 - **A `[caps]` section that omits a domain grants `main` nothing for it**: the
   same "referencing a gated namespace is a resolution error" rule that governs
   an ungranted imported module governs `main` too, once `[caps]` exists at
@@ -346,7 +351,7 @@ net = ["api.example.com:443"]
   the section.
 - **The runtime pattern check uses this same grant** for any gated call whose
   call site is textually inside `main`'s own body, exactly as it uses any
-  other module's own held patterns for a call site inside that module —
+  other module's own held patterns for a call site inside that module.
   `[caps]`'s patterns are the actual boundary a denial panics against, and the
   panic names `main` the way it names any other module.
 - **`[caps]` does not change what `main` may *delegate*.** An
@@ -360,7 +365,7 @@ net = ["api.example.com:443"]
 
 `extern fun` used to be compiler-only: user code got "only compiler-shipped
 stdlib modules may declare 'extern fun'", because a raw `extern fun` bypasses
-`caps(...)` by construction — nothing would check what it actually reaches.
+`caps(...)` by construction, so nothing would check what it actually reaches.
 MK9-S1-M1 (roadmap B-1) opened that door for a manifest-declared module
 instead of removing the check: `coral.toml` assigns a user `.kp` module one of
 the **six existing capability domains** (`fs`, `net`, `process`, `env`,
@@ -395,7 +400,7 @@ fun main() {
 ```
 
 - **The section header names the module by its id** (the path Kelp imports it
-  under, `"sys"` for `src/sys.kp`), quoted, as `[extern."<module id>"]` — a
+  under, `"sys"` for `src/sys.kp`), quoted, as `[extern."<module id>"]`; a
   bare `[extern.sys]` is refused, since the header has to carry an arbitrary
   module id rather than a bare TOML key.
 - **`domain`** must be one of the six existing names; an unknown one is the
@@ -404,7 +409,7 @@ fun main() {
   library is free to link" reasoning `-lm`/`-lssl` already use. **`symbols`**
   is the allowlist: an `extern fun` in that module typechecks only if its bare
   name is in the list, and user FFI stays a 1:1 name mapping (no rename or
-  alias vocabulary in v1) — the symbol `codegen_c.rs` calls is the function's
+  alias vocabulary in v1), so the symbol `codegen_c.rs` calls is the function's
   own name.
 - **A module gets at most one `[extern.*]` entry**, and it must appear before
   any other section that isn't `[caps]` (the same manifest-ordering rule

@@ -1,6 +1,6 @@
 ---
 title: "Install and build"
-description: "The binary lands at target/release/kelpc."
+description: "Building `kelpc` from source and the requirements it has of the machine, installing Coral with its Nix flake, and the test suites."
 isPublished: true
 tags: "getting-started"
 ---
@@ -51,6 +51,37 @@ So `kelpc build myproject/` writes `build/myproject`,
 `build/myproject.ll` and `build/myproject.o`, and `kelpc build src/main.kp`
 writes `build/main`. Pass `-o` when that is not where you want it, and pass
 `-O0` for a cheap dev build (`-O2` is the default).
+
+## Install Coral with Nix
+
+Coral carries an official `flake.nix` at its repository root, so a machine with
+flakes enabled needs no Rust toolchain to build it:
+
+```sh
+nix run git+https://homelabone.xenoo.dev/gittea/Juniper/coral -- version
+nix build git+https://homelabone.xenoo.dev/gittea/Juniper/coral
+./result/bin/coral version
+```
+
+A tag is a flake ref like any other, and the file fetches the source it is built
+from: `nix build git+https://homelabone.xenoo.dev/gittea/Juniper/coral?ref=v26.09.4`
+builds that release. From a checkout, `.` is the same flake:
+
+```sh
+nix build .#coral              # result/bin/coral
+nix run . -- version
+nix develop                    # cargo and rustc, at the revision the flake pins
+```
+
+The flake pins `nixos-26.05`. It reads the package version from `Cargo.toml`
+rather than repeating it, so a release bump moves the package with it, and it
+runs Coral's unit tests as part of the build.
+
+`kelpc` is deliberately **not** part of it. Coral manages the compiler itself,
+and `coral toolchain kelp install <ver>` is how one arrives, so pinning a second
+compiler in the flake would be a second answer to the same question. Build the
+compiler from source with the steps above, or let Coral fetch a release asset
+(see [Toolchains](/tooling/coral#toolchains)).
 
 ## Backends
 
@@ -156,4 +187,5 @@ their checksums.
 - [Set up your editor](/getting-started/editor)
 - [Your first program](/getting-started/first-program)
 - [`kelpc` CLI](/tooling/kelpc-cli)
+- [Coral](/tooling/coral), including the `nix build` above
 - [Compiler architecture](/compiler)
