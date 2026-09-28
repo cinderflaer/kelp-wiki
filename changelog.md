@@ -38,6 +38,7 @@ this page is the index to it.
 
 | Version | Date | Headline |
 | --- | --- | --- |
+| [26.09.5](#26095-2026-09-28) | 2026-09-28 | `std/tls` and `https`; `coral.toml`'s `[caps]` and `[extern]`; rate-limit headers on `Response`; two assignment leaks fixed; every program now needs OpenSSL to build |
 | [26.09.4](#26094-2026-09-26) | 2026-09-26 | the LLVM backend inlines builtin bodies; `Map`'s index halved, `Map.with_capacity`; unrolled loops, `noalias`, `llvm.sqrt.f64`; the benchmark suite published |
 | [26.09.3](#26093-2026-09-25) | 2026-09-25 | `thread.sleep_ms`/`current_id`; a unit-returning worker can be joined; concurrent downloads; the memory model published; `kelpc check --text` |
 | [26.09.2](#26092-2026-09-24) | 2026-09-24 | `pub` and private by default; tuples; threads; `std/ws`; `caps(*)`; `try_connect` |
@@ -49,6 +50,51 @@ this page is the index to it.
 | [0.1.2](#012-2026-09-19) | 2026-09-19 | `View`, `char` literals, bitwise operators, `str` to `String` coercion |
 | [0.1.1](#011-2026-09-19) | 2026-09-19 | the `for` loop, `spawn_in`/`run_in`, fallible `try_run`, `fs.symlink` |
 | [0.1.0](#010-no-release) | 2026-09-19 | first tag: the core language, modules, containers, capabilities, stdlib |
+
+## 26.09.5 (2026-09-28)
+
+[Release](https://homelabone.xenoo.dev/gittea/Juniper/kelp/releases/tag/v26.09.5)
+· 22 commits · 203 unit tests, 488 fixtures green.
+
+**`https` works.** [`std/tls`](/stdlib/tls) ships a client-side TLS module and
+`std/http`'s `parse_url` accepts `https://` (default port 443) instead of
+refusing it by name. It is gated on the existing `net` domain, so a program that
+already writes `impl "std/http" caps(net = [...])` needs nothing new. `std/tls`
+never dials a socket, because a grant resolves one hop from the importing
+program, so `std/http` hands it an already-connected `net.Socket`. Certificate
+verification is unconditional and there is no insecure escape hatch. See
+[`std/tls`](/stdlib/tls) for the new build requirement below.
+
+**Every program needs OpenSSL to build now, TLS or not.** The link line carries
+`-lssl -lcrypto` for every program, and a program that reaches any `extern`
+object has OpenSSL's headers included in its generated `<out>.externs.c`. So a
+program that never imports `std/tls` still needs the libraries to link and the
+development output to compile. [Install and
+build](/getting-started/install#requirements) lists both, and `nix-shell
+shell.nix` supplies them.
+
+**A project can restrict the entry module's own authority.** `coral.toml` gains
+`[caps]`, which uses the same vocabulary as a `caps(...)` clause on an `impl`
+line. A clause on one of `main`'s own `impl` lines grants the imported module,
+never `main`, so until now `main` always held everything. A domain omitted from
+`[caps]` is a resolution error at any reference to it in `main`, the same error
+an ungranted imported module gets. No `[caps]` section means exactly the old
+behaviour, so every existing `coral.toml` is unaffected.
+
+**A user module can bind a native symbol.** `coral.toml` gains
+`[extern."<module id>"]`: one of the six existing capability domains, a native
+`library`, and an allowlisted `symbols` set, checked and gated exactly like a
+stdlib module. `extern "C"` block syntax, variadics, function-pointer types and
+link vocabulary beyond one library per section are still not there.
+
+**`Response` carries the rate-limit headers.** `retry_after()` returns the
+`Retry-After` header's seconds form and `rate_limit()` bundles the
+`X-RateLimit-*` headers. Both are ungated, and the client never sleeps or
+retries on its own: the caller reads the parsed headers and decides.
+
+**Two assignment leaks are gone.** `*p = value` and `h.name = s` free the value
+they overwrite, pinned under the ASAN and valgrind gates. `if c { b = a }` was
+already leak-free.
 
 ## 26.09.4 (2026-09-26)
 
