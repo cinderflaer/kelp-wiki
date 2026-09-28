@@ -107,9 +107,9 @@ fetched by kelp
   may be dialled and the `fs` grant says which directory may be written. Neither
   one widens the other, and a program that only fetches does not need the
   filesystem grant at all.
-- **`http.parse_url` refuses `https` by name.** TLS is a later milestone, so a URL
-  scheme this client cannot speak is a compile-time-refused call rather than a
-  plaintext request to a port that will not answer.
+- **`http.parse_url` accepts `https` too** (MK5-S4b-M1): the same `net` grant
+  covers it, because [`std/tls`](/stdlib/tls) wraps the connection `std/http`
+  already opened rather than dialing one of its own.
 
 ## See also
 

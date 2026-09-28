@@ -84,8 +84,11 @@ impl "std/rand" caps(rand = [])
 
 ## Delegation
 
-- The **entry module holds the wildcard** for every domain, so a single-file
-  program needs no grant for its own calls.
+- The **entry module holds the wildcard** for every domain by default, so a
+  single-file program needs no grant for its own calls. `coral.toml`'s
+  `[caps]` section can narrow this (see
+  [Coral: the manifest](/tooling/coral#the-manifest)) so the entry module
+  itself holds less than everything.
 - `caps(*)` is that whole set in one clause: `impl "helper" caps(*)` delegates
   `/**` for the path domains and `*` for the name domains, the same set the
   importing module holds. It stands alone (`caps(*, net = [...])` is a parse

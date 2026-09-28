@@ -26,7 +26,10 @@ it. The batch after it is the fallible dial at `kelp` `93d050f`:
 three helpers that keep the panicking `connect` wrappers honest (`handshake`,
 `refusal_text`, `fail_connect`). The batch after that is `thread.sleep_ms` and
 `thread.current_id` (MK9-S3-M1 stage C2, `kelp` `54d3bdb`), the module's first
-two names that are ordinary `.kp` signatures rather than compiler builtins.
+two names that are ordinary `.kp` signatures rather than compiler builtins. The
+latest batch is `std/tls`, a new module (MK5-S4b-M1), plus `std/http`'s
+`RateLimit`/`Conn` types and `retry_after`/`rate_limit` accessors
+(`MISSING-p5Xtr`), all at `kelp` `e33ea55`.
 
 `std/rt` has no section: it ships inside the binary but is the compiler's own
 runtime module rather than part of the stdlib surface. `impl "std/rt"` resolves
@@ -343,23 +346,34 @@ Types:
 - `datac Response(val status: i32, val headers: List<Header>, val body: Bytes, val reusable: bool)`
 - `datac Request(val method: String, val url: String, val headers: List<Header>, val body: Bytes)`
 - `datac Client(val timeout_ms: u64, val max_redirects: i32, val follow_redirects: bool)`
-- `datac Pool(val host: String, val port: u16, val size: usize, val timeout_ms: u64, var idle: List<i32>)`
-- `datac Lease(val fd: i32, val reused: bool)`
-- `datac Cursor(val fd: i32, var buf: Bytes, var start: usize)`
+- `datac RateLimit(val limit: Option<u64>, val remaining: Option<u64>, val reset: Option<f64>, val reset_after: Option<f64>, val bucket: Option<String>)`
+- `datac Pool(val host: String, val port: u16, val size: usize, val timeout_ms: u64, var idle: List<Conn>)`
+- `datac Lease(val fd: i32, val tls_handle: usize, val reused: bool)`
+- `datac Conn(val fd: i32, val tls_handle: usize)`
+- `datac Cursor(val fd: i32, val tls_handle: usize, var buf: Bytes, var start: usize)`
 
 Constants:
 
-- `const DEFAULT_SCHEME: str = "http"`
 - `const DEFAULT_PORT: u16 = 80`
+- `const DEFAULT_HTTPS_PORT: u16 = 443`
 - `const DEFAULT_TIMEOUT_MS: u64 = 30000`
 - `const DEFAULT_MAX_REDIRECTS: i32 = 5`
 - `const pool_size: usize = __KELP_HTTP_POOL__`
 
 Functions:
 
+- `fun Conn.is_tls().R: bool`
+- `fun conn_send_all(c: Conn, data: Bytes).R: usize`
+- `fun conn_recv(c: Conn, max: usize).R: Bytes`
+- `fun conn_recv_into(c: Conn, buf: mut Bytes, at: usize).R: usize`
+- `fun conn_close(c: Conn)`
+- `fun connect_configured(host: &str, port: u16, timeout_ms: u64, use_tls: bool).R: Conn`
+- `fun Cursor.conn().R: Conn`
+- `fun default_port_for(scheme: &str).R: u16`
+- `fun url_is_https(u: Url).R: bool`
 - `fun parse_url(s: &str).R: Url`
-- `fun split_authority(rest: &str).R: Url`
-- `fun make_url(authority: String, path: &str).R: Url`
+- `fun split_authority(rest: &str, scheme: &str).R: Url`
+- `fun make_url(authority: String, path: &str, scheme: &str).R: Url`
 - `fun parse_port(text: &str).R: u16`
 - `fun name_eq(a: &str, b: &str).R: bool`
 - `fun empty_headers().R: List<Header>`
@@ -367,6 +381,8 @@ Functions:
 - `fun Response.header(name: &str).R: String`
 - `fun Response.is_ok().R: bool`
 - `fun Response.text().R: String`
+- `fun Response.retry_after().R: Option<u64>`
+- `fun Response.rate_limit().R: RateLimit`
 - `fun build_head(method: &str, u: Url, headers: List<Header>, body_len: usize).R: String`
 - `fun mut Cursor.ensure()`
 - `fun mut Cursor.read_line().R: String`
@@ -382,11 +398,14 @@ Functions:
 - `fun status_code(text: &str).R: i32`
 - `fun parse_headers(lines: List<String>).R: List<Header>`
 - `fun header_value(hs: List<Header>, name: &str).R: String`
+- `fun header_u64(hs: List<Header>, name: &str).R: Option<u64>`
+- `fun header_f64(hs: List<Header>, name: &str).R: Option<f64>`
+- `fun header_opt(hs: List<Header>, name: &str).R: Option<String>`
 - `fun content_length_of(hs: List<Header>).R: i64`
 - `fun is_chunked(hs: List<Header>).R: bool`
 - `fun wants_close(hs: List<Header>).R: bool`
-- `fun read_response(s: net.Socket).R: Response`
-- `fun one_exchange(s: net.Socket, method: &str, u: Url, headers: List<Header>, body: Bytes).R: Response`
+- `fun read_response(c: Conn).R: Response`
+- `fun one_exchange(c: Conn, method: &str, u: Url, headers: List<Header>, body: Bytes).R: Response`
 - `fun keep_body_on(status: i32).R: bool`
 - `fun is_redirect(status: i32).R: bool`
 - `fun absolute_url(base: Url, loc: &str).R: String`
@@ -394,15 +413,14 @@ Functions:
 - `fun default_client().R: Client`
 - `fun Client.send(req: Request).R: Response`
 - `fun send_fresh(`
-- `fun exchange(s: net.Socket, req: Request).R: Response`
+- `fun exchange(c: Conn, req: Request).R: Response`
 - `fun pool(host: &str, port: u16).R: Pool`
-- `fun empty_idle().R: List<i32>`
-- `fun connect_configured(host: &str, port: u16, timeout_ms: u64).R: net.Socket`
+- `fun empty_idle().R: List<Conn>`
 - `fun Pool.size().R: usize`
 - `fun Pool.len().R: usize`
-- `fun Lease.socket().R: net.Socket`
-- `fun mut Pool.warm()`
-- `fun mut Pool.checkout().R: Lease`
+- `fun Lease.conn().R: Conn`
+- `fun mut Pool.warm(use_tls: bool)`
+- `fun mut Pool.checkout(use_tls: bool).R: Lease`
 - `fun mut Pool.release(lease: Lease, reusable: bool)`
 - `fun mut Pool.close_all()`
 - `fun pool_matches(p: Pool, u: Url).R: bool`
@@ -411,6 +429,26 @@ Functions:
 - `fun get(url: &str).R: Response`
 - `fun make_get(url: &str).R: Request`
 - `fun post_text(url: &str, body: &str, content_type: &str).R: Response`
+
+## `std/tls` (needs `net`)
+
+Client-side TLS for `https` (MK5-S4b-M1). Never dials or closes a socket
+itself: a capability grant is resolved one hop from the importing program's
+own `impl` line, so `handshake` takes an already-connected `net.Socket`
+instead of calling `net.connect`. Full account on [`std/tls`](/stdlib/tls).
+
+Types:
+
+- `datac TlsStream(val fd: i32, val handle: usize)`
+
+Functions:
+
+- `fun handshake(s: net.Socket, host: &str).R: TlsStream`
+- `fun write(t: TlsStream, data: Bytes).R: usize`
+- `fun write_all(t: TlsStream, data: Bytes).R: usize`
+- `fun read(t: TlsStream, max: usize).R: Bytes`
+- `fun read_into(t: TlsStream, buf: mut Bytes, at: usize).R: usize`
+- `fun shutdown(t: TlsStream)`
 
 ## `std/time` (needs `time`)
 
@@ -633,7 +671,8 @@ layer under it. The whole surface is on [`std/ws`](/stdlib/ws).
 | `std/fs` | 30 | 1 | fs |
 | `std/process` | 14 | 3 | process |
 | `std/net` | 18 | 3 | net |
-| `std/http` | 54 | 13 | — |
+| `std/http` | 67 | 15 | — |
+| `std/tls` | 6 | 1 | net |
 | `std/ws` | 32 | 18 | net, rand |
 | `std/time` | 3 | 0 | time |
 | `std/rand` | 3 | 0 | rand |
