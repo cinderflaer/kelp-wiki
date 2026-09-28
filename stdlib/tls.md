@@ -68,9 +68,17 @@ a footgun left lying around for the next reader to trip on.
 ## Linking
 
 The system OpenSSL (`-lssl -lcrypto`) is linked into every Kelp binary
-unconditionally, the same "an unused library is free to link" reasoning
-`-lm` already uses for `std/math` — there is no per-project opt-in and no
-extra `coral.toml` line needed.
+unconditionally, the same "an unused library is free to link" reasoning `-lm`
+already uses for `std/math`: there is no per-project opt-in and no extra
+`coral.toml` line needed.
+
+That is not quite free, and the cost is worth knowing before the first
+`error: cc failed`. The linker has to find `libssl` and `libcrypto`, and a
+program that reaches an `extern` object (a `std/fs`-only program does) has the
+OpenSSL headers included in the generated `<out>.externs.c`, so the package's
+development output has to be on the include path as well. `nix-shell shell.nix`
+provides both; [Install and build](/getting-started/install#requirements) lists
+them for every other setup.
 
 ## See also
 
