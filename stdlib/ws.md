@@ -1,10 +1,10 @@
 ---
 title: "`std/ws`"
-description: "A WebSocket client (RFC 6455) over ws:// only. It holds net for the socket and rand for the handshake key and every masking key, so an import delegates both."
+description: "A WebSocket client (RFC 6455) over ws:// and wss://. It holds net for the socket and rand for the handshake key and every masking key, so an import delegates both."
 isPublished: true
 tags: "stdlib, networking"
 ---
-A WebSocket **client** (RFC 6455), over `ws://` only. It holds `net` and `rand`.
+A WebSocket **client** (RFC 6455), over `ws://` and `wss://`. It holds `net` and `rand`.
 
 Source section:
 [`syntax.md` §16.18](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
@@ -13,8 +13,9 @@ Source section:
 impl "std/ws" caps(net = ["gateway.example.com:80"], rand = [])
 ```
 
-`std/ws` is pure Kelp over [`std/net`](/stdlib/net) and
-[`std/encoding`](/stdlib/encoding): no compiler change and no dependency.
+`std/ws` is Kelp over [`std/net`](/stdlib/net), [`std/tls`](/stdlib/tls) (for
+`wss://`) and [`std/encoding`](/stdlib/encoding): no compiler change and no
+dependency beyond the system TLS library `std/tls` already links.
 **Two domains, because the module has two needs.** `net` reaches the socket, and
 its half of the check is the host-and-port check `net.connect` already gives: the
 grant matches the host as written and the port beside it, before name resolution
@@ -100,9 +101,12 @@ with the same messages `connect` uses. A caller cannot branch on them.
 
 | Function | Returns | Notes |
 | --- | --- | --- |
-| `ws.parse_url(s)` | `Url` | splits `ws://host[:port][/path]`, port 80 when it is absent; refuses `wss` by name |
+| `ws.parse_url(s)` | `Url` | splits `ws://` or `wss://` `host[:port][/path]`; the port defaults to 80 for `ws` and 443 for `wss` |
+| `ws.url_is_secure(u)` | `bool` | whether `u` is a `wss` URL |
 | `ws.connect(host, port, path)` | `Conn` | the HTTP/1.1 upgrade; panics on every refusal below |
 | `ws.try_connect(host, port, path)` | `Result<Conn, WsErr>` | the fallible `connect`: a refused dial and a non-`101` answer are values, the errors with no status still panic |
+| `ws.connect_secure(host, port, path, secure)` | `Conn` | `connect`, over TLS when `secure` is true (pass `ws.url_is_secure(u)` to follow a URL) |
+| `ws.try_connect_secure(host, port, path, secure)` | `Result<Conn, WsErr>` | `try_connect`, over TLS when `secure` is true |
 | `Conn.send_text(text)` | `Unit` | one masked text frame |
 | `Conn.send_binary(data)` | `Unit` | one masked binary frame |
 | `Conn.ping(data)` / `Conn.pong(data)` | `Unit` | a control frame; the payload may not exceed 125 bytes |
@@ -152,9 +156,8 @@ the number or code the module put there.
 
 | Message | When |
 | --- | --- |
-| `ws.parse_url: 'wss' is not supported: v1 has no TLS, so only 'ws://' is reachable` | the scheme is `wss` |
-| `ws.parse_url: only 'ws' is supported` | any other scheme |
-| `ws.parse_url: URL must start with 'ws://' (no scheme found)` | there is no `://` |
+| `ws.parse_url: only 'ws' and 'wss' are supported` | any other scheme |
+| `ws.parse_url: URL must start with 'ws://' or 'wss://' (no scheme found)` | there is no `://` |
 | `ws.parse_url: URL has no host` | the authority is empty |
 | `ws.parse_url: URL has an empty port` / `ws.parse_url: URL port is not a number` / `ws.parse_url: URL port is out of range` | a port that does not convert |
 | `net.connect: connection failed`, with a second line `  errno N: ...` | the dial failed: nothing is listening, or every resolved address refused (`WsErr.Dial`) |
@@ -210,11 +213,15 @@ fun main() {
 
 ## Notes
 
-- **`wss://` is refused by name.** `std/http` no longer shares this limit
-  (MK5-S4b-M1 shipped [`std/tls`](/stdlib/tls) for `https`), but
-  WebSocket-over-TLS is a separate, unscheduled milestone: nothing about the
-  framing depends on the transport, which is why the plain client shipped
-  first either way.
+- **`wss://` is the same client over TLS.** `connect_secure` and
+  `try_connect_secure` wrap the dialed socket in a [`std/tls`](/stdlib/tls)
+  session before the WebSocket handshake, checking the certificate against the
+  host as written, exactly as `https` does. The `net` grant is the same
+  host-and-port check (`caps(net = ["gateway.example.com:443"], rand = [])`);
+  TLS needs nothing beyond it. A failed TLS handshake or certificate check
+  panics inside `std/tls` in both forms: it is not a `WsErr`. `connect` and
+  `try_connect` stay plain-`ws` and are the `secure: false` case of the two
+  above.
 - **A refused dial is a value, a head that is not HTTP is not.**
   `ws.try_connect` returns `WsErr.Dial` for a dial that failed and
   `WsErr.Handshake` for a peer that answered something other than `101`, so a

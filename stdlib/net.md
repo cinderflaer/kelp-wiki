@@ -159,8 +159,7 @@ fun main() {
   a bounded wait.
 - `std/net` itself is plain TCP; TLS lives one layer up in
   [`std/tls`](/stdlib/tls), which `http.parse_url` now uses for `https`
-  (MK5-S4b-M1). `ws.parse_url` still refuses `wss` by name: WebSocket-over-TLS
-  is not this milestone.
+  (MK5-S4b-M1) and `ws.connect_secure` for `wss`.
 - Errors panic rather than returning `Result`, with the one exception of
   `try_connect`, whose dial failure is the `Err` it exists to hand back.
 

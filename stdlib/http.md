@@ -117,7 +117,10 @@ its pool was small.
 
 `warm`/`checkout` take `use_tls` because a pool is keyed on `host:port` alone,
 and the same address could in principle be dialed either way; the caller (which
-already knows the URL's scheme) says which.
+already knows the URL's scheme) says which. `checkout` only reuses an idle
+connection of the scheme asked for: a kept connection of the other scheme is
+closed and replaced by a fresh one, so an `https` request is never sent over a
+plain connection or the reverse.
 
 A `Lease` is a **ticket, not an owner**: the pool holds every descriptor, a lease
 is permission to use one for one exchange, and `release` consumes it. Since a

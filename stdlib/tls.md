@@ -53,7 +53,11 @@ type). It is opaque outside this module; nothing else needs to know its shape.
 | `shutdown(t)` | `Unit` | closes the TLS session (not the underlying socket) |
 
 All five panic on failure, the same style as [`std/net`](/stdlib/net)'s
-`send`/`recv`/`close`.
+`send`/`recv`/`close`, with one exception: for `read` and `read_into`, a peer
+that ends the stream, whether by a clean `close_notify` or by dropping the
+connection without one (what a proxy or load balancer that resets TCP does), is
+end of stream (an empty `Bytes`, or 0), not a panic. Any other read failure
+still panics.
 
 ## Certificate verification is not optional
 
