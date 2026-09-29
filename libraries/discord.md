@@ -32,8 +32,8 @@ deny every call at runtime.
 
 This library's own `impl` lines grant each shipped module the wildcard,
 `net = ["*"]` for `std/http` and `std/ws` and `time = []` for `std/time`, because
-it does not know which host a caller points it at: Discord's own endpoints, a
-local mock, or a TLS terminator in front. Capability patterns are static text
+it does not know which host a caller points it at: Discord's own endpoints, or a
+local mock. Capability patterns are static text
 and a module can delegate less than it holds, never more, so the caller's line
 has to hold the wildcard too:
 
@@ -65,14 +65,14 @@ impl "std/ws" caps(net = ["gateway.discord.gg:443"], rand = [])
 with the frames, the sequence bookkeeping and the payload JSON the caller's own.
 That is the same loop "The raw path" below shows, minus the library.
 
-**TLS.** Discord is `https://` and `wss://` end to end. The REST half works
-with **no configuration at all**: [`std/http`](/stdlib/http) gained TLS
+**TLS.** Discord is `https://` and `wss://` end to end, and both halves work
+with **no configuration at all**: [`std/http`](/stdlib/http) has TLS
 (`MISSING-XkcSp`, resolved), so `DEFAULT_API_BASE` and every
-webhook/interaction call reach the real `discord.com`. The gateway half does
-not yet: [`std/ws`](/stdlib/ws) has no TLS (`MISSING-wV4tg`), so
-`DEFAULT_GATEWAY_URL`, which is `wss://`, is **not reachable**. Point only the
-gateway URL at a plain `ws://` endpoint (a local one, or a TLS terminator in
-front of you) and nothing else changes:
+webhook/interaction call reach the real `discord.com`, and
+[`std/ws`](/stdlib/ws) has TLS (`MISSING-wV4tg`, resolved), so the gateway loop
+dials `DEFAULT_GATEWAY_URL` (`wss://`) with `ws.try_connect_secure`, following
+the URL's scheme. Point the gateway URL at a plain `ws://` endpoint (a local
+mock) and nothing else changes:
 
 ```kelp
 var bot = discord.bot_with_intents("TOKEN", discord.intents_all())
@@ -80,9 +80,9 @@ bot.set_gateway_url("ws://127.0.0.1:8098/?v=10&encoding=json")
 // bot.api_base needs no override: DEFAULT_API_BASE (https://) already works.
 ```
 
-`discord.run_gateway` refuses a TLS gateway URL itself, through
-`discord.gateway_endpoint(bot)`, with a message that says so before `std/ws`
-would. A REST call against `https` no longer panics.
+`discord.gateway_endpoint(bot)` parses the gateway URL and panics only on one it
+cannot parse; a `wss://` URL is dialed over TLS, and a certificate the system
+trust store does not vouch for panics inside `std/tls`.
 
 ## The constants
 
@@ -130,9 +130,8 @@ fun main() {
 That is the whole bot: the loop dials, reads HELLO, identifies with the intents,
 answers heartbeats with the last dispatch's sequence, resumes after a reconnect
 the server asked for, backs off between attempts, and closes for good on a code
-that says retrying cannot work. With Discord's defaults it panics on the
-gateway's `wss://` URL, as above (the REST calls the interaction handler makes
-need no change); with a `ws://` gateway it runs unchanged.
+that says retrying cannot work. With Discord's defaults it dials the gateway's
+`wss://` URL over TLS; with a local `ws://` gateway it runs unchanged.
 
 Every handler is optional and the default does nothing:
 
@@ -276,9 +275,8 @@ one. Every header the library sets is set in `request_at`, which is public.
 | --- | --- |
 | `split_url(url)` | `Result<Endpoint, ParseErr>`: `scheme`, `host`, `port`, `path`, `query`, `tls` |
 | `e.path_and_query()`, `e.url()` | the path with its query, and the URL back as text |
-| `needs_tls(scheme)` | whether a scheme needs TLS at all (true for `https` and `wss` alike, regardless of whether the client it's headed to has TLS) |
+| `needs_tls(scheme)` | whether a scheme needs TLS at all (true for `https` and `wss`) |
 | `escape_uri(text)` | one query value or path segment, percent-encoded |
-| `tls_message(what, url)` | the refusal `gateway_endpoint` writes for a `wss://` URL, now that only the gateway still needs one |
 
 ## Intents
 
@@ -613,24 +611,23 @@ Content-Type
   CLOSE 4000, a reconnect, and an op 6 RESUME carrying the session id and the
   sequence. The REST half is tested the same way, against a loopback endpoint
   that answers with Discord's rate-limit headers.
-- **TLS is here for REST, not yet for the gateway.** `DEFAULT_API_BASE`
-  (`https://`) is reachable as written ([`std/http`](/stdlib/http) has TLS).
-  `DEFAULT_GATEWAY_URL` (`wss://`) is not ([`std/ws`](/stdlib/ws) doesn't,
-  `MISSING-wV4tg`); the gateway code is the same against a local `ws://`
-  endpoint. Nothing shells out to `curl` and nothing pretends.
+- **TLS is here for both halves.** `DEFAULT_API_BASE` (`https://`) and
+  `DEFAULT_GATEWAY_URL` (`wss://`) are reachable as written
+  ([`std/http`](/stdlib/http) and [`std/ws`](/stdlib/ws) have TLS); the gateway
+  code is the same against a local `ws://` endpoint. Nothing shells out to
+  `curl` and nothing pretends.
 - **Ed25519 verification is not here.** The raw signature, the timestamp and the
   body are handed over, `verify_with` is the seam, and a reverse proxy is the
   honest deployment until `std/crypto` exists.
 - **No retries and no rate-limit waiting.** `rate_limit(resp)` is a value; the
   decision and the sleep are the caller's.
-- **`ws.try_connect` is the dial that does not end the loop**: where
-  `ws.connect` panics when the dial fails, `ws.try_connect` returns `WsErr.Dial`
+- **`ws.try_connect_secure` is the dial that does not end the loop**: where
+  `ws.connect` panics when the dial fails, it returns `WsErr.Dial`
   with the refused connection's reason, so a redial after a dial that fails
   (a wrong host, a refused connection) can survive instead of ending the process.
 - **A resume lands on the configured gateway URL**, not on the
-  `resume_gateway_url` Discord sends in READY: that URL is `wss://` in practice
-  and therefore unreachable from v1, and a resume against a local endpoint has to
-  go where the caller pointed the library.
+  `resume_gateway_url` Discord sends in READY: a resume against a local endpoint
+  has to go where the caller pointed the library.
 - Not here, deliberately: `zlib-stream` compression and gateway extensions,
   subprotocols, automatic sharding across many connections, message attachment
   upload (there is no `multipart/form-data` in v1: `MISSING-j2Wka`), scheduled
