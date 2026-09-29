@@ -22,6 +22,12 @@ entirely in WebKelp. A button in the corner toggles between the rendered page an
 compiled from, so you can see each construct next to its output. No login is needed. The source is
 `demo/index.wk` in the repository, and `demo/build.sh` builds it.
 
+## Playground
+
+[**homelabone.xenoo.dev/webkelpplay**](https://homelabone.xenoo.dev/webkelpplay/) is an in-browser editor:
+write WebKelp on the left and see the compiled page on the right, live. Links carry your source in the URL, so
+you can share a page without saving anything. See [WebKelp playground](/family/webkelp-playground).
+
 ## A first page
 
 ```markdown

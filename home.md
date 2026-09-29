@@ -71,7 +71,8 @@ by the first few lines of a file instead of by auditing it.
     [Kelp family](/family) is software built on Kelp: [WebKelp](/family/webkelp),
     a markdown-style language that compiles to HTML and CSS, and the
     [conventions](/family/writing-tools-in-kelp) such projects share.
-    Try the [live demo](https://homelabone.xenoo.dev/webkelpdemo/).
+    Try the [live demo](https://homelabone.xenoo.dev/webkelpdemo/) or the
+    [playground](https://homelabone.xenoo.dev/webkelpplay/).
 
 -   **Release history**
 

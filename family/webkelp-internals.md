@@ -1,10 +1,10 @@
 ---
 title: "How WebKelp is built"
-description: "The WebKelp compiler is about 2,100 lines of Kelp in seven modules. This page maps them, follows one document through the pipeline, and explains the capability split, the design choices and the golden tests."
+description: "The WebKelp compiler is about 2,500 lines of Kelp in eight modules. This page maps them, follows one document through the pipeline, and explains the capability split, the design choices and the golden tests."
 isPublished: true
 tags: "family, compiler"
 ---
-WebKelp's compiler is a Coral-style Kelp project of about 2,100 lines with no
+WebKelp's compiler is a Coral-style Kelp project of about 2,500 lines with no
 dependencies beyond `std/*`. This page is for someone reading or changing it. For using it,
 see the [overview](/family/webkelp) and the [syntax reference](/family/webkelp-syntax).
 
@@ -14,24 +14,27 @@ see the [overview](/family/webkelp) and the [syntax reference](/family/webkelp-s
 webkelp/
     coral.toml        name, version, entry = "src/main.kp"
     src/main.kp       CLI and all file I/O
+    src/server.kp     the playground backend: a small HTTP server
     src/page.kp       front matter and whole-page assembly
     src/block.kp      block parser
     src/inline.kp     inline parser
     src/attrs.kp      the {attribute} parser
     src/text.kp       byte-level string helpers
     src/theme.kp      the default stylesheet, embedded as Kelp source
+    playground/       the playground page (a .wk file) and its build script
     tests/            golden tests: cases/*.wk with expected .html and .css
     examples/site/    a small sample site
 ```
 
 | Module | Lines | Owns |
 | --- | --- | --- |
-| `block` | ~920 | headings, paragraphs, lists, quotes, fences, tables, containers, raw HTML, and the `Ctx` shared by a page |
-| `inline` | ~340 | code spans, emphasis, links, images, spans, raw inline tags |
-| `text` | ~300 | escaping, slugs, scanning helpers, `brace_close`, URL rewriting |
+| `block` | ~960 | headings, paragraphs, lists, quotes, fences, tables, containers, raw HTML, and the `Ctx` shared by a page |
+| `inline` | ~370 | code spans, emphasis, links, images, spans, raw inline tags |
+| `text` | ~400 | escaping, slugs, scanning helpers, `brace_close`, URL rewriting |
 | `page` | ~220 | front matter, `Meta`, the document shell, fragment mode |
 | `attrs` | ~160 | `Attrs`, `parse`, `split_trailing`, `looks_like_attrs` |
 | `main` | ~150 | argument handling, reading and writing files, directory walking |
+| `server` | ~250 | the [playground](/family/webkelp-playground) backend: sockets, request limits, UTF-8 validation |
 | `theme` | ~65 | `base_css()` |
 
 ## The capability split
@@ -119,6 +122,21 @@ buffer. `page.compile` then concatenates hoisted imports, the theme, and the res
 the whole reason the ordering rule exists: the theme is written first, and CSS ignores an
 `@import` that follows any rule.
 
+## Hostile input
+
+The compiler also runs behind a public endpoint, so it has to stay cheap on adversarial text. Three
+mechanisms do that, and each one came from a test that broke without it:
+
+- **Depth caps.** `Ctx` counts block nesting, and beyond 24 levels the remaining lines are emitted as an
+  escaped `<pre>`; `render_into` carries a depth and does the same past 12 inline levels. Without the cap,
+  30,000 nested `>` crashed the process with a stack overflow.
+- **Bounded lookahead.** An opener with no closer (`[`, `*`, a backtick) scans ahead for one, so a line of
+  thousands of them was quadratic. Every inline search stops after 4,000 bytes.
+- **`View` for scanning.** `str.byte(s, i)` has to find the end of `s` on every call, because a `str` has no
+  stored length, so scanning a long paragraph byte by byte was quadratic on its own. The inline scanner takes a
+  `View`, which carries its length. Unmatched-opener inputs went from 27 s to 0.14 s. Block-level code still
+  uses `str`, since it works on one short line at a time.
+
 ## Choices worth knowing
 
 - **Bytes, not characters.** Every scanner works on `u8` with `str.byte`. Multi-byte UTF-8
@@ -167,6 +185,7 @@ regression. A new behaviour gets a new case rather than an edit to an old one.
 
 ## See also
 
+- [WebKelp playground](/family/webkelp-playground)
 - [Writing tools in Kelp](/family/writing-tools-in-kelp)
 - [Capabilities](/language/capabilities)
 - [Text](/language/text) and [`std/str`](/stdlib/str)

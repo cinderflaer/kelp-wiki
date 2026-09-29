@@ -14,7 +14,7 @@ where its rough edges get found first.
 
 | Project | What it is | Written in | Repository |
 | --- | --- | --- | --- |
-| [WebKelp](/family/webkelp) | a markdown-style language (`.wk`) that compiles to plain HTML and CSS, with an escape hatch for everything HTML and CSS can do. [Live demo](https://homelabone.xenoo.dev/webkelpdemo/) | Kelp | `Juniper/webkelp` |
+| [WebKelp](/family/webkelp) | a markdown-style language (`.wk`) that compiles to plain HTML and CSS, with an escape hatch for everything HTML and CSS can do. [Live demo](https://homelabone.xenoo.dev/webkelpdemo/), [Playground](https://homelabone.xenoo.dev/webkelpplay/) | Kelp | `Juniper/webkelp` |
 
 The core repositories, for comparison, are listed on the [home page](/home).
 
@@ -23,6 +23,7 @@ The core repositories, for comparison, are listed on the [home page](/home).
 - [WebKelp](/family/webkelp): what it is, how to build it, and a first page.
 - [WebKelp syntax reference](/family/webkelp-syntax): every construct, the page settings,
   the CSS pipeline, and what is deliberately not supported.
+- [WebKelp playground](/family/webkelp-playground): the in-browser editor, its Kelp backend, and its limits.
 - [How WebKelp is built](/family/webkelp-internals): the module layout, the data flow, the
   capability split and the test setup.
 - [Writing tools in Kelp](/family/writing-tools-in-kelp): the structure the family projects
