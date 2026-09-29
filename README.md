@@ -63,7 +63,7 @@ tags: "language, ownership"
 
 Tag vocabulary, so the tag browser stays useful: one chapter tag per page
 (`overview`, `getting-started`, `language`, `stdlib`, `library`, `example`,
-`compiler`, `tooling`, `reference`, `meta`) plus cross-cutting topics
+`compiler`, `tooling`, `reference`, `family`, `meta`) plus cross-cutting topics
 (`capability`, `ownership`, `errors`, `cli`, `networking`, `filesystem`, `text`,
 `collections`, `data-formats`, `math`, `time`, `testing`).
 
