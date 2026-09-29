@@ -470,6 +470,7 @@ shard, and every one of them is settable.
 | `webhook_request(w, method, path, body)` | no `Authorization` at all |
 | `with_header(req, name, value)` | one more header, on a request taken with `move` |
 | `send_request(bot, req)`, `send_json(bot, method, path, body)`, `send_at(base, method, path, body)` | the three ways to send |
+| `try_send_request(bot, req)`, `try_send_json(bot, method, path, body)`, `try_send_at(base, method, path, body)` | the same three, returning `Result<http.Response, http.HttpErr>`: a dead host (`Dial`), a reset or truncated response (`Exchange`) and a redirect loop (`Redirects`) are values, not a dead process |
 | `channel_messages_path`, `channel_message_path`, `channel_path`, `global_commands_path`, `global_command_path`, `guild_commands_path`, `interaction_callback_path`, `interaction_webhook_base`, `original_response_path`, `DM_CHANNELS_PATH`, `CURRENT_USER_PATH`, `GATEWAY_ENDPOINT_PATH` | the paths, so a caller can build their own request for an endpoint this library does not have a helper for |
 
 `send_message`, `send_message_json`, `edit_message`, `delete_message`,
@@ -496,6 +497,7 @@ including `webhooks`; Discord's is `https://discord.com/api/webhooks` and
 | `w.message_path(message_id)` | the path of one message |
 | `post_webhook(w, message, wait, thread_id)`, `post_webhook_text(w, content)` | post, with a built payload or with text |
 | `post_webhook_json(w, payload_json, wait, thread_id)`, `post_webhook_url(url, payload_json)` | post the JSON the caller already has |
+| `try_post_webhook_json`, `try_post_webhook_url`, `try_edit_webhook_message`, `try_delete_webhook_message`, `try_get_webhook_message` | the fallible twins of the webhook calls, same return type as the `try_send_*` row |
 | `edit_webhook_message`, `delete_webhook_message`, `get_webhook_message` | the rest of a webhook's surface |
 | `webhook_url_of(w)` | the URL back as text |
 
