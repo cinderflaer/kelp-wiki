@@ -55,14 +55,17 @@ spliced in by the compiler from the project's `http_pool` setting in
 | --- | --- | --- |
 | `parse_url(s)` | `Url` | accepts both `http://` and `https://`; the latter defaults to port 443 |
 | `default_client()` | `Client` | 30 s timeout, 5 redirects, following them |
-| `Client.send(req)` | `Response` | the whole exchange, scheme decides plain or TLS |
+| `Client.send(req)` | `Response` | the whole exchange, scheme decides plain or TLS; panics on any failure |
+| `Client.try_send(req)` | `Result<Response, HttpErr>` | `send` with the failures as a value (see below) |
+| `try_get(url)` | `Result<Response, HttpErr>` | `get` with the failures as a value |
+| `Pool.try_send(req)` / `Pool.try_checkout(use_tls)` | `Result<Response, HttpErr>` / `Result<Lease, HttpErr>` | the pooled forms of the same |
 | `empty_headers()` | `List<Header>` | |
 | `Response.is_ok()` | `bool` | status in `200..299` |
 | `Response.text()` | `String` | the body as text |
 | `Response.has_header(name)` / `Response.header(name)` | `bool` / `String` | |
 | `Response.retry_after()` | `Option<u64>` | the `Retry-After` header, seconds form only (see below) |
 | `Response.rate_limit()` | `RateLimit` | the `X-RateLimit-*` bucket headers, each field `Option` |
-| `send_fresh(...)`, `exchange(...)`, `one_exchange(...)` | `Response` | the lower-level steps, if you need them |
+| `send_fresh(...)`, `exchange(...)`, `one_exchange(...)` | `Response` | the lower-level steps, if you need them; each has a `_try` twin returning `Result<Response, HttpErr>` |
 
 Response header lookup is case-insensitive (`name_eq`). The body framing handles
 **all four** cases: `Content-Length`, `Transfer-Encoding: chunked`, a bodyless
@@ -151,6 +154,41 @@ fun main() {
 `send` panics when the connection or the TLS handshake fails; a mismatched or
 self-signed certificate is a handshake failure too, since [`std/tls`](/stdlib/tls)
 verifies unconditionally.
+
+## Fallible sends: `HttpErr`
+
+`try_send` (on `Client` and `Pool`) and `try_get` return the failure as a value
+instead of ending the process, so a program whose handler calls a REST endpoint
+that is down can report it and carry on:
+
+```kelp
+enum HttpErr {
+    Dial(val reason: String)
+    Exchange(val reason: String)
+    Redirects(val reason: String)
+}
+```
+
+The variants split on the question a retry needs answered: **could the server
+have seen the request?**
+
+| Variant | Means | Retrying |
+| --- | --- | --- |
+| `Dial` | nothing was sent: the name did not resolve, the connection was refused, or the TLS handshake failed (an untrusted certificate, a name mismatch) | safe for any method |
+| `Exchange` | the connection was open and the request may have reached the server: a send failed, the peer reset or closed before the response was complete, a read timed out, or the response was malformed (bad status line, `Content-Length` or chunk) | the caller's call: an idempotent request can be repeated, a `POST` cannot without knowing more |
+| `Redirects` | the redirect chain was longer than the client allows; the requests before it completed | a loop will repeat |
+
+Every `reason` is the text the panicking form panics with, so a caller that logs
+it prints what `send` would have printed on stderr. A pooled request that fails
+mid-exchange closes its connection instead of putting it back, so the pool never
+hands out a half-read connection. An `Exchange` failure on a *reused* connection
+is often a stale keep-alive (the server closed an idle connection before the
+request reached it), which is why retrying an idempotent request once on
+`Exchange` is the ordinary policy.
+
+Still a panic, not a value, in both forms: a host outside the `net` grant (a
+mistake in the program, checked before any dial, as for `net.try_connect`) and a
+URL that does not parse.
 
 ## Notes
 

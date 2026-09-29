@@ -35,6 +35,7 @@ single `String` rather than an `errno` (see below).
 | --- | --- | --- |
 | `connect(host, port)` | `Socket` | panics on failure (`net.connect: connection failed`) |
 | `try_connect(host, port)` | `Result<Socket, ConnectErr>` | the fallible `connect`: a refused dial is `Err`, and only a capability denial still panics |
+| `try_send_all(s, data)` / `try_recv(s, max)` / `try_recv_into(s, buf, at)` | `Result<usize, NetErr>` / `Result<Bytes, NetErr>` / `Result<usize, NetErr>` | `send_all`, `recv` and `recv_into` with a reset, a closed peer or a timeout as `Err` (`NetErr.reason` is the panic text) instead of a panic; an empty or zero `Ok` is still end of stream |
 | `listen(port)` | `Listener` | port `0` asks the OS for a free one |
 | `accept(l)` | `Socket` | blocks until a peer connects |
 | `Listener.port()` | `u16` | the bound port: how you learn what `0` became |

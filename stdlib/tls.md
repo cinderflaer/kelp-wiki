@@ -51,6 +51,7 @@ type). It is opaque outside this module; nothing else needs to know its shape.
 | `read(t, max)` | `Bytes` | up to `max` bytes |
 | `read_into(t, buf, at)` | `usize` | fills an existing buffer from offset `at` |
 | `shutdown(t)` | `Unit` | closes the TLS session (not the underlying socket) |
+| `try_handshake(s, host)` / `try_write_all(t, data)` / `try_read(t, max)` / `try_read_into(t, buf, at)` | `Result<_, TlsErr>` | the fallible twins: a failed handshake or I/O call is `Err` (`TlsErr.reason` is the panic text). A failed `try_handshake` leaves the socket open, still the caller's to close |
 
 All five panic on failure, the same style as [`std/net`](/stdlib/net)'s
 `send`/`recv`/`close`, with one exception: for `read` and `read_into`, a peer
