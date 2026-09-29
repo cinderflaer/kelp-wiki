@@ -15,6 +15,13 @@ It has two goals that pull in opposite directions, and the design is the answer 
 - **Never limiting.** Anything HTML or CSS can express, WebKelp can express. There is
   always an escape hatch, and it never needs an "unsafe" flag.
 
+## Live demo
+
+[**homelabone.xenoo.dev/webkelpdemo**](https://homelabone.xenoo.dev/webkelpdemo/) is a page written
+entirely in WebKelp. A button in the corner toggles between the rendered page and the `.wk` source it was
+compiled from, so you can see each construct next to its output. No login is needed. The source is
+`demo/index.wk` in the repository, and `demo/build.sh` builds it.
+
 ## A first page
 
 ```markdown

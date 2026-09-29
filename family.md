@@ -14,7 +14,7 @@ where its rough edges get found first.
 
 | Project | What it is | Written in | Repository |
 | --- | --- | --- | --- |
-| [WebKelp](/family/webkelp) | a markdown-style language (`.wk`) that compiles to plain HTML and CSS, with an escape hatch for everything HTML and CSS can do | Kelp | `Juniper/webkelp` (private) |
+| [WebKelp](/family/webkelp) | a markdown-style language (`.wk`) that compiles to plain HTML and CSS, with an escape hatch for everything HTML and CSS can do. [Live demo](https://homelabone.xenoo.dev/webkelpdemo/) | Kelp | `Juniper/webkelp` (private) |
 
 The core repositories, for comparison, are listed on the [home page](/home).
 
