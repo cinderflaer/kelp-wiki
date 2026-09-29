@@ -17,9 +17,9 @@ impl "std/str"
 
 | Function | Returns | Notes |
 | --- | --- | --- |
-| `len(s: &str)` | `usize` | bytes, not characters (a `strlen`) |
+| `len(s: &str)` | `usize` | bytes, not characters (a `strlen`, so it costs the length of the string) |
 | `is_empty(s: &str)` | `bool` | |
-| `byte(s: &str, i: usize)` | `u8` | byte at `i`; out of range panics |
+| `byte(s: &str, i: usize)` | `u8` | byte at `i`; out of range panics. The bounds check reads `i + 1` bytes, not the whole string |
 | `byte_index(s: &str, i: usize)` | `usize` | the byte offset of character `i` |
 | `char_count(s: &str)` | `usize` | codepoints |
 | `char_at(s: &str, i: usize)` | `u32` | the codepoint at character index `i` |
@@ -91,6 +91,12 @@ fun main() {
 
 ## Notes
 
+- **Scanning a long string byte by byte: take a `View` (or `Bytes`) first.** A
+  `str` carries no length, so `str.len` walks to the terminating NUL and
+  `str.byte(s, i)` walks `i + 1` bytes; a `while` loop over a 13 MB `str` is
+  quadratic and does not finish. `val v = s.view()` pays one `strlen` (none from
+  an owned `String`), and `v.len()` and `v.get(i)` are then constant time: the
+  same 13 MB scan takes about 15 ms. See [Text](/language/text#view-borrowed-text-with-a-length).
 - Everything byte-oriented counts bytes: `str.len("é")` is 2. Use `char_count`
   when the answer must be characters.
 - `to_upper`/`to_lower` are ASCII-only; other scripts are left alone.
