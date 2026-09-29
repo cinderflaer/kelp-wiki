@@ -406,7 +406,7 @@ fun main() {
 - **`domain`** must be one of the six existing names; an unknown one is the
   same error an unknown domain gives on a `caps(...)` clause. **`library`** is
   linked (`-l<library>`) on both backends' link lines, the same "an unused
-  library is free to link" reasoning `-lm`/`-lssl` already use. **`symbols`**
+  library is free to link" reasoning `-lm` uses. **`symbols`**
   is the allowlist: an `extern fun` in that module typechecks only if its bare
   name is in the list, and user FFI stays a 1:1 name mapping (no rename or
   alias vocabulary in v1), so the symbol `codegen_c.rs` calls is the function's
