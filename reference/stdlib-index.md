@@ -32,7 +32,9 @@ latest batch is `std/tls`, a new module (MK5-S4b-M1), plus `std/http`'s
 (`MISSING-p5Xtr`), all at `kelp` `e33ea55`. The batch after it is the typed
 error surface: `std/tls`'s `TlsError`/`TlsOptions` and its `try_` family,
 `std/http`'s `HttpErr` and `try_get`/`try_send`, and `std/net`'s `NetErr` with
-`try_send_all`/`try_recv`/`try_recv_into`. The kernel-path language surface
+`try_send_all`/`try_recv`/`try_recv_into`. The batch after that is `std/arena`,
+kernel stage 13's bump arena, whose six functions and one type are below. The
+kernel-path language surface
 (`unsafe`/`Ptr<T>`, `repr(...)`, statics, `defer`, the `[target]` manifest
 section) is not a stdlib name and lives on the [language pages](/language), not
 here.
@@ -556,6 +558,25 @@ Functions:
 - `fun or_else<T, E, F>(r: &Result<T, E>, f: closure(&E).R: Result<T, F>).R: Result<T, F>`
 - `fun each<T, E>(r: &Result<T, E>, f: closure(&T))`
 
+## `std/arena`
+
+Types:
+
+- `datac Arena(var base: Ptr<u8>, val cap: usize, var used: usize)`
+
+Functions:
+
+- `fun new(base: Ptr<u8>, cap: usize).R: Arena`
+- `fun Arena.used().R: usize`
+- `fun Arena.remaining().R: usize`
+- `fun mut Arena.reset()`
+- `fun mut Arena.alloc(size: usize, align: usize).R: Ptr<u8>`
+- `fun mut Arena.alloc_zeroed(size: usize, align: usize).R: Ptr<u8>`
+
+A bump arena over a caller-owned byte region. It allocates nothing, so it works
+in a freestanding image and needs no `[target] alloc` pair. On
+[`std/arena`](/stdlib/arena).
+
 ## `std/atomic`
 
 Types:
@@ -711,6 +732,7 @@ layer under it. The whole surface is on [`std/ws`](/stdlib/ws).
 | `std/list` | 6 | 0 | — |
 | `std/option` | 9 | 1 | — |
 | `std/result` | 12 | 1 | — |
+| `std/arena` | 6 | 1 | - |
 | `std/atomic` | 10 | 1 | - |
 | `std/thread` | 5 | 1 | - |
 

@@ -142,6 +142,7 @@ binding ('val p: Ptr<i32> = Ptr.null()')
 | `p.read_unaligned()` | a `Copy` element at any alignment |
 | `p.write_unaligned(v)` | a store at any alignment |
 | `Ptr.alloc<T>(count)` | hosted `malloc`; unavailable in a freestanding build |
+| `Ptr.try_alloc<T>(count)` | the same allocation without the panic: the null `Ptr<T>` on failure, the byte count checked for wrap on both backends; freestanding it needs an `[target] alloc`/`dealloc` pair |
 | `p.free()` | hosted `free`; unavailable in a freestanding build |
 
 ```kelp
@@ -176,6 +177,56 @@ fun main() {
 99
 99
 ```
+
+### Fallible allocation: `Ptr.try_alloc`
+
+`Ptr.try_alloc<T>(count)` is `Ptr.alloc<T>` minus the panic. It is unsafe like
+`alloc`, takes the same element set and makes the same alignment promise
+("aligned for `T`"), but a failed allocation is the null `Ptr<T>` rather than a
+call to the panic handler, so the null check `alloc` used to make for the
+program is the program's own:
+
+```kelp
+fun main() {
+    val max: usize = ~0
+    unsafe {
+        val p: Ptr<i32> = Ptr.try_alloc<i32>(4)
+        print(p.is_null())
+        p.write(42)
+        print(p.read())
+        p.free()
+
+        val huge: Ptr<u64> = Ptr.try_alloc<u64>(max / 2)
+        print(huge.is_null())
+
+        val small: Ptr<u8> = Ptr.try_alloc<u8>(8)
+        print(small.is_null())
+        small.free()
+    }
+}
+```
+
+```text
+false
+42
+true
+false
+```
+
+Hosted it is libc's `malloc` on both backends. Freestanding it is the project's
+own `[target] alloc`, admitted only when the manifest names `alloc`/`dealloc`;
+without the pair the refusal is the same one `List` gets and names both keys:
+
+```text
+error: 'Ptr#try_alloc' is unavailable in a freestanding build: it needs an allocator: set '[target] alloc' and '[target] dealloc' to the project's own functions
+```
+
+On both backends the byte count `count * size_of::<T>()` is checked for wrap
+before the call, so a request whose product would overflow `usize` answers the
+null pointer instead of asking the allocator for a small block. That is the one
+place `try_alloc` is deliberately stricter than `Ptr.alloc`, whose product can
+still wrap. [`std/arena`](/stdlib/arena) is the other allocation tool a kernel
+reaches for: a bump region the caller owns, no allocator and no libc.
 
 ### Volatile access
 
@@ -404,6 +455,8 @@ listing) and nothing about whether the address is valid, aligned, live, aliased
 or correctly sized. Provenance and address-space control are not in this
 release, so a pointer is a plain integer-shaped address and `from_addr` can name
 any of them. `AtomicPtr`, `transmute` and non-`Copy` reads are not here either.
+`Ptr.try_alloc`'s null check, the `base`/`cap` an arena is handed, and whether a
+`free` is ever called are the caller's promises too.
 [`plan/kernel-ub-notes.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/kernel-ub-notes.md)
 is the growing catalogue of what that leaves to the program.
 
