@@ -1,6 +1,6 @@
 ---
 title: "`std/tls`"
-description: "Client-side TLS: a typed `TlsError`, a `try_` family beside the panicking wrappers, `TlsOptions` (private CA file or directory, timeout), truncation detection and `wss`. Gated on net, the same domain std/net and std/http already hold."
+description: "Client-side TLS: a typed `TlsError`, an opaque `TlsHandle`, a `try_` family beside the panicking wrappers, `TlsOptions` (private CA file or directory, timeout), truncation detection and `wss`. Gated on net."
 isPublished: true
 tags: "stdlib, networking, tls"
 ---
@@ -36,7 +36,7 @@ the check already works.
 ## Types
 
 ```kelp
-datac TlsStream(val fd: i32, val handle: usize)
+datac TlsStream(val fd: i32, val handle: TlsHandle)
 
 pub enum TlsError {
     Untrusted
@@ -61,11 +61,19 @@ does not close `fd`. The caller closes the socket itself afterward with
 `net.close(net.Socket(fd = t.fd))`. Nothing closes on drop, the same rule
 `net.Socket` and `net.Listener` follow.
 
-`handle` is carried as a `usize` rather than an `extern type` handle: an `extern
-type` is legal only in a module with its own `coral.toml` `[extern."<module
-id>"]` section, and a compiler-shipped std module has no manifest.
-`plan/release-goals.md` records the smallest compiler change that would lift
-that, under "Follow-ups".
+`handle` is an `extern type`, `pub extern type TlsHandle`, not a `usize`. The
+opaque OpenSSL `SSL*` crosses as a value the type system keeps whole: a handle
+can be produced only by the library, not forged from an integer, compared with
+one, or confused with a different handle type, so the accidental
+integer-to-pointer path is gone. A std module the compiler ships may declare one
+(`stdlib.rs`'s source table is what admits it, since its extern bodies come from
+`externs.rs` rather than a manifest); a project module still needs its own
+`coral.toml` `[extern."<module id>"]` section. `TlsHandle` is `Copy`, owns
+nothing and has no drop, so a handle can still outlive the `try_shutdown` that
+freed its `SSL`; the type buys spelling, not liveness. `try_shutdown` remains
+the call that frees the `SSL*`, and `std/http`/`std/ws` carry the plain-or-TLS
+choice as an `Option<TlsHandle>`, so `None` is the "no handle" value and no
+integer sentinel has to stand in for one.
 
 ## Functions
 

@@ -425,11 +425,42 @@ $ echo $?
 The `as name` clause is refused the same way, and the module is reached by its own
 name (see [Modules and imports](/language/modules)).
 
+## The memory floor
+
+`kelpc build` and `kelpc run` end themselves when the machine is nearly out of
+memory, with one `error:` line and exit status **75**, instead of leaving the
+kernel's OOM killer to choose a victim (on a small host the victim is often not
+the compiler, and can be a whole login session).
+
+A watchdog thread reads `MemAvailable` from `/proc/meminfo` every 200 ms. Below
+the floor it kills the `cc`/`ld.lld`/`pkg-config` children the driver spawned
+(they are the largest consumers and would outlive `kelpc`), prints the message
+below and leaves with `_exit(75)` (`EX_TEMPFAIL`: the same input can succeed once
+memory is free). The main thread is still inside LLVM at that point, so the exit
+is `_exit` and not `std::process::exit`.
+
+```text
+$ KELPC_MIN_AVAILABLE_MB=999999999 kelpc build src/main.kp
+error: kelpc stopped itself: only 4974 MiB of memory is available (floor 999999999 MiB). Free some memory and run it again, or lower the floor with KELPC_MIN_AVAILABLE_MB (0 turns the guard off).
+$ echo $?
+75
+```
+
+| Setting | Meaning |
+| --- | --- |
+| `KELPC_MIN_AVAILABLE_MB` | the floor in MiB, default **384**; `0` turns the guard off; an unparsable value is the default |
+
+What it does not police: `kelpc run` stops the guard before it starts the
+compiled program, so a program's own memory use is never limited by it. `fmt`,
+`lint`, `check` and `version` do not start it at all, and only Linux is covered:
+with no `/proc/meminfo` the guard does nothing. Disk space is not checked.
+
 ## Environment variables
 
 | Variable | Effect |
 | --- | --- |
 | `LLVM_SYS_211_PREFIX` | where `llvm-sys` finds `libLLVM` and its headers; set by `shell.nix` |
+| `KELPC_MIN_AVAILABLE_MB` | the compiler's memory floor; below it `build`/`run` exit 75, `0` disables it (see [above](#the-memory-floor)) |
 
 Coral also reads `KELPC` to decide which compiler to run, which is a different
 question from what the compiler does with its own environment (see

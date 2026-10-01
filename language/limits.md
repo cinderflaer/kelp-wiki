@@ -207,13 +207,15 @@ active roadmap item or a named future milestone, not a closed decision:
   layout and data-format surface the kernel path needed have shipped
   (`unsafe` blocks and `unsafe fun`, `Ptr<T>` with
   `offset`/`byte_offset`/`cast`/`addr`, volatile and unaligned access,
-  `alloc`/`free`, `repr(c)`/`repr(packed)`/`repr(align(N))`,
-  `size_of`/`align_of`/`offset_of`, the byte-order conversions, and the
-  `[unsafe] modules` gate): see [Unsafe code and raw
-  pointers](/language/unsafe). What is not here is provenance and
-  address-space control, which is why a pointer is a plain integer-shaped
-  address and `from_addr` can name any of them. `AtomicPtr`, `transmute` and
-  unaligned or non-`Copy` reads are absent too.
+  `alloc`/`free` and the fallible `try_alloc`, `repr(c)`/`repr(packed)`/
+  `repr(align(N))`, `size_of`/`align_of`/`offset_of`, the byte-order
+  conversions, the `[unsafe] modules` gate, and the [`std/arena`](/stdlib/arena)
+  bump region): see [Unsafe code and raw
+  pointers](/language/unsafe). `from_addr` names an address, and a freestanding
+  module must hold an `mmio` grant to do it, but there is still no provenance or
+  address-space model, which is why a granted range admits any address reachable
+  from it by arithmetic. `AtomicPtr`, `transmute` and a read of a non-`Copy`
+  element are absent too.
 - **Traits, interfaces, `dyn` dispatch.** A-12. Slice 1 already shipped (a
   `datac`/`enum` can declare its own `hash`/`eq` pair, and a concrete `enum`
   can declare a receiver method); named traits and dynamic dispatch are slice 2

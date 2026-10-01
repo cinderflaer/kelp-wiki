@@ -1,6 +1,6 @@
 ---
 title: "Freestanding mode"
-description: "A bare-metal build: no libc, no runtime preamble, a compiler-emitted `_start`, the entry and panic functions and a linker script named in `[target]`. LLVM-only. riscv64 and aarch64. The allocator hook reroutes `Box`, `List` and `Map`."
+description: "A bare-metal build: no libc, no runtime preamble, a compiler-emitted `_start`, the entry and panic functions and a linker script named in `[target]`. LLVM-only. riscv64 and aarch64. The allocator hook reroutes `Box`, `List`, `Map`, `String` and `Bytes`."
 isPublished: true
 tags: "language, freestanding, kernel"
 ---
@@ -74,10 +74,10 @@ message names the construct.
   `kelp_assert`), a defined `main` (the hosted entry point and its
   `argc`/`argv` globals), `Ptr.alloc`/`Ptr.free` (the hosted `malloc`/`free`),
   passdowns (`pd`, whose initializers run through the generated `kelp_init_pds`
-  that only the hosted entry point calls), `String`, `Bytes`, `View` and
-  `Thread` (which always reach the hosted C runtime), `Box`, `List` and `Map`
-  when no allocator pair is configured, and any `std/*` module except the pure
-  ones below.
+  that only the hosted entry point calls), `View` and `Thread` (which always
+  reach the hosted C runtime), `Box`, `List`, `Map`, `String` and `Bytes` when
+  no allocator pair is configured, and any `std/*` module except the pure ones
+  below.
 
 ```text
 error: 'print' is unavailable in a freestanding build: it writes through the hosted runtime's 'printf'
@@ -104,15 +104,19 @@ cannot reference a symbol the link would miss.
   borrows `&T`/`&mut T`.
 - `if`, `when`, loops, functions, and closures that capture nothing (a capturing
   literal owns a heap environment that only the runtime could free).
-- `Atomic<T>` and its methods, plus the pure `std/atomic`, `std/option` and
-  `std/result` modules.
+- `Atomic<T>` and its methods, plus the pure `std/atomic`, `std/option`,
+  `std/result` and `std/arena` modules.
 - The five `std/str` operations the compiler lowers itself: `str.len`,
-  `str.byte`, `str.eq`, `str.starts_with` and `str.ptr`. Every other `std/str`
-  function is refused by name, and the rest of the module (and `std/mem`, which
-  it imports) is dropped from the AST before inference, so its bodies and the
-  type instances they would instantiate never exist.
+  `str.byte`, `str.eq`, `str.starts_with` and `str.ptr`. With an allocator
+  configured, the three builders `str.concat`, `str.from_u64` and `str.from_i64`
+  are kept too. Every other `std/str` function is refused by name, and the rest
+  of the module (and `std/mem`, which it imports) is dropped from the AST before
+  inference, so its bodies and the type instances they would instantiate never
+  exist.
 - `Ptr<T>`, the compile-time `size_of`/`align_of`/`offset_of`, `unsafe`,
-  `asm` and naked functions. `Ptr.alloc`/`Ptr.free` stay refused.
+  `asm` and naked functions. `Ptr.alloc`/`Ptr.free` stay refused; `Ptr.try_alloc`
+  is allowed by the same `[target] alloc`/`dealloc` pair `String` and `Bytes`
+  need.
 - `static`/`static mut` and `defer`.
 - A user `extern fun` whose module has its own `[extern."<id>"]` section.
 - A call to the builtin `panic(msg)`, and the arithmetic/bounds checks, which
@@ -160,12 +164,60 @@ output calls the project's functions instead of libc's `malloc`, `realloc` and
 allocation (the project's `alloc` returns null) calls the project's panic
 handler with `"out of memory"`, so it is a panic and never a null dereference.
 
-`String`, `Bytes`, `View` and `Thread` stay refused either way, because their
-operations reach `strlen`/`memcpy`/`realloc` in the hosted runtime.
+`View` and `Thread` stay refused either way, because their operations reach
+`strlen`/`memcpy`/`realloc` in the hosted runtime.
 
-`examples/kernel0-heap` is the idiom: a bump allocator over a `static mut`
-arena, a `List<i32>` of 1..=10, and a counting wrapper that prints `balanced`
-when every allocation reached a matching free.
+### `String` and `Bytes` on the project allocator
+
+With `alloc`/`dealloc` configured, `String` and `Bytes` are legal types wherever
+an allowed type is: a local, a field, a parameter, a return and a container
+element. Without the pair they stay refused by name, the same as `Box`/`List`/
+`Map`:
+
+```text
+error: the binding 's' has type 'String', which is unavailable in a freestanding build without an allocator: set '[target] alloc' and '[target] dealloc' to the project's own functions
+```
+
+Both types are lowered as byte loops over the buffer the project's allocator
+returned, so no `strlen`, `memcpy` or `realloc` symbol is emitted and
+`llvm-nm -u` stays clean. `String` keeps `empty`, `from_str`, `len`, `is_empty`,
+`as_str`, `clone`, `push`, `push_str`, `reserve`, `with_capacity` and `clear`;
+`Bytes` keeps `empty`, `from_str`, `len`, `is_empty`, `get`, `set`, `push`,
+`clone`, `reserve` and `clear`; and `std/str` keeps `concat`, `from_u64` and
+`from_i64` beside the five raw operations, which is how a kernel builds text
+(`str.concat` over `str.from_u64`, because `"${}"` is a print-only construct and
+`print` needs `printf`). Every other method is refused at the call, by name,
+with "needs the hosted runtime": `str.split`, `str.join`, `str.repeat`,
+`str.to_upper`, `str.char_count`, the parsers, `str.from_f64`, `Bytes.append`,
+`Bytes.as_str`'s UTF-8 validation, and every `String`/`Bytes` method not in
+those lists. The refusal is in the front end, so `kelpc check` and `kelpc build`
+give the same error and nothing reaches the linker.
+
+Every allocation goes through the project's `alloc(size, align)` with `align =
+1`, and every free through `dealloc(ptr, size, 1)` with `size = cap + 1`, the
+exact byte count the matching allocation asked for (an empty buffer allocates
+one byte so the terminating NUL always has a slot). Growth doubles the capacity
+through the manifest's `realloc` when it names one, else alloc + copy + dealloc,
+and a null from any of the three reaches the project's `[target] panic` handler
+with `"out of memory"`, so a failed allocation is a panic and never a null
+dereference. `Ptr.try_alloc` is the deliberate exception: the same pair admits
+it, and it answers the null `Ptr<T>` instead of panicking (see
+[Unsafe code and raw pointers](/language/unsafe)).
+
+`examples/kernel0-string` is the idiom: the heap example's bump allocator with
+the optional `realloc` named, `str.concat` and `str.from_u64` for text, a
+`String` grown with `push_str`, and a `Bytes` grown through several doublings:
+
+```text
+s: hello kelp!
+n: 12345
+b: 300
+balanced
+```
+
+`examples/kernel0-heap` is the same idiom for `List<i32>`: a bump allocator over
+a `static mut` arena, a `List<i32>` of 1..=10, and a counting wrapper that
+prints `balanced` when every allocation reached a matching free.
 
 ## `section(...)`, the `_start` stub and the link
 

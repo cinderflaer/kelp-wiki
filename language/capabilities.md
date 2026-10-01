@@ -22,8 +22,8 @@ instead of by auditing it.
 
 ## The model
 
-- Seven domains: **`fs`**, **`net`**, **`process`**, **`env`**, **`time`**,
-  **`rand`**, **`ui`**.
+- Eight domains: **`fs`**, **`net`**, **`process`**, **`env`**, **`time`**,
+  **`rand`**, **`ui`** and **`mmio`**.
 - Each has a corresponding bare built-in namespace, and the *only* way to reach
   the outside is through a stdlib module that holds it (`kelpc/src/stdlib.rs`),
   or, since MK9-S1-M1 (roadmap B-1), a **user** module a project's `coral.toml`
@@ -32,8 +32,11 @@ instead of by auditing it.
   real C symbol. See [User FFI](/language/externs) and
   [Coral: the manifest](/tooling/coral#extern-user-modules-that-bind-a-native-symbol).
   `ui` is the display domain: no call argument names the display, so the only
-  accepted grant is `ui = ["*"]`. No new domain names exist for this: the seven
-  above are still the whole set.
+  accepted grant is `ui = ["*"]`. `mmio` is the device-address domain a
+  freestanding project uses to let a module name a hardware address; it is the
+  one domain whose whole-resource wildcard the entry module does not hold by
+  default (see [below](#mmio-device-registers)). No new domain names exist for
+  this: the eight above are still the whole set.
 - **Every item a gated module declares is gated**, not only the wrapper
   functions a program normally calls: the `extern fun` primitives behind them
   and the module's receiver methods are gated names too, so `fs.read_raw` and
@@ -129,6 +132,7 @@ legitimate line, while the clause on `std/str` is the refusal above.
 | `env` | names, `*` | name matching |
 | `time`, `rand` | no pattern | an empty list is the whole grant |
 | `ui` | `*` only | the domain gate alone: no argument at a display call names the display, so any other pattern list is refused |
+| `mmio` | `"0xBASE+0xLEN"` ranges, or `*` alone | an address against the half-open range; a computed address only against `*` (freestanding only) |
 
 Consequences worth internalizing:
 
@@ -143,6 +147,66 @@ Consequences worth internalizing:
   directory, it matches no pattern (holding `fs` is the whole grant for a call
   with no path argument), and `path.absolute` normalizes the join so the check
   accepts the result.
+
+### `mmio`: device registers
+
+The eighth domain belongs to a freestanding project. A grant is a list of
+half-open address ranges, `"0xBASE+0xLEN"` (`BASE` and `LEN` in hex or decimal,
+`+` the separator, `LEN` in bytes), or the whole address space as `["*"]` alone:
+
+```kelp
+impl "uart" caps(mmio = ["0x10000000+0x100"])
+```
+
+The range covers `[base, base + len)`, so `0x100000FF` is the last byte the
+grant above admits and `0x10000100` is the first it does not. The grant is
+validated where it is written: a bare address, a zero length, a non-numeric part
+and two ranges that share a byte are each a compile error at the `impl` line or
+the manifest line.
+
+**What it gates is one call: `Ptr.from_addr(addr)` in a freestanding project.**
+It is the only place either backend turns an integer into a pointer, so it is
+the whole surface of "this module may name an address". A hosted project's
+`Ptr.from_addr` is unchanged and ungated: this domain is about a machine whose
+addresses are facts, and a hosted process has an OS between it and the hardware.
+
+- A **constant** address (a literal, a `const`, or arithmetic over those) must
+  fall inside a granted range. The refusal names the address and the ranges the
+  module holds:
+
+  ```text
+  error: 'Ptr.from_addr' would take the address 0x20000000, which no 'mmio' grant of module 'main' covers (granted: 0x10000000+0x100)
+  ```
+
+- A **computed** address is refused unless the grant is `["*"]`, because the
+  compiler cannot prove a runtime value lands inside a range. The message says
+  so:
+
+  ```text
+  error: 'Ptr.from_addr' takes an address the compiler cannot fold, and module 'main' holds only the range(s) 0x10000000+0x100; a computed address needs the whole-address-space grant `caps(mmio = ["*"])`
+  ```
+
+- A module that holds **no** `mmio` grant and calls `Ptr.from_addr` is refused by
+  name.
+
+`mmio` is the one domain the entry module does **not** hold by default.
+`caps(*)` hands over every other domain's whole resource and leaves `mmio` out,
+because a fallback of `*` would make the feature a no-op, and a device's address
+is a fact about the machine rather than a resource the root of trust owns. The
+whole-address-space grant has to be written where a reviewer will see it,
+`[caps] mmio = ["*"]` or `caps(mmio = ["*"])`. A range can only be delegated by
+a module that holds it, the same no-escalation rule every other domain has.
+
+The limits are honest and worth writing down: the check is on the address a
+pointer is **born** at, so an offset applied afterwards (`p.byte_offset(n)`,
+`p.offset(n)`, `p.cast<U>()`) is not revisited, and a granted range admits any
+address reachable from it by arithmetic; there is no runtime check and no
+provenance model; and `mmio` says nothing about what is at the address (a fault
+taken on a probe page is granted like a device register). Freestanding is
+LLVM-only by design, so the C oracle never sees the check. See
+[Kernel 0](/language/kernel) for the grants the examples carry and
+[`plan/device-caps.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/device-caps.md)
+for the design.
 
 ## Library grants
 
@@ -227,7 +291,7 @@ the entry module itself instead (see
 below still works and is the simpler option for a quick test:
 
 ```kelp
-// sandbox.kp — a module with exactly one directory
+// sandbox.kp: a module with exactly one directory
 impl "std/fs" caps(fs = ["/srv/data/**"])
 impl "std/str"
 
@@ -245,4 +309,6 @@ failure as a panic from the gated call.
   [`std/ws`](/stdlib/ws), [`std/tls`](/stdlib/tls)
 - [Coral: the manifest](/tooling/coral#extern-user-modules-that-bind-a-native-symbol):
   assigning a domain to a user FFI module
+- [Kernel 0](/language/kernel): the freestanding examples, each with an `mmio`
+  grant
 - [Compiler](/compiler): how the check is implemented
