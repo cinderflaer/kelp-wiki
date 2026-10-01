@@ -22,15 +22,18 @@ instead of by auditing it.
 
 ## The model
 
-- Six domains: **`fs`**, **`net`**, **`process`**, **`env`**, **`time`**,
-  **`rand`**.
+- Seven domains: **`fs`**, **`net`**, **`process`**, **`env`**, **`time`**,
+  **`rand`**, **`ui`**.
 - Each has a corresponding bare built-in namespace, and the *only* way to reach
-  the outside is through a stdlib module that holds it (`kelpc/src/stdlib.rs`)
-  — or, since MK9-S1-M1 (roadmap B-1), a **user** module a project's
-  `coral.toml` assigns one of these same six domains to, plus a native
-  library and an allowlisted symbol set, so its own `extern fun` declarations
-  can bind to a real C symbol. See [Coral: the manifest](/tooling/coral#extern-user-modules-that-bind-a-native-symbol).
-  No new domain names exist for this: the six above are still the whole set.
+  the outside is through a stdlib module that holds it (`kelpc/src/stdlib.rs`),
+  or, since MK9-S1-M1 (roadmap B-1), a **user** module a project's `coral.toml`
+  assigns one of these same seven domains to, plus a native library and an
+  allowlisted symbol set, so its own `extern fun` declarations can bind to a
+  real C symbol. See [User FFI](/language/externs) and
+  [Coral: the manifest](/tooling/coral#extern-user-modules-that-bind-a-native-symbol).
+  `ui` is the display domain: no call argument names the display, so the only
+  accepted grant is `ui = ["*"]`. No new domain names exist for this: the seven
+  above are still the whole set.
 - **Every item a gated module declares is gated**, not only the wrapper
   functions a program normally calls: the `extern fun` primitives behind them
   and the module's receiver methods are gated names too, so `fs.read_raw` and
@@ -125,6 +128,7 @@ legitimate line, while the clause on `std/str` is the refusal above.
 | `process` | absolute program paths | same normalization as `fs` |
 | `env` | names, `*` | name matching |
 | `time`, `rand` | no pattern | an empty list is the whole grant |
+| `ui` | `*` only | the domain gate alone: no argument at a display call names the display, so any other pattern list is refused |
 
 Consequences worth internalizing:
 

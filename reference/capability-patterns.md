@@ -29,7 +29,8 @@ the compiler for a module you do not want to let out.
 | `process` | absolute program path, same wildcards as `fs` | the program path, normalized as for `fs` |
 | `env` | variable name, `*` | the name string |
 | `time` | no pattern | (an empty list is the whole grant) |
-| `rand` | no pattern | — |
+| `rand` | no pattern | (an empty list is the whole grant) |
+| `ui` | `*` only | the domain gate alone: no display call names the display |
 
 ## `net`
 
@@ -81,6 +82,19 @@ No pattern exists: the domain is the grant:
 impl "std/time" caps(time = [])
 impl "std/rand" caps(rand = [])
 ```
+
+## `ui`
+
+No pattern is enforceable: a call in this domain carries no argument that names
+the display server, so the wildcard is the only accepted grant.
+
+```kelp
+impl "display" caps(ui = ["*"])
+```
+
+An empty list or any named pattern is refused where it is written. This is the
+domain gate alone, and it is what a GTK binding asks for (see
+[User FFI](/language/externs)).
 
 ## Delegation
 
