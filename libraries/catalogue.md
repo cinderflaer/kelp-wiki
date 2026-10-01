@@ -1,12 +1,14 @@
 ---
 title: "Catalogue"
-description: "All twenty-eight first-party libraries, grouped by what they do. Every one is a folder in the fpl repository and every one is a single manifest line."
+description: "All twenty-nine first-party libraries, grouped by what they do. Twenty-eight are folders in the fpl repository, a manifest line each; Polyp ships with the compiler instead."
 isPublished: true
 tags: "library"
 ---
-All twenty-eight first-party libraries, grouped by what they do. Every one is a
-folder in the [fpl repository](https://homelabone.xenoo.dev/gittea/Juniper/fpl)
-and every one is a single manifest line.
+All twenty-nine first-party libraries, grouped by what they do. Twenty-eight are
+folders in the [fpl repository](https://homelabone.xenoo.dev/gittea/Juniper/fpl),
+a single manifest line each. [`polyp`](/libraries/polyp) ships with the compiler
+instead, because a native UI library needs an `[extern.*]` manifest section rather
+than a dependency line.
 
 ## Data formats
 
@@ -66,6 +68,12 @@ and every one is a single manifest line.
 | [`table`](/libraries/table) | Column layout with auto-sized widths | — |
 | [`testkit`](/libraries/testkit) | `check()`/`check_eq_*` helpers with a pass/fail `Report` | — |
 | [`benchkit`](/libraries/benchkit) | Warmup + repeat timing, median/percentile over the runs | `time` |
+
+## Native UI
+
+| Library | What it does | Needs |
+| --- | --- | --- |
+| [`polyp`](/libraries/polyp) | Declarative GTK4 UI in the Elm shape: a pure `view` over state, an exhaustive `when` over a `Msg` enum, a builder with trailing blocks | `ui` |
 
 ## Adding one
 
