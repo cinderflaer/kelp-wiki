@@ -29,7 +29,13 @@ three helpers that keep the panicking `connect` wrappers honest (`handshake`,
 two names that are ordinary `.kp` signatures rather than compiler builtins. The
 latest batch is `std/tls`, a new module (MK5-S4b-M1), plus `std/http`'s
 `RateLimit`/`Conn` types and `retry_after`/`rate_limit` accessors
-(`MISSING-p5Xtr`), all at `kelp` `e33ea55`.
+(`MISSING-p5Xtr`), all at `kelp` `e33ea55`. The batch after it is the typed
+error surface: `std/tls`'s `TlsError`/`TlsOptions` and its `try_` family,
+`std/http`'s `HttpErr` and `try_get`/`try_send`, and `std/net`'s `NetErr` with
+`try_send_all`/`try_recv`/`try_recv_into`. The kernel-path language surface
+(`unsafe`/`Ptr<T>`, `repr(...)`, statics, `defer`, the `[target]` manifest
+section) is not a stdlib name and lives on the [language pages](/language), not
+here.
 
 `std/rt` has no section: it ships inside the binary but is the compiler's own
 runtime module rather than part of the stdlib surface. `impl "std/rt"` resolves
@@ -315,6 +321,7 @@ Types:
 - `datac Socket(val fd: i32)`
 - `datac Listener(val fd: i32)`
 - `datac ConnectErr(val reason: String)`
+- `datac NetErr(val reason: String)`
 
 Functions:
 
@@ -330,6 +337,9 @@ Functions:
 - `fun send_text(s: Socket, text: &str)`
 - `fun recv(s: Socket, max: usize).R: Bytes`
 - `fun recv_into(s: Socket, buf: mut Bytes, at: usize).R: usize`
+- `fun try_send_all(s: Socket, data: Bytes).R: result.Result<usize, NetErr>`
+- `fun try_recv(s: Socket, max: usize).R: result.Result<Bytes, NetErr>`
+- `fun try_recv_into(s: Socket, buf: mut Bytes, at: usize).R: result.Result<usize, NetErr>`
 - `fun Socket.wait_readable(timeout_ms: u64).R: bool`
 - `fun Socket.wait_writable(timeout_ms: u64).R: bool`
 - `fun mut Socket.set_timeout(ms: u64)`
@@ -351,6 +361,7 @@ Types:
 - `datac Lease(val fd: i32, val tls_handle: usize, val reused: bool)`
 - `datac Conn(val fd: i32, val tls_handle: usize)`
 - `datac Cursor(val fd: i32, val tls_handle: usize, var buf: Bytes, var start: usize)`
+- `enum HttpErr { Dial(val reason: String), Exchange(val reason: String), Redirects(val reason: String) }`
 
 Constants:
 
@@ -366,6 +377,9 @@ Functions:
 - `fun conn_send_all(c: Conn, data: Bytes).R: usize`
 - `fun conn_recv(c: Conn, max: usize).R: Bytes`
 - `fun conn_recv_into(c: Conn, buf: mut Bytes, at: usize).R: usize`
+- `fun conn_send_all_try(c: Conn, data: Bytes).R: result.Result<usize, HttpErr>`
+- `fun conn_recv_try(c: Conn, max: usize).R: result.Result<Bytes, HttpErr>`
+- `fun conn_recv_into_try(c: Conn, buf: mut Bytes, at: usize).R: result.Result<usize, HttpErr>`
 - `fun conn_close(c: Conn)`
 - `fun connect_configured(host: &str, port: u16, timeout_ms: u64, use_tls: bool).R: Conn`
 - `fun Cursor.conn().R: Conn`
@@ -412,6 +426,7 @@ Functions:
 - `fun follow_url(client: Client, base: Url, resp: Response, hops: i32).R: String`
 - `fun default_client().R: Client`
 - `fun Client.send(req: Request).R: Response`
+- `fun Client.try_send(req: Request).R: result.Result<Response, HttpErr>`
 - `fun send_fresh(`
 - `fun exchange(c: Conn, req: Request).R: Response`
 - `fun pool(host: &str, port: u16).R: Pool`
@@ -421,12 +436,15 @@ Functions:
 - `fun Lease.conn().R: Conn`
 - `fun mut Pool.warm(use_tls: bool)`
 - `fun mut Pool.checkout(use_tls: bool).R: Lease`
+- `fun mut Pool.try_checkout(use_tls: bool).R: result.Result<Lease, HttpErr>`
 - `fun mut Pool.release(lease: Lease, reusable: bool)`
 - `fun mut Pool.close_all()`
 - `fun pool_matches(p: Pool, u: Url).R: bool`
 - `fun mut Pool.send(req: Request).R: Response`
+- `fun mut Pool.try_send(req: Request).R: result.Result<Response, HttpErr>`
 - `fun pooled_hop(`
 - `fun get(url: &str).R: Response`
+- `fun try_get(url: &str).R: result.Result<Response, HttpErr>`
 - `fun make_get(url: &str).R: Request`
 - `fun post_text(url: &str, body: &str, content_type: &str).R: Response`
 
@@ -440,15 +458,28 @@ instead of calling `net.connect`. Full account on [`std/tls`](/stdlib/tls).
 Types:
 
 - `datac TlsStream(val fd: i32, val handle: usize)`
+- `pub datac TlsOptions(val ca_file: String, val ca_dir: String, val timeout_ms: u64)`
+- `pub enum TlsError { Untrusted, Expired, HostMismatch, ProtocolTooOld, HandshakeFailed(val reason: String), PeerClosedUncleanly, Timeout, Io(val reason: String) }`
 
 Functions:
 
 - `fun handshake(s: net.Socket, host: &str).R: TlsStream`
+- `fun handshake_with(s: net.Socket, host: &str, opts: TlsOptions).R: TlsStream`
+- `fun handshake_timeout(s: net.Socket, host: &str, ms: u64).R: TlsStream`
+- `fun try_handshake(s: net.Socket, host: &str).R: result.Result<TlsStream, TlsError>`
+- `fun try_handshake_with(s: net.Socket, host: &str, opts: TlsOptions).R: result.Result<TlsStream, TlsError>`
+- `fun try_handshake_timeout(s: net.Socket, host: &str, ms: u64).R: result.Result<TlsStream, TlsError>`
+- `fun set_timeout(t: TlsStream, ms: u64)`
 - `fun write(t: TlsStream, data: Bytes).R: usize`
 - `fun write_all(t: TlsStream, data: Bytes).R: usize`
 - `fun read(t: TlsStream, max: usize).R: Bytes`
 - `fun read_into(t: TlsStream, buf: mut Bytes, at: usize).R: usize`
+- `fun try_write(t: TlsStream, data: Bytes).R: result.Result<usize, TlsError>`
+- `fun try_write_all(t: TlsStream, data: Bytes).R: result.Result<usize, TlsError>`
+- `fun try_read(t: TlsStream, max: usize).R: result.Result<Bytes, TlsError>`
+- `fun try_read_into(t: TlsStream, buf: mut Bytes, at: usize).R: result.Result<usize, TlsError>`
 - `fun shutdown(t: TlsStream)`
+- `fun try_shutdown(t: TlsStream).R: result.Result<bool, TlsError>`
 
 ## `std/time` (needs `time`)
 

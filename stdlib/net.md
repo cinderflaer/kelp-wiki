@@ -22,12 +22,16 @@ resolved address, so `127.0.0.1:*` does not cover `localhost`. A pattern is
 datac Socket(val fd: i32)
 datac Listener(val fd: i32)
 datac ConnectErr(val reason: String)
+datac NetErr(val reason: String)
 ```
 
 `Socket` and `Listener` are neither `Copy`, so a socket is moved when passed and
 there is exactly one owner of the descriptor. `ConnectErr` is what
 `try_connect` hands back instead of panicking: `reason` is the whole refusal, a
-single `String` rather than an `errno` (see below).
+single `String` rather than an `errno` (see below). `NetErr` is the same for a
+failed send or receive: `reason` is the text the panicking form would have
+panicked with (the message line and the `errno` detail line, or
+`net.recv: timed out` for a read that hit the socket's timeout).
 
 ## Functions
 
@@ -47,6 +51,9 @@ single `String` rather than an `errno` (see below).
 | `send_text(s, text)` | `Unit` | |
 | `recv(s, max)` | `Bytes` | up to `max` bytes; **empty means the peer closed**, or that `max` was `0` |
 | `recv_into(s, buf, at)` | `usize` | |
+| `try_send_all(s, data)` | `Result<usize, NetErr>` | the fallible `send_all`; the `Ok` count is always the whole buffer |
+| `try_recv(s, max)` | `Result<Bytes, NetErr>` | the fallible `recv`; an empty `Ok` is still the peer's clean end of stream |
+| `try_recv_into(s, buf, at)` | `Result<usize, NetErr>` | the fallible `recv_into`; `Ok(0)` is end of stream |
 | `Socket.wait_readable(timeout_ms)` / `wait_writable(...)` | `bool` | |
 | `Socket.set_timeout(ms)` | `Unit` | `mut` receiver |
 | `Socket.peer_addr()` | `String` | |
@@ -68,6 +75,64 @@ panicking form would have written to stderr:
 ```text
 net.connect: connection failed
   errno 111: Connection refused
+```
+
+## A failed send or receive is a value
+
+`try_send_all`, `try_recv` and `try_recv_into` are the same calls with a reset,
+a closed peer or a timeout as `Err(NetErr)` instead of a panic. The capability
+check still panics: a denial is not a value in this module.
+
+```kelp
+impl "std/net" caps(net = ["127.0.0.1:*"])
+impl "std/thread"
+
+fun serve(l: move net.Listener) {
+    val peer = net.accept(l)
+    thread.sleep_ms(3000)
+    net.close(peer)
+    l.close()
+}
+
+fun main() {
+    val l = net.listen(0)
+    val port = l.port()
+    val h = thread.spawn(serve, l)
+
+    when net.try_connect("127.0.0.1", port) {
+        Ok(sock) -> {
+            var s = sock
+            s.set_timeout(300)
+            when net.try_send_all(s, Bytes.from_str("ping")) {
+                Ok(n) -> print(n)
+                Err(e) -> {
+                    print("send failed")
+                    print(e.reason)
+                }
+            }
+            when net.try_recv(s, 16) {
+                Ok(b) -> print(b.len())
+                Err(e) -> {
+                    print("recv failed")
+                    print(e.reason)
+                }
+            }
+            net.close(s)
+        }
+        Err(e) -> print(e.reason)
+    }
+
+    when thread.join(h) {
+        Ok(_) -> {}
+        Err(_) -> {}
+    }
+}
+```
+
+```text
+4
+recv failed
+net.recv: timed out
 ```
 
 A name that does not resolve is the other message, and its detail line is the
@@ -159,10 +224,12 @@ fun main() {
 - Blocking is the default. `set_timeout` and `wait_readable` are how a caller gets
   a bounded wait.
 - `std/net` itself is plain TCP; TLS lives one layer up in
-  [`std/tls`](/stdlib/tls), which `http.parse_url` now uses for `https`
-  (MK5-S4b-M1) and `ws.connect_secure` for `wss`.
-- Errors panic rather than returning `Result`, with the one exception of
-  `try_connect`, whose dial failure is the `Err` it exists to hand back.
+  [`std/tls`](/stdlib/tls), which `http.parse_url` uses for `https`
+  (MK5-S4b-M1) and `ws.parse_url` uses for `wss` (`plan/done.md`). A `wss`
+  connection is the same WebSocket client over a `TlsStream`.
+- Errors panic rather than returning `Result`, except `try_connect` and the
+  `try_send_all`/`try_recv`/`try_recv_into` trio, whose failure is the `Err`
+  they exist to hand back. A capability denial still panics either way.
 
 ## See also
 

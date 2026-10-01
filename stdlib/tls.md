@@ -1,11 +1,12 @@
 ---
 title: "`std/tls`"
-description: "Client-side TLS for https. Gated on net, the same domain std/net and std/http already hold - not a new capability."
+description: "Client-side TLS: a typed `TlsError`, a `try_` family beside the panicking wrappers, `TlsOptions` (private CA file or directory, timeout), truncation detection and `wss`. Gated on net, the same domain std/net and std/http already hold."
 isPublished: true
 tags: "stdlib, networking, tls"
 ---
-Client-side TLS (MK5-S4b-M1). This is what makes `https://` work in
-[`std/http`](/stdlib/http); most programs never import it directly.
+Client-side TLS. This is what makes `https://` work in
+[`std/http`](/stdlib/http) and `wss://` work in [`std/ws`](/stdlib/ws); most
+programs never import it directly.
 
 **Gated on `net`, the same domain `std/net` and `std/http` already hold, not a
 new capability.** `https` is still network access, so a program that already
@@ -29,63 +30,210 @@ be checked against `std/tls`'s *own* `impl` line instead, which carries no
 
 So `std/tls` never dials, listens, or resolves a name: `handshake` takes an
 already-connected [`net.Socket`](/stdlib/net), wraps it, and everything after
-that is read/write on the wrapped stream. The dial stays in `std/http.kp`,
-where the check already works.
+that is read/write on the wrapped stream. The dial stays in `std/http.kp`, where
+the check already works.
 
 ## Types
 
 ```kelp
 datac TlsStream(val fd: i32, val handle: usize)
+
+pub enum TlsError {
+    Untrusted
+    Expired
+    HostMismatch
+    ProtocolTooOld
+    HandshakeFailed(val reason: String)
+    PeerClosedUncleanly
+    Timeout
+    Io(val reason: String)
+}
+
+pub datac TlsOptions(val ca_file: String, val ca_dir: String, val timeout_ms: u64)
 ```
 
-`handle` is the OpenSSL `SSL*`, carried as a `usize` (v1 has no raw pointer
-type). It is opaque outside this module; nothing else needs to know its shape.
+`TlsStream` pairs a plain `fd` with the OpenSSL handle bound to it, not a
+`net.Socket`, because a `net.Socket` and its `TlsStream` would then be two owners
+of one descriptor. The value is not `Copy`, so there is never a silent second
+free of the handle. `shutdown` ends only the TLS session (sending
+`close_notify` where the connection allows it) and frees the OpenSSL handle; it
+does not close `fd`. The caller closes the socket itself afterward with
+`net.close(net.Socket(fd = t.fd))`. Nothing closes on drop, the same rule
+`net.Socket` and `net.Listener` follow.
+
+`handle` is carried as a `usize` rather than an `extern type` handle: an `extern
+type` is legal only in a module with its own `coral.toml` `[extern."<module
+id>"]` section, and a compiler-shipped std module has no manifest.
+`plan/release-goals.md` records the smallest compiler change that would lift
+that, under "Follow-ups".
 
 ## Functions
 
-| Function | Returns | Notes |
-| --- | --- | --- |
-| `handshake(s: net.Socket, host: &str)` | `TlsStream` | performs the TLS handshake over an already-connected socket |
-| `write(t, data)` | `usize` | one write, may be partial |
-| `write_all(t, data)` | `usize` | loops until everything is written |
-| `read(t, max)` | `Bytes` | up to `max` bytes |
-| `read_into(t, buf, at)` | `usize` | fills an existing buffer from offset `at` |
-| `shutdown(t)` | `Unit` | closes the TLS session (not the underlying socket) |
-| `try_handshake(s, host)` / `try_write_all(t, data)` / `try_read(t, max)` / `try_read_into(t, buf, at)` | `Result<_, TlsErr>` | the fallible twins: a failed handshake or I/O call is `Err` (`TlsErr.reason` is the panic text). A failed `try_handshake` leaves the socket open, still the caller's to close |
+Every call has a fallible form returning `Result<_, TlsError>` and a panicking
+wrapper that panics with the error's own text.
 
-All five panic on failure, the same style as [`std/net`](/stdlib/net)'s
-`send`/`recv`/`close`, with one exception: for `read` and `read_into`, a peer
-that ends the stream, whether by a clean `close_notify` or by dropping the
-connection without one (what a proxy or load balancer that resets TCP does), is
-end of stream (an empty `Bytes`, or 0), not a panic. Any other read failure
-still panics.
+| Fallible | Panicking | Returns | Notes |
+| --- | --- | --- | --- |
+| `try_handshake(s, host)` | `handshake(s, host)` | `Result<TlsStream, TlsError>` / `TlsStream` | the TLS handshake over an already-connected socket |
+| `try_handshake_with(s, host, opts)` | `handshake_with(s, host, opts)` | as above, with `TlsOptions` | private CA, timeout |
+| `try_handshake_timeout(s, host, ms)` | `handshake_timeout(s, host, ms)` | as above, with a deadline | shorthand for `TlsOptions` with only `timeout_ms` |
+| `try_write(t, data)` | `write(t, data)` | `Result<usize, TlsError>` / `usize` | one write, may be partial |
+| `try_write_all(t, data)` | `write_all(t, data)` | `Result<usize, TlsError>` / `usize` | loops until everything is written |
+| `try_read(t, max)` | `read(t, max)` | `Result<Bytes, TlsError>` / `Bytes` | up to `max` bytes |
+| `try_read_into(t, buf, at)` | `read_into(t, buf, at)` | `Result<usize, TlsError>` / `usize` | fills an existing buffer from offset `at` |
+| `try_shutdown(t)` | `shutdown(t)` | `Result<bool, TlsError>` | ends the TLS session and frees the handle |
+
+`set_timeout(t, ms)` sets the receive and send timeouts on the stream's socket,
+so a blocking read on a silent peer gives up instead of hanging forever; `ms`
+of `0` means "no timeout". The handshake's own timeout is set before it starts.
+
+`TlsError` is a value a caller branches on: `Timeout` says retry, `Untrusted`
+says install the CA, and so on. `HandshakeFailed` and `Io` carry OpenSSL's or
+the socket's own sentence, so the detail is not thrown away. The panicking
+wrappers panic with the text those variants carry.
+
+The program below points `try_handshake` at a local plain-TCP peer that answers
+with something that is not a TLS record, so the handshake fails and the typed
+error is reported. `report` matches every variant; a real caller usually has
+somewhere to go for only a few of them.
+
+```kelp
+impl "std/net" caps(net = ["127.0.0.1:*"])
+impl "std/tls"
+impl "std/thread"
+
+fun serve(l: move net.Listener) {
+    val peer = net.accept(l)
+    net.send_text(peer, "this is not a TLS record\n")
+    thread.sleep_ms(200)
+    net.close(peer)
+    l.close()
+}
+
+fun report(e: move tls.TlsError) {
+    when e {
+        Untrusted -> print("untrusted certificate")
+        Expired -> print("expired certificate")
+        HostMismatch -> print("host mismatch")
+        ProtocolTooOld -> print("protocol too old")
+        HandshakeFailed(reason) -> {
+            print("handshake failed")
+            print(reason)
+        }
+        PeerClosedUncleanly -> print("peer closed without close_notify")
+        Timeout -> print("timeout")
+        Io(reason) -> {
+            print("io error")
+            print(reason)
+        }
+    }
+}
+
+fun main() {
+    val l = net.listen(0)
+    val port = l.port()
+    val h = thread.spawn(serve, l)
+
+    when net.try_connect("127.0.0.1", port) {
+        Ok(sock) -> {
+            when tls.try_handshake(sock, "127.0.0.1") {
+                Ok(t) -> {
+                    print("handshake ok")
+                    tls.shutdown(t)
+                }
+                Err(e) -> report(e)
+            }
+        }
+        Err(e) -> print(e.reason)
+    }
+
+    when thread.join(h) {
+        Ok(_) -> {}
+        Err(_) -> {}
+    }
+}
+```
+
+```text
+protocol too old
+```
+
+## Truncation is detected
+
+A connection that ends without a `close_notify` is an error, never a clean EOF.
+`try_read` is `Ok` with an empty `Bytes` on a clean `close_notify`, and
+`Err(TlsError.PeerClosedUncleanly)` when the stream ended without one. This is
+by design: a peer that stops mid-body is never a clean end of stream. It is what
+makes `std/http`'s framing refuse a short body rather than accepting it as
+complete.
+
+## Timeouts
+
+`TlsOptions.timeout_ms` is applied as `SO_RCVTIMEO`/`SO_SNDTIMEO` before the
+handshake starts, so a silent peer is `Err(Timeout)` instead of a hang. The
+settings stay on the socket for the reads and writes that follow, and
+`set_timeout` changes them later. `0` is "no timeout", which is `SO_RCVTIMEO`'s
+own meaning; there is no silent default deadline.
 
 ## Certificate verification is not optional
 
-The system trust store, `SSL_VERIFY_PEER`, and hostname verification against
-the name the caller wrote to `handshake` (the same name the `net` grant was
-checked against, not whatever the DNS resolution turned it into) are all on
-unconditionally, and TLS 1.2 is the floor. A self-signed or mismatched
-certificate is a handshake failure, not a silent connection. There is no
-`insecure` flag: v1 has nowhere reviewable to put one that would not look like
-a footgun left lying around for the next reader to trip on.
+The system trust store (`SSL_CTX_set_default_verify_paths`, which honours
+`SSL_CERT_FILE` and `SSL_CERT_DIR`), `SSL_VERIFY_PEER`, and hostname
+verification against the name the caller wrote to `handshake` (the same name the
+`net` grant was checked against, not whatever the DNS resolution turned it into)
+are all on unconditionally, and TLS 1.2 is the floor. A self-signed or
+mismatched certificate is a handshake failure, not a silent connection.
+
+There is no `insecure` flag. What there is, is a way to *add* a private CA:
+`TlsOptions(ca_file = ..., ca_dir = ..., timeout_ms = ...)` calls
+`SSL_CTX_load_verify_locations` with the named file or directory. It can never
+remove the requirement to verify and it does not lower the TLS 1.2 minimum.
+
+## `wss`
+
+`std/ws` speaks `wss://` over this module: the scheme comes off the parsed URL
+and the dial stays in `std/ws`, exactly as the `https` dial stays in
+`std/http`. A `wss` connection is the same WebSocket client over a `TlsStream`,
+so certificate verification, the TLS 1.2 floor and truncation detection all
+apply unchanged.
+
+```kelp
+impl "std/ws" caps(net = ["*"], rand = [])
+
+fun main() {
+    val u = ws.parse_url("wss://example.com/socket")
+    print(u.scheme)
+    print(u.port)
+}
+```
+
+```text
+wss
+443
+```
 
 ## Linking
 
-The system OpenSSL (`-lssl -lcrypto`) is linked into a program that reaches
-`std/tls`, which includes every program that imports [`std/http`](/stdlib/http)
-or [`std/ws`](/stdlib/ws). There is no per-project opt-in and no extra
-`coral.toml` line needed. A program that reaches none of them neither links
-OpenSSL nor includes its headers, so it builds on a host that has no OpenSSL.
+The system OpenSSL (`-lssl -lcrypto`) is linked, and OpenSSL's headers are
+included in the program's extern object, **only when a program reaches
+`std/tls`**. `std/http` and `std/ws` import it, so a program that uses either
+gets it too; a program that never touches TLS does not need either the library
+or the development output.
 
-For the programs that do, the linker has to find `libssl` and `libcrypto`, and
-the package's development output has to be on the include path for the generated
-C's `openssl/ssl.h`. `nix-shell shell.nix` provides both;
-[Install and build](/getting-started/install#requirements) lists them for every
-other setup.
+```sh
+# a program that reaches std/tls: its <out>.externs.c includes openssl/ssl.h
+# a program that does not: the file carries no openssl include and the link
+# line carries no -lssl
+```
+
+When it is needed, the linker has to find `libssl` and `libcrypto`, and the
+OpenSSL headers have to be on the include path. `nix-shell shell.nix` provides
+both; [Install and build](/getting-started/install#requirements) lists them for
+every other setup.
 
 ## See also
 
 - [`std/http`](/stdlib/http)
+- [`std/ws`](/stdlib/ws)
 - [`std/net`](/stdlib/net)
 - [Capability patterns](/reference/capability-patterns)

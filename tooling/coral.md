@@ -250,10 +250,11 @@ is well-formed.
 
 `coral.toml` is the flat `name`/`version`/`entry` manifest `kelpc` reads, plus the
 sections Coral owns. `kelpc` stops parsing the flat keys at the first
-`[section]`, and skips over every section except two: `[caps]` (below), which
-restricts the entry module's own capability grant, and `[extern."<module id>"]`,
-which assigns a user module a capability domain and native surface, are both read
-by `kelpc` itself rather than left for Coral.
+`[section]`, and reads four of them itself rather than leaving them for Coral:
+`[caps]` (below), which restricts the entry module's own capability grant,
+`[extern."<module id>"]`, which assigns a user module a capability domain and
+native surface, `[unsafe]`, which lists the modules allowed to contain `unsafe`,
+and `[target]`, which selects a bare-metal build.
 
 ```toml
 name = "myproject"
@@ -300,6 +301,8 @@ does not know yet.
 | --- | --- | --- |
 | `[caps]` | `domain = ["pattern", ...]` | read by `kelpc`, not Coral: it restricts the entry module's own capability grant; see [below](#caps-the-entry-modules-own-grant) |
 | `[extern."<module id>"]` | `domain`, `library`, `symbols`, `header`, `include_dirs`, `library_dirs`, `pkg_config` | read by `kelpc`, not Coral: it assigns a user module a capability domain and a native FFI surface; see [below](#extern-user-modules-that-bind-a-native-symbol) |
+| `[unsafe]` | `modules = ["<module id>", ...]` | read by `kelpc`, not Coral: the modules allowed to contain `unsafe`, an `unsafe fun`, a `static mut` access or an `asm`; see [below](#unsafe-modules-that-may-leave-the-checked-language) |
+| `[target]` | `mode`, `triple`, `entry`, `linker_script`, `panic`, `alloc`, `dealloc`, `realloc` | read by `kelpc`, not Coral: a bare-metal build; see [below](#target-a-freestanding-build) |
 | `[tasks]` | `name = "path/to/file.kp"` | each task compiles as its own unit, and `src/tasks/` is where `init` puts them |
 | `[dependencies]` | `name = "owner/repo[/folder]"` | see [Dependencies](#dependencies) |
 | `[toolchain]` | `kelp = "v0.1.4"` | written by `coral toolchain kelp pin`, a line edit that leaves comments and section order alone |
@@ -428,6 +431,54 @@ fun main() {
   user externs, and a `repr(C)` struct crossing by value. `extern type` handles
   (with parents, `null()` and `cast()`), `...` variadics and
   `move closure(...)` callbacks all ship; see [User FFI](/language/externs).
+
+### `[unsafe]`: modules that may leave the checked language
+
+A module may contain an `unsafe` block, an `unsafe fun`, a `static mut` access
+or an `asm` only if this section lists it. The list is the set of modules
+aloud to leave the checked language, and it is short and reviewable on purpose:
+a dependency cannot grant itself the power. The language side is
+[Unsafe code and raw pointers](/language/unsafe).
+
+```toml
+# myproject/coral.toml
+name = "myproject"
+entry = "src/main.kp"
+
+[unsafe]
+modules = ["main", "uart"]
+```
+
+A module is named by the path it is imported under, exactly as
+`[extern."<module id>"]` names one: `"uart"` for `src/uart.kp` and `"main"` for
+the entry module `src/main.kp`. A project with no `[unsafe]` section is
+unchanged: no module may contain `unsafe`, and no `Ptr` operation is reachable
+at all. A construct in an unlisted module is a compile error naming the module,
+and `kelpc check` enforces the same list `kelpc build` does.
+
+### `[target]`: a freestanding build
+
+A project opts into bare metal with this section. `mode` is `"hosted"` or
+`"freestanding"` and is required; a project with no `[target]` section, or with
+`mode = "hosted"`, builds for the host exactly as before. In freestanding mode
+`triple`, `entry` and `linker_script` are required, and `panic`, `alloc`,
+`dealloc` and `realloc` are optional. The full account, including the allowed
+set and the allocator signatures, is [Freestanding mode](/language/freestanding).
+
+```toml
+# myproject/coral.toml
+name = "kernel0"
+
+[target]
+mode = "freestanding"
+triple = "riscv64-unknown-none-elf"
+entry = "kmain"
+linker_script = "kernel.ld"
+panic = "kp_panic"
+
+[unsafe]
+modules = ["uart"]
+```
 
 ## A worked session
 

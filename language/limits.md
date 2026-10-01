@@ -199,9 +199,17 @@ macro system.
 **(open)** The rest of this list is absent from v1 today but is either an
 active roadmap item or a named future milestone, not a closed decision:
 
-- **`unsafe`, raw pointers, pointer arithmetic, casts.** Backlog item B-3,
-  MK9-S2-M1. Without it there is no kernel, no driver, no allocator, no FFI:
-  the one structural reason systems work is out of reach today.
+- **Provenance and address-space control.** `unsafe`, raw pointers and the
+  layout and data-format surface the kernel path needed have shipped
+  (`unsafe` blocks and `unsafe fun`, `Ptr<T>` with
+  `offset`/`byte_offset`/`cast`/`addr`, volatile and unaligned access,
+  `alloc`/`free`, `repr(c)`/`repr(packed)`/`repr(align(N))`,
+  `size_of`/`align_of`/`offset_of`, the byte-order conversions, and the
+  `[unsafe] modules` gate): see [Unsafe code and raw
+  pointers](/language/unsafe). What is not here is provenance and
+  address-space control, which is why a pointer is a plain integer-shaped
+  address and `from_addr` can name any of them. `AtomicPtr`, `transmute` and
+  unaligned or non-`Copy` reads are absent too.
 - **Traits, interfaces, `dyn` dispatch.** A-12. Slice 1 already shipped (a
   `datac`/`enum` can declare its own `hash`/`eq` pair, and a concrete `enum`
   can declare a receiver method); named traits, user `Drop` and dynamic
@@ -210,8 +218,9 @@ active roadmap item or a named future milestone, not a closed decision:
   This is why a `str`/`View` cannot be a `datac` field or an `enum` payload
   today, and why a closure cannot capture a borrow: both need a way to say
   what a stored borrow is tied to, which v1 does not have yet.
-- No undefined-behaviour escape hatch: this one stays true even once
-  `unsafe` ships, the same way Rust's `unsafe` does not mean "UB is allowed."
+- No undefined-behaviour escape hatch: `unsafe` marks the operations the
+  compiler cannot check, it does not make undefined behaviour allowed, the same
+  way Rust's `unsafe` does not.
 - **Named nested functions.** No roadmap item names this one at all, closures
   (a `fun` literal capturing a binding) shipped instead and cover most of
   what a nested function would be for; a named one that can recurse or be

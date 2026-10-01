@@ -38,6 +38,7 @@ this page is the index to it.
 
 | Version | Date | Headline |
 | --- | --- | --- |
+| Unreleased | pending | `unsafe`/`Ptr<T>` and layout control; freestanding mode and kernel 0 booting under QEMU on riscv64 and aarch64; a typed `TlsError`/`TlsOptions` and truncation detection; the `try_` error surface on `std/net` and `std/http` |
 | [26.09.5](#26095-2026-09-28) | 2026-09-28 | `std/tls` and `https`; `coral.toml`'s `[caps]` and `[extern]`; rate-limit headers on `Response`; two assignment leaks fixed; every program now needs OpenSSL to build |
 | [26.09.4](#26094-2026-09-26) | 2026-09-26 | the LLVM backend inlines builtin bodies; `Map`'s index halved, `Map.with_capacity`; unrolled loops, `noalias`, `llvm.sqrt.f64`; the benchmark suite published |
 | [26.09.3](#26093-2026-09-25) | 2026-09-25 | `thread.sleep_ms`/`current_id`; a unit-returning worker can be joined; concurrent downloads; the memory model published; `kelpc check --text` |
@@ -50,6 +51,67 @@ this page is the index to it.
 | [0.1.2](#012-2026-09-19) | 2026-09-19 | `View`, `char` literals, bitwise operators, `str` to `String` coercion |
 | [0.1.1](#011-2026-09-19) | 2026-09-19 | the `for` loop, `spawn_in`/`run_in`, fallible `try_run`, `fs.symlink` |
 | [0.1.0](#010-no-release) | 2026-09-19 | first tag: the core language, modules, containers, capabilities, stdlib |
+
+## Unreleased
+
+Not a version number yet: this is what has landed since 26.09.5 and is waiting
+for a release to cut. Three pieces, in the order they were built.
+
+**`unsafe`, `Ptr<T>` and layout control.** A raw pointer type `Ptr<T>` and the
+`unsafe` blocks and `unsafe fun` that are the only way to dereference one.
+`p.read`/`write` and their `read_volatile`/`write_volatile` twins (volatile is
+never merged, reordered or elided), the unaligned pair, `Ptr.alloc`/`free`,
+`offset`/`byte_offset`/`cast`/`addr`/`is_null`, and `Ptr.from_ref`/`from_mut`/
+`from_fn`. A module may contain any of it only if `coral.toml` lists it under
+`[unsafe] modules`, parsed like `[extern.*]`, so the set of modules that leave
+the checked language is short and reviewable, and a project with no `[unsafe]`
+section is unchanged. `repr(c)` (the default, now a guarantee), `repr(packed)`
+and `repr(align(N))`, the compile-time `size_of`/`align_of`/`offset_of`, and
+explicit discriminants on a field-less enum with `repr(u8|...|i64)` storage and
+`to_int`/`from_int`. Every integer wider than a byte has `swap_bytes`/
+`to_be`/`to_le` and the static `from_be`/`from_le`, the direction asked of the
+*target* rather than assumed, and `Bytes` has bounds-checked
+`read_u16_le`...`read_i64_be`/`write_*` accessors with no alignment
+requirement. Both backends write the same layout and the same bytes; a C helper
+in `tests/projects/ffi_layout` checks the packed layout against a real C
+compiler. See [Unsafe code and raw pointers](/language/unsafe).
+
+**Freestanding mode, and kernel 0 boots.** A project with `[target] mode =
+"freestanding"` in `coral.toml` gets no libc, no runtime preamble, a
+compiler-emitted `_start` that sets `sp` and clears `[__bss_start,
+__bss_end)`, the entry and panic functions and a linker script it names, and an
+`ld.lld -T` static link with no runtime object. Everything that would reach
+libc is a compile error, and so is any `std/*` module except the pure ones and
+the five `str` operations the compiler lowers itself. `static`/`static mut` and
+`defer` are allowed, `asm` and naked functions are allowed, and a `[target]
+alloc`/`dealloc`/`realloc` hook reroutes `Box`/`List`/`Map` onto the project's
+own allocator. The five `memcpy`/`memmove`/`memset`/`memcmp`/`bcmp` routines
+LLVM's own aggregate copies call are defined weakly in every freestanding
+object. Freestanding is LLVM-only: the C backend's preamble is libc, so
+`KELPC_ORACLE=c` refuses such a project by name. `examples/kernel0` boots on
+QEMU's riscv64 `virt` machine and prints `hello from kelp`; so do the trap, BSS,
+panic and heap variants, and `examples/kernel0-aarch64` boots the second
+architecture. See [Freestanding mode](/language/freestanding) and
+[Kernel 0](/language/kernel).
+
+**Stable TLS, and the `try_` surface on the network modules.** `std/tls` gains
+the typed `TlsError`, `TlsOptions` (a private CA file or directory, a timeout)
+and a `try_handshake`/`try_read`/`try_write`/`try_shutdown` family beside the
+panicking wrappers. A stream that ends without a `close_notify` is
+`PeerClosedUncleanly`, never a clean EOF, by design. `wss://` works over
+[`std/ws`](/stdlib/ws). `std/http` gains `try_get` and `HttpErr` (`Dial`,
+`Exchange`, `Redirects`), and `std/net` gains `try_send_all`/`try_recv`/
+`try_recv_into` with `NetErr`. OpenSSL is linked, and its headers included, only
+when a program reaches `std/tls` (which `std/http` and `std/ws` do). See
+[`std/tls`](/stdlib/tls).
+
+**Bugfix pass.** The compiler's own warnings are zero, the differential fuzz ran
+1500 generated programs plus the 24-program corpus with 0 mismatches, and one
+real bug was fixed: `u8`/`u16` arithmetic was not narrowed to its declared width
+in the C backend, so `u8 + u8` of 300 printed 300 where LLVM wrapped to 44. The
+differential sweep is a ratchet: `LLVM_BUILT_BASELINE` is 362 of the 655 corpus
+targets, 0 refused, 0 mismatches, 0 crashes, and it may only rise. See
+[Backends](/compiler/backends).
 
 ## 26.09.5 (2026-09-28)
 

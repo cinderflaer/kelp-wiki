@@ -12,7 +12,7 @@ and no `KELPC_BACKEND`.
 | Backend | Emits | Finished with | Status |
 | --- | --- | --- | --- |
 | `llvm` (the one backend) | LLVM IR, then an object | `<out>.ll` and `<out>.o`, then `cc -O2 -o <out> <out>.o -lm` | the whole language the [Language](/language) pages describe; one guard remains for an owned temporary at a place the lowering did not stage, and nothing in the corpus reaches it; the object carries DWARF line locations |
-| `c` (the project's own oracle) | C source text | `cc -O2 -fwrapv -lm` | complete and maintained, reached only through the project's internal switch, and the thing every `llvm` build is compared against: same stdout and exit status byte for byte over the corpus (223 of 223 targets, the refusal ranking empty) |
+| `c` (the project's own oracle) | C source text | `cc -O2 -fwrapv -lm` | complete and maintained, reached only through the project's internal switch, and the thing every `llvm` build is compared against: same stdout and exit status byte for byte over the corpus (362 of 655 targets, 0 mismatches, the refusal ranking empty) |
 
 A retired spelling names its own removal rather than reading as an unknown flag.
 Whatever `--backend=` carries is refused with
@@ -30,6 +30,14 @@ finished with `as` and `ld`, was retired on 2026-09-20 and its source was remove
 on 2026-09-21. Its plan, its counts, its refusal
 ranking and the measurements behind them are history rather than a live
 measurement.
+
+**Freestanding is LLVM-only.** A project with `[target] mode = "freestanding"`
+(see [Freestanding mode](/language/freestanding)) is lowered only by the LLVM
+backend: the C backend's runtime preamble is libc, so `KELPC_ORACLE=c` refuses
+such a project by name rather than mislinking it. The C oracle still covers every
+*hosted* construct the freestanding work added (`unsafe`/`Ptr<T>`, `repr(...)`,
+endianness, statics, `defer`, `asm`), and the corpus below is what measures it; a
+freestanding image is not a two-backend target.
 
 ```sh
 kelpc build examples/hello.kp   # llvm, the one backend
@@ -90,12 +98,16 @@ The corpus agrees byte for byte. The differential sweep builds every fixture the
 C backend builds with `llvm` too, runs both and compares stdout and exit status:
 
 ```text
-223 of 380 corpus targets built by 'c' (157 rejected by it),
-223 also built by 'llvm', 0 refused, 0 mismatch(es), 0 crash(es)
+362 of 655 corpus targets built on both backends,
+0 refused, 0 mismatch(es), 0 crash(es)
 ```
 
-`LLVM_BUILT_BASELINE` is 223 of the 223 targets the C backend builds and the
-refusal ranking is empty, which is the plan's §4.1 gate. The deny path is
+`LLVM_BUILT_BASELINE` is 362 and the refusal ranking is empty, which is the
+plan's §4.1 gate. **The baseline is a ratchet**: it may only rise, and a refusal
+that arrived with a new fixture is recorded with its message rather than being
+allowed to lower the number. Freestanding work does not move it: a freestanding
+project is LLVM-only (below), so the C oracle never builds one, and the
+freestanding fixtures are not part of the two-backend sweep. The deny path is
 byte-identical on all eight denied projects: stdout, stderr and the exit status
 compare equal between the two backends, including `caps_double_eval`, whose
 stdout is one `SIDE` line under both, which is the once-only resource evaluation
@@ -250,12 +262,12 @@ Two consequences worth knowing:
    where the baseline is `LLVM_BUILT_BASELINE`:
    it builds every fixture the C backend builds with `llvm`, runs both and compares
    stdout and exit status byte for byte, and records a refusal with its message
-   rather than failing it. The baseline is 223 of the 223 targets and the ranking
-   is empty. A refusal that arrived with a new fixture would still be recorded, so
-   the ratchet stays the instrument: it may only rise, and a backward step is a
-   regression. On its first run it caught a silent miscompile, a borrow returned
-   through the value position of an `if` and a returned `&String`, which now match
-   the C backend.
+   rather than failing it. The baseline is 362 of the 655 corpus targets and the
+   ranking is empty. A refusal that arrived with a new fixture would still be
+   recorded, so the ratchet stays the instrument: it may only rise, and a
+   backward step is a regression. On its first run it caught a silent miscompile,
+   a borrow returned through the value position of an `if` and a returned
+   `&String`, which now match the C backend.
 
 ## See also
 
