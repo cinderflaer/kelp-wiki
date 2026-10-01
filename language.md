@@ -51,6 +51,7 @@ error, and so is a `const` or `pd` after a `datac`, `enum` or `fun`
 | [Modules and imports](/language/modules) | `impl`, aliases, visibility, projects |
 | [Constants and passdowns](/language/passdowns) | `const`, `pd` passdowns and the hidden borrow |
 | [Capabilities](/language/capabilities) | the model, grants, patterns, delegation |
+| [User FFI](/language/externs) | `extern fun`, `extern type` handles, variadics, `move closure` callbacks |
 | [Errors and panics](/language/errors) | `Option`, `Result`, `?`, `panic`, `assert` |
 | [Limits in v1](/language/limits) | what the language deliberately does not have |
 | [Style](/language/style) | indentation, naming, file order, comments |

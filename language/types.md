@@ -147,6 +147,16 @@ val p: Pair<i32, String> = Pair(first = 1, second = "one")
   call site instantiates them, by inference or by writing them
   (`identity<i32>(x = 5)`).
 
+## Opaque native handles
+
+A module with an `[extern."<module id>"]` manifest section may declare an
+`extern type`, an opaque pointer-sized `Copy` value with no readable contents:
+`pub extern type Widget`. A handle is the only way a native pointer crosses the
+boundary. It compares with `==`/`!=` (the pointers) and has no arithmetic, no
+conversion to or from an integer, and no `print`; a parent chain, `null()`,
+`is_null()` and the unchecked `cast()` are covered in
+[User FFI](/language/externs).
+
 ## Truth and falsiness
 
 There is none: `if` and `while` take a `bool`, and nothing else converts to one.
