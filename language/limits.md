@@ -164,16 +164,20 @@ and `std/ws` is §16.18 of the same document.
 - **One ordering, and nothing else around it.** The single ordering v1 has is
   `SeqCst`; `Relaxed`, `Acquire` and `Release` are reserved, not shipped. There
   are no channels, no async and no coroutines, with no roadmap item tracking
-  any of the three yet. **(open)** `Mutex` and thread-local/per-CPU storage
-  are different: both are named backlog items (`Mutex` alongside the threads
-  work; thread-local storage as B-11, MK9-S3-M3) rather than ruled out, they
-  are simply not built. Today's one shared-mutable shape is `Atomic<T>`; a
-  worker that needs to share something bigger takes its own copy instead, the
-  way `examples/download_pool.kp` gives each thread its own `http.Pool`. Two
-  leaks are admitted: a panicking worker's frame is abandoned,
-  and a handle nobody joins is detached with its worker record leaked, because
-  v1 has no `must_use` and no user `Drop`. A worker that returns `unit` joins
-  to `Result<unit, ThreadErr>` with nothing in its `Ok`, the same shape
+  any of the three yet. **(open)** `Mutex` and thread-local storage are
+  different: both are named backlog items (`Mutex` alongside the threads work;
+  thread-local storage as B-11, MK9-S3-M3) rather than ruled out, they are
+  simply not built. Per-CPU storage has shipped: `percpu static mut` lays out
+  `[target] cpus` copies and `cpu_index()`/`cpu_count()` read it back, in a
+  freestanding build only; see [Per-CPU storage](/language/percpu). Today's one
+  shared-mutable shape for hosted threads is `Atomic<T>`; a worker that needs to
+  share something bigger takes its own copy instead, the way
+  `examples/download_pool.kp` gives each thread its own `http.Pool`. Two leaks
+  are admitted: a panicking worker's frame is abandoned, and a handle nobody
+  joins is detached with its worker record leaked, because v1 has no `must_use`.
+  A user `Drop` now exists ([User `Drop`](/language/drop)), but it does not run
+  on the panic path: there is still no unwinding. A worker that returns `unit`
+  joins to `Result<unit, ThreadErr>` with nothing in its `Ok`, the same shape
   `None` already has.
   `thread.fence(order)` in [`std/thread`](/stdlib/thread) joins the total order
   while naming no location, and changes nothing a single-threaded program can
@@ -212,8 +216,10 @@ active roadmap item or a named future milestone, not a closed decision:
   unaligned or non-`Copy` reads are absent too.
 - **Traits, interfaces, `dyn` dispatch.** A-12. Slice 1 already shipped (a
   `datac`/`enum` can declare its own `hash`/`eq` pair, and a concrete `enum`
-  can declare a receiver method); named traits, user `Drop` and dynamic
-  dispatch are slice 2 and beyond, unscheduled but named.
+  can declare a receiver method); named traits and dynamic dispatch are slice 2
+  and beyond, unscheduled but named. A user `Drop` is a smaller thing that
+  shipped on its own, `fun mut T.drop()`, and is not a trait; see
+  [User `Drop`](/language/drop).
 - **Lifetime syntax, and the borrows it would allow in fields.** A-11/A-8.
   This is why a `str`/`View` cannot be a `datac` field or an `enum` payload
   today, and why a closure cannot capture a borrow: both need a way to say

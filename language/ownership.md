@@ -197,7 +197,8 @@ Owned values are freed at the end of the scope that owns them, on every exit pat
 including `return` and either branch of an `if`. A `datac` drops its fields, a
 `List` drops its elements and then its buffer, and a `Box` drops what it holds.
 An owned `pd` is freed once at process exit. There is no `free`, no `deinit`, and
-no way to leak deliberately.
+no way to leak deliberately. A type can hook these drop points with its own
+destructor, `fun mut T.drop()`; see [User `Drop`](/language/drop).
 
 ## The two rules that explain most borrow errors
 

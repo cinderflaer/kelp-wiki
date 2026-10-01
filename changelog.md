@@ -38,7 +38,7 @@ this page is the index to it.
 
 | Version | Date | Headline |
 | --- | --- | --- |
-| Unreleased | pending | `unsafe`/`Ptr<T>` and layout control; freestanding mode and kernel 0 booting under QEMU on riscv64 and aarch64; a typed `TlsError`/`TlsOptions` and truncation detection; the `try_` error surface on `std/net` and `std/http` |
+| Unreleased | pending | `unsafe`/`Ptr<T>` and layout control; freestanding mode and kernel 0 booting under QEMU on riscv64 and aarch64; per-CPU storage, user `Drop`, Sv39 address spaces and the user-mode syscall ABI; a typed `TlsError`/`TlsOptions` and truncation detection; the `try_` error surface on `std/net` and `std/http` |
 | [26.09.5](#26095-2026-09-28) | 2026-09-28 | `std/tls` and `https`; `coral.toml`'s `[caps]` and `[extern]`; rate-limit headers on `Response`; two assignment leaks fixed; every program now needs OpenSSL to build |
 | [26.09.4](#26094-2026-09-26) | 2026-09-26 | the LLVM backend inlines builtin bodies; `Map`'s index halved, `Map.with_capacity`; unrolled loops, `noalias`, `llvm.sqrt.f64`; the benchmark suite published |
 | [26.09.3](#26093-2026-09-25) | 2026-09-25 | `thread.sleep_ms`/`current_id`; a unit-returning worker can be joined; concurrent downloads; the memory model published; `kelpc check --text` |
@@ -55,7 +55,7 @@ this page is the index to it.
 ## Unreleased
 
 Not a version number yet: this is what has landed since 26.09.5 and is waiting
-for a release to cut. Three pieces, in the order they were built.
+for a release to cut. Five pieces, in the order they were built.
 
 **`unsafe`, `Ptr<T>` and layout control.** A raw pointer type `Ptr<T>` and the
 `unsafe` blocks and `unsafe fun` that are the only way to dereference one.
@@ -92,6 +92,22 @@ object. Freestanding is LLVM-only: the C backend's preamble is libc, so
 QEMU's riscv64 `virt` machine and prints `hello from kelp`; so do the trap, BSS,
 panic and heap variants, and `examples/kernel0-aarch64` boots the second
 architecture. See [Freestanding mode](/language/freestanding) and
+[Kernel 0](/language/kernel).
+
+**Per-CPU storage, user `Drop`, Sv39 address spaces and user mode.**
+`percpu static mut NAME: T = INIT` lays out `[target] cpus` copies (an integer
+`1..=64`, default 1) as one 64-byte-aligned array in `.percpu`, and the
+freestanding-only `cpu_index()`/`cpu_count()` read the register the kernel sets
+(`tp` on riscv64, `TPIDR_EL1` on aarch64); the riscv64 `_start` stub parks every
+hart but hart 0 before it loads `sp`. `fun mut T.drop()` gives a user `datac` or
+`enum` a destructor that runs first at each drop point the plan already had,
+with a moved value not dropped, a partial move refused, and no unwinding on a
+panic. The kernel examples grew with it: `examples/kernel0-vm` builds Sv39 page
+tables, drops to S-mode and aliases a high page, `examples/kernel0-vm-fault`
+takes a load and a store page fault in an S-mode handler, and
+`examples/kernel0-user` adds the trap frame, the `ecall` ABI and
+untrusted-pointer validation for a program in U-mode. See
+[Per-CPU storage](/language/percpu), [User `Drop`](/language/drop) and
 [Kernel 0](/language/kernel).
 
 **Stable TLS, and the `try_` surface on the network modules.** `std/tls` gains

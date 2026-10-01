@@ -302,7 +302,7 @@ does not know yet.
 | `[caps]` | `domain = ["pattern", ...]` | read by `kelpc`, not Coral: it restricts the entry module's own capability grant; see [below](#caps-the-entry-modules-own-grant) |
 | `[extern."<module id>"]` | `domain`, `library`, `symbols`, `header`, `include_dirs`, `library_dirs`, `pkg_config` | read by `kelpc`, not Coral: it assigns a user module a capability domain and a native FFI surface; see [below](#extern-user-modules-that-bind-a-native-symbol) |
 | `[unsafe]` | `modules = ["<module id>", ...]` | read by `kelpc`, not Coral: the modules allowed to contain `unsafe`, an `unsafe fun`, a `static mut` access or an `asm`; see [below](#unsafe-modules-that-may-leave-the-checked-language) |
-| `[target]` | `mode`, `triple`, `entry`, `linker_script`, `panic`, `alloc`, `dealloc`, `realloc` | read by `kelpc`, not Coral: a bare-metal build; see [below](#target-a-freestanding-build) |
+| `[target]` | `mode`, `triple`, `entry`, `linker_script`, `panic`, `alloc`, `dealloc`, `realloc`, `cpus` | read by `kelpc`, not Coral: a bare-metal build; see [below](#target-a-freestanding-build) |
 | `[tasks]` | `name = "path/to/file.kp"` | each task compiles as its own unit, and `src/tasks/` is where `init` puts them |
 | `[dependencies]` | `name = "owner/repo[/folder]"` | see [Dependencies](#dependencies) |
 | `[toolchain]` | `kelp = "v0.1.4"` | written by `coral toolchain kelp pin`, a line edit that leaves comments and section order alone |
@@ -462,7 +462,9 @@ A project opts into bare metal with this section. `mode` is `"hosted"` or
 `"freestanding"` and is required; a project with no `[target]` section, or with
 `mode = "hosted"`, builds for the host exactly as before. In freestanding mode
 `triple`, `entry` and `linker_script` are required, and `panic`, `alloc`,
-`dealloc` and `realloc` are optional. The full account, including the allowed
+`dealloc`, `realloc` and `cpus` are optional. `cpus` is the per-CPU copy count
+(`1` to `64`, default `1`) a `percpu static mut` is laid out with; see
+[Per-CPU storage](/language/percpu). The full account, including the allowed
 set and the allocator signatures, is [Freestanding mode](/language/freestanding).
 
 ```toml

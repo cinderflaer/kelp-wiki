@@ -54,6 +54,8 @@ error, and so is a `const` or `pd` after a `datac`, `enum` or `fun`
 | [User FFI](/language/externs) | `extern fun`, `extern type` handles, variadics, `move closure` callbacks |
 | [Unsafe code and raw pointers](/language/unsafe) | `unsafe` blocks and `unsafe fun`, `Ptr<T>`, volatile access, `repr(...)`, `size_of`/`offset_of`, byte order |
 | [Statics and `defer`](/language/statics-and-defer) | `static`/`static mut`/`pub static`, `Atomic` statics, `section(...)`, `defer` |
+| [User `Drop`](/language/drop) | `fun mut T.drop()`, the order of drops, what is refused, no unwinding |
+| [Per-CPU storage](/language/percpu) | `percpu static mut`, `[target] cpus`, `cpu_index()`/`cpu_count()`, the `.percpu` array |
 | [Freestanding mode](/language/freestanding) | the `[target]` manifest section, the allowed set, the allocator hook, riscv64 and aarch64 |
 | [Kernel 0](/language/kernel) | the bare-metal examples, run under QEMU, with their real serial output |
 | [Errors and panics](/language/errors) | `Option`, `Result`, `?`, `panic`, `assert` |

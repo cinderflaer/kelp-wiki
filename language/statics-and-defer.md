@@ -131,6 +131,10 @@ fun main() {
 41
 ```
 
+A `percpu static mut` is the per-CPU variant of the same storage class: the
+compiler lays out `[target] cpus` copies of one value. See
+[Per-CPU storage](/language/percpu).
+
 ### What the compiler does not check
 
 The address of a static is stable, but `Ptr.from_mut(NAME)` still hands out a
@@ -258,6 +262,9 @@ the nested-block form the language already has.
 
 ## See also
 
+- [User `Drop`](/language/drop): the destructor a value runs at every drop
+  point
+- [Per-CPU storage](/language/percpu): one copy of a static per CPU
 - [Unsafe code and raw pointers](/language/unsafe): the `[unsafe]` gate
   `static mut` shares
 - [Freestanding mode](/language/freestanding): statics and `defer` in a
