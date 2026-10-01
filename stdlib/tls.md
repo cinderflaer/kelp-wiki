@@ -51,9 +51,14 @@ type). It is opaque outside this module; nothing else needs to know its shape.
 | `read(t, max)` | `Bytes` | up to `max` bytes |
 | `read_into(t, buf, at)` | `usize` | fills an existing buffer from offset `at` |
 | `shutdown(t)` | `Unit` | closes the TLS session (not the underlying socket) |
+| `try_handshake(s, host)` / `try_write_all(t, data)` / `try_read(t, max)` / `try_read_into(t, buf, at)` | `Result<_, TlsErr>` | the fallible twins: a failed handshake or I/O call is `Err` (`TlsErr.reason` is the panic text). A failed `try_handshake` leaves the socket open, still the caller's to close |
 
 All five panic on failure, the same style as [`std/net`](/stdlib/net)'s
-`send`/`recv`/`close`.
+`send`/`recv`/`close`, with one exception: for `read` and `read_into`, a peer
+that ends the stream, whether by a clean `close_notify` or by dropping the
+connection without one (what a proxy or load balancer that resets TCP does), is
+end of stream (an empty `Bytes`, or 0), not a panic. Any other read failure
+still panics.
 
 ## Certificate verification is not optional
 
@@ -67,18 +72,17 @@ a footgun left lying around for the next reader to trip on.
 
 ## Linking
 
-The system OpenSSL (`-lssl -lcrypto`) is linked into every Kelp binary
-unconditionally, the same "an unused library is free to link" reasoning `-lm`
-already uses for `std/math`: there is no per-project opt-in and no extra
-`coral.toml` line needed.
+The system OpenSSL (`-lssl -lcrypto`) is linked into a program that reaches
+`std/tls`, which includes every program that imports [`std/http`](/stdlib/http)
+or [`std/ws`](/stdlib/ws). There is no per-project opt-in and no extra
+`coral.toml` line needed. A program that reaches none of them neither links
+OpenSSL nor includes its headers, so it builds on a host that has no OpenSSL.
 
-That is not quite free, and the cost is worth knowing before the first
-`error: cc failed`. The linker has to find `libssl` and `libcrypto`, and a
-program that reaches an `extern` object (a `std/fs`-only program does) has the
-OpenSSL headers included in the generated `<out>.externs.c`, so the package's
-development output has to be on the include path as well. `nix-shell shell.nix`
-provides both; [Install and build](/getting-started/install#requirements) lists
-them for every other setup.
+For the programs that do, the linker has to find `libssl` and `libcrypto`, and
+the package's development output has to be on the include path for the generated
+C's `openssl/ssl.h`. `nix-shell shell.nix` provides both;
+[Install and build](/getting-started/install#requirements) lists them for every
+other setup.
 
 ## See also
 

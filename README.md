@@ -61,6 +61,12 @@ tags: "language, ownership"
   survived a bad import only because their titles broke YAML parsing and left them
   without a `tags` key at all.
 
+**Run `./check-front-matter.sh` before committing a page and at every release.**
+It checks each rule above (a `description` over 255 characters, `tags` that is
+not a quoted string, `published:` in place of `isPublished`, a missing key) and
+exits non-zero with one `path: what is wrong` line per failure, so a page that
+Wiki.js would silently drop fails here instead.
+
 Tag vocabulary, so the tag browser stays useful: one chapter tag per page
 (`overview`, `getting-started`, `language`, `stdlib`, `library`, `example`,
 `compiler`, `tooling`, `reference`, `family`, `meta`) plus cross-cutting topics

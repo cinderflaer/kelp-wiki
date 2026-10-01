@@ -126,11 +126,8 @@ them.
 
 - **(decided 2026-09-26, roadmap item 37; done, MK5-S4b-M1)** TLS shipped:
   [`std/tls`](/stdlib/tls) links the system OpenSSL, and `http.parse_url` now
-  accepts `https`. `ws.parse_url` still refuses `wss` by name
-  (`ws.parse_url: 'wss' is not supported: v1 has no TLS, so only 'ws://' is
-  reachable`), rather than parsing the URL and failing later: WebSocket-over-TLS
-  was not this milestone, and the two clients shipped ahead of TLS because the
-  framing of a WebSocket does not depend on the transport.
+  accepts `https`, and `ws.parse_url` accepts `wss` (`ws.connect_secure` runs the
+  WebSocket handshake over the same TLS layer).
 - **`std/ws` is a client, not a server.** Not scheduled anywhere on the
   roadmap: a WebSocket server, extensions (`Sec-WebSocket-Extensions`, so
   `permessage-deflate` and the `zlib-stream` transport a compressed gateway

@@ -11,17 +11,16 @@ tags: "getting-started"
 | Rust, 2024 edition (rustc 1.85 or newer) | building `kelpc` |
 | LLVM 21 development (`llvm-config`, `include/llvm-c`) | building `kelpc`: it depends on `llvm-sys`, whose build step locates `libLLVM`. The repository's `shell.nix` provides this and sets `LLVM_SYS_211_PREFIX` |
 | `libLLVM-21.so` | running a `kelpc` built this way: the `llvm` backend links it dynamically and the binary does not start without it |
-| OpenSSL libraries (`libssl`, `libcrypto`) | building any program: `kelpc` puts `-lssl -lcrypto` on every link line, TLS or not, so the linker has to find both |
-| OpenSSL development output (`openssl/ssl.h`) | building a program that reaches an `extern` (a `std/fs`-only program does): the generated `<out>.externs.c` includes OpenSSL's headers |
+| OpenSSL libraries (`libssl`, `libcrypto`) | building a program that reaches [`std/tls`](/stdlib/tls), which `std/http` and `std/ws` do: `kelpc` puts `-lssl -lcrypto` on that program's link line |
+| OpenSSL development output (`openssl/ssl.h`) | the same programs: the generated C includes OpenSSL's headers |
 | a C compiler and glibc | linking: `cc` links the object the `llvm` backend emits, and it is the compiler the C oracle's own path uses |
 | `valgrind` (optional) | the memory gate test |
 | [Coral](/tooling/coral) (recommended) | the build tool and package manager: projects, dependencies, tasks, toolchain pins. One `coral.toml`, and it calls `kelpc` for you |
 
-The two OpenSSL rows are worth spelling out, since a program that never imports
-[`std/tls`](/stdlib/tls) meets them anyway: the link line always carries
-`-lssl -lcrypto`, and the OpenSSL headers are part of any program's generated
-`<out>.externs.c`. `nix-shell shell.nix` provides both, and its `packages` list
-is the place to copy the pair from.
+A program that reaches neither `std/tls`, `std/http` nor `std/ws` needs no
+OpenSSL at all: `hello` builds on a host without it. `nix-shell shell.nix`
+provides the pair for the programs that do, and its `packages` list is the place
+to copy it from.
 
 ## Build the compiler
 
