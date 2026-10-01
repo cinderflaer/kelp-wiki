@@ -52,6 +52,10 @@ error, and so is a `const` or `pd` after a `datac`, `enum` or `fun`
 | [Constants and passdowns](/language/passdowns) | `const`, `pd` passdowns and the hidden borrow |
 | [Capabilities](/language/capabilities) | the model, grants, patterns, delegation |
 | [User FFI](/language/externs) | `extern fun`, `extern type` handles, variadics, `move closure` callbacks |
+| [Unsafe code and raw pointers](/language/unsafe) | `unsafe` blocks and `unsafe fun`, `Ptr<T>`, volatile access, `repr(...)`, `size_of`/`offset_of`, byte order |
+| [Statics and `defer`](/language/statics-and-defer) | `static`/`static mut`/`pub static`, `Atomic` statics, `section(...)`, `defer` |
+| [Freestanding mode](/language/freestanding) | the `[target]` manifest section, the allowed set, the allocator hook, riscv64 and aarch64 |
+| [Kernel 0](/language/kernel) | the bare-metal examples, run under QEMU, with their real serial output |
 | [Errors and panics](/language/errors) | `Option`, `Result`, `?`, `panic`, `assert` |
 | [Limits in v1](/language/limits) | what the language deliberately does not have |
 | [Style](/language/style) | indentation, naming, file order, comments |
