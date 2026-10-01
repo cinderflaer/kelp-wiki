@@ -125,6 +125,58 @@ val total = listx.fold(xs, 0, fun(acc: i32, x: &i32).R: i32 = acc + x)
 > There is no way to write a named nested function and no `dyn`-style boxing of
 > one.
 
+## Trailing blocks and scoped parameters
+
+A `{ ... }` written on the same line after a call is that call's **last
+argument**, a `fun` literal. A block may declare parameters by name only, and
+their types come from the function type of the parameter the block is passed to.
+A block whose body ends in an expression returns it when the expected return type
+is non-unit.
+
+A parameter written `scoped fun(T).R: U` accepts **only** a `fun` literal or a
+trailing block written at the call site, never a stored value. Because the callee
+may only call it during the call, the literal may capture an enclosing binding
+**by borrow**, which an ordinary closure cannot do. The mode of each parameter
+follows the expected type, so `scoped fun(mut Counter)` binds a block parameter as
+an exclusive borrow.
+
+```kelp
+fun sum(xs: List<i32>, f: scoped fun(i32).R: i32).R: i32 {
+    var total = 0
+    var i: usize = 0
+    while i < xs.len() {
+        total += f(xs.get(i))
+        i += 1
+    }
+    return total
+}
+
+fun main() {
+    var xs: List<i32> = List.empty()
+    xs.push(4)
+    xs.push(5)
+    xs.push(6)
+    print(sum(xs) { n -> n * 10 })
+}
+```
+
+```text
+150
+```
+
+- A scoped value may be re-bound or passed to another scoped parameter: both stay
+  inside the call.
+- **Exclusive captures are refused.** A block that writes through a captured
+  binding is an error, and the message names the shared alternative. A builder
+  that needs a mutation takes the `Msg` shape instead (see
+  [`polyp`](/libraries/polyp)).
+- A scoped value may not be stored in a `datac` field, returned, put in a
+  container, passed to a plain parameter, or captured by another closure. Each of
+  those is an ordinary type mismatch, because `scoped fun(...)` is a type of its
+  own.
+- The builder shape this exists for is `polyp.column { k -> k.text(s.title) }`,
+  where the block reads the view's borrowed state.
+
 ## `pd` passdowns as hidden parameters
 
 A function that mentions a `pd` binding gets it wired in as a hidden parameter;
