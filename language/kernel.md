@@ -1,6 +1,6 @@
 ---
 title: "Kernel 0"
-description: "The freestanding examples that boot under QEMU: the UART driver, naked trap handlers, per-CPU statics, Sv39 page tables, a user-mode trap frame and syscall ABI, and a bump allocator behind `List`."
+description: "The freestanding examples that boot under QEMU: the UART driver, trap handlers, per-CPU statics, Sv39 page tables, a user-mode trap frame and syscall ABI, a bump allocator behind `List`/`String`/`Bytes`, a stack guard and `mmio` grants."
 isPublished: true
 tags: "language, freestanding, kernel"
 ---
@@ -42,11 +42,21 @@ hello from kelp
 | `examples/kernel0-panic` | the compiler's bounds check reaches the handler | `panic: Array.get: index out of bounds` |
 | `examples/kernel0-bss` | `_start` erased a marker the image loaded into `.bss` | `bss clear` |
 | `examples/kernel0-heap` | `List<i32>` over a bump allocator | `heap sum 55` then `balanced` |
+| `examples/kernel0-string` | `String`/`Bytes` on the project allocator | `s: hello kelp!`, `n: 12345`, `b: 300`, `balanced` |
 | `examples/kernel0-percpu` | `percpu static mut` on two harts | `cpu0 4`, `cpu1 7`, `idx 1`, `count 2` |
 | `examples/kernel0-vm` | Sv39 tables, the S-mode drop, a high alias | nine `vm:` lines |
 | `examples/kernel0-vm-fault` | the load and store page faults | `fault: scause 0xd stval 0x40000000`, `fault: scause 0xf stval 0x3ffffff000` |
+| `examples/kernel0-stack` | an unmapped guard page and the stack probe | both faults print `stack overflow: scause 0xf stval 0x...` |
 | `examples/kernel0-user` | the trap frame, `ecall`, U-mode | `hello from user`, `bad write -> E`, `user exited 7` |
 | `examples/kernel0-aarch64` | the second architecture | `hello from kelp (aarch64)` |
+
+Every manifest under `examples/kernel0*` also carries an `mmio` grant now, the
+stage-16 check that a freestanding module may name only an address it was
+granted. The UART drivers hold exactly their device's window
+(`0x10000000+0x100` for the riscv64 NS16550, `0x09000000+0x1000` for the aarch64
+PL011), and the modules that build a pointer from a computed address (a
+page-table frame, a trap-frame slot, a user page) hold the whole-address-space
+`["*"]`. See [Capabilities](/language/capabilities#mmio-device-registers).
 
 The four RISC-V boots, run one after another:
 
@@ -370,6 +380,59 @@ space abstraction, and no interrupt path (`trap_entry` assumes the trap came fro
 U-mode; a kernel-mode fault would swap the stack pointer out from under the
 running handler). There are no signals, and no more than six syscall arguments.
 
+## Stack guards and probing
+
+`examples/kernel0-stack` is the overflow made loud. Every function a freestanding
+LLVM build emits carries LLVM's `"probe-stack"="inline-asm"` attribute, so a
+frame larger than one page is built by touching each page in order from the top;
+a frame that reaches the guard page below the stack faults instead of a single
+`sub sp` stepping over the hole. Hosted builds carry no attribute, because a
+hosted process has no guard page to probe for.
+
+The linker script puts a 16 KiB trap stack below the image, an unmapped 4 KiB
+guard page above it and the 8 KiB kernel stack above the guard. `kmain` identity
+maps `[image, __guard_bottom)` and `[__guard_top, __frames_end)` and leaves the
+guard page with no leaf.
+
+One boot takes the two overflows on purpose. Phase a recurses with a 16-byte
+frame until the frame that crosses `__stack_bottom` stores its saved `ra` into
+the guard; the S-mode handler runs on the trap stack, prints the `scause` and
+`stval` it saw, checks `stval` against the guard bounds and, for the first fault,
+points `sepc` at phase b and returns. Phase b calls a function whose single
+`[u8; 16384]` frame is larger than the whole kernel stack: the probe walks it
+down page by page into the same guard, which is the case a `sub sp` alone would
+miss.
+
+```sh
+nix-shell dev-kernel.nix --run 'examples/kernel0-stack/run.sh'
+```
+
+```text
+run.sh: booted .../examples/kernel0-stack and the UART printed:
+stack: m-mode
+stack: paging on
+stack: guard 0x80007000 0x80008000
+stack: phase a
+stack overflow: scause 0xf stval 0x80007ff8
+stack: stval in guard
+stack: phase b
+stack overflow: scause 0xf stval 0x80007de0
+stack: stval in guard
+stack: halted
+```
+
+Both faults are `scause 0xf`, a store page fault, and each `stval` falls inside
+the guard the kernel printed. `run.sh` asserts the seven `stack:` lines, and the
+suite's boot test parses the printed bounds and both fault addresses to check
+the same range independently.
+
+What this is not: the guard page is the linker script's, not the compiler's
+(`probe-stack` only turns a large frame into stores, and whether they land on an
+unmapped page is the script's business), the probe does not compare `sp` against
+a bound and does not run on a `naked` function, and nothing maps a page to grow
+the stack. See
+[`plan/stack-guard.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/stack-guard.md).
+
 ## The `.bss` clear
 
 `_start` zeroes `[__bss_start, __bss_end)` after it loads `sp` and before it
@@ -397,22 +460,29 @@ The remaining gaps, in order, from
 [`plan/kernel0-status.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/kernel0-status.md):
 
 - **Interrupts are not set up.** `kernel0-trap` installs `mtvec` itself and
-  nothing enables `mstatus.MIE` or models the privilege transition. Stage 10
-  (panic semantics with no OS) and stage 11 (MMIO capabilities) are where that
-  becomes a checked story.
+  nothing enables `mstatus.MIE`, models the privilege transition or claims an
+  interrupt line as a capability. Panic semantics with no OS is the other half
+  of stage 10 and is not merged yet.
 - **The `interrupt`/calling-convention attributes** stage 5 deferred are still
   open, so a trap handler is a naked body the compiler does not understand as a
   handler.
-- **No allocator hook for `Ptr.alloc`/`Ptr.free`.** The global allocator reroutes
-  `Box`/`List`/`Map` only; the `Ptr` methods stay the hosted `malloc`/`free` and
-  are refused in freestanding. Arenas as a language feature and a fallible
-  allocation surface are not in this release.
-- **Stages 6, 8 and 9's language half have shipped.** User `Drop` (stage 6) is
-  [`fun mut T.drop()`](/language/drop), per-CPU storage (stage 8) is
-  [per-CPU statics](/language/percpu), and the MMU and the syscall ABI (stage 9)
-  are the two examples above, written in the language rather than added to it.
-- **Stack guards and probing (stage 10)** and **MMIO regions and IRQ lines as
-  capabilities (stage 11)** are the rest of the plan.
+- **`Ptr.alloc`/`Ptr.free` still have no allocator hook.** The global allocator
+  reroutes `Box`/`List`/`Map`/`String`/`Bytes`, and stage 13 added the
+  [`std/arena`](/stdlib/arena) bump region and the fallible `Ptr.try_alloc`, but
+  the `Ptr.alloc`/`free` pair is still the hosted `malloc`/`free` and is refused
+  in freestanding.
+- **Stages 6, 8, 9, 12, 13, 14 and 16 have shipped.** User `Drop` (stage 6) is
+  [`fun mut T.drop()`](/language/drop); per-CPU storage (stage 8) is
+  [per-CPU statics](/language/percpu); the MMU and the syscall ABI (stage 9) are
+  the two examples above; freestanding `String`/`Bytes` and arena/`try_alloc`
+  (stages 12 and 13) are [Freestanding mode](/language/freestanding) and
+  [`std/arena`](/stdlib/arena); the stack guard and the `probe-stack` attribute
+  (stage 14) are the section above; and the `mmio` capability (stage 16) is the
+  grant every example now carries.
+- **IRQ lines and physical frames** (the rest of the capabilities row) and
+  **panic semantics with no OS** (stage 10's other half) are what remains: an
+  abort message, a register dump and a panic path beyond the handler's own lines
+  are not here.
 - **No C-oracle coverage.** Freestanding is LLVM-only by design, so the usual
   "both backends, same behaviour" rule does not apply to these images. It still
   holds everywhere else.
@@ -428,3 +498,7 @@ The remaining gaps, in order, from
 - [User `Drop`](/language/drop): the destructor a value runs on the way out
 - [Per-CPU storage](/language/percpu): one copy of a static per CPU, and the two
   intrinsics that read it back
+- [Capabilities](/language/capabilities#mmio-device-registers): the `mmio`
+  grant every example carries
+- [`std/arena`](/stdlib/arena): the bump region a kernel reaches for after the
+  allocator hook

@@ -341,8 +341,9 @@ net = ["api.example.com:443"]
   patterns are absolute, glob paths; `net` is `host`, `host:port`, `*.host`,
   `*:port` or `*`; `env` is a variable name or `*`; `time` and `rand` take no
   pattern (an empty list, `time = []`, still holds the domain); `ui` takes only
-  `["*"]`. An unknown domain, or a pattern its vocabulary refuses, is the same
-  error `caps(...)` gives on an `impl` line, at the manifest instead.
+  `["*"]`; `mmio` takes half-open ranges `"0xBASE+0xLEN"` or the wildcard
+  `["*"]` alone. An unknown domain, or a pattern its vocabulary refuses, is the
+  same error `caps(...)` gives on an `impl` line, at the manifest instead.
 - **No `[caps]` section at all is the old default**: `main` holds the whole
   resource of every domain (`/**` for a path domain, `*` for a name domain),
   exactly as before this section existed. A `coral.toml` written before
@@ -364,6 +365,32 @@ net = ["api.example.com:443"]
   delegate less than it has, never more") now has a real ceiling to check
   `main`'s own delegations against, instead of the wildcard always satisfying
   it.
+
+`mmio` is the one domain the entry module does **not** hold by default, and the
+one `caps(*)` leaves out, so a freestanding project that builds a pointer from a
+device address writes the grant in `[caps]` and delegates it to each driver on
+the `impl` line. The compiler reads this section only for a freestanding
+project; a hosted manifest's `mmio` line is inert.
+
+```toml
+# mykernel/coral.toml
+name = "mykernel"
+entry = "src/main.kp"
+
+[caps]
+mmio = ["0x10000000+0x100"]
+```
+
+```kelp
+// mykernel/src/main.kp
+impl "uart" caps(mmio = ["0x10000000+0x100"])
+```
+
+The range covers `[base, base + len)`. A module that builds a pointer from a
+**computed** address cannot be covered by a range and needs the
+whole-address-space `mmio = ["*"]`, the line to grep for in a review. See
+[Capabilities](/language/capabilities#mmio-device-registers) for what the
+check does and does not decide.
 
 ### `[extern."<module id>"]`: user modules that bind a native symbol
 
@@ -462,8 +489,9 @@ A project opts into bare metal with this section. `mode` is `"hosted"` or
 `"freestanding"` and is required; a project with no `[target]` section, or with
 `mode = "hosted"`, builds for the host exactly as before. In freestanding mode
 `triple`, `entry` and `linker_script` are required, and `panic`, `alloc`,
-`dealloc`, `realloc` and `cpus` are optional. `cpus` is the per-CPU copy count
-(`1` to `64`, default `1`) a `percpu static mut` is laid out with; see
+`dealloc`, `realloc` and `cpus` are optional, and the `mmio` grants a device
+driver needs live in `[caps]` rather than in `[target]`. `cpus` is the per-CPU
+copy count (`1` to `64`, default `1`) a `percpu static mut` is laid out with; see
 [Per-CPU storage](/language/percpu). The full account, including the allowed
 set and the allocator signatures, is [Freestanding mode](/language/freestanding).
 
