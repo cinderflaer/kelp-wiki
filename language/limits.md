@@ -53,15 +53,18 @@ them.
   missing.
 - **No user overloading** (permanent: `abs`, `min`, `max`, `clamp` are the
   only overloads in the language, and they are stdlib-only). User `extern`
-  bodies are no longer refused outright (MK9-S1-M1, roadmap B-1): a
-  `coral.toml` `[extern."<module id>"]` section assigns a user module one of
-  the six existing capability domains plus a native library and an
-  allowlisted symbol set, so its `extern fun` declarations bind to a real
-  symbol instead of a compiler-supplied body, gated exactly like a stdlib
-  module — see [Coral: the manifest](/tooling/coral#extern-user-modules-that-bind-a-native-symbol).
-  **(still open)** `extern "C"` block syntax, variadics, function-pointer
-  types for user externs, and link-flag/library-path vocabulary beyond one
-  `library` name per section.
+  bodies bind to real symbols (MK9-S1-M1, roadmap B-1): a `coral.toml`
+  `[extern."<module id>"]` section assigns a user module one of the seven
+  capability domains (`ui` included) plus a native library, a `header`,
+  `include_dirs`/`library_dirs`, an optional `pkg_config` package and an
+  allowlisted symbol set, so its `extern fun` declarations bind a real C
+  symbol under a name the section can rename, gated exactly like a stdlib
+  module. `extern type` handles with parents, `null()`/`cast()`, `...`
+  variadics and `move closure(...)` callbacks all ship; see
+  [User FFI](/language/externs) and
+  [Coral: the manifest](/tooling/coral#extern-user-modules-that-bind-a-native-symbol).
+  **(still open)** `extern "C"` block syntax, function-pointer types for user
+  externs, and a `repr(C)` struct crossing by value.
 
 ## Ownership
 
