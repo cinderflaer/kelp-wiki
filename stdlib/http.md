@@ -71,6 +71,73 @@ costs a connection. A redirect that changes host or port re-resolves the scheme
 from the `Location` header, so a plain-to-TLS (or TLS-to-plain) hop across a
 redirect is not stuck on the original connection's kind.
 
+### Failure is a value
+
+Every request call has a fallible twin returning `Result<_, HttpErr>`. The
+variants split on the one question a retry needs answered: **could the server
+have seen the request?**
+
+```kelp
+enum HttpErr {
+    Dial(val reason: String)       // nothing was sent: the name did not resolve,
+                                   // the connection was refused, or (for https)
+                                   // the TLS handshake failed. Retrying any
+                                   // method is safe
+    Exchange(val reason: String)   // the connection was open: a send failed, the
+                                   // peer reset or closed before the response was
+                                   // complete, a read timed out, or the response
+                                   // was malformed
+    Redirects(val reason: String)  // the chain was longer than the client allows;
+                                   // the requests before it did complete
+}
+```
+
+| Fallible | Panicking | Returns |
+| --- | --- | --- |
+| `try_get(url)` | `get(url)` | `Result<Response, HttpErr>` / `Response` |
+| `Client.try_send(req)` | `Client.send(req)` | as above |
+| `Pool.try_send(req)` | `Pool.send(req)` | as above, over a pooled connection |
+| `Pool.try_checkout(use_tls)` | `Pool.checkout(use_tls)` | `Result<Lease, HttpErr>` / `Lease` |
+| `conn_send_all_try` / `conn_recv_try` / `conn_recv_into_try` | the plain trio | `Result<_, HttpErr>` |
+| `send_fresh_try`, `exchange_try`, `one_exchange_try`, `read_response_try`, `follow_url_try`, `content_length_try`, `parse_status_line_try`, `status_code_try` | the plain forms | `Result<_, HttpErr>` |
+
+Every `reason` is the text the panicking form panics with, so a caller that
+logs it prints what `send` would have printed on stderr. The panicking wrappers
+are thin: `get` is `default_client().send(make_get(url))`, and `send` is
+`when self.try_send(req) { Ok(r) -> r, Err(e) -> fail_http(e) }`.
+
+A refused dial is a `Dial` error, not the end of the process:
+
+```kelp
+impl "std/http" caps(net = ["127.0.0.1:1"])
+
+fun main() {
+    when http.try_get("http://127.0.0.1:1/") {
+        Ok(r) -> print(r.status)
+        Err(e) -> when e {
+            Dial(reason) -> {
+                print("dial failed")
+                print(reason)
+            }
+            Exchange(reason) -> {
+                print("exchange failed")
+                print(reason)
+            }
+            Redirects(reason) -> {
+                print("too many redirects")
+                print(reason)
+            }
+        }
+    }
+}
+```
+
+```text
+dial failed
+net.connect: connection failed
+  errno 111: Connection refused
+```
+
 ### Rate limits
 
 `Response.retry_after()` parses the `Retry-After` header's **seconds form**
@@ -155,6 +222,10 @@ verifies unconditionally.
   `Expect: 100-continue`, and idle reaping.
 - **`https` works** (MK5-S4b-M1): TLS is [`std/tls`](/stdlib/tls), gated under
   the same `net` domain this module already holds, no new capability needed.
+  Because this module imports `std/tls`, a program that reaches `std/http`
+  links the system OpenSSL (`-lssl -lcrypto`) and needs its headers to build;
+  a program that never touches TLS does not. See
+  [`std/tls`](/stdlib/tls#linking).
 - Redirects: `max_redirects` and `follow_redirects` on the `Client`. A 307/308
   keeps the body; other redirects drop it. A redirect can cross schemes.
 - Only `GET` and text-body `POST` ship as helpers. `PUT`, `DELETE` and `PATCH`
