@@ -38,7 +38,7 @@ this page is the index to it.
 
 | Version | Date | Headline |
 | --- | --- | --- |
-| Unreleased | pending | `unsafe`/`Ptr<T>` and layout control; freestanding mode and kernel 0 booting under QEMU on riscv64 and aarch64; per-CPU storage, user `Drop`, Sv39 address spaces and the user-mode syscall ABI; a typed `TlsError`/`TlsOptions` and truncation detection; the `try_` error surface on `std/net` and `std/http` |
+| Unreleased | pending | `unsafe`/`Ptr<T>` and layout control; freestanding mode and kernel 0 booting under QEMU; per-CPU storage, user `Drop`, Sv39 and the user-mode syscall ABI; freestanding `String`/`Bytes`, `std/arena` and `Ptr.try_alloc`; stack guards and probing; a typed `TlsHandle` with `TlsError`/`TlsOptions`; the `try_` surface; the `mmio` capability; a compiler memory floor |
 | [26.09.5](#26095-2026-09-28) | 2026-09-28 | `std/tls` and `https`; `coral.toml`'s `[caps]` and `[extern]`; rate-limit headers on `Response`; two assignment leaks fixed; every program now needs OpenSSL to build |
 | [26.09.4](#26094-2026-09-26) | 2026-09-26 | the LLVM backend inlines builtin bodies; `Map`'s index halved, `Map.with_capacity`; unrolled loops, `noalias`, `llvm.sqrt.f64`; the benchmark suite published |
 | [26.09.3](#26093-2026-09-25) | 2026-09-25 | `thread.sleep_ms`/`current_id`; a unit-returning worker can be joined; concurrent downloads; the memory model published; `kelpc check --text` |
@@ -55,7 +55,7 @@ this page is the index to it.
 ## Unreleased
 
 Not a version number yet: this is what has landed since 26.09.5 and is waiting
-for a release to cut. Five pieces, in the order they were built.
+for a release to cut. Nine pieces, in the order they were built.
 
 **`unsafe`, `Ptr<T>` and layout control.** A raw pointer type `Ptr<T>` and the
 `unsafe` blocks and `unsafe fun` that are the only way to dereference one.
@@ -82,15 +82,19 @@ compiler-emitted `_start` that sets `sp` and clears `[__bss_start,
 __bss_end)`, the entry and panic functions and a linker script it names, and an
 `ld.lld -T` static link with no runtime object. Everything that would reach
 libc is a compile error, and so is any `std/*` module except the pure ones and
-the five `str` operations the compiler lowers itself. `static`/`static mut` and
+the `str` operations the compiler lowers itself. `static`/`static mut` and
 `defer` are allowed, `asm` and naked functions are allowed, and a `[target]
 alloc`/`dealloc`/`realloc` hook reroutes `Box`/`List`/`Map` onto the project's
-own allocator. The five `memcpy`/`memmove`/`memset`/`memcmp`/`bcmp` routines
-LLVM's own aggregate copies call are defined weakly in every freestanding
-object. Freestanding is LLVM-only: the C backend's preamble is libc, so
+own allocator. With that pair configured, `String` and `Bytes` join them: their
+bodies are byte loops over the project's own buffers, so a kernel builds text
+with `str.concat` and `str.from_u64`/`from_i64` and grows a `Bytes` by doubling,
+with no `strlen` or `memcpy` in the image and a null allocation reaching the
+handler with `"out of memory"`. The five
+`memcpy`/`memmove`/`memset`/`memcmp`/`bcmp` routines LLVM's own aggregate
+copies call are defined weakly in every freestanding object. Freestanding is LLVM-only: the C backend's preamble is libc, so
 `KELPC_ORACLE=c` refuses such a project by name. `examples/kernel0` boots on
 QEMU's riscv64 `virt` machine and prints `hello from kelp`; so do the trap, BSS,
-panic and heap variants, and `examples/kernel0-aarch64` boots the second
+panic, heap and string variants, and `examples/kernel0-aarch64` boots the second
 architecture. See [Freestanding mode](/language/freestanding) and
 [Kernel 0](/language/kernel).
 
@@ -110,16 +114,64 @@ untrusted-pointer validation for a program in U-mode. See
 [Per-CPU storage](/language/percpu), [User `Drop`](/language/drop) and
 [Kernel 0](/language/kernel).
 
+**Arenas and fallible allocation.** `Ptr.try_alloc<T>(count)` is `Ptr.alloc`'s
+non-panicking twin: unsafe like it, the same element set and alignment promise,
+but a failed allocation is the null `Ptr<T>`, and a count whose
+`count * size_of::<T>()` product would wrap `usize` is refused before the
+allocator is asked. Hosted it is `malloc` on both backends; freestanding it is
+the project's own `[target] alloc`, admitted by the same pair `Box`/`List`/`Map`
+need. `std/arena` is a bump arena over a caller-owned region, in Kelp with no
+externs and no libc, so it works hosted and freestanding and needs no allocator
+hook: `arena.new(base, cap)` hands out aligned `Ptr<u8>` blocks, answers the
+null pointer when a request does not fit or would wrap, panics on a
+non-power-of-two `align`, and `reset` reclaims the whole region. `alloc_zeroed`
+is the module's one unsafe operation, admitted by the compiler's own
+`stdlib::UNSAFE_MODULES` list rather than a project manifest. See [Unsafe code
+and raw pointers](/language/unsafe) and [`std/arena`](/stdlib/arena).
+
+**Stack guards and probing.** Every function a freestanding LLVM build emits
+carries `"probe-stack"="inline-asm"`, so a frame larger than a page is built by
+touching each page from the top and an unmapped guard page traps it.
+`examples/kernel0-stack` puts a 16 KiB trap stack below the image, an unmapped
+4 KiB guard above it and an 8 KiB kernel stack above the guard, then takes both
+overflows in one boot: a small-frame recursion into the guard, and a single
+`[u8; 16384]` frame the probe walks down page by page. Both print `scause 0xf`
+and an `stval` inside the guard bounds. Hosted builds carry no attribute. See
+[Kernel 0](/language/kernel).
+
 **Stable TLS, and the `try_` surface on the network modules.** `std/tls` gains
 the typed `TlsError`, `TlsOptions` (a private CA file or directory, a timeout)
 and a `try_handshake`/`try_read`/`try_write`/`try_shutdown` family beside the
-panicking wrappers. A stream that ends without a `close_notify` is
+panicking wrappers. `TlsStream` now carries the OpenSSL handle as a typed
+`extern type TlsHandle` instead of a `usize`, so it cannot be forged from an
+integer or confused with another handle, and `std/http`/`std/ws` carry the
+plain-or-TLS choice as `Option<TlsHandle>` rather than an integer sentinel. A
+stream that ends without a `close_notify` is
 `PeerClosedUncleanly`, never a clean EOF, by design. `wss://` works over
 [`std/ws`](/stdlib/ws). `std/http` gains `try_get` and `HttpErr` (`Dial`,
 `Exchange`, `Redirects`), and `std/net` gains `try_send_all`/`try_recv`/
 `try_recv_into` with `NetErr`. OpenSSL is linked, and its headers included, only
 when a program reaches `std/tls` (which `std/http` and `std/ws` do). See
 [`std/tls`](/stdlib/tls).
+
+**`mmio` as a capability.** An eighth capability domain, `mmio`, gates
+`Ptr.from_addr` in a freestanding project: a grant is a list of half-open ranges
+`"0xBASE+0xLEN"` or the whole address space as `["*"]`. A constant address must
+fall inside a granted range, a computed one is refused unless the grant is
+`["*"]`, and a module with no grant is refused by name. `mmio` is the one
+domain the entry module does not hold by default and the one `caps(*)` leaves
+out, so the whole-space grant is written where a reviewer sees it. Every
+`examples/kernel0*` manifest now carries a grant. The check is on the address a
+pointer is born at, so an offset applied afterwards is not revisited. See
+[Capabilities](/language/capabilities#mmio-device-registers).
+
+**The compiler's memory floor.** `kelpc build` and `kelpc run` watch
+`MemAvailable` and, below `KELPC_MIN_AVAILABLE_MB` (default 384; `0` turns it
+off), kill the `cc`/`ld.lld`/`pkg-config` children they spawned, print one
+`error:` line and leave with `_exit(75)` (`EX_TEMPFAIL`) instead of letting the
+kernel OOM killer pick a victim. `kelpc run` stops the guard before the compiled
+program starts, and `fmt`/`lint`/`check`/`version` do not start it. See [`kelpc`
+CLI](/tooling/kelpc-cli#the-memory-floor).
 
 **Bugfix pass.** The compiler's own warnings are zero, the differential fuzz ran
 1500 generated programs plus the 24-program corpus with 0 mismatches, and one
