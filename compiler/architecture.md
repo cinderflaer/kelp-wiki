@@ -167,6 +167,18 @@ backend's own includes and prototypes, so it is built per program rather than
 shipped fixed: one body calls a `std/path` function only the resolver injects,
 and another names a per-program container typedef.
 
+### The memory floor
+
+`driver.rs` also starts the watchdog in `guard.rs` for `build` and `run`: it
+reads `MemAvailable` from `/proc/meminfo` every 200 ms and, below
+`KELPC_MIN_AVAILABLE_MB` (default 384; `0` turns it off), kills the external
+children the driver spawned (`cc`, `ld.lld`, `pkg-config`) and leaves with
+`_exit(75)` rather than letting the kernel OOM killer choose a victim. It is
+`_exit` because the main thread is still inside LLVM. `kelpc run` stops the
+guard before the compiled program starts, so a program's own memory is never
+policed by it, and `fmt`/`lint`/`check`/`version` never start it. See [`kelpc`
+CLI](/tooling/kelpc-cli#the-memory-floor).
+
 ## Following one program through the passes
 
 This walk names the C oracle's stages; under the default `llvm` backend the code
