@@ -1,6 +1,6 @@
 ---
 title: "Freestanding mode"
-description: "A bare-metal build: no libc, no runtime preamble, a compiler-emitted `_start`, the entry and both panic shapes and a linker script named in `[target]`. LLVM-only. riscv64 and aarch64. The allocator hook reroutes `Box`, `List`, `Map`, `String` and `Bytes`."
+description: "A bare-metal build: no libc, no runtime preamble, a compiler-emitted `_start`, the entry and both panic shapes, a linker script named in `[target]`, and the admitted `std` subset. LLVM-only. riscv64, aarch64 and x86-64."
 isPublished: true
 tags: "language, freestanding, kernel"
 ---
@@ -39,16 +39,19 @@ realloc = "krealloc"        # optional, needs the pair
 | `alloc`, `dealloc` | no | the project's own allocator; see below |
 | `realloc` | no | the growth fast path; needs `alloc`/`dealloc` |
 
-`riscv64-unknown-none-elf` and `aarch64-unknown-none` are the two kernel 0
-boots, and the two the compiler has a target machine and a `_start` stub for.
-Any other triple is refused by name at the stub:
+`riscv64-unknown-none-elf`, `aarch64-unknown-none` and `x86_64-unknown-none`
+(the `-elf` spelling too) are the three kernel 0 boots, and the three the
+compiler has a target machine, a `_start` stub and a wait instruction for. Any
+other triple is refused by name before any code is emitted:
 
 ```text
-error: kelpc has no freestanding '_start' stub for the triple 'x86_64-unknown-none': it has one for riscv64 and aarch64
+error: kelpc has no code generator to load for the freestanding triple 'mips-unknown-none'
 ```
 
-An x86-64 image has to wait for its own entry stub, a 32-bit PVH/Multiboot one
-that enters long mode first.
+A triple whose backend does load but whose stub or wait instruction is missing
+is refused the same way by name (for example the 32-bit `i686-unknown-none`,
+which loads the X86 backend but has neither an x86-64 `_start` nor an x86-64
+wait instruction).
 
 A freestanding project is **LLVM-only**. `KELPC_ORACLE=c` refuses with a message
 naming the mode and the backend, because the C backend's runtime preamble is
@@ -104,8 +107,11 @@ cannot reference a symbol the link would miss.
   borrows `&T`/`&mut T`.
 - `if`, `when`, loops, functions, and closures that capture nothing (a capturing
   literal owns a heap environment that only the runtime could free).
-- `Atomic<T>` and its methods, plus the pure `std/atomic`, `std/option`,
-  `std/result` and `std/arena` modules.
+- `Atomic<T>` and its methods, plus the admitted standard modules below:
+the pure `std/atomic`, `std/arena`, `std/irq` and `std/frame`, `std/option`'s
+and `std/result`'s value helpers, `std/math`'s integer
+`abs`/`min`/`max`/`clamp`, and `std/list` and the `std/option`/`std/result`
+callback combinators with the `[target] alloc`/`dealloc` pair configured.
 - The five `std/str` operations the compiler lowers itself: `str.len`,
   `str.byte`, `str.eq`, `str.starts_with` and `str.ptr`. With an allocator
   configured, the three builders `str.concat`, `str.from_u64` and `str.from_i64`
@@ -127,6 +133,60 @@ cannot reference a symbol the link would miss.
 anything has to walk text. Its raw primitives are emitted into the module as
 byte loops marked `optnone`, so the target's own loop-idiom pass cannot rewrite
 the NUL scan into a `strlen` call.
+
+## The freestanding standard subset
+
+Which shipped `std/*` modules a freestanding program may use is one table in
+`freestanding.rs` (`std_admission`), one row per module, and the call-site check
+and the body-pruning pass are driven by the same row. The row is one of five
+verdicts: **Pure** (every item callable, no body reaches libc), **Allocator**
+(callable once `[target] alloc`/`dealloc` are configured), **Subset** (only the
+named items are callable; the rest are refused by name at the call and pruned),
+**Present** (the module may be in the program but nothing in it is callable),
+and **Hosted** (nothing of it may be in a freestanding program). The table is
+checked against `stdlib::shipped()` by a unit test, so a new shipped module
+fails the build rather than defaulting to allowed.
+
+| Module | Verdict | What is admitted |
+| --- | --- | --- |
+| `std/atomic` | Pure | every item; `Ordering` is a plain `enum` |
+| `std/option` | Subset | `is_some`, `is_none`, `unwrap_or`, `unwrap`, `expect`; with `[target] alloc`/`dealloc`, `map`, `and_then`, `or_else`, `each` |
+| `std/result` | Subset | the value helpers as-is; with the allocator pair, `map`, `map_err`, `and_then`, `or_else`, `each` |
+| `std/arena` | Pure | every item; the region is the caller's |
+| `std/irq` | Pure | `claim` and `Line.number` (under an `irq` grant) |
+| `std/frame` | Pure | `claim`, `Frame.addr` and `Frame.offset` (under a `frames` grant) |
+| `std/str` | Subset | `len`, `byte`, `eq`, `starts_with`, `ptr`; with the allocator pair, `concat`, `from_u64`, `from_i64`; every other function refused by name |
+| `std/math` | Subset | the integer `abs`, `min`, `max` and `clamp`; the sixteen libm externs, the `f64` overloads of the four arithmetic ones and `sign` are refused by name |
+| `std/list` | Allocator | every item, once `[target] alloc`/`dealloc` are configured |
+| `std/mem` | Present | nothing is callable; `std/str` imports it, and the pruning pass drops its one extern |
+| `std/rt` | Present | nothing is callable; the resolver injects it for a gated module, and its bodies are pruned |
+| `std/encoding`, `std/path`, `std/io`, `std/fs`, `std/net`, `std/tls`, `std/http`, `std/ws`, `std/process`, `std/env`, `std/time`, `std/rand`, `std/thread`, `std/sync`, `std/fmt` | Hosted | refused by name; they reach libc, the allocator or the hosted runtime (`std/fmt`'s `hex_raw`/`bytes_raw` are `snprintf`-backed) |
+
+A module whose row is `Allocator` and a program with no allocator pair is
+refused with the two manifest keys named, not left to the linker. A whole-module
+refusal says "needs a hosted runtime" and then names the modules a freestanding
+project may implement, derived from the same table so it cannot drift:
+`std/arena, std/atomic, std/frame, std/irq, std/list, std/math, std/option,
+std/result, std/str`.
+
+```text
+error: the module 'std/time' is unavailable in a freestanding build: it needs a hosted runtime (libc or the 'kelp_rt' helpers); the std modules a freestanding project may implement are std/arena, std/atomic, std/frame, std/irq, std/list, std/math, std/option, std/result, std/str
+```
+
+A refused item inside an admitted module is refused at the call instead, the
+same way, so nothing reaches `ld.lld`:
+
+```text
+error: the call to 'std.math.sqrt' is unavailable in a freestanding build: it needs the hosted runtime, which 'std/math' reaches for everything but abs, clamp, max, min
+```
+
+Admitting `std/math` without a per-item set would not work: every concrete body
+in an admitted module is emitted, so an uncalled `sqrt` left `undefined symbol:
+sqrt` at the link, and an admitted `sign` left `__ltdf2`, the soft-float compare
+a riscv64 image has no library for. The integer overloads are one-line Kelp
+comparisons, so the subset separates by name and by parameter type (`prune`
+drops the `f64` overloads). Nothing new is added: what is admitted is what the
+shipped modules already declare, and `std/bits` is not shipped on this branch.
 
 ## Panic semantics
 
@@ -329,9 +389,13 @@ language yet. The stub is per-architecture, selected by the manifest's `triple`.
 The riscv64 one loads `sp` from `__stack_top`, zeroes `[__bss_start, __bss_end)`
 a word at a time, calls `kelp_kmain`, and loops on `wfi` if the entry returns;
 the aarch64 one is the same shape with `ldr x0, =__stack_top`, `wfe` and `str
-xzr, [x0], #8`. `sp` is loaded first, and nothing between it and the entry call
-touches memory except the clear loop itself, so a kernel's first instruction
-already has a stack and already has zeroed statics.
+xzr, [x0], #8`. The x86-64 one cannot start in the entry's own mode: QEMU's x86
+`-kernel` enters it through SeaBIOS' Xen PVH loader in 32-bit protected mode
+with paging off, so the stub has to build long mode first (see [The x86-64
+target](#the-x86-64-target)). `sp` is loaded first in the two word-at-a-time
+stubs, and nothing between it and the entry call touches memory except the clear
+loop itself, so a kernel's first instruction already has a stack and already has
+zeroed statics.
 
 The two bounds are declared `.weak`: a linker script that does not assign them
 still links, both resolve to 0, and the loop runs zero times. A script that does
@@ -347,8 +411,98 @@ files back in. There is no runtime object, no per-program C object and no `-lm`.
 
 riscv64 gets the `generic-rv64` CPU, `+m,+a,+c` features and the **medium** code
 model; aarch64 gets the `generic` CPU, no extra features and the **small** code
-model, because LLVM refuses `medium` on AArch64. The relocation model is static
-for both, and the module's triple and data layout are set from the machine.
+model, because LLVM refuses `medium` on AArch64; x86-64 gets the `x86-64` CPU,
+no extra features, the **static** relocation model and the **small** code model,
+which is what links an image placed at 1 MiB (`kernel` assumes code in the top
+2 GiB of the address space, and LLVM's x86-64 default, `medium`, is larger than
+a 1 MiB image needs while `small` reaches code and data in the low 2 GiB with
+the shortest addressing). The relocation model is static for all three, and the
+module's triple and data layout are set from the machine. Every emitted function
+is marked `noredzone` on x86-64: the System V ABI's 128-byte red zone below
+`rsp` is clobbered by any interrupt, and a kernel that is about to take one must
+not keep a live value there. SSE is not disabled; the stub enables it before the
+entry call, so the compiler's `memcpy` and float lowering is safe.
+
+### The x86-64 target
+
+`[target] triple = "x86_64-unknown-none"` (the `-elf` spelling too) is the
+third ISA (kernel stage 20). QEMU's x86 `-kernel` has no loader that starts an
+ELF64 image in long mode the way its riscv64 and aarch64 `virt` machines do.
+Instead SeaBIOS scans the image's `PT_NOTE` program headers for the
+`XEN_ELFNOTE_PHYS32_ENTRY` note (type 18, owner `Xen`), loads the ELF's
+segments, and jumps to the 32-bit physical address the note names, **in 32-bit
+protected mode with paging off**. Before any Kelp code can run, the stub has to
+reach long mode itself, which is bootstrapping rather than language work.
+
+The compiler emits the x86-64 `_start` as module-level assembly, with one
+section for the note, one for the 32-bit and 64-bit code, and one NOBITS section
+for the boot page tables:
+
+1. `.note.Xen` holds the note whose 4-byte description is the address of
+   `_start`, in a `PT_NOTE` program header, which is where SeaBIOS looks.
+2. `.code32`: load a three-entry GDT (null, a 64-bit code segment at selector
+   `0x08`, data at `0x10`), zero the three boot page-table pages in
+   `.boot_pt`, fill PML4[0] with the PDPT, PDPT[0] with one PD, and the PD with
+   512 `2 MiB` present+rw+ps entries that identity-map the first 1 GiB, set
+   `CR4.PAE`, set `EFER.LME` through `rdmsr`/`wrmsr`, load `CR3`, and set
+   `CR0.PG|CR0.PE`.
+3. A far jump (selector `0x08`) into `.code64` turns on `EFER.LMA`. The 64-bit
+   half reloads the data segment registers, loads `rsp` from `__stack_top`,
+   and zeroes `[__bss_start, __bss_end)` a word at a time. The tables live in
+   `.boot_pt`, outside the clear range, so the clear never erases the tables it
+   runs under even though paging is on.
+4. It enables SSE (`CR0.EM` clear, `CR0.MP` set, `CR4.OSFXSR` and
+   `CR4.OSXMMEXCPT` set), sets `MXCSR` to its reset value, and calls the entry
+   `fun` (`kelp_kmain`). If the entry returns, it spins on `hlt`.
+
+`__bss_start` and `__bss_end` are `.weak` exactly as the other two stubs
+declare them, and the double-panic halt is `hlt` for this triple.
+
+`examples/kernel0-x86_64` is the COM1 (port `0x3F8`) driver: poll the Line
+Status Register at `0x3FD` for bit 5 (THR empty) through `in`, then write the
+Transmit Holding Register at `0x3F8` through `out`, both inline `asm` in the
+`uart` module the `[unsafe]` list names. Port I/O is not memory-mapped, so the
+manifest needs no `mmio` grant: `in`/`out` name a port number, not a
+`Ptr.from_addr`. `kmain` prints its greeting and halts:
+
+```sh
+nix-shell dev-kernel.nix --run 'examples/kernel0-x86_64/run.sh'
+```
+
+```text
+run.sh: booted .../examples/kernel0-x86_64 and the UART printed:
+hello from kelp (x86_64)
+```
+
+SeaBIOS prints its own banner (and iPXE's prompt) on the same serial line before
+the greeting; `run.sh` asserts the greeting line whole, as it does for every
+example, and the greeting's leading `\n` separates it from the banner's
+newline-less `Booting from ROM..` line.
+
+`examples/kernel0-x86_64-lmode` is the long-mode proof. Its `kmain` reads `CR0`,
+`CR4` and `EFER` through `asm`, prints `long mode on` only when `EFER.LMA`,
+`CR0.PG` and `CR4.PAE` are all set, then loads a null IDT and executes `ud2`.
+With no IDT the `#UD` is a triple fault, so the machine resets; the boot test
+runs QEMU with `-no-reboot` and asserts the two lines came out first:
+
+```sh
+nix-shell dev-kernel.nix --run 'examples/kernel0-x86_64-lmode/run.sh'
+```
+
+```text
+run.sh: booted .../examples/kernel0-x86_64-lmode and the UART printed:
+hello from kelp (x86_64)
+long mode on
+```
+
+What is not there: interrupts and an IDT, the APIC, SMP and ACPI. An x86-64
+kernel that wants to take an interrupt is the same open work
+`examples/kernel0-trap` is for riscv64, plus the x86 delivery model, and the
+`interrupt`/calling-convention attributes stage 5 deferred are still open.
+`cpu_index()` has no x86-64 lowering yet, so a `percpu` static is refused by
+name for this triple, and there is no second x86-64 boot path (a Multiboot 1
+header): SeaBIOS' PVH support accepts the ELF64 image on this machine's QEMU, so
+the fallback is not carried.
 
 ### The compiler's `mem*` fallbacks
 

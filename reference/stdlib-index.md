@@ -577,6 +577,39 @@ A bump arena over a caller-owned byte region. It allocates nothing, so it works
 in a freestanding image and needs no `[target] alloc` pair. On
 [`std/arena`](/stdlib/arena).
 
+## `std/irq` (needs `irq`)
+
+Types:
+
+- `datac Line(val n: u32)`
+
+Functions:
+
+- `fun claim(n: u32).R: Line`
+- `fun Line.number().R: u32`
+
+An interrupt line as a capability. `claim` is the only constructor and its
+argument is checked against the calling module's `irq` grant, so the `Line` is
+the receipt for the grant. The constructor is sealed to `std/irq`, so another
+module cannot build one. On [`std/irq`](/stdlib/irq).
+
+## `std/frame` (needs `frames`)
+
+Types:
+
+- `datac Frame(val addr: usize)`
+
+Functions:
+
+- `fun claim(addr: usize).R: Frame`
+- `fun Frame.addr().R: usize`
+- `fun Frame.offset(byte: usize).R: usize`
+
+A physical frame as a capability. `claim` is the only constructor, its argument
+must fall inside the calling module's `frames` grant and be 4 KiB-aligned, and
+the `Frame` is the receipt for the grant. `offset` is bounds-checked against
+the frame's own 4096. On [`std/frame`](/stdlib/frame).
+
 ## `std/atomic`
 
 Types:

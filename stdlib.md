@@ -40,6 +40,8 @@ The domain each module needs comes from the compiler's own table
 | `std/option` | — | `Option<T>` and its combinators |
 | `std/result` | — | `Result<T, E>` and its combinators |
 | `std/arena` | - | a bump arena over a caller-owned byte region; pure pointer arithmetic, so it needs no allocator and works freestanding |
+| `std/irq` | `irq` | an interrupt line as a capability: `irq.claim(n)` is the only constructor, checked against the calling module's `irq` grant |
+| `std/frame` | `frames` | a physical frame as a capability: `frame.claim(addr)` is the only constructor, checked against the calling module's `frames` grant and 4 KiB-aligned |
 | `std/atomic` | - | `Atomic<T>` and the one ordering v1 has |
 | `std/thread` | - | `spawn`, `join`, `fence(order)`, `sleep_ms`, `current_id` and the `ThreadErr` a join hands back |
 | `std/sync` | - | `Mutex<T>`: guarded access through a scoped `lock` block, released on every exit and poisoned by a panic; hosted only |
@@ -89,6 +91,8 @@ The builtins are described in [Text](/language/text) and
 | `option` | [`std/option`](/stdlib/option) |
 | `result` | [`std/result`](/stdlib/result) |
 | `arena` | [`std/arena`](/stdlib/arena) |
+| `irq` | [`std/irq`](/stdlib/irq) |
+| `frame` | [`std/frame`](/stdlib/frame) |
 | `atomic` | [`std/atomic`](/stdlib/atomic) |
 | `sync` | [`std/sync`](/stdlib/sync) |
 | `thread` | [`std/thread`](/stdlib/thread) |

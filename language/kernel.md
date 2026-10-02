@@ -1,6 +1,6 @@
 ---
 title: "Kernel 0"
-description: "The freestanding examples that boot under QEMU: the UART driver, trap handlers, per-CPU statics, Sv39 page tables, a user-mode trap frame and syscall ABI, a bump allocator behind `List`/`String`/`Bytes`, panic locations, a stack guard and `mmio` grants."
+description: "The freestanding examples that boot under QEMU: the UART driver, trap handlers, per-CPU statics, Sv39 page tables, a user-mode syscall ABI, a bump allocator, panic locations, a stack guard, `mmio` and `irq`/`frames` grants, and the x86-64 port."
 isPublished: true
 tags: "language, freestanding, kernel"
 ---
@@ -15,13 +15,14 @@ The build side is [Freestanding mode](/language/freestanding).
 
 ## Running one
 
-The examples need `qemu-system-riscv64`, `qemu-system-aarch64` and `ld.lld`,
-which `dev-kernel.nix` supplies. Each has a `run.sh` that builds the project,
-boots it under `timeout 20 qemu-system-riscv64 -machine virt -bios none
--nographic -no-reboot -serial mon:stdio -kernel <elf>`, reads QEMU's own stdout
-until the last expected line appears, kills QEMU, and asserts every expected
-line appears whole. Nothing in the script reads the kernel's intent: the
-assertion is a comparison against the bytes that came out of the serial port.
+The examples need `qemu-system-riscv64`, `qemu-system-aarch64`,
+`qemu-system-x86_64` and `ld.lld`, which `dev-kernel.nix` supplies. Each has a
+`run.sh` that builds the project, boots it under `timeout 20 qemu-system-riscv64
+-machine virt -bios none -nographic -no-reboot -serial mon:stdio -kernel <elf>`,
+reads QEMU's own stdout until the last expected line appears, kills QEMU, and
+asserts every expected line appears whole. Nothing in the script reads the
+kernel's intent: the assertion is a comparison against the bytes that came out
+of the serial port.
 
 ```sh
 nix-shell dev-kernel.nix --run 'examples/kernel0/run.sh'
@@ -50,6 +51,9 @@ hello from kelp
 | `examples/kernel0-stack` | an unmapped guard page and the stack probe | both faults print `stack overflow: scause 0xf stval 0x...` |
 | `examples/kernel0-user` | the trap frame, `ecall`, U-mode | `hello from user`, `bad write -> E`, `user exited 7` |
 | `examples/kernel0-aarch64` | the second architecture | `hello from kelp (aarch64)` |
+| `examples/kernel0-caps` | `irq`/`frames` claims handed to a driver | `line 10`, `frame 0x80100000`, `offset 0x80100010` |
+| `examples/kernel0-x86_64` | the third ISA, a COM1 port-I/O driver | `hello from kelp (x86_64)` |
+| `examples/kernel0-x86_64-lmode` | long mode with paging, then a triple fault on purpose | `hello from kelp (x86_64)`, `long mode on` |
 
 Every manifest under `examples/kernel0*` also carries an `mmio` grant now, the
 stage-16 check that a freestanding module may name only an address it was
@@ -58,6 +62,8 @@ granted. The UART drivers hold exactly their device's window
 PL011), and the modules that build a pointer from a computed address (a
 page-table frame, a trap-frame slot, a user page) hold the whole-address-space
 `["*"]`. See [Capabilities](/language/capabilities#mmio-device-registers).
+`examples/kernel0-caps` adds the two device-value domains beside it: a narrowed
+`irq` grant and a narrowed `frames` grant; see [below](#irq-lines-and-frames-as-capabilities).
 
 The four RISC-V boots, run one after another:
 
@@ -84,6 +90,101 @@ nix-shell dev-kernel.nix --run 'examples/kernel0-aarch64/run.sh'
 run.sh: booted .../examples/kernel0-aarch64 and the UART printed:
 hello from kelp (aarch64)
 ```
+
+## IRQ lines and frames as capabilities
+
+`examples/kernel0-caps` is kernel stage 18: two device capabilities beside the
+`mmio` grant, both narrowed in the manifest so the grant and the code say the
+same thing.
+
+```toml
+[caps]
+mmio = ["0x10000000+0x100"]
+irq = ["10"]
+frames = ["0x80100000+0x100000"]
+```
+
+`kmain` holds exactly one line and one frame, claims them with the gated
+constructors, and hands the receipts to `drv`, which holds the same two grants
+and so may read them:
+
+```kelp
+section(".text.boot") fun kmain() {
+    val line: irq.Line = irq.claim(10)
+    val frm: frame.Frame = frame.claim(0x80100000)
+    drv.report(line = line, frame = frm)
+    uart.halt()
+}
+```
+
+`irq.claim` and `frame.claim` are the only constructors: the compiler seals the
+`Line`/`Frame` struct literals to their modules, so a driver cannot forge a
+receipt, and every item of `std/irq`/`std/frame` needs the domain, so possession
+of a value is not authority to read it. A constant argument must fall inside a
+granted range (a frame must also be 4 KiB-aligned); a computed argument needs
+the whole-resource `["*"]`. `src/ungranted.kp` is the compile-error fixture: the
+entry grants it line 10 and it reaches for 11, which the test suite copies into
+a scratch project and asserts is refused.
+
+```sh
+nix-shell dev-kernel.nix --run 'examples/kernel0-caps/run.sh'
+```
+
+```text
+run.sh: booted .../examples/kernel0-caps and the UART printed:
+line 10
+frame 0x80100000
+offset 0x80100010
+```
+
+See [Capabilities](/language/capabilities#irq-and-frames-interrupt-lines-and-physical-frames),
+[`std/irq`](/stdlib/irq) and [`std/frame`](/stdlib/frame).
+
+## The x86-64 port
+
+The third ISA (kernel stage 20) boots the same way from the reader's side: a
+`[target] triple = "x86_64-unknown-none"` project, built by `kelpc` and loaded
+by QEMU. What differs is the loader. SeaBIOS' Xen PVH support scans the image's
+`PT_NOTE` headers for the `XEN_ELFNOTE_PHYS32_ENTRY` note and jumps to the
+32-bit physical address it names, in protected mode with paging off, so the
+compiler's `_start` stub builds long mode before it calls Kelp. The full boot
+flow, `noredzone` and the SSE enable are in [Freestanding
+mode](/language/freestanding#the-x86-64-target).
+
+`examples/kernel0-x86_64` is a COM1 driver: it polls the Line Status Register at
+port `0x3FD` and writes the Transmit Holding Register at `0x3F8` through the
+`in`/`out` instructions, both inline `asm` in the module the `[unsafe]` list
+names. Port I/O is not memory-mapped, so the manifest carries no `mmio` grant:
+`in`/`out` name a port number, not a `Ptr.from_addr`.
+
+```sh
+nix-shell dev-kernel.nix --run 'examples/kernel0-x86_64/run.sh'
+```
+
+```text
+run.sh: booted .../examples/kernel0-x86_64 and the UART printed:
+hello from kelp (x86_64)
+```
+
+`examples/kernel0-x86_64-lmode` proves the stub really left protected mode: it
+reads `CR0`, `CR4` and `EFER` through `asm`, prints `long mode on` only when
+`EFER.LMA`, `CR0.PG` and `CR4.PAE` are all set, then loads a null IDT and
+executes `ud2`. With no IDT that is a triple fault, so the machine resets and
+`-no-reboot` turns the reset into an exit the test can read.
+
+```sh
+nix-shell dev-kernel.nix --run 'examples/kernel0-x86_64-lmode/run.sh'
+```
+
+```text
+run.sh: booted .../examples/kernel0-x86_64-lmode and the UART printed:
+hello from kelp (x86_64)
+long mode on
+```
+
+SeaBIOS prints its own banner on the same serial line first (the greeting's
+leading `\n` separates it from `Booting from ROM..`), and `run.sh` asserts the
+greeting and `long mode on` whole.
 
 ## The driver
 
@@ -522,9 +623,9 @@ The remaining gaps, in order, from
 [`plan/kernel0-status.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/kernel0-status.md):
 
 - **Interrupts are not set up.** `kernel0-trap` installs `mtvec` itself and
-  nothing enables `mstatus.MIE`, models the privilege transition or claims an
-  interrupt line as a capability. Panic semantics with no OS, the row's other
-  half, is the [section above](#panic-location-and-the-double-panic).
+  nothing enables `mstatus.MIE`, models the privilege transition or installs a
+  handler for the line `kernel0-caps` claims. Panic semantics with no OS, the
+  row's other half, is the [section above](#panic-location-and-the-double-panic).
 - **The `interrupt`/calling-convention attributes** stage 5 deferred are still
   open, so a trap handler is a naked body the compiler does not understand as a
   handler.
@@ -533,16 +634,24 @@ The remaining gaps, in order, from
   [`std/arena`](/stdlib/arena) bump region and the fallible `Ptr.try_alloc`, but
   the `Ptr.alloc`/`free` pair is still the hosted `malloc`/`free` and is refused
   in freestanding.
-- **Stages 6, 8, 9, 12, 13, 14 and 16 have shipped.** User `Drop` (stage 6) is
-  [`fun mut T.drop()`](/language/drop); per-CPU storage (stage 8) is
-  [per-CPU statics](/language/percpu); the MMU and the syscall ABI (stage 9) are
-  the two examples above; freestanding `String`/`Bytes` and arena/`try_alloc`
-  (stages 12 and 13) are [Freestanding mode](/language/freestanding) and
-  [`std/arena`](/stdlib/arena); the stack guard and the `probe-stack` attribute
-  (stage 14) are the section above; and the `mmio` capability (stage 16) is the
-  grant every example now carries.
-- **IRQ lines and physical frames** (the rest of the capabilities row) are what
-  remains: an abort message and a register dump are still not here.
+- **Stages 6, 8, 9, 12, 13, 14, 16, 18, 19 and 20 have shipped.** User `Drop`
+  (stage 6) is [`fun mut T.drop()`](/language/drop); per-CPU storage (stage 8)
+  is [per-CPU statics](/language/percpu); the MMU and the syscall ABI (stage 9)
+  are the two examples above; freestanding `String`/`Bytes` and
+  arena/`try_alloc` (stages 12 and 13) are
+  [Freestanding mode](/language/freestanding) and
+  [`std/arena`](/stdlib/arena); the stack guard and the `probe-stack`
+  attribute (stage 14) are the section above; the `mmio`, `irq` and `frames`
+  capabilities (stages 16 and 18) are the grants the examples carry and the
+  section above; the freestanding standard subset (stage 19) is
+  [Freestanding mode](/language/freestanding#the-freestanding-standard-subset);
+  and the x86-64 target (stage 20) is the section above.
+- **The remaining holes are the trap path and the process model.** No interrupt
+  controller is programmed and no `interrupt` attribute exists, so a trap
+  handler is still a naked body the compiler does not understand as a handler;
+  `Ptr.alloc`/`Ptr.free` still have no hook; and there is no scheduler,
+  preemption, `fork` or TLB shootdown. x86-64 is in the same state, without an
+  IDT, APIC, SMP or ACPI.
 - **No C-oracle coverage.** Freestanding is LLVM-only by design, so the usual
   "both backends, same behaviour" rule does not apply to these images. It still
   holds everywhere else.
@@ -559,6 +668,8 @@ The remaining gaps, in order, from
 - [Per-CPU storage](/language/percpu): one copy of a static per CPU, and the two
   intrinsics that read it back
 - [Capabilities](/language/capabilities#mmio-device-registers): the `mmio`
-  grant every example carries
+  grant every example carries, and the `irq`/`frames` domains
 - [`std/arena`](/stdlib/arena): the bump region a kernel reaches for after the
   allocator hook
+- [`std/irq`](/stdlib/irq), [`std/frame`](/stdlib/frame): the capability values
+  `kernel0-caps` claims
