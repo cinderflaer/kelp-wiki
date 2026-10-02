@@ -219,12 +219,17 @@ active roadmap item or a named future milestone, not a closed decision:
 - **Traits, interfaces, `dyn` dispatch.** A-12. Slice 1 shipped (a
   `datac`/`enum` can declare its own `hash`/`eq` pair, and a concrete `enum`
   can declare a receiver method). Named traits with **static** dispatch shipped
-  in slice 2: `trait`/`impl Trait for Type` and `fun f<T: A + B>` bounds, with
-  no vtable and no `dyn`; see [Traits and static dispatch](/language/traits).
-  What is still absent is `dyn` and dynamic dispatch, default methods,
-  associated types and the rest of the refusal list on that page. A user `Drop`
-  is a smaller thing that shipped on its own, `fun mut T.drop()`, and is not a
-  trait; see [User `Drop`](/language/drop).
+  in slice 2 (`trait`/`impl Trait for Type` and `fun f<T: A + B>` bounds),
+  slice 3 added default methods, supertraits and impls for builtins that
+  already carry methods, and slice 4 added the borrowed trait object `&dyn
+  Name` / `&mut dyn Name`, dispatched through a vtable (a freestanding riscv64
+  image dispatches through one); see [Traits and static
+  dispatch](/language/traits). What is still absent is the owned trait object
+  (`Box<dyn Name>`), an upcast between trait objects, associated types, `impl
+  Trait` in argument position, `where` clauses, generic traits, `dyn` in a
+  field or a return type, and the rest of the refusal list on that page. A user
+  `Drop` is a smaller thing that shipped on its own, `fun mut T.drop()`, and is
+  not a trait; see [User `Drop`](/language/drop).
 - **Lifetime syntax, and the borrows it would allow in fields.** A-11/A-8.
   This is why a `str`/`View` cannot be a `datac` field or an `enum` payload
   today, and why a closure cannot capture a borrow: both need a way to say
