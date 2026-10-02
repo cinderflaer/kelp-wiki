@@ -148,14 +148,19 @@ fun describe<T: Shape + Named>(s: &T).R: f64 = s.area() + s.name_length()
 - At every call, the type argument must implement every bound, and a call that
   does not is an error naming the callee, the type and the trait. The check runs
   where the instantiation is created, so a satisfied call compiles to the same
-  monomorphized function it would have without the bound.
+  monomorphized function it would have without the bound. A supertrait is
+  satisfied transitively: a type implementing `B`, where `B: A`, satisfies a
+  `T: A` bound and may call `A`'s methods through a `<T: B>`.
 - Inside the body, a method call on a `T` resolves against the concrete type
   each instantiation binds, so the code the bound admits is the type's own
-  direct call. Dispatch stays static: there is no `dyn` and no vtable.
+  direct call. Dispatch stays static: a bound never adds a vtable.
 - Bounds are checked transitively. A bounded generic may call another bounded
   generic with its own parameter, and the inner call is checked when the outer
   function is instantiated.
 - The bound goes on the parameter; a `where` clause is refused by name.
+- A trait may also be written behind a borrow as a trait object, `&dyn Name`,
+  which is dynamic dispatch through a vtable and is a different mechanism from
+  a bound; see [Traits and static dispatch](/language/traits).
 
 ## What is not generic
 

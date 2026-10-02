@@ -44,7 +44,7 @@ error, and so is a `const` or `pd` after a `datac`, `enum` or `fun`
 | [Methods and receivers](/language/methods) | `Type.name`, `mut` receivers, generic receivers |
 | [datac and enum](/language/data-types) | records, tagged unions, generics, construction, matching |
 | [Generics and type parameters](/language/generics) | type parameters, instantiation, generic receivers and functions |
-| [Traits and static dispatch](/language/traits) | method signatures, `impl Trait for Type`, bounds, static dispatch |
+| [Traits and static dispatch](/language/traits) | methods, default bodies, supertraits, `impl Trait for Type`, bounds, and `&dyn` trait objects |
 | [Ownership and borrowing](/language/ownership) | moves, drops, borrows, partial moves, `Box.take` |
 | [Text](/language/text) | `str`, `View`, `String`, `Bytes`, printing, conversions |
 | [Collections](/language/collections) | `List<T>`, `Map<K, V>`, `Box<T>`, the fixed-size array `[T; N]` |
@@ -58,7 +58,7 @@ error, and so is a `const` or `pd` after a `datac`, `enum` or `fun`
 | [User `Drop`](/language/drop) | `fun mut T.drop()`, the order of drops, what is refused, no unwinding |
 | [Per-CPU storage](/language/percpu) | `percpu static mut`, `[target] cpus`, `cpu_index()`/`cpu_count()`, the `.percpu` array |
 | [Freestanding mode](/language/freestanding) | the `[target]` manifest section, the allowed set, the allocator hook, riscv64 and aarch64 |
-| [Kernel 0](/language/kernel) | the bare-metal examples, run under QEMU, with their real serial output |
+| [Kernel 0](/language/kernel) | the bare-metal examples under QEMU with their serial output, the timer scheduler and the x86-64 IDT |
 | [Errors and panics](/language/errors) | `Option`, `Result`, `?`, `panic`, `assert` |
 | [Limits in v1](/language/limits) | what the language deliberately does not have |
 | [Style](/language/style) | indentation, naming, file order, comments |

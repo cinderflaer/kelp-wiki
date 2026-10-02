@@ -21,12 +21,13 @@ impl         := "impl" string [ "caps" "(" ( grant ( "," grant )* | "*" ) ")" ]
 grant        := ident "=" "[" string ("," string)* "]"
 // A leading "pub" (13.4) is accepted on trait, const, datac, enum and fun, and
 // nowhere else: a `pd` is module-scoped and an import is not an item.
-// `trait`/`traitimpl` (9.5): a trait is a set of signatures, an impl gives them
-// to a `datac`/`enum`. "Self" is an ordinary identifier used as a type name in
-// both, and stands for the implementing type.
-trait        := [ "pub" ] "trait" ident "{" ( traitmethod )* "}"
+// `trait`/`traitimpl` (9.5): a trait is a set of methods, an impl gives them
+// to a `datac`/`enum` or to a builtin. "Self" is an ordinary identifier used
+// as a type name in both, and stands for the implementing type. A method with
+// no body is a signature; one with a body is a default the impl may omit.
+trait        := [ "pub" ] "trait" ident [ ":" bound ("+" bound)* ] "{" ( traitmethod )* "}"
 traitmethod  := "fun" [ "mut" ] "Self" "." ident "(" [ param ("," param)* ] ")"
-                [ ".R" ":" type ]                     // a signature: no body
+                [ ".R" ":" type ] ( body | )        // no body: a signature
 traitimpl    := "impl" traitname "for" typename "{" ( method )* "}"
 traitname    := ident [ "." ident ]                    // `Shape` or `shape.Shape`
 typename     := ident [ "." ident ]
@@ -49,7 +50,8 @@ fun          := [ "pub" ] [ "extern" ] "fun" [ "mut" ] ( ident [ typeparams ] ".
 param        := ident ":" [ "mut" | "move" ] type
 body         := "=" expr | block | <nothing for extern>
 
-type         := [ "&" ] ( ident [ "<" type ("," type)* ">" ] [ "." ident ]
+type         := [ "&" [ "mut" ] "dyn" ident ]  // a borrowed trait object: `&dyn T`, `&mut dyn T`
+              | [ "&" ] ( ident [ "<" type ("," type)* ">" ] [ "." ident ]
                        | "fun" "(" [ fparam ("," fparam)* ] ")" [ ".R" ":" type ]
                        | "[" type ";" expr "]"        // a fixed-size array: [T; N]
                        | "(" type "," type ("," type)* ")" )  // a tuple: (A, B)
@@ -107,11 +109,18 @@ chain        := [ "elif" expr block chain
   single `caps(*)` that delegates the whole resource of every domain the
   importing module holds. The `*` stands alone; a named domain beside it is
   refused by name (15.2).
-- `trait` and `traitimpl` are the trait forms (§9.5): a `trait` body is method
-  signatures only, and `impl Trait for Type` gives them to a `datac`/`enum`.
+- `trait` and `traitimpl` are the trait forms (§9.5): a `trait` body is
+  methods, and `impl Trait for Type` gives them to a `datac`/`enum` or to a
+  builtin. A method with no body is a signature; one with a body is a default
+  the impl may omit or override, and a trait may name supertraits after a `:`.
   `Self` is an ordinary `ident` in both, standing for the implementing type,
   and `typeparam` carries the bounds a generic declaration may put on a type
   parameter (`fun f<T: A + B>`).
+- `type` carries the borrowed trait object `&dyn Name` / `&mut dyn Name`
+  (§9.5.1) ahead of the ordinary `[ "&" ]` type. `dyn` is not a keyword: it is
+  recognized only after a leading `&` (or `&mut`), and the form is legal only as
+  a parameter type or a local binding type; a bare `dyn Name` is refused by
+  name.
 - A leading `pub` is accepted on a top-level `const`, `datac`, `enum`, `fun`,
   `extern fun` and `trait`, and nowhere else (13.4): a `pd` is module-scoped by
   design, an `impl` is not an item, and a method's reachability follows its
