@@ -44,6 +44,7 @@ error, and so is a `const` or `pd` after a `datac`, `enum` or `fun`
 | [Methods and receivers](/language/methods) | `Type.name`, `mut` receivers, generic receivers |
 | [datac and enum](/language/data-types) | records, tagged unions, generics, construction, matching |
 | [Generics and type parameters](/language/generics) | type parameters, instantiation, generic receivers and functions |
+| [Traits and static dispatch](/language/traits) | method signatures, `impl Trait for Type`, bounds, static dispatch |
 | [Ownership and borrowing](/language/ownership) | moves, drops, borrows, partial moves, `Box.take` |
 | [Text](/language/text) | `str`, `View`, `String`, `Bytes`, printing, conversions |
 | [Collections](/language/collections) | `List<T>`, `Map<K, V>`, `Box<T>`, the fixed-size array `[T; N]` |

@@ -38,7 +38,7 @@ this page is the index to it.
 
 | Version | Date | Headline |
 | --- | --- | --- |
-| Unreleased | pending | `unsafe`/`Ptr<T>` and layout control; freestanding mode and kernel 0 booting under QEMU; per-CPU storage, user `Drop`, Sv39 and the user-mode syscall ABI; freestanding `String`/`Bytes`, `std/arena` and `Ptr.try_alloc`; stack guards and probing; a typed `TlsHandle` with `TlsError`/`TlsOptions`; the `try_` surface; the `mmio` capability; a compiler memory floor |
+| Unreleased | pending | `unsafe`/`Ptr<T>` and layout control; freestanding mode and kernel 0 booting under QEMU; per-CPU storage, user `Drop`, Sv39 and the user-mode syscall ABI; freestanding `String`/`Bytes`, `std/arena` and `Ptr.try_alloc`; stack guards and probing; a typed `TlsHandle` with `TlsError`/`TlsOptions`; the `try_` surface; the `mmio` capability; a compiler memory floor; traits with static dispatch; `==`/`!=` over a declared `eq`; the `for` mutation rule; `Mutex<T>` in `std/sync` |
 | [26.09.5](#26095-2026-09-28) | 2026-09-28 | `std/tls` and `https`; `coral.toml`'s `[caps]` and `[extern]`; rate-limit headers on `Response`; two assignment leaks fixed; every program now needs OpenSSL to build |
 | [26.09.4](#26094-2026-09-26) | 2026-09-26 | the LLVM backend inlines builtin bodies; `Map`'s index halved, `Map.with_capacity`; unrolled loops, `noalias`, `llvm.sqrt.f64`; the benchmark suite published |
 | [26.09.3](#26093-2026-09-25) | 2026-09-25 | `thread.sleep_ms`/`current_id`; a unit-returning worker can be joined; concurrent downloads; the memory model published; `kelpc check --text` |
@@ -55,7 +55,7 @@ this page is the index to it.
 ## Unreleased
 
 Not a version number yet: this is what has landed since 26.09.5 and is waiting
-for a release to cut. Nine pieces, in the order they were built.
+for a release to cut. Twelve pieces, in the order they were built.
 
 **`unsafe`, `Ptr<T>` and layout control.** A raw pointer type `Ptr<T>` and the
 `unsafe` blocks and `unsafe fun` that are the only way to dereference one.
@@ -173,11 +173,55 @@ kernel OOM killer pick a victim. `kelpc run` stops the guard before the compiled
 program starts, and `fmt`/`lint`/`check`/`version` do not start it. See [`kelpc`
 CLI](/tooling/kelpc-cli#the-memory-floor).
 
+**`==`/`!=` over a declared `eq`.** The front end lowers `a == b` to
+`a.eq(&b)` and `a != b` to `!a.eq(&b)` for a `datac`/`enum` that declares
+`fun T.eq(other: &T).R: bool`, before borrow checking and code generation, so
+both backends run the declared body and no operator is added anywhere. `eq`
+alone is now a complete declaration: it gives the operator without making the
+type a `Map` key, and a lone `hash` is still refused. Nothing is derived, so a
+type with no declared `eq` keeps the old refusal, `<`/`>` stay refused, and
+`View` against `View` or a `str` lowers to the builtin `View.eq`. See
+[Operators and expressions](/language/expressions).
+
+**Traits with static dispatch.** A `trait Name { fun [mut] Self.method(...) }`
+is a named set of method signatures, `impl Name for Type { ... }` gives them to
+a `datac`/`enum` in the trait's module or the type's, and `fun f<T: A + B>`
+bounds a type parameter. At most one impl of a trait for a type, every
+signature matched exactly, and an inherent method of the same name is refused
+at the impl. Dispatch is static: the bound is checked at every call and
+instantiation, and the body is then monomorphized per concrete type exactly as
+generics already are, so neither backend nor the freestanding mode needed a new
+lowering. `dyn` and trait objects, default methods, associated types, `impl
+Trait` in argument position, a trait on a builtin or on a generic
+instantiation, `where` clauses, supertraits and operator overloading through a
+trait are each refused by name. See [Traits and static
+dispatch](/language/traits).
+
+**`Mutex<T>` in `std/sync`.** A compiler builtin generic in the shape
+`Atomic<T>`/`Thread<T>` have: one monomorphized type per element, not `Copy`,
+with a drop. The value is reached only through the scoped block
+`m.lock { v -> ... }`, which passes `v: mut T` to a `scoped fun(mut T).R: R`, so
+the borrow cannot escape; the block's tail is the call's value, and a `return`
+or `?` inside it still releases the lock. A panic inside the block releases the
+lock and marks the mutex POISONED, so a later `lock` panics with
+`mutex poisoned`, and `into_inner` consumes the mutex. A `&Mutex<T>` crosses to
+a worker exactly as a `&Atomic<T>` does. Hosted only: a freestanding manifest
+refuses it by name and points at a spin lock over an `Atomic<T>`. See
+[`std/sync`](/stdlib/sync).
+
 **Bugfix pass.** The compiler's own warnings are zero, the differential fuzz ran
 1500 generated programs plus the 24-program corpus with 0 mismatches, and one
 real bug was fixed: `u8`/`u16` arithmetic was not narrowed to its declared width
-in the C backend, so `u8 + u8` of 300 printed 300 where LLVM wrapped to 44. The
-differential sweep is a ratchet: `LLVM_BUILT_BASELINE` is 362 of the 655 corpus
+in the C backend, so `u8 + u8` of 300 printed 300 where LLVM wrapped to 44. It
+also closed the `for` rule: a body may no longer mutate the list it walks,
+because an owned element already bound as a borrow but a `Copy` element did not,
+so `for x in xs { xs.push(x) }` grew the list the loop re-read until memory ran
+out. The body may read the iterated place and change a different list; a `mut`
+receiver method, an assignment, a move, `&mut xs`, a `mut` argument and a
+capturing `fun` literal are one error, `cannot mutate 'xs' while iterating over
+it`, reported on the `for` line, and walking by index in a `while` is the
+supported way to change what a loop walks. The differential sweep is a ratchet:
+`LLVM_BUILT_BASELINE` is 362 of the 655 corpus
 targets, 0 refused, 0 mismatches, 0 crashes, and it may only rise. See
 [Backends](/compiler/backends).
 

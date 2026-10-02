@@ -11,7 +11,7 @@ builtin type name like `str` or `String`, not a keyword.
 
 ```
 program      := line* EOF
-line         := impl | const | pd | datac | enum | fun
+line         := impl | trait | traitimpl | const | pd | datac | enum | fun
 
 impl         := "impl" string [ "caps" "(" ( grant ( "," grant )* | "*" ) ")" ]
                 // `caps(*)` (15.2) delegates the whole resource of every domain and
@@ -19,17 +19,33 @@ impl         := "impl" string [ "caps" "(" ( grant ( "," grant )* | "*" ) ")" ]
                 // `as name` was removed (13.1) and `with caps(...)` with it (15.2):
                 // the parser refuses each by name, and `as` stays a keyword
 grant        := ident "=" "[" string ("," string)* "]"
+// A leading "pub" (13.4) is accepted on trait, const, datac, enum and fun, and
+// nowhere else: a `pd` is module-scoped and an import is not an item.
+// `trait`/`traitimpl` (9.5): a trait is a set of signatures, an impl gives them
+// to a `datac`/`enum`. "Self" is an ordinary identifier used as a type name in
+// both, and stands for the implementing type.
+trait        := [ "pub" ] "trait" ident "{" ( traitmethod )* "}"
+traitmethod  := "fun" [ "mut" ] "Self" "." ident "(" [ param ("," param)* ] ")"
+                [ ".R" ":" type ]                     // a signature: no body
+traitimpl    := "impl" traitname "for" typename "{" ( method )* "}"
+traitname    := ident [ "." ident ]                    // `Shape` or `shape.Shape`
+typename     := ident [ "." ident ]
+method       := "fun" [ "mut" ] "Self" "." ident "(" [ param ("," param)* ] ")"
+                [ ".R" ":" type ] body
 const        := [ "pub" ] "const" ident ":" type "=" expr
 pd           := "pd" ("val" | "var") ident [ ":" type ] "=" expr
 datac        := [ "pub" ] "datac" ident [ typeparams ] "(" [ field ("," field)* ] ")"
 field        := ("val" | "var") ident ":" type
 enum         := [ "pub" ] "enum" ident [ typeparams ] "{" ( ident [ "(" [ field ("," field)* ] ")" ] )* "}"
-typeparams   := "<" ident ("," ident)* ">"
+typeparams   := "<" typeparam ("," typeparam)* ">"
+typeparam    := ident [ ":" bound ("+" bound)* ]
+bound        := traitname
 typeargs     := "<" type ("," type)* ">"   // in an expression: adjacent to the name and to "("
-// A leading "pub" (13.4) is accepted on const, datac, enum and fun, and
-// nowhere else: a `pd` is module-scoped and an impl is not an item.
 fun          := [ "pub" ] [ "extern" ] "fun" [ "mut" ] ( ident [ typeparams ] "." )? ident [ typeparams ]
                 "(" [ param ("," param)* ] ")" [ ".R" ":" type ] body
+                // `[typeparams]` after the function's own name bounds its type
+                // parameters (9.5); on a receiver it names the receiver's type
+                // arguments and takes no bounds.
 param        := ident ":" [ "mut" | "move" ] type
 body         := "=" expr | block | <nothing for extern>
 
@@ -91,9 +107,15 @@ chain        := [ "elif" expr block chain
   single `caps(*)` that delegates the whole resource of every domain the
   importing module holds. The `*` stands alone; a named domain beside it is
   refused by name (15.2).
-- A leading `pub` is accepted on a top-level `const`, `datac`, `enum`, `fun` and
-  `extern fun`, and nowhere else (13.4): a `pd` is module-scoped by design, an
-  `impl` is not an item, and a method's reachability follows its declaring type.
+- `trait` and `traitimpl` are the trait forms (§9.5): a `trait` body is method
+  signatures only, and `impl Trait for Type` gives them to a `datac`/`enum`.
+  `Self` is an ordinary `ident` in both, standing for the implementing type,
+  and `typeparam` carries the bounds a generic declaration may put on a type
+  parameter (`fun f<T: A + B>`).
+- A leading `pub` is accepted on a top-level `const`, `datac`, `enum`, `fun`,
+  `extern fun` and `trait`, and nowhere else (13.4): a `pd` is module-scoped by
+  design, an `impl` is not an item, and a method's reachability follows its
+  declaring type.
   A top-level item with no `pub` is private to its own module, and a declaration
   that carries `pub` may name only types its own module exports, so an exported
   signature is reachable in every name it writes.
@@ -118,3 +140,4 @@ chain        := [ "elif" expr block chain
 - [Lexical structure](/language/lexical)
 - [Types](/language/types)
 - [Operators and expressions](/language/expressions)
+- [Traits and static dispatch](/language/traits)

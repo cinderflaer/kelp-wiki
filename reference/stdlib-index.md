@@ -604,6 +604,24 @@ The element set is `bool` and the integer types, spelled with the names
 The `fetch_*` set exists on the integer instantiations only, never on
 `AtomicBool`.
 
+## `std/sync`
+
+`Mutex<T>` guarded access. The three calls are compiler builtins rather than
+declarations in `std/sync.kp`; the module exists so a program can name the
+surface it is using, and the type is reachable without the import and is
+refused in a freestanding project.
+
+- `fun Mutex.new(value: move T).R: Mutex<T>`
+- `fun Mutex<T>.lock(block: scoped fun(mut T).R: R).R: R`
+- `fun Mutex<T>.into_inner().R: T`
+
+`lock` runs the block while the mutex is held, hands the block `v: mut T`, and
+releases the lock on every exit, including a `return` or `?` out of the block; a
+panic inside the block releases the lock and poisons the mutex, so a later
+`lock` panics with `mutex poisoned`. `into_inner` consumes the mutex. The slot
+holds any owned, borrow-free value. The whole surface is on
+[`std/sync`](/stdlib/sync).
+
 ## `std/thread`
 
 Types:

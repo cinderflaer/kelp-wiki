@@ -164,14 +164,13 @@ and `std/ws` is §16.18 of the same document.
 - **One ordering, and nothing else around it.** The single ordering v1 has is
   `SeqCst`; `Relaxed`, `Acquire` and `Release` are reserved, not shipped. There
   are no channels, no async and no coroutines, with no roadmap item tracking
-  any of the three yet. **(open)** `Mutex` and thread-local storage are
-  different: both are named backlog items (`Mutex` alongside the threads work;
-  thread-local storage as B-11, MK9-S3-M3) rather than ruled out, they are
-  simply not built. Per-CPU storage has shipped: `percpu static mut` lays out
+  any of the three yet. `Mutex` has shipped ([`std/sync`](/stdlib/sync));
+  thread-local storage is still a named backlog item (B-11, MK9-S3-M3) rather
+  than ruled out, it is simply not built. Per-CPU storage has shipped: `percpu static mut` lays out
   `[target] cpus` copies and `cpu_index()`/`cpu_count()` read it back, in a
-  freestanding build only; see [Per-CPU storage](/language/percpu). Today's one
-  shared-mutable shape for hosted threads is `Atomic<T>`; a worker that needs to
-  share something bigger takes its own copy instead, the way
+  freestanding build only; see [Per-CPU storage](/language/percpu). Today's shared-mutable shapes for hosted threads are `Atomic<T>` and
+  `Mutex<T>`; a worker that needs to share something else still takes its own
+  copy instead, the way
   `examples/download_pool.kp` gives each thread its own `http.Pool`. Two leaks
   are admitted: a panicking worker's frame is abandoned, and a handle nobody
   joins is detached with its worker record leaked, because v1 has no `must_use`.
@@ -216,12 +215,15 @@ active roadmap item or a named future milestone, not a closed decision:
   address-space model, which is why a granted range admits any address reachable
   from it by arithmetic. `AtomicPtr`, `transmute` and a read of a non-`Copy`
   element are absent too.
-- **Traits, interfaces, `dyn` dispatch.** A-12. Slice 1 already shipped (a
+- **Traits, interfaces, `dyn` dispatch.** A-12. Slice 1 shipped (a
   `datac`/`enum` can declare its own `hash`/`eq` pair, and a concrete `enum`
-  can declare a receiver method); named traits and dynamic dispatch are slice 2
-  and beyond, unscheduled but named. A user `Drop` is a smaller thing that
-  shipped on its own, `fun mut T.drop()`, and is not a trait; see
-  [User `Drop`](/language/drop).
+  can declare a receiver method). Named traits with **static** dispatch shipped
+  in slice 2: `trait`/`impl Trait for Type` and `fun f<T: A + B>` bounds, with
+  no vtable and no `dyn`; see [Traits and static dispatch](/language/traits).
+  What is still absent is `dyn` and dynamic dispatch, default methods,
+  associated types and the rest of the refusal list on that page. A user `Drop`
+  is a smaller thing that shipped on its own, `fun mut T.drop()`, and is not a
+  trait; see [User `Drop`](/language/drop).
 - **Lifetime syntax, and the borrows it would allow in fields.** A-11/A-8.
   This is why a `str`/`View` cannot be a `datac` field or an `enum` payload
   today, and why a closure cannot capture a borrow: both need a way to say

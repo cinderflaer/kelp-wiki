@@ -12,9 +12,10 @@ survive into this page, and `syntax.md` §12.5-12.6 is the syntax authority for
 the surface this page describes.
 
 v1 has one ordering and real threads. What ships is a memory model with a
-single ordering, an atomic cell, a fence, and `thread.spawn`/`thread.join`: the
-cell is what a worker and its joiner **do** share, and the way it is shared is
-a rule of the checker rather than a runtime instrument.
+single ordering, an atomic cell, a `Mutex<T>`, a fence, and
+`thread.spawn`/`thread.join`: the cell and the mutex are what a worker and its
+joiner **do** share, and the way they are shared is a rule of the checker
+rather than a runtime instrument.
 
 ## Why a data race does not compile
 
@@ -58,12 +59,12 @@ keeping on record:
   nothing refuses it. The rule above is what makes the race unwritable; a
   channel would be one of the ways to obey it.
 - **Not `Mutex`-only, for the same reason.** A lock is a library type that
-  needs the same checker rule to be sound underneath it, so the rule comes
-  first and a lock is a later convenience, not the foundation.
+  needs the same checker rule to be sound underneath it, so the rule came
+  first, and `Mutex<T>` is the convenience built on it.
 
-Neither a channel nor a `Mutex` ships in v1 (see [Limits in v1](/language/limits)):
-the rule above is what a program has today, and it is enough to share one
-scalar through an atomic.
+A channel still does not ship in v1 (see [Limits in v1](/language/limits)), but
+`Mutex<T>` now does: [`std/sync`](/stdlib/sync) is the lock the rule above makes
+sound, and a worker that needs to share more than one scalar takes it.
 
 ## One ordering: `SeqCst`
 
@@ -120,6 +121,11 @@ borrow a function takes when it assigns to the passdown itself, and that borrow
 may not cross to a thread. That is the same rule that keeps a `&mut T` from being sent anywhere
 ([Ownership and borrowing](/language/ownership)).
 
+**A `Mutex<T>` is the second shape.** It also has no reachable `&mut` path,
+because the lock is the only way to reach `T`, so a `&Mutex<T>` crosses the
+same way and for the same reason. It is what a worker uses when the shared
+value is bigger than one cell; [`std/sync`](/stdlib/sync) has the surface.
+
 ## The threads that exist
 
 `thread.spawn(entry, arg)` starts a real OS thread and
@@ -130,8 +136,9 @@ checker applies to a `spawn` call:
 - **an owned value is moved in**, so the worker owns it: a `&mut T` argument is
   refused, because the worker outlives the frame that made the borrow;
 - **a shared borrow crosses only from a `pd` whose pointee has no reachable
-  `var` field**, which an `Atomic<T>` satisfies by construction, since it has no
-  `&mut` path. That is the single borrow v1 lets two threads hold at once, so
+  `var` field**, which an `Atomic<T>` and a `Mutex<T>` both satisfy by
+  construction, since neither has an `&mut` path. That is the single borrow v1
+  lets two threads hold at once, so
   `thread.spawn(bump, &counter)` with `pd val counter: AtomicI64` is the shared
   counter and a `datac` with a reachable `var` field is the refused case.
 
@@ -180,8 +187,9 @@ The path list is split across the four workers by a static round robin
 *before* any of them is spawned, not pulled from a shared queue while they run:
 `Thread<T>` cannot be a `List`, `Map`, `Box` or array element (a handle is
 joined once, while a container's own routines copy and drop an element like a
-plain location), and v1 has no `Mutex` and no channel to protect a shared queue
-with even if one could be built. Four workers are therefore four named
+plain location). [`std/sync`'s `Mutex`](/stdlib/sync) can guard a shared queue,
+but the split here is done before the spawn so no lock is needed. Four workers
+are therefore four named
 `Thread<Outcome>` locals, joined in a fixed order, the same shape
 [`std/thread`'s stress test](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/kelpc/tests/fixtures/thread_stress.kp)
 uses for its eight.
@@ -202,9 +210,10 @@ than decided speculatively; none of them blocks anything above:
   extensions), where the vocabulary for it lives.
 - **`Relaxed`, `Acquire` and `Release`** are reserved argument values, not
   shipped: see "One ordering" above.
-- **Channels and a `Mutex`** are reasonable additions once a program wants
-  more than one shared scalar, and neither changes the rule above; they would
-  be built on it.
+- **Channels** are a reasonable addition once a program wants to pass values
+  between threads rather than share a location, and a channel would not change
+  the rule above; it would be built on it. `Mutex<T>` now ships
+  ([`std/sync`](/stdlib/sync)).
 
 ## See also
 

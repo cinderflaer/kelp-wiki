@@ -22,10 +22,11 @@ fun mut LockGuard.drop() {
 
 `fun mut T.drop()` on a user `datac` or `enum` is that type's destructor. It
 takes the value as an exclusive borrow (`mut` receiver), takes no parameters, and
-returns nothing. There is no trait keyword, no `impl` block and no new
-punctuation: the method name **is** the declaration, the shape A-12 slice 1
-already chose for a declared `Map` key pair (`fun T.hash()` / `fun T.eq(other:
-&T)`, syntax.md §9.4).
+returns nothing. It is not spelled through a trait: `trait Drop` is refused
+where it is written, and the method name **is** the declaration, the shape A-12
+slice 1 already chose for a declared `Map` key pair (`fun T.hash()` /
+`fun T.eq(other: &T)`, syntax.md §9.4). See
+[Traits and static dispatch](/language/traits).
 
 ## Order of drops
 
