@@ -70,8 +70,8 @@ with **no configuration at all**: [`std/http`](/stdlib/http) has TLS
 (`MISSING-XkcSp`, resolved), so `DEFAULT_API_BASE` and every
 webhook/interaction call reach the real `discord.com`, and
 [`std/ws`](/stdlib/ws) has TLS (`MISSING-wV4tg`, resolved), so the gateway loop
-dials `DEFAULT_GATEWAY_URL` (`wss://`) with `ws.try_connect_secure`, following
-the URL's scheme. Point the gateway URL at a plain `ws://` endpoint (a local
+dials `DEFAULT_GATEWAY_URL` (`wss://`) with the URL-aware `ws.try_connect_url`,
+following the URL's scheme. Point the gateway URL at a plain `ws://` endpoint (a local
 mock) and nothing else changes:
 
 ```kelp
@@ -623,9 +623,10 @@ Content-Type
   honest deployment until `std/crypto` exists.
 - **No retries and no rate-limit waiting.** `rate_limit(resp)` is a value; the
   decision and the sleep are the caller's.
-- **`ws.try_connect_secure` is the dial that does not end the loop**: where
-  `ws.connect` panics when the dial fails, it returns `WsErr.Dial`
-  with the refused connection's reason, so a redial after a dial that fails
+- **The URL-aware `ws.try_connect_url` is the dial that does not end the loop**:
+  where `ws.connect` panics when the dial fails, it returns `WsErr.Dial`
+  with the refused connection's reason (or `WsErr.Tls` when the `wss` handshake
+  or certificate check is what failed), so a redial after a dial that fails
   (a wrong host, a refused connection) can survive instead of ending the process.
 - **A resume lands on the configured gateway URL**, not on the
   `resume_gateway_url` Discord sends in READY: a resume against a local endpoint
