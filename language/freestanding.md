@@ -495,14 +495,16 @@ hello from kelp (x86_64)
 long mode on
 ```
 
-What is not there: interrupts and an IDT, the APIC, SMP and ACPI. An x86-64
-kernel that wants to take an interrupt is the same open work
-`examples/kernel0-trap` is for riscv64, plus the x86 delivery model, and the
-`interrupt`/calling-convention attributes stage 5 deferred are still open.
-`cpu_index()` has no x86-64 lowering yet, so a `percpu` static is refused by
-name for this triple, and there is no second x86-64 boot path (a Multiboot 1
-header): SeaBIOS' PVH support accepts the ELF64 image on this machine's QEMU, so
-the fallback is not carried.
+What is not there: the APIC (local and I/O), SMP and ACPI, a TSS or an IST
+stack, `syscall`/`sysret` and x86 user mode. An IDT with four CPU exception
+gates and the PIC+PIT timer does ship, `examples/kernel0-x86_64-idt`
+([Kernel 0](/language/kernel#x86-64-interrupts-the-idt-the-exceptions-and-the-timer)),
+so what a kernel still needs on x86-64 is the local and I/O APIC and ACPI
+enumeration. The `interrupt`/calling-convention attributes stage 5 deferred are
+still open. `cpu_index()` has no x86-64 lowering yet, so a `percpu` static is
+refused by name for this triple, and there is no second x86-64 boot path (a
+Multiboot 1 header): SeaBIOS' PVH support accepts the ELF64 image on this
+machine's QEMU, so the fallback is not carried.
 
 ### The compiler's `mem*` fallbacks
 
