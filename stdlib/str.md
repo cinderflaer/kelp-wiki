@@ -64,7 +64,7 @@ fun main() {
     val s = "  kelp, language  "
     val t = str.trim(s)
     print(t)                          // kelp, language
-    print(str.len(t))                 // 14
+    print(str.len(t.as_str()))        // 14
     print(str.contains(t.as_str(), "lang"))
     print(str.starts_with(t.as_str(), "kelp"))
     print(str.to_upper(t.as_str()))   // KELP, LANGUAGE

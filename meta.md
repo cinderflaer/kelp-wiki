@@ -11,6 +11,7 @@ work on the project.
 | --- | --- |
 | [Source documents](/meta/source-documents) | which file in which repository is the authority for what |
 | [Contributing](/meta/contributing) | repository layout, tests, gates, and how this site is built and served |
+| [Documentation audit, October 2026](/meta/audit-2026-10) | every runnable example run against the compiler, with the verdict for each block |
 
 ## The one-paragraph version
 

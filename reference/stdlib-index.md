@@ -691,10 +691,12 @@ Holds `net` for the socket and `rand` for the sixteen bytes of
 both: `impl "std/ws" caps(net = ["host:port"], rand = [])`. The `net` half of
 the check is the host-and-port check `net.connect` gives, against the host as
 written, before name resolution. `ws.try_connect` is the fallible connect beside
-the panicking `ws.connect`: a refused dial comes back as `WsErr.Dial` and an
+the panicking `ws.connect`: a refused dial comes back as `WsErr.Dial`, a refused
+`wss` handshake or certificate check as `WsErr.Tls` and an
 answer that is not `101` as `WsErr.Handshake`, while a head that is not HTTP and a
 peer that closes mid-handshake still panic, because neither has a status to
-report.
+report. The scheme comes off a parsed URL in the `connect_url`/`try_connect_url`
+spellings, which is what reaches `wss`.
 
 Types:
 
@@ -702,13 +704,15 @@ Types:
 - `datac Header(val name: String, val value: String)`
 - `datac Frame(val fin: bool, val opcode: u8, val data: Bytes)`
 - `datac Conn(val fd: i32, var buf: Bytes, var start: usize, var frag_opcode: u8, var frag_data: Bytes)`
-- `enum WsErr { Dial(val reason: String), Handshake(val status: i32, val reason: String) }`
+- `enum WsErr { Dial(val reason: String), Handshake(val status: i32, val reason: String), Tls(val reason: String) }`
 - `enum Msg { Text(val text: String), Binary(val data: Bytes), Ping(val data: Bytes), Pong(val data: Bytes), Close(val code: u16, val reason: String) }`
 
 Constants:
 
 - `const DEFAULT_PORT: u16 = 80`
+- `const DEFAULT_WSS_PORT: u16 = 443`
 - `const DEFAULT_SCHEME: str = "ws"`
+- `const WSS_SCHEME: str = "wss"`
 - `const WS_GUID: str = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"`
 - `const MAX_FRAME: usize = 1048576`
 - `const MAX_HEAD: usize = 8192`
@@ -723,12 +727,13 @@ Constants:
 Functions:
 
 - `fun parse_url(s: &str).R: Url`
-- `fun split_authority(rest: &str).R: Url`
-- `fun make_url(authority: String, path: &str).R: Url`
+- `fun default_port_for(scheme: &str).R: u16`
+- `fun split_authority(rest: &str, scheme: &str).R: Url`
+- `fun make_url(authority: String, path: &str, scheme: &str).R: Url`
 - `fun parse_port(text: &str).R: u16`
 - `fun accept_for(key: &str).R: String`
 - `fun with_number(prefix: &str, n: u64, suffix: &str).R: String`
-- `fun build_head(host: &str, port: u16, path: &str, key: &str).R: String`
+- `fun build_head(scheme: &str, host: &str, port: u16, path: &str, key: &str).R: String`
 - `fun find_head_end(b: Bytes).R: usize`
 - `fun head_text(b: Bytes, end: usize).R: String`
 - `fun name_eq(a: &str, b: &str).R: bool`
@@ -737,10 +742,19 @@ Functions:
 - `fun parse_status(head: &str).R: i32`
 - `fun status_code(text: &str).R: i32`
 - `fun try_connect(host: &str, port: u16, path: &str).R: result.Result<Conn, WsErr>`
-- `fun handshake(s: net.Socket, host: &str, port: u16, path: &str, key_text: &str, expected: &str).R: result.Result<Conn, WsErr>`
+- `fun try_connect_url(u: Url).R: result.Result<Conn, WsErr>`
+- `fun try_connect_scheme(scheme: &str, host: &str, port: u16, path: &str).R: result.Result<Conn, WsErr>`
+- `fun conn_send_all(fd: i32, tls_handle: option.Option<tls.TlsHandle>, data: Bytes).R: usize`
+- `fun conn_recv(fd: i32, tls_handle: option.Option<tls.TlsHandle>, max: usize).R: Bytes`
+- `fun conn_recv_into(fd: i32, tls_handle: option.Option<tls.TlsHandle>, buf: mut Bytes, at: usize).R: usize`
+- `fun conn_close(fd: i32, tls_handle: option.Option<tls.TlsHandle>)`
+- `fun handshake(scheme: &str, fd: i32, tls_handle: move option.Option<tls.TlsHandle>, host: &str, port: u16, path: &str, key_text: &str, expected: &str).R: result.Result<Conn, WsErr>`
+- `fun connect_tls(scheme: &str, s: net.Socket, host: &str).R: result.Result<option.Option<tls.TlsHandle>, WsErr>`
 - `fun refusal_text(e: move WsErr).R: String`
 - `fun fail_connect(e: move WsErr).R: Conn`
 - `fun connect(host: &str, port: u16, path: &str).R: Conn`
+- `fun connect_url(u: Url).R: Conn`
+- `fun connect_scheme(scheme: &str, host: &str, port: u16, path: &str).R: Conn`
 - `fun Conn.send_frame(opcode: u8, data: &Bytes)`
 - `fun Conn.send_text(text: &str)`
 - `fun Conn.send_binary(data: &Bytes)`
