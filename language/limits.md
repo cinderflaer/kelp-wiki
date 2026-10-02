@@ -231,9 +231,14 @@ active roadmap item or a named future milestone, not a closed decision:
   `Drop` is a smaller thing that shipped on its own, `fun mut T.drop()`, and is
   not a trait; see [User `Drop`](/language/drop).
 - **Lifetime syntax, and the borrows it would allow in fields.** A-11/A-8.
-  This is why a `str`/`View` cannot be a `datac` field or an `enum` payload
-  today, and why a closure cannot capture a borrow: both need a way to say
-  what a stored borrow is tied to, which v1 does not have yet.
+  Two of A-11's pieces have shipped: a bound borrow ends at its last use rather
+  than at the end of its scope, and a reference binding remembers the owner its
+  value came from, so a pointer local can walk a structure as a cursor
+  ([Ownership and borrowing](/language/ownership#cursors-and-provenance)).
+  What stays out is explicit lifetime syntax (`'a`), which is why a `str`/`View`
+  cannot be a `datac` field or an `enum` payload today, and why a closure cannot
+  capture a borrow: both need a way to say what a stored borrow is tied to,
+  which v1 does not have yet.
 - No undefined-behaviour escape hatch: `unsafe` marks the operations the
   compiler cannot check, it does not make undefined behaviour allowed, the same
   way Rust's `unsafe` does not.

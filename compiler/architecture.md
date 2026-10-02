@@ -122,7 +122,7 @@ Two milestones in one pass, over the typed IR:
 | Rule | Detail |
 | --- | --- |
 | Moves | scalars and `&str` are `Copy`; a `datac` is not, so a bare identifier read moves it, while a `.field` read through a borrow consumes nothing. A read by value directly off an owned local is a **partial move**: the field or `enum` payload moves out and its slot is cleared, so the local keeps the projections that stayed |
-| Borrows | a `datac` parameter is a shared borrow unless `mut`-marked; a borrow lives to the end of its scope, with a statement-sized exception for a borrow taken inside an initializer |
+| Borrows | a `datac` parameter is a shared borrow unless `mut`-marked; a bound borrow ends at its last use, not at the end of its scope, and a reference-typed binding carries the root set of owners its value may borrow from, so a pointer local is a usable cursor. A borrow taken inside an initializer ends with that statement |
 | Drops | the pass produces a **drop plan** keyed by span, which the code generators consult: no second walk, and no lockstep between two passes |
 
 The drop plan is why `codegen_c.rs` only has to ask "which locals die at the end of
@@ -226,7 +226,7 @@ fun main() {
 | A library or object target | "Using a library" means copying or fetching a folder of `.kp` sources: see [Libraries](/libraries) |
 | A module dependency list | `kelpc check --json` answers with diagnostics; which module depends on which is still not askable outside the compiler, which is the other half of the interface a build cache wants |
 | An optimiser | There is no separate hook to add: `-O0`, `-O1`, `-O2`, `-O3` and `-Os` select the LLVM pass pipeline and the target machine's codegen level, and the same `-O` is given to the per-program C object and the final link. `-O2` is the default. |
-| Incremental compilation and a build cache | [Coral](/getting-started/install) owns the project-level cache |
+| Incremental compilation and a build cache | `kelpc build --incremental` splits the backend into per-module units and caches their objects by a hash of each unit's IR (see [Incremental builds](/compiler/incremental)); the front end is still whole-program, and [Coral](/getting-started/install) owns the project-level up-to-date check |
 
 ## See also
 
