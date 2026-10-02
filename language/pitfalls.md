@@ -23,6 +23,20 @@ the fix. Source: [`syntax.md` §18 and §22](https://homelabone.xenoo.dev/gittea
 | `this is a borrow of a borrow` (with the operand named) | `&o` where `o` is already a borrow, which a parameter always is | pass the parameter itself: `o`, not `&o` |
 | `cannot borrow a temporary value` | `&expr` needs a place, and a call's result is not one, nor is a field of one | bind the call to a `val` and borrow the field of that: `val h = mk()` then `&h.name` |
 | `operator requires matching numeric operands, found 'mut i64' and 'i32'` (with the `write '*sink'` note) | a `mut T` parameter is an exclusive borrow, so it is read and written through `*` | write `*sink`, not `sink`, wherever the value is used |
+| `cannot borrow 'names' as exclusive: already borrowed as shared` | the owner is mutated while a bound borrow into it is still used later in the block, or later in the same loop | move the mutation after the borrow's last use; a use inside a loop body keeps the borrow live for the whole loop |
+| `cannot assign to 'list' while it is borrowed` | a cursor or a view into `list` is still used when `list` is reassigned | stop using the cursor first, or rebind the cursor to a different owner |
+| `cannot borrow 'a': already borrowed exclusively` | two live exclusive borrows of one place: two `mut` cursors, or copying a `&mut` into a second binding | keep one exclusive borrow at a time; shared cursors into the same owner are fine |
+| `cannot move 'list' while it is borrowed` | an owner is moved while a cursor into it is live | stop using the cursor first |
+| `cannot return a borrow of 'local': ...` | a borrow rooted in a frame local is returned | return a borrow derived from the first reference parameter, or return an owned value instead |
+
+Two borrow errors that used to be common no longer appear. A bound borrow ends
+at its last use, so `val first = names.get(0); print(first.as_str());
+names.push(x)` compiles without wrapping the read in an extra `{ }`; that
+workaround is obsolete. And a reference binding remembers the owner its value
+came from, so `var cur = &list; cur = cur.next.get()` is accepted and
+`cannot assign to 'cur' while it is borrowed` no longer names the cursor. See
+[Borrows end at their last use](/language/ownership#borrows-end-at-their-last-use)
+and [Cursors and provenance](/language/ownership#cursors-and-provenance).
 
 ## Text
 
