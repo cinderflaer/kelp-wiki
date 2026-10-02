@@ -71,8 +71,8 @@ with **no configuration at all**: [`std/http`](/stdlib/http) has TLS
 webhook/interaction call reach the real `discord.com`, and
 [`std/ws`](/stdlib/ws) has TLS (`MISSING-wV4tg`, resolved), so the gateway loop
 dials `DEFAULT_GATEWAY_URL` (`wss://`) with the URL-aware `ws.try_connect_url`,
-following the URL's scheme. Point the gateway URL at a plain `ws://` endpoint (a local
-mock) and nothing else changes:
+following the URL's scheme. Point the gateway URL at a plain `ws://` endpoint (a
+local mock) and nothing else changes:
 
 ```kelp
 var bot = discord.bot_with_intents("TOKEN", discord.intents_all())
