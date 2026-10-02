@@ -73,7 +73,7 @@ than a dependency line.
 
 | Library | What it does | Needs |
 | --- | --- | --- |
-| [`polyp`](/libraries/polyp) | Declarative GTK4 UI in the Elm shape: a pure `view` over state, an exhaustive `when` over a `Msg` enum, a builder with trailing blocks | `ui` |
+| [`polyp`](/libraries/polyp) | Declarative GTK4 UI in the Elm shape: a pure `view` over state, an exhaustive `when` over a `Msg` enum, a builder with trailing blocks, and keyed children patched in place | `ui` |
 
 ## Adding one
 
