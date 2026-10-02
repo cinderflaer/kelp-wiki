@@ -341,9 +341,11 @@ net = ["api.example.com:443"]
   patterns are absolute, glob paths; `net` is `host`, `host:port`, `*.host`,
   `*:port` or `*`; `env` is a variable name or `*`; `time` and `rand` take no
   pattern (an empty list, `time = []`, still holds the domain); `ui` takes only
-  `["*"]`; `mmio` takes half-open ranges `"0xBASE+0xLEN"` or the wildcard
-  `["*"]` alone. An unknown domain, or a pattern its vocabulary refuses, is the
-  same error `caps(...)` gives on an `impl` line, at the manifest instead.
+  `["*"]`; `mmio` and `frames` take half-open ranges `"0xBASE+0xLEN"` or the
+  wildcard `["*"]` alone; `irq` takes decimal line numbers or inclusive ranges
+  (`"10"`, `"32-47"`) or the wildcard alone. An unknown domain, or a pattern its
+  vocabulary refuses, is the same error `caps(...)` gives on an `impl` line, at
+  the manifest instead.
 - **No `[caps]` section at all is the old default**: `main` holds the whole
   resource of every domain (`/**` for a path domain, `*` for a name domain),
   exactly as before this section existed. A `coral.toml` written before
@@ -370,7 +372,10 @@ net = ["api.example.com:443"]
 one `caps(*)` leaves out, so a freestanding project that builds a pointer from a
 device address writes the grant in `[caps]` and delegates it to each driver on
 the `impl` line. The compiler reads this section only for a freestanding
-project; a hosted manifest's `mmio` line is inert.
+project; a hosted manifest's `mmio` line is inert. The two device-value domains
+behave like every other domain instead: the entry module holds `irq` and
+`frames` as `["*"]` unless the section narrows them, and a kernel that wants the
+narrow story writes those lines too.
 
 ```toml
 # mykernel/coral.toml
@@ -379,11 +384,14 @@ entry = "src/main.kp"
 
 [caps]
 mmio = ["0x10000000+0x100"]
+irq = ["10"]
+frames = ["0x80100000+0x100000"]
 ```
 
 ```kelp
 // mykernel/src/main.kp
 impl "uart" caps(mmio = ["0x10000000+0x100"])
+impl "drv" caps(irq = ["10"], frames = ["0x80100000+0x100000"])
 ```
 
 The range covers `[base, base + len)`. A module that builds a pointer from a
@@ -489,9 +497,10 @@ A project opts into bare metal with this section. `mode` is `"hosted"` or
 `"freestanding"` and is required; a project with no `[target]` section, or with
 `mode = "hosted"`, builds for the host exactly as before. In freestanding mode
 `triple`, `entry` and `linker_script` are required, and `panic`, `alloc`,
-`dealloc`, `realloc` and `cpus` are optional, and the `mmio` grants a device
-driver needs live in `[caps]` rather than in `[target]`. `cpus` is the per-CPU
-copy count (`1` to `64`, default `1`) a `percpu static mut` is laid out with; see
+`dealloc`, `realloc` and `cpus` are optional, and the `mmio`, `irq` and `frames`
+grants a device driver needs live in `[caps]` rather than in `[target]`. `cpus`
+is the per-CPU copy count (`1` to `64`, default `1`) a `percpu static mut` is
+laid out with; see
 [Per-CPU storage](/language/percpu). The full account, including the allowed
 set and the allocator signatures, is [Freestanding mode](/language/freestanding).
 

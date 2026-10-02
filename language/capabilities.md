@@ -22,12 +22,13 @@ instead of by auditing it.
 
 ## The model
 
-- Eight domains: **`fs`**, **`net`**, **`process`**, **`env`**, **`time`**,
-  **`rand`**, **`ui`** and **`mmio`**.
+- Ten domains: **`fs`**, **`net`**, **`process`**, **`env`**, **`time`**,
+  **`rand`**, **`ui`**, **`mmio`**, **`irq`** and **`frames`**.
 - Each has a corresponding bare built-in namespace, and the *only* way to reach
   the outside is through a stdlib module that holds it (`kelpc/src/stdlib.rs`),
   or, since MK9-S1-M1 (roadmap B-1), a **user** module a project's `coral.toml`
-  assigns one of these same seven domains to, plus a native library and an
+  assigns one of the seven name domains (`fs`, `net`, `process`, `env`, `time`,
+  `rand`, `ui`) to, plus a native library and an
   allowlisted symbol set, so its own `extern fun` declarations can bind to a
   real C symbol. See [User FFI](/language/externs) and
   [Coral: the manifest](/tooling/coral#extern-user-modules-that-bind-a-native-symbol).
@@ -35,8 +36,11 @@ instead of by auditing it.
   accepted grant is `ui = ["*"]`. `mmio` is the device-address domain a
   freestanding project uses to let a module name a hardware address; it is the
   one domain whose whole-resource wildcard the entry module does not hold by
-  default (see [below](#mmio-device-registers)). No new domain names exist for
-  this: the eight above are still the whole set.
+  default (see [below](#mmio-device-registers)). `irq` and `frames` are the two
+  device-capability domains a driver uses to claim an interrupt line and a
+  physical frame, and unlike `mmio` the entry module holds them by default (see
+  [below](#irq-and-frames-interrupt-lines-and-physical-frames)). The ten above
+  are the whole set.
 - **Every item a gated module declares is gated**, not only the wrapper
   functions a program normally calls: the `extern fun` primitives behind them
   and the module's receiver methods are gated names too, so `fs.read_raw` and
@@ -133,6 +137,8 @@ legitimate line, while the clause on `std/str` is the refusal above.
 | `time`, `rand` | no pattern | an empty list is the whole grant |
 | `ui` | `*` only | the domain gate alone: no argument at a display call names the display, so any other pattern list is refused |
 | `mmio` | `"0xBASE+0xLEN"` ranges, or `*` alone | an address against the half-open range; a computed address only against `*` (freestanding only) |
+| `irq` | decimal line numbers and inclusive ranges (`"10"`, `"32-47"`), or `*` alone | a line against the range; a computed line only against `*` |
+| `frames` | the `"0xBASE+0xLEN"` byte windows `mmio` uses, or `*` alone | an address against the half-open range; a constant address must be 4 KiB-aligned, a computed one only against `*` |
 
 Consequences worth internalizing:
 
@@ -207,6 +213,75 @@ LLVM-only by design, so the C oracle never sees the check. See
 [Kernel 0](/language/kernel) for the grants the examples carry and
 [`plan/device-caps.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/device-caps.md)
 for the design.
+
+### `irq` and `frames`: interrupt lines and physical frames
+
+Two more device capabilities (kernel stage 18). Both reuse the range vocabulary
+above, and both are **values** rather than a pointer's birth address: a driver
+is handed a `Line` or a `Frame` and the type is the record of the grant. A
+grant is a list of patterns or the whole resource as `["*"]`:
+
+```kelp
+impl "uart" caps(mmio = ["0x10000000+0x100"])
+impl "drv"  caps(irq = ["10"], frames = ["0x80100000+0x100000"])
+```
+
+- `irq` reads a decimal line number (`"10"`) or an inclusive decimal range
+  (`"32-47"`). Hex is refused, so a line number reads the same to a reviewer
+  and to the checker, and `"47-32"` is refused as the empty range it is.
+- `frames` reads the same `"0xBASE+0xLEN"` byte window as `mmio`, parsed and
+  validated by the same code (`stdlib::parse_byte_range`, `ranges_overlap`,
+  `range_covers`). There is one range type for all three domains, and `irq`'s
+  grammar lowers to the same `(start, len)` pair.
+
+A grant is validated where it is written: a malformed pattern, a zero length, a
+reversed line range and two ranges that share a line or a byte are each a
+compile error, and `["*"]` cannot be listed beside a range, per domain.
+
+**What it gates.** `irq.claim(<n>)` and `frame.claim(<addr>)`, the two calls
+that build the capability values, and every other item of the two shipped
+modules (`Line.number`, `Frame.addr`, `Frame.offset`). Both modules are gated
+stdlib modules (`stdlib::domain_of` maps `std/irq` to `irq` and `std/frame` to
+`frames`), so a module must hold the domain to call anything in them, and
+possession of a `Line` is not by itself authority to read it.
+
+- A **constant** line or address must fall inside a granted range. The refusal
+  names the value and the ranges the module holds.
+- A **computed** line or address is refused unless the grant is `["*"]`,
+  because the compiler cannot prove a runtime value lands in a range.
+- A `frames` constant must also be 4096-aligned; the check runs before the range
+  question and of the wildcard too, because a misaligned frame is not a frame.
+- A module with **no** grant that reaches either constructor is refused by the
+  domain gate, before any value question is asked.
+
+Unlike `mmio`, the check is in `infer.rs` in the front end and applies to a
+hosted program and a freestanding image alike. A hosted program has no
+hardware, so the line and the frame it claims are only the numbers the compiler
+admitted, and nothing in the modules pretends otherwise.
+
+**Capability by construction.** `claim` is the only constructor. Kelp has no
+field-level `pub` and a shipped module exports every item, so the compiler
+carries a short list of sealed capability types (`stdlib::SEALED_TYPES`) and
+refuses `irq.Line(n = 3)` or `frame.Frame(addr = ...)` written from another
+module by name:
+
+```text
+error: 'irq.Line' is a capability value: its constructor is private to module 'std/irq', so another module cannot build one; take the value from a `claim` call instead
+```
+
+The two runtime checks are `Frame.claim`'s 4096-alignment test for a computed
+address and `Frame.offset`'s bounds test against the frame's own 4096.
+
+**Honest limits.** The same shape as `mmio`: a granted line need not exist and a
+granted frame need not be RAM, so the domain scopes authority, not meaning;
+`Frame.offset` bounds one byte against the frame but the `usize` it returns is
+ordinary arithmetic afterwards, so a caller that walks on with `+ n` is outside
+the frame and the compiler does not revisit it; and DMA is not tracked, so a
+frame handed to a device can be freed, reused or claimed twice. `irq` and
+`frames` are held by the entry module by default, so an un-narrowed project can
+claim any line and any frame; a kernel that wants the narrow story writes the
+`[caps]` section, as `examples/kernel0-caps` does. See [`std/irq`](/stdlib/irq)
+and [`std/frame`](/stdlib/frame).
 
 ## Library grants
 
@@ -306,7 +381,8 @@ failure as a panic from the gated call.
 - [Capability patterns](/reference/capability-patterns): the pattern grammar in full
 - [`std/fs`](/stdlib/fs), [`std/net`](/stdlib/net), [`std/process`](/stdlib/process),
   [`std/env`](/stdlib/env), [`std/time`](/stdlib/time), [`std/rand`](/stdlib/rand),
-  [`std/ws`](/stdlib/ws), [`std/tls`](/stdlib/tls)
+  [`std/ws`](/stdlib/ws), [`std/tls`](/stdlib/tls), [`std/irq`](/stdlib/irq),
+  [`std/frame`](/stdlib/frame)
 - [Coral: the manifest](/tooling/coral#extern-user-modules-that-bind-a-native-symbol):
   assigning a domain to a user FFI module
 - [Kernel 0](/language/kernel): the freestanding examples, each with an `mmio`
