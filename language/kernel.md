@@ -1,6 +1,6 @@
 ---
 title: "Kernel 0"
-description: "The freestanding examples that boot under QEMU: the UART driver, trap handlers, per-CPU statics, Sv39 page tables, a user-mode syscall ABI, a bump allocator, panic locations, a stack guard, `mmio` and `irq`/`frames` grants, and the x86-64 port."
+description: "The freestanding examples that boot under QEMU: the UART driver, trap handlers, per-CPU statics, Sv39 tables, a syscall ABI, an allocator, panic locations, `mmio` and `irq`/`frames` grants, a preemptive scheduler and the x86-64 port with its IDT."
 isPublished: true
 tags: "language, freestanding, kernel"
 ---
@@ -54,42 +54,8 @@ hello from kelp
 | `examples/kernel0-caps` | `irq`/`frames` claims handed to a driver | `line 10`, `frame 0x80100000`, `offset 0x80100010` |
 | `examples/kernel0-x86_64` | the third ISA, a COM1 port-I/O driver | `hello from kelp (x86_64)` |
 | `examples/kernel0-x86_64-lmode` | long mode with paging, then a triple fault on purpose | `hello from kelp (x86_64)`, `long mode on` |
-
-Every manifest under `examples/kernel0*` also carries an `mmio` grant now, the
-stage-16 check that a freestanding module may name only an address it was
-granted. The UART drivers hold exactly their device's window
-(`0x10000000+0x100` for the riscv64 NS16550, `0x09000000+0x1000` for the aarch64
-PL011), and the modules that build a pointer from a computed address (a
-page-table frame, a trap-frame slot, a user page) hold the whole-address-space
-`["*"]`. See [Capabilities](/language/capabilities#mmio-device-registers).
-`examples/kernel0-caps` adds the two device-value domains beside it: a narrowed
-`irq` grant and a narrowed `frames` grant; see [below](#irq-lines-and-frames-as-capabilities).
-
-The four RISC-V boots, run one after another:
-
-```text
-run.sh: booted .../examples/kernel0-trap and the UART printed:
-trap: ecall
-done
-run.sh: booted .../examples/kernel0-panic and the UART printed:
-panic: Array.get: index out of bounds
-run.sh: booted .../examples/kernel0-bss and the UART printed:
-bss clear
-run.sh: booted .../examples/kernel0-heap and the UART printed:
-heap sum 55
-balanced
-```
-
-And the aarch64 boot, on QEMU's `virt` machine with `-cpu cortex-a57`:
-
-```sh
-nix-shell dev-kernel.nix --run 'examples/kernel0-aarch64/run.sh'
-```
-
-```text
-run.sh: booted .../examples/kernel0-aarch64 and the UART printed:
-hello from kelp (aarch64)
-```
+| `examples/kernel0-sched` | the machine timer, preemption and round-robin | `A`/`B`/`C` lines, then `sched: done ticks=40` |
+| `examples/kernel0-x86_64-idt` | the IDT, four exceptions and the PIC+PIT timer | `exception 6 ...`, `exception 0 ...`, `tick 1`...`tick 5`, `x86: done`, `exception 14 ...` |
 
 ## IRQ lines and frames as capabilities
 
@@ -185,6 +151,100 @@ long mode on
 SeaBIOS prints its own banner on the same serial line first (the greeting's
 leading `\n` separates it from `Booting from ROM..`), and `run.sh` asserts the
 greeting and `long mode on` whole.
+
+## x86-64 interrupts: the IDT, the exceptions and the timer
+
+`examples/kernel0-x86_64-idt` is kernel stage 22, the hole the `lmode` boot
+leaves open: it builds a real IDT, handles four CPU exceptions and takes the
+8254/8259 timer interrupt, with the same shape the riscv64 trap stages use (a
+naked vector, a frame the compiler does not know about, a Kelp dispatcher, and a
+resuming `iretq`). The design is
+[`plan/x86-idt.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/x86-idt.md).
+
+An `IdtEntry` is a `repr(c)` 16-byte gate: the target's low 16 bits, the code
+selector `0x08` (the boot GDT's 64-bit code segment, read out of the x86-64
+`_start` stub's own GDT), an 8-bit IST (0, no stack switch), an 8-bit
+type/attribute byte (`0x8E`: present, ring 0, 64-bit interrupt gate), the
+offset's middle 16 bits, its high 32 bits and a reserved word. The table is
+`static mut IDT: [IdtEntry; 256]`; `install` writes the five gates the kernel
+owns (`#DE` 0, `#UD` 6, `#GP` 13, `#PF` 14 and the timer's 32) from
+`Ptr.from_fn(gate).addr()`. The other 251 gates stay absent: an absent gate is a
+`#GP`, which has a handler, so nothing points at zero. `lidt` reads a separate
+`repr(packed)` ten-byte descriptor (a 16-bit limit and a 64-bit base), so the
+gate cannot double as one. Both layouts are pinned by
+`tests/projects/x86_idt_layout` on both backends and re-checked at boot by
+`trap.layout_ok`, because the gates' `asm` hardcodes the offsets and the
+compiler checks neither end.
+
+An exception taken in ring 0 pushes three words (`RIP`, `CS`, `RFLAGS`); a
+privilege change would push `RSP` and `SS` too, but there is no user mode on
+x86-64 here, so every gate sees three. Vectors 13 and 14 arrive with a CPU error
+code below them; the gates for the rest push a zero first so one
+`repr(c) TrapFrame` layout serves every vector. A gate then pushes the fifteen general
+registers, pushes its vector number, moves the frame base to `rdi`, aligns `rsp`
+down to 16 bytes, calls the Kelp `trap_dispatch`, restores the registers and ends
+in `iretq`. Three details are not free: the dispatcher's address arrives through
+the GS base (an `asm` operand would be materialised into a register before the
+gate had saved anything); the frame base is kept in `rbx` across the call
+because `rsp` moved; and the interrupted `rsp` is not saved, because a same-level
+`iretq` does not restore one.
+
+`trap_dispatch(frame)` reads the vector and prints
+`exception <vector> err <code> rip <hex>`, plus ` cr2 <hex>` (from CR2) for
+`#PF`. `#UD` and `#DE` are the two faults the kernel raises on purpose, and the
+dispatcher resumes them by adding the faulting instruction's length from a small
+table (`ud2` is two bytes, the 64-bit `div rcx` is three) to the saved `rip`.
+`#GP` and `#PF` have no repair here: the dispatcher prints and halts.
+
+The timer is the 8259 pair and the 8254 PIT. The BIOS maps the 8259s over
+vectors 8..15, which collide with the CPU's own exceptions, so the boot remaps
+them with ICW1..4: the master to 32..39 and the slave to 40..47, the slave on
+IRQ2. Only IRQ0 is unmasked (master IMR `0xFE`, slave IMR `0xFF`). Channel 0 of
+the 8254 is programmed through port `0x43` (mode 3, lo/hi, binary) with a
+divisor of 11932, so the PIT's 1.193182 MHz input becomes about 100 Hz. The
+timer's vector-32 gate is the same naked shape with a dummy-zero error code, so
+the timer and the exceptions share one frame and one dispatcher. `pic.on_tick`
+prints `tick <n>`, sends the EOI (`outb(0x20, 0x20)`) and, on the fifth tick,
+masks the line itself before the boot returns.
+
+The boot order is the proof. `kmain` builds the IDT, takes a `#UD` and a divide
+by zero (both repaired and resumed), starts the timer, waits out five ticks,
+masks the line, prints `x86: done`, and then stores through 8 GiB. The stub's
+identity map covers the first 1 GiB only, so that store is a not-present
+supervisor write: the `#PF` gate prints its line and halts, which makes it the
+last thing the serial port ever sees. The manifest grants `mmio` exactly that one
+page (`"0x200000000+0x1000"`). No compiler change was needed: `Ptr.from_fn`,
+`naked fun`, `asm` operands, `align(N)` and the static array of a `datac` were
+all in place.
+
+```sh
+nix-shell dev-kernel.nix --run 'KELPC=<kelpc> examples/kernel0-x86_64-idt/run.sh'
+```
+
+```text
+run.sh: booted .../examples/kernel0-x86_64-idt and the UART printed:
+exception 6 err 0 rip 0x00000000001002f5
+exception 0 err 0 rip 0x0000000000100305
+tick 1
+tick 2
+tick 3
+tick 4
+tick 5
+x86: done
+exception 14 err 2 rip 0x0000000000100583 cr2 0x0000000200000000
+```
+
+`run.sh` matches the exception lines by prefix (the `rip` is the linker's
+choice), pins the error codes and the `cr2`, requires the lines in order, and
+requires no `tick 6`, because the line is masked after the fifth. The last line,
+the `#PF` report, is what ends the run.
+
+What is deliberately not here: the APIC (local and I/O), SMP, ACPI, a TSS or an
+IST stack, a separate trap stack, `syscall`/`sysret`, x86 user mode, and the
+SSE/XMM state in the frame (the gates save the general registers only, and
+nothing in this kernel keeps a live `xmm` value across a fault). Priorities,
+blocking and preemption of user mode are the same open work they are for
+riscv64.
 
 ## The driver
 
@@ -542,6 +602,145 @@ ASIDs or TLB shootdown, no copy-on-write, demand paging, guard pages or address
 space abstraction, and no interrupt path (`trap_entry` assumes the trap came from
 U-mode; a kernel-mode fault would swap the stack pointer out from under the
 running handler). There are no signals, and no more than six syscall arguments.
+The timer-driven scheduler in the next section is a separate image,
+`examples/kernel0-sched`.
+
+## A timer interrupt and a preemptive scheduler
+
+`examples/kernel0-sched` is kernel stage 21: the machine timer and a
+preemptive round-robin scheduler, still in machine mode with no paging. It is
+the process-model half the user-mode example above leaves out. The design is
+[`plan/scheduler.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/scheduler.md).
+
+The timer is the CLINT. A hart's compare register is at `0x02004000 + 8 * hart`
+and the shared free-running counter is at `0x0200BFF8`; on this machine the
+counter ticks at 10 MHz, so `10000` ticks are about a millisecond. The boot
+arms `mtimecmp`, enables `mie.MTIE` and `mstatus.MIE`, and the manifest grants
+exactly the two CLINT words plus the NS16550's block:
+
+```toml
+[caps]
+mmio = ["0x10000000+0x100", "0x2004000+0x8", "0x200BFF8+0x8"]
+```
+
+Each address is delegated to the one module that builds a pointer from it,
+exactly as [Capabilities](/language/capabilities#mmio-device-registers)
+describes.
+
+The task table is `static mut TASKS: [Task; 3]`, and a `Task` holds a saved
+register file, the scheduler address the entry calls, a state, an id and its
+own 4096-byte stack, so the whole table is one object in `.bss`. An array
+static's element may now be a `datac` or another array, recursively, which is
+the one compiler change this stage forced; `tests/projects/static_datac_array`
+pins it on both backends.
+
+A timer tick is handled by a naked `trap_entry`. `mscratch` holds the address of
+the *current* task's frame while that task runs, so the entry saves all 31
+general registers, `mepc` and `mstatus` into the task table itself, calls
+`schedule(frame: Ptr<TrapFrame>)`, restores whichever frame the scheduler
+returns, and ends in `mret`. The word just past `mstatus` in each frame is the
+address of `schedule`, which is how a naked function reaches a Kelp function
+without spelling its mangled symbol (the same idiom kernel stage 11 used for its
+dispatch slot). `schedule` reads `mcause`: a machine timer interrupt re-arms
+`mtimecmp`, counts the tick and may stop the machine, and an `ecall` advances
+the saved `mepc` past the instruction; both then fall into the same `pick`,
+which rotates to the next READY task and returns its frame.
+
+The three tasks never yield. Each loops forever over its own counter and prints
+its letter (`A`, `B`, `C`) and the counter every 50000 iterations. The line is
+written under a spin lock, an `Atomic<bool>` whose acquisition also clears
+`mstatus.MIE` first and whose release is a `defer uart.lock_release()`. On a
+single hart that is what makes a line non-preemptible: no timer interrupt can
+arrive with the lock held, so the scheduler never runs mid-line and can never
+spin for a lock an interrupted task holds. Since no task ever yields, the only
+way the letters can interleave is the timer preempting them, which is what makes
+the serial log a proof of preemption rather than of cooperation. The kernel
+stops itself after 40 ticks and prints `sched: done ticks=40`.
+
+`run.sh` boots the image under `timeout 20`, reads QEMU's own stdout, and
+asserts that all three letters appear, that the letter changes at least three
+times, that no line is torn (each is exactly `<letter> <count>`) and that the
+stop line is whole:
+
+```sh
+nix-shell dev-kernel.nix --run 'KELPC=<kelpc> examples/kernel0-sched/run.sh'
+```
+
+```text
+164 lines, 39 transitions, no torn lines
+```
+
+That is the whole of run.sh's output when it passes. The serial bytes behind
+it, from a boot of the same image, begin and end like this (the letters and
+counters depend on where each tick lands, so they differ between boots; the
+invariants run.sh checks do not):
+
+```text
+A 50000
+B 50000
+B 100000
+B 150000
+B 200000
+C 50000
+C 100000
+C 150000
+C 200000
+A 100000
+A 150000
+A 200000
+A 250000
+...
+C 2700000
+C 2750000
+C 2800000
+A 2700000
+A 2750000
+A 2800000
+A 2850000
+sched: done ticks=40
+```
+
+What is deliberately not in this stage: priorities, blocking, sleep/wake, a run
+queue with anything but "next READY", task exit and reaping (the state field
+exists so those have somewhere to go); SMP (the image runs on hart 0 and the
+lock's interrupt masking is a one-hart argument); and preemption of user mode
+(these tasks run in machine mode).
+
+Every manifest under `examples/kernel0*` also carries an `mmio` grant now, the
+stage-16 check that a freestanding module may name only an address it was
+granted. The UART drivers hold exactly their device's window
+(`0x10000000+0x100` for the riscv64 NS16550, `0x09000000+0x1000` for the aarch64
+PL011), and the modules that build a pointer from a computed address (a
+page-table frame, a trap-frame slot, a user page) hold the whole-address-space
+`["*"]`. See [Capabilities](/language/capabilities#mmio-device-registers).
+`examples/kernel0-caps` adds the two device-value domains beside it: a narrowed
+`irq` grant and a narrowed `frames` grant; see [below](#irq-lines-and-frames-as-capabilities).
+
+The four RISC-V boots, run one after another:
+
+```text
+run.sh: booted .../examples/kernel0-trap and the UART printed:
+trap: ecall
+done
+run.sh: booted .../examples/kernel0-panic and the UART printed:
+panic: Array.get: index out of bounds
+run.sh: booted .../examples/kernel0-bss and the UART printed:
+bss clear
+run.sh: booted .../examples/kernel0-heap and the UART printed:
+heap sum 55
+balanced
+```
+
+And the aarch64 boot, on QEMU's `virt` machine with `-cpu cortex-a57`:
+
+```sh
+nix-shell dev-kernel.nix --run 'examples/kernel0-aarch64/run.sh'
+```
+
+```text
+run.sh: booted .../examples/kernel0-aarch64 and the UART printed:
+hello from kelp (aarch64)
+```
 
 ## Stack guards and probing
 
@@ -622,10 +821,16 @@ script could get wrong silently.
 The remaining gaps, in order, from
 [`plan/kernel0-status.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/kernel0-status.md):
 
-- **Interrupts are not set up.** `kernel0-trap` installs `mtvec` itself and
-  nothing enables `mstatus.MIE`, models the privilege transition or installs a
-  handler for the line `kernel0-caps` claims. Panic semantics with no OS, the
-  row's other half, is the [section above](#panic-location-and-the-double-panic).
+- **The interrupt path exists, but not as a language construct.** A riscv64
+  machine timer interrupt and a preemptive round-robin scheduler are
+  `examples/kernel0-sched` ([above](#a-timer-interrupt-and-a-preemptive-scheduler)),
+  and an x86-64 IDT with four exception gates and the PIC+PIT timer is
+  `examples/kernel0-x86_64-idt`
+  ([above](#x86-64-interrupts-the-idt-the-exceptions-and-the-timer)). Both are
+  naked bodies the compiler does not model as handlers. `kernel0-trap` still
+  installs `mtvec` itself and enables nothing, and the line `kernel0-caps`
+  claims is still not wired to a handler. Panic semantics with no OS, the row's
+  other half, is the [section above](#panic-location-and-the-double-panic).
 - **The `interrupt`/calling-convention attributes** stage 5 deferred are still
   open, so a trap handler is a naked body the compiler does not understand as a
   handler.
@@ -634,10 +839,10 @@ The remaining gaps, in order, from
   [`std/arena`](/stdlib/arena) bump region and the fallible `Ptr.try_alloc`, but
   the `Ptr.alloc`/`free` pair is still the hosted `malloc`/`free` and is refused
   in freestanding.
-- **Stages 6, 8, 9, 12, 13, 14, 16, 18, 19 and 20 have shipped.** User `Drop`
-  (stage 6) is [`fun mut T.drop()`](/language/drop); per-CPU storage (stage 8)
-  is [per-CPU statics](/language/percpu); the MMU and the syscall ABI (stage 9)
-  are the two examples above; freestanding `String`/`Bytes` and
+- **Stages 6, 8, 9, 12, 13, 14, 16, 18, 19, 20, 21 and 22 have shipped.** User
+  `Drop` (stage 6) is [`fun mut T.drop()`](/language/drop); per-CPU storage
+  (stage 8) is [per-CPU statics](/language/percpu); the MMU and the syscall ABI
+  (stage 9) are the two examples above; freestanding `String`/`Bytes` and
   arena/`try_alloc` (stages 12 and 13) are
   [Freestanding mode](/language/freestanding) and
   [`std/arena`](/stdlib/arena); the stack guard and the `probe-stack`
@@ -645,13 +850,16 @@ The remaining gaps, in order, from
   capabilities (stages 16 and 18) are the grants the examples carry and the
   section above; the freestanding standard subset (stage 19) is
   [Freestanding mode](/language/freestanding#the-freestanding-standard-subset);
-  and the x86-64 target (stage 20) is the section above.
-- **The remaining holes are the trap path and the process model.** No interrupt
-  controller is programmed and no `interrupt` attribute exists, so a trap
-  handler is still a naked body the compiler does not understand as a handler;
-  `Ptr.alloc`/`Ptr.free` still have no hook; and there is no scheduler,
-  preemption, `fork` or TLB shootdown. x86-64 is in the same state, without an
-  IDT, APIC, SMP or ACPI.
+  the x86-64 target (stage 20) is the section above; and the machine timer with
+  the preemptive scheduler (stage 21) and the x86-64 IDT, the exceptions and the
+  PIC+PIT timer (stage 22) are the two sections above.
+- **The remaining holes are the rest of the process model.** No `interrupt`
+  attribute exists, so a trap handler is still a naked body the compiler does
+  not understand as a handler, and `Ptr.alloc`/`Ptr.free` still have no hook. A
+  preemptive scheduler exists for machine-mode riscv64 tasks (stage 21), but
+  there is no `fork`, no `exec`/`wait`, no priorities or blocking, no TLB
+  shootdown, no SMP and no preemption of user mode; x86-64 has an IDT and a
+  PIC+PIT timer, but no APIC, SMP, ACPI or user mode.
 - **No C-oracle coverage.** Freestanding is LLVM-only by design, so the usual
   "both backends, same behaviour" rule does not apply to these images. It still
   holds everywhere else.
