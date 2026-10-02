@@ -34,6 +34,11 @@ error surface: `std/tls`'s `TlsError`/`TlsOptions` and its `try_` family,
 `std/http`'s `HttpErr` and `try_get`/`try_send`, and `std/net`'s `NetErr` with
 `try_send_all`/`try_recv`/`try_recv_into`. The batch after that is `std/arena`,
 kernel stage 13's bump arena, whose six functions and one type are below. The
+batch documented here adds the HTTP/1.1 server to `std/http`
+(`listen`/`accept`/`serve*`, `Limits`, `ServerRequest`/`ServerResponse`) with
+`net.mono_ms`, `net.try_accept`, `net.try_shutdown_write` and
+`Listener.set_timeout`, and a new module, `std/regex`, a linear-time Pike VM
+that is hosted only. The
 kernel-path language surface
 (`unsafe`/`Ptr<T>`, `repr(...)`, statics, `defer`, the `[target]` manifest
 section) is not a stdlib name and lives on the [language pages](/language), not
@@ -214,6 +219,37 @@ Functions:
 - `fun form_encode(text: &str).R: String`
 - `fun form_decode(text: &str).R: result.Result<String, DecodeErr>`
 
+## `std/regex`
+
+A linear-time regular expression engine (a Pike VM over bytes). Hosted only.
+Full account on [`std/regex`](/stdlib/regex).
+
+Types:
+
+- `datac Regex(op: List<i32>, ax: List<i32>, ay: List<i32>, classes: List<u8>, ngroups: usize, var tl_pc: List<i32>, var tl_cap: List<i32>, var cnt: List<usize>, var mark: List<i64>, var gen: i64, var stk_a: List<i32>, var stk_b: List<i32>, var wcap: List<i32>, var res: List<i32>, var nsteps: i64)`
+- `datac RegexErr(val message: String, val offset: usize)`
+- `datac Match(val start: usize, val end: usize, val text: String)`
+- `datac Captures(val text: String, val slots: List<i32>)`
+
+Functions:
+
+- `fun compile(pattern: &str).R: result.Result<Regex, RegexErr>`
+- `fun is_match(pattern: &str, text: &str).R: bool`
+- `fun mut Regex.is_match(text: &str).R: bool`
+- `fun mut Regex.find(text: &str).R: option.Option<Match>`
+- `fun mut Regex.find_at(text: &str, start: usize).R: option.Option<Match>`
+- `fun mut Regex.captures(text: &str).R: option.Option<Captures>`
+- `fun mut Regex.find_all(text: &str).R: List<Match>`
+- `fun mut Regex.replace(text: &str, replacement: &str).R: String`
+- `fun mut Regex.replace_all(text: &str, replacement: &str).R: String`
+- `fun mut Regex.split(text: &str).R: List<String>`
+- `fun Regex.steps().R: i64`
+- `fun mut Regex.reset_steps()`
+- `fun Regex.group_count().R: usize`
+- `fun Captures.get(i: usize).R: option.Option<String>`
+- `fun Captures.span(i: usize).R: option.Option<Match>`
+- `fun Captures.len().R: usize`
+
 ## `std/io`
 
 Types:
@@ -331,9 +367,13 @@ Functions:
 - `fun try_connect(host: &str, port: u16).R: result.Result<Socket, ConnectErr>`
 - `fun listen(port: u16).R: Listener`
 - `fun accept(l: Listener).R: Socket`
+- `fun try_accept(l: Listener).R: result.Result<Socket, NetErr>`
 - `fun close(s: Socket)`
 - `fun Listener.close()`
+- `fun Listener.set_timeout(ms: u64)`
 - `fun shutdown_write(s: Socket)`
+- `fun try_shutdown_write(s: Socket).R: bool`
+- `fun mono_ms().R: i64`
 - `fun send(s: Socket, data: Bytes).R: usize`
 - `fun send_all(s: Socket, data: Bytes).R: usize`
 - `fun send_text(s: Socket, text: &str)`
@@ -364,6 +404,11 @@ Types:
 - `datac Conn(val fd: i32, val tls_handle: usize)`
 - `datac Cursor(val fd: i32, val tls_handle: usize, var buf: Bytes, var start: usize)`
 - `enum HttpErr { Dial(val reason: String), Exchange(val reason: String), Redirects(val reason: String) }`
+- `datac Limits(val max_request_line: usize, val max_header_bytes: usize, val max_headers: usize, val max_body: usize, val head_timeout_ms: u64, val body_timeout_ms: u64, val idle_timeout_ms: u64, val max_requests_per_conn: usize)`
+- `datac ServerRequest(val method: String, val target: String, val path: String, val query: String, val headers: List<Header>, val body: Bytes)`
+- `datac ServerResponse(val status: i32, val headers: List<Header>, val body: Bytes)`
+- `datac Server(val fd: i32)`
+- `datac ServerConn(val fd: i32, var buf: Bytes, var start: usize, var served: usize, var close_after: bool, var head_only: bool, var keep_alive_header: bool)`
 
 Constants:
 
@@ -449,6 +494,45 @@ Functions:
 - `fun try_get(url: &str).R: result.Result<Response, HttpErr>`
 - `fun make_get(url: &str).R: Request`
 - `fun post_text(url: &str, body: &str, content_type: &str).R: Response`
+
+The server surface (a plain HTTP/1.1 server; see the
+[`std/http`](/stdlib/http#the-server) page):
+
+- `fun ok_text(text: &str).R: ServerResponse`
+- `fun json(text: &str).R: ServerResponse`
+- `fun html(text: &str).R: ServerResponse`
+- `fun status(code: i32).R: ServerResponse`
+- `fun not_found().R: ServerResponse`
+- `fun bad_request(message: &str).R: ServerResponse`
+- `fun ServerRequest.header(name: &str).R: String`
+- `fun ServerRequest.has_header(name: &str).R: bool`
+- `fun ServerRequest.text().R: String`
+- `fun ServerRequest.query_param(name: &str).R: option.Option<String>`
+- `fun ServerRequest.path_segments().R: List<String>`
+- `fun ServerResponse.with_header(name: &str, value: &str).R: ServerResponse`
+- `fun mut ServerResponse.add_header(name: &str, value: &str)`
+- `fun listen(port: u16).R: Server`
+- `fun Server.port().R: u16`
+- `fun Server.set_accept_timeout(ms: u64)`
+- `fun Server.close()`
+- `fun Server.accept().R: ServerConn`
+- `fun Server.try_accept().R: result.Result<ServerConn, HttpErr>`
+- `fun ServerConn.read_request(limits: &Limits).R: result.Result<ServerRequest, HttpErr>`
+- `fun mut ServerConn.write_response(resp: &ServerResponse).R: result.Result<usize, HttpErr>`
+- `fun mut ServerConn.write_error(e: &HttpErr).R: result.Result<usize, HttpErr>`
+- `fun mut ServerConn.mark_close()`
+- `fun ServerConn.wants_close().R: bool`
+- `fun ServerConn.close()`
+- `fun default_limits().R: Limits`
+- `fun Limits.with_timeouts(head_ms: u64, body_ms: u64, idle_ms: u64).R: Limits`
+- `fun Limits.dup().R: Limits`
+- `fun serve(port: u16, handler: fun(&ServerRequest).R: ServerResponse)`
+- `fun serve_n(port: u16, handler: fun(&ServerRequest).R: ServerResponse, max_requests: u64).R: u64`
+- `fun serve_on(server: &Server, handler: fun(&ServerRequest).R: ServerResponse, limits: &Limits, max_requests: u64).R: u64`
+- `fun serve_threaded(port: u16, handler: fun(&ServerRequest).R: ServerResponse, workers: usize)`
+- `fun serve_threaded_on(server: &Server, handler: fun(&ServerRequest).R: ServerResponse, limits: &Limits, workers: usize, idle_ms: u64).R: u64`
+- `fun http_error_status(e: &HttpErr).R: i32`
+- `fun http_error_text(e: &HttpErr).R: String`
 
 ## `std/tls` (needs `net`)
 
@@ -778,25 +862,26 @@ layer under it. The whole surface is on [`std/ws`](/stdlib/ws).
 
 | Module | Functions | Types/constants | Domain |
 | --- | ---: | ---: | --- |
-| `std/mem` | 1 | 0 | — |
-| `std/str` | 37 | 1 | — |
-| `std/path` | 12 | 0 | — |
-| `std/math` | 29 | 3 | — |
-| `std/fmt` | 10 | 0 | — |
+| `std/mem` | 1 | 0 | - |
+| `std/str` | 37 | 1 | - |
+| `std/path` | 12 | 0 | - |
+| `std/math` | 29 | 3 | - |
+| `std/fmt` | 10 | 0 | - |
 | `std/encoding` | 26 | 4 | - |
-| `std/io` | 27 | 3 | — |
+| `std/regex` | 16 | 4 | - |
+| `std/io` | 27 | 3 | - |
 | `std/fs` | 30 | 1 | fs |
 | `std/process` | 14 | 3 | process |
-| `std/net` | 18 | 3 | net |
-| `std/http` | 67 | 15 | — |
+| `std/net` | 22 | 3 | net |
+| `std/http` | 102 | 20 | - |
 | `std/tls` | 6 | 1 | net |
 | `std/ws` | 32 | 18 | net, rand |
 | `std/time` | 3 | 0 | time |
 | `std/rand` | 3 | 0 | rand |
 | `std/env` | 4 | 0 | env |
-| `std/list` | 6 | 0 | — |
-| `std/option` | 9 | 1 | — |
-| `std/result` | 12 | 1 | — |
+| `std/list` | 6 | 0 | - |
+| `std/option` | 9 | 1 | - |
+| `std/result` | 12 | 1 | - |
 | `std/arena` | 6 | 1 | - |
 | `std/atomic` | 10 | 1 | - |
 | `std/thread` | 5 | 1 | - |

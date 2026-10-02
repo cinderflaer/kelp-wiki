@@ -124,6 +124,14 @@ them.
 
 ## Networking
 
+- **`std/http` also serves HTTP/1.1.** The server is pure Kelp over `std/net`,
+  with a `Limits` table, keep-alive, pipelining, chunked and
+  `Expect: 100-continue` request bodies, and `serve_threaded` worker threads.
+  **Listening cannot be restricted to one host:** `net.listen(port)` always
+  binds `0.0.0.0`, and the host part of a `net` grant constrains nothing for a
+  listener, so a grant for `127.0.0.1:8080` still lets a module bind
+  `0.0.0.0:8080` (open item 55). `net.mono_ms`, `net.try_accept`,
+  `Listener.set_timeout` and `net.try_shutdown_write` exist for it.
 - **(decided 2026-09-26, roadmap item 37; done, MK5-S4b-M1)** TLS shipped:
   [`std/tls`](/stdlib/tls) links the system OpenSSL, and `http.parse_url` now
   accepts `https`, and `ws.parse_url` accepts `wss` (`ws.connect_url` runs the
@@ -189,8 +197,10 @@ and `std/ws` is §16.18 of the same document.
 - `str.to_upper`/`to_lower` are **ASCII-only**.
 - A string is UTF-8 by convention and bytes by API: most functions count bytes and
   the codepoint helpers are the separate `char_*` set.
-- No regular expressions anywhere. [`glob`](/libraries/glob) has `*`/`?`,
-  and that is the whole pattern language.
+- **No regular-expression literals in the language.** Patterns are data, so a
+  regex is [`std/regex`](/stdlib/regex): a linear-time Pike VM over bytes with a
+  documented subset, refused in a freestanding project. [`glob`](/libraries/glob)
+  still has the `*`/`?` shell patterns.
 
 ## Not present at all
 

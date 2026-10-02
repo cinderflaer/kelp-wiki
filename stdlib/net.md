@@ -42,10 +42,13 @@ panicked with (the message line and the `errno` detail line, or
 | `try_send_all(s, data)` / `try_recv(s, max)` / `try_recv_into(s, buf, at)` | `Result<usize, NetErr>` / `Result<Bytes, NetErr>` / `Result<usize, NetErr>` | `send_all`, `recv` and `recv_into` with a reset, a closed peer or a timeout as `Err` (`NetErr.reason` is the panic text) instead of a panic; an empty or zero `Ok` is still end of stream |
 | `listen(port)` | `Listener` | port `0` asks the OS for a free one |
 | `accept(l)` | `Socket` | blocks until a peer connects |
+| `try_accept(l)` | `Result<Socket, NetErr>` | `accept` with a failed accept (including a timeout) as an `Err` instead of a panic |
 | `Listener.port()` | `u16` | the bound port: how you learn what `0` became |
+| `Listener.set_timeout(ms)` | `Unit` | `mut` receiver; makes `accept`/`try_accept` give up after `ms` (`0` waits forever) |
 | `Listener.close()` | `Unit` | |
 | `close(s)` | `Unit` | |
 | `shutdown_write(s)` | `Unit` | half-close, which is how a line protocol says "no more input" |
+| `try_shutdown_write(s)` | `bool` | `shutdown_write` that answers `false` when the peer has already reset the socket |
 | `send(s, data)` | `usize` | one `send`; may write less than asked |
 | `send_all(s, data)` | `usize` | loops until everything is written |
 | `send_text(s, text)` | `Unit` | |
@@ -56,6 +59,7 @@ panicked with (the message line and the `errno` detail line, or
 | `try_recv_into(s, buf, at)` | `Result<usize, NetErr>` | the fallible `recv_into`; `Ok(0)` is end of stream |
 | `Socket.wait_readable(timeout_ms)` / `wait_writable(...)` | `bool` | |
 | `Socket.set_timeout(ms)` | `Unit` | `mut` receiver |
+| `mono_ms()` | `i64` | milliseconds on the monotonic clock, for deadlines: only the difference of two readings means anything |
 | `Socket.peer_addr()` | `String` | |
 | `resolve(host)` | `List<String>` | addresses, for a caller that wants to log one |
 
@@ -189,6 +193,59 @@ attempt 3: net.connect: connection failed
   errno 111: Connection refused
 gave up
 ```
+
+## A listener that can time out
+
+`accept` blocks forever. `Listener.set_timeout(ms)` puts an upper bound on it,
+and `try_accept` turns the bounded failure into an `Err` whose reason is
+`net.accept: timed out`, which is how one thread serves many sockets or stops
+when nobody is coming. `net.mono_ms()` is the monotonic clock the deadlines are
+built on; it lives here, not in `std/time`, so a module that holds only `net`
+can keep a deadline without being handed the `time` capability too.
+`try_shutdown_write` is `shutdown_write` with a socket the peer has already
+reset as `false` instead of a panic: a server ending a connection it does not
+know the state of is exactly that case.
+
+```kelp
+impl "std/net"
+
+fun main() {
+    var l = net.listen(0)
+    l.set_timeout(100)
+    val t0 = net.mono_ms()
+    when net.try_accept(l) {
+        Ok(s) -> {
+            net.close(s)
+            print("unexpected connection")
+        }
+        Err(e) -> {
+            print(e.reason)
+            print(net.mono_ms() - t0 >= 100)
+        }
+    }
+
+    val c = net.connect("127.0.0.1", l.port())
+    when net.try_accept(l) {
+        Ok(s) -> {
+            print(net.try_shutdown_write(s))
+            net.close(s)
+        }
+        Err(e) -> print(e.reason)
+    }
+    net.close(c)
+    l.close()
+}
+```
+
+```text
+net.accept: timed out
+true
+true
+```
+
+The first `try_accept` waits the 100 ms and fails, so the elapsed reading is at
+least `100`. The second accept has a client already queued, so
+`try_shutdown_write` on the accepted socket is `true`.
 
 ## Example
 

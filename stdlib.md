@@ -20,32 +20,33 @@ The domain each module needs comes from the compiler's own table
 
 | Module | Domain | Notes |
 | --- | --- | --- |
-| `std/mem` | — | `alloc` |
-| `std/str` | — | text: search, slice, split, parse, format |
-| `std/path` | — | lexical path handling |
-| `std/math` | — | `sqrt`, `pow`, trig, `abs`/`min`/`max`/`clamp` |
-| `std/fmt` | — | number, grouping, byte-size and padding formatting into `String` |
-| `std/encoding` | — | base64, base32, base58, hex and percent encoding |
-| `std/io` | — | `File`, `BufReader`, `print`/`eprint` |
+| `std/mem` | - | `alloc` |
+| `std/str` | - | text: search, slice, split, parse, format |
+| `std/path` | - | lexical path handling |
+| `std/math` | - | `sqrt`, `pow`, trig, `abs`/`min`/`max`/`clamp` |
+| `std/fmt` | - | number, grouping, byte-size and padding formatting into `String` |
+| `std/encoding` | - | base64, base32, base58, hex and percent encoding |
+| `std/regex` | - | a linear-time regular expression engine (hosted only) |
+| `std/io` | - | `File`, `BufReader`, `print`/`eprint` |
 | `std/fs` | `fs` | read, write, walk, metadata |
 | `std/process` | `process` | `args`, `spawn`, `run`, `exit` |
 | `std/net` | `net` | TCP connect/listen/accept, `send`/`recv`, and the `try_connect`/`try_send_all`/`try_recv`/`try_recv_into` value returns |
-| `std/http` | `net` (held) | an HTTP/1.1 client, `http` and `https`; ungated itself, but importing it needs `net` delegated. The `try_get`/`try_send` family returns `HttpErr` |
+| `std/http` | `net` (held) | an HTTP/1.1 client and server; the client speaks `http` and `https`, the server is plain HTTP/1.1 with request limits and worker threads. Ungated itself, but importing it needs `net` delegated. The `try_get`/`try_send` family returns `HttpErr` |
 | `std/tls` | `net` (held) | client-side TLS: a typed `TlsError`, `TlsOptions` for a private CA and a timeout, a `try_` family, and truncation detection. Wraps a connection `std/http` or `std/ws` already opened, never dials its own |
 | `std/ws` | `net`, `rand` (both held) | a WebSocket client (RFC 6455) over `ws://` and `wss://`; importing it needs both delegated |
 | `std/time` | `time` | `now_unix`, `now_mono_ns`, `sleep_ms` |
 | `std/rand` | `rand` | unseeded `u64`, `below`, `bytes` |
 | `std/env` | `env` | `has`, `get`, `set`, `unset` |
-| `std/list` | — | `map`, `filter`, `each`, `find_index`, `any`, `all` |
-| `std/option` | — | `Option<T>` and its combinators |
-| `std/result` | — | `Result<T, E>` and its combinators |
+| `std/list` | - | `map`, `filter`, `each`, `find_index`, `any`, `all` |
+| `std/option` | - | `Option<T>` and its combinators |
+| `std/result` | - | `Result<T, E>` and its combinators |
 | `std/arena` | - | a bump arena over a caller-owned byte region; pure pointer arithmetic, so it needs no allocator and works freestanding |
 | `std/irq` | `irq` | an interrupt line as a capability: `irq.claim(n)` is the only constructor, checked against the calling module's `irq` grant |
 | `std/frame` | `frames` | a physical frame as a capability: `frame.claim(addr)` is the only constructor, checked against the calling module's `frames` grant and 4 KiB-aligned |
 | `std/atomic` | - | `Atomic<T>` and the one ordering v1 has |
 | `std/thread` | - | `spawn`, `join`, `fence(order)`, `sleep_ms`, `current_id` and the `ThreadErr` a join hands back |
 | `std/sync` | - | `Mutex<T>`: guarded access through a scoped `lock` block, released on every exit and poisoned by a panic; hosted only |
-| `std/rt` | — | the compiler's own runtime module (the capability matcher), injected for a program that imports a gated module; not part of the stdlib surface |
+| `std/rt` | - | the compiler's own runtime module (the capability matcher), injected for a program that imports a gated module; not part of the stdlib surface |
 
 ## Compiler builtins
 
@@ -77,6 +78,7 @@ The builtins are described in [Text](/language/text) and
 | `math` | [`std/math`](/stdlib/math) |
 | `fmt` | [`std/fmt`](/stdlib/fmt) |
 | `encoding` | [`std/encoding`](/stdlib/encoding) |
+| `regex` | [`std/regex`](/stdlib/regex) |
 | `io` | [`std/io`](/stdlib/io) |
 | `fs` | [`std/fs`](/stdlib/fs) |
 | `process` | [`std/process`](/stdlib/process) |
