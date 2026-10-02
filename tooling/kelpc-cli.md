@@ -13,13 +13,14 @@ after it (`kelpc lint` below, the comment-run and naming-case findings, the
 `kelpc 26.09.0`.
 
 ```text
-usage: kelpc build <file.kp> [-o <out>] [-O0|-O1|-O2|-O3|-Os] [--deny-outdated]
-       kelpc run <file.kp> [-O0|-O1|-O2|-O3|-Os] [--deny-outdated]
+usage: kelpc build <file.kp> [-o <out>] [-O0|-O1|-O2|-O3|-Os] [--deny-outdated] [--incremental] [--timings]
+       kelpc run <file.kp> [-O0|-O1|-O2|-O3|-Os] [--deny-outdated] [--incremental] [--timings]
        kelpc check <file.kp> [--json] [--deny-outdated] [--text]
        kelpc fmt <file.kp>
        kelpc fmt -w <path>...
        kelpc fmt --check <path>...
        kelpc lint <path>...
+       kelpc cache stats|clear [--dir <dir>]
        kelpc version
 ```
 
@@ -41,6 +42,8 @@ above, and `kelpc version` is the version query.
 | `kelpc fmt -w <path>...` | rewrites files in place | 1 if any input fails to parse |
 | `kelpc fmt --check <path>...` | writes nothing, exits 1 if anything is not already formatted | 0 or 1 |
 | `kelpc lint <path>...` | writes warnings to stderr for the style rules a formatter cannot enforce, and writes no file | 0 even when it warns; 1 only for a path it cannot read or a file it cannot lex |
+| `kelpc cache stats` | prints the per-unit object cache's entry count and total size | 0 |
+| `kelpc cache clear` | deletes every cached unit object | 0, or 1 when the directory cannot be removed |
 | `kelpc version` | prints the release name the binary was built from: `kelpc 0.2.2` for the release tagged `v0.1.4`, and `kelpc 26.09.0` for the first release under the `YY.MM.N` scheme (`26.09.0`; the crate carries the semver-legal `26.9.0` and this command pads the month back) | 0 |
 
 Two behaviours worth knowing:
@@ -184,6 +187,79 @@ artifact is checked.
   $ kelpc build src/main.kp -o /tmp/missing/app
   error: could not write generated IR to '/tmp/missing/app.ll': No such file or directory (os error 2)
   ```
+
+An `--incremental` build writes its artifacts somewhere else: see below.
+
+## Incremental builds and the object cache
+
+`kelpc` can split a program's **backend** into separate compilation units and
+cache their objects, so a later build reuses everything whose IR did not change.
+The front end (load, type check, borrow check) still runs whole-program; only
+code generation is split. The mode is off by default and produces the same
+program either way. [Incremental builds](/compiler/incremental) explains how it
+works; this section is the command surface.
+
+Turn it on one of three ways:
+
+- `kelpc build <target> --incremental` and `kelpc run <target> --incremental`;
+- `[build]` `incremental = true` in the project's `coral.toml`;
+- leave it off, which is the default.
+
+The C oracle (`KELPC_ORACLE=c`) ignores the flag and keeps its one translation
+unit. A freestanding project is refused by name:
+
+```text
+$ kelpc build examples/kernel0 --incremental
+error: '--incremental' is not implemented for a freestanding project yet: its image is one ELF with a single entry stub and one panic state, so the per-unit split is its own slice (plan/incremental-compilation.md)
+```
+
+One unit is written per source module id, plus one `_support` unit for the
+compiler-generated helpers. A build with output `<out>` writes the units to
+`<out>.units/<unit>.ll` and `<out>.units/<unit>.o` (a `/` in a module id is
+written `+`, so `shapes/circle` is `shapes+circle.o`) and links them.
+
+`--timings` adds per-phase wall times and, under `--incremental`, one line per
+unit with `hit` or `miss`, all to stderr. `KELPC_CACHE_STATS=1` prints the
+one-line build summary:
+
+```text
+$ KELPC_JOBS=2 KELPC_CACHE_DIR=cache KELPC_CACHE_STATS=1 kelpc build proj/ -o out/inc --incremental
+kelpc cache: 0 hits, 4 misses, 4 stored
+$ KELPC_JOBS=2 KELPC_CACHE_DIR=cache KELPC_CACHE_STATS=1 kelpc build proj/ -o out/inc --incremental
+kelpc cache: 4 hits, 0 misses, 0 stored
+```
+
+Edit one module's source and run it again: the units whose IR did not change are
+hits, and the edited module is the exception. On a three-module `shapes` project
+(`main`, `geom`, `shapes/circle`) with a filled cache:
+
+```text
+$ KELPC_CACHE_DIR=cache KELPC_CACHE_STATS=1 kelpc build proj/ -o out/inc --incremental --timings
+kelpc cache: 3 hits, 1 misses, 1 stored
+kelpc timings:
+  parse: 0.6 ms
+  resolve: 0.1 ms
+  infer: 0.7 ms
+  borrowck: 0.1 ms
+  codegen: 3.8 ms
+  unit compile: 6.6 ms
+  link: 106.9 ms
+  unit geom: 0.9 ms hit
+  unit main: 7.6 ms miss
+  unit shapes/circle: 0.9 ms hit
+  unit _support: 1.1 ms hit
+```
+
+`kelpc cache stats` and `kelpc cache clear` inspect and empty the directory. With
+no `--dir` they use `KELPC_CACHE_DIR` when it is set and `build/.kelpc-cache`
+otherwise, the same directory an `--incremental` build uses by default:
+
+```text
+$ kelpc cache stats --dir cache
+kelpc cache: 4 entries, 9904 bytes in cache
+$ kelpc cache clear --dir cache
+kelpc cache: removed 4 files from cache
+```
 
 ## Backends
 
@@ -461,6 +537,11 @@ with no `/proc/meminfo` the guard does nothing. Disk space is not checked.
 | --- | --- |
 | `LLVM_SYS_211_PREFIX` | where `llvm-sys` finds `libLLVM` and its headers; set by `shell.nix` |
 | `KELPC_MIN_AVAILABLE_MB` | the compiler's memory floor; below it `build`/`run` exit 75, `0` disables it (see [above](#the-memory-floor)) |
+| `KELPC_JOBS` | the `--incremental` unit-compilation worker count: a positive integer, default **2**, not the CPU count. A missing, unparsable or `0` value is the default, and more workers than units spawns one per unit |
+| `KELPC_CACHE_DIR` | the object cache's directory; overrides the default `<out dir>/.kelpc-cache`, for a build and for a bare `kelpc cache` command |
+| `KELPC_CACHE` | `off` turns lookups and stores off for one build; nothing is read and no directory is created |
+| `KELPC_CACHE_STATS` | `1` prints the one-line `kelpc cache: <H> hits, <M> misses, <S> stored` summary to stderr at the end of a build |
+| `KELPC_CACHE_MAX_MB` | the cache size cap in MiB, default **1024**. At the end of a build the oldest-modified entries are deleted until the total is under it (`0` empties the cache) |
 
 Coral also reads `KELPC` to decide which compiler to run, which is a different
 question from what the compiler does with its own environment (see
@@ -478,10 +559,13 @@ file changes three things:
    `..` segments, no absolute paths).
 2. **The entry point comes from the manifest.** `entry = "src/main.kp"` is the
    file that must hold `main`, and it does not have to be called `main.kp`.
-3. **The compiler reads only the flat part.** It wants `name`, `version` and
-   `entry`, and it **stops parsing at the first `[section]`**, so `[tasks]`,
-   `[dependencies]` and `[toolchain]` are invisible to it. Coral is the program
-   that reads those.
+3. **The compiler reads the flat keys and a few of its own sections.** It wants
+   `name`, `version` and `entry` (plus `http_pool` and `naming_case`), and it
+   reads `[build]`, `[target]`, `[caps]`, `[unsafe]` and `[extern."..."]`
+   itself, because those change what it compiles: `[build] incremental = true`
+   turns on the per-unit split. Every other section (`[tasks]`,
+   `[dependencies]`, `[toolchain]`) is Coral's manifest surface, and the
+   compiler skips its lines rather than rejecting them.
 
 `kelpc` is lenient about flat keys it does not use: a manifest carrying
 `http_pool = 8` compiles, because the compiler never looks at it. Coral validates
