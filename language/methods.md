@@ -60,6 +60,10 @@ print(c.total())
   that builds the variant names a type rather than a value, so `Shape.Empty.label()`
   is refused with `an 'enum' method is called on a value, not on a variant path`:
   bind the variant first.
+- A method declared by a `trait`, and the method that implements it in an `impl`
+  block, write the receiver as `Self` rather than the type's name: `fun
+  Self.area()`. Everywhere else the receiver names its type
+  ([Traits and static dispatch](/language/traits)).
 
 ## Return types that borrow
 
@@ -148,5 +152,6 @@ mutate their receiver).
 - [datac and enum](/language/data-types)
 - [Return types and `return`](/language/returns)
 - [Generics and type parameters](/language/generics)
+- [Traits and static dispatch](/language/traits)
 - [Ownership and borrowing](/language/ownership)
 - [Functions](/language/functions)

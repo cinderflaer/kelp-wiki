@@ -135,6 +135,28 @@ fun empty_of<T>().R: List<T> = List.empty()
   element: `get` borrows it, and only a `Copy` value can come back out of a borrow
   ([Ownership and borrowing](/language/ownership)).
 
+## Bounding a type parameter
+
+A type parameter may carry one or more **bounds** after a `:`, separated by
+`+`. The bound names a `trait` ([Traits and static dispatch](/language/traits)):
+
+```kelp
+fun area_of<T: Shape>(s: &T).R: f64 = s.area()
+fun describe<T: Shape + Named>(s: &T).R: f64 = s.area() + s.name_length()
+```
+
+- At every call, the type argument must implement every bound, and a call that
+  does not is an error naming the callee, the type and the trait. The check runs
+  where the instantiation is created, so a satisfied call compiles to the same
+  monomorphized function it would have without the bound.
+- Inside the body, a method call on a `T` resolves against the concrete type
+  each instantiation binds, so the code the bound admits is the type's own
+  direct call. Dispatch stays static: there is no `dyn` and no vtable.
+- Bounds are checked transitively. A bounded generic may call another bounded
+  generic with its own parameter, and the inner call is checked when the outer
+  function is instantiated.
+- The bound goes on the parameter; a `where` clause is refused by name.
+
 ## What is not generic
 
 - No method type parameters beyond the receiver's own.
@@ -148,4 +170,5 @@ fun empty_of<T>().R: List<T> = List.empty()
 - [`datac` and `enum`](/language/data-types)
 - [Functions](/language/functions)
 - [Methods and receivers](/language/methods)
+- [Traits and static dispatch](/language/traits)
 - [Limits in v1](/language/limits)

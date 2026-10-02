@@ -33,8 +33,17 @@ the fix. Source: [`syntax.md` §18 and §22](https://homelabone.xenoo.dev/gittea
 | `.as_str()` on a temporary is refused | bind the `String` to a `val` first (same for `.view()`); a chained call is the same temporary one step out (`fmt.int(n).as_str()`) |
 | a template is refused as a value | `a string template can only be printed`: build the text with `str.concat`, `fmt.*` or a `String`, or print it where it is written |
 | `field 'text' is a borrowed type ('View')` | a view cannot be stored: store a `String` |
-| `cannot compare 'View' values with '=='` | use `v.eq(other)`, which compares bytes and lengths |
+| comparing two `str` values | a `str` is a borrowed pointer, so `==` would compare addresses: use `str.eq`, or compare two `View`s with `v == w` |
 | `field 'text' is a borrowed type (str)` | same as the `View` case: a field must be owned |
+
+## Equality
+
+| Message | What happened | Fix |
+| --- | --- | --- |
+| `cannot compare 'P' values with '=='` | a `datac`/`enum` gets `==`/`!=` only from a declared `eq`, and nothing is derived | declare `fun P.eq(other: &P).R: bool`, which `a == b` lowers to (`a.eq(&b)`); or compare the fields directly, or match with `when` |
+| `cannot compare 'P' values with '<'` | `<`/`<=`/`>`/`>=` are refused on every owned `datac`/`enum`, declared `eq` or not | compare the fields you mean, or write the ordering method you want |
+| `'P.eq' takes exactly one parameter, a shared borrow of 'P'` | the `eq` method has the wrong signature | write `fun P.eq(other: &P).R: bool`: one parameter, a shared borrow of the type, returning `bool` |
+| `cannot compare 'A' with 'B'` | the two operands are different types | make both sides the same type |
 
 ## Characters and integers
 
@@ -58,7 +67,7 @@ the fix. Source: [`syntax.md` §18 and §22](https://homelabone.xenoo.dev/gittea
 | `List.empty()` / `Map.new()` has no element type | nothing said what is inside and nothing decided it: write it on the binding (`var xs: List<i32> = List.empty()`), or `push`/`insert`/`set` a value, which decides the element |
 | a `Map` value or an array element is a container | a `List` element and a `Box` element may be a `List` or a `Box`, but a `Map` value and an array element may not be a container at all; wrap the inner one in a one-field `datac` |
 | `Map` key type refused | a key is keyable when the compiler can derive its hash and its equality: `String`, an integer, `bool`, `char`, or a `datac`/`enum`/tuple whose fields, variant payloads or positions are all keyable, and a `datac`/`enum` outside that set becomes a key by declaring `hash` and `eq`. The message names the field that is not, or the half of the pair that is missing |
-| `for` cannot `push` to what it walks | the loop borrows its iterable; iterate over a copy or index the source |
+| `cannot mutate 'xs' while iterating over it` | the body may read the list it walks but not change it; walk a different list, or change the source by index in a `while` |
 
 ## Tuples
 

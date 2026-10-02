@@ -128,8 +128,24 @@ for x in xs {
   `for name in names` reads `name: &String`, so a `str` call wants
   `name.as_str()`. An array's `get` gives the same thing, and its `len` is the
   type's own length.
-- The iterable is *borrowed* when it is a place, so the body cannot `push` to
-  what it walks.
+- The body may **read** the place it walks (`xs.get(i)`, `xs.len()`, `&xs`), and
+  may walk or change a **different** list, but it may not mutate the one it
+  walks. A `mut` receiver method on it (`push`, `pop`, `remove`, `insert`,
+  `set`, `clear`, `sort`, `reverse`), an assignment to it, a move of it, taking
+  `&mut xs`, and passing it to a `mut` parameter are all one compile error,
+  reported on the `for` line:
+
+  ```
+  error: cannot mutate 'xs' while iterating over it
+  ```
+
+  A `fun` literal written in the body cannot capture it either: a capture moves
+  or copies, and the move is refused the same way. The rule names the place, so
+  `for x in self.items { self.other.push(x) }` is legal while
+  `for x in self.items { self.items.push(x) }` reports
+  `cannot mutate 'self.items' while iterating over it`.
+- When the loop has to change what it walks, walk it by index with `while`
+  instead: that is the supported pattern, and no such rule applies to it.
 - Anything else (a call, a literal, or a field of one) is bound to a temporary
   the loop owns and frees, and is evaluated **once**. A field chain over a
   temporary stages its *root*: `for x in mk().items` binds `mk()` once and walks

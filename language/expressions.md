@@ -72,6 +72,57 @@ val low = byte & 15
 val flipped = ~byte
 ```
 
+## Equality
+
+`==` and `!=` work for scalars, for two `View` values (byte-wise and
+length-aware, exactly like `view.eq`), and for a `View` against a `str` (the
+`str` is viewed first). Comparing two `str` values is refused, because it would
+compare addresses; use `str.eq`.
+
+**A type gets `==`/`!=` by declaring `eq`.** A `datac` or `enum` `T` that
+declares `fun T.eq(other: &T).R: bool` gets the operators from that method:
+
+```kelp
+datac P(val x: i32, val tag: i32)
+
+fun P.eq(other: &P).R: bool = self.x == other.x && self.tag == other.tag
+
+fun main() {
+    val a = P(x = 1, tag = 1)
+    val b = P(x = 1, tag = 1)
+    val c = P(x = 2, tag = 1)
+    print(a == b)   // true
+    print(a != c)   // true
+}
+```
+
+- `a == b` means `a.eq(&b)` and `a != b` means `!a.eq(&b)`. The front end
+  rewrites the operator into that call *before* borrow checking and code
+  generation, so both are ordinary calls of the declared body and no backend
+  gains an operator. Each operand is evaluated exactly once, left to right, and
+  is only borrowed, never moved, so an owned binding, a `&T`/`mut T` borrow, or
+  a mix of the two all compare.
+- `eq` alone is enough for the operator. A `Map` *key* still needs the pair,
+  `hash` and `eq`, and a lone `hash` is still refused
+  ([Collections](/language/collections)).
+- The signature is fixed: exactly one parameter, a **shared borrow** of `T`,
+  returning `bool`. A different signature is refused where the method is
+  declared, with the spelling to write:
+
+  ```
+  error: 'P.eq' takes exactly one parameter, a shared borrow of 'P', so write 'fun P.eq(other: &P).R: bool'
+  ```
+
+- **Nothing is derived.** A `datac`/`enum` without a declared `eq` keeps the
+  refusal, and so does `<`/`<=`/`>`/`>=` on any such type:
+
+  ```
+  error: cannot compare 'P' values with '==': a datac has no generated equality
+  error: cannot compare 'P' values with '<': a datac has no generated equality
+  ```
+
+- The two operands must be the same type: `cannot compare 'A' with 'B'`.
+
 ## Borrows and dereference
 
 ```kelp

@@ -125,10 +125,10 @@ An identifier starts with a letter or `_`. These are the keywords (§2.3):
 
 ```
 as  closure  const  datac  elif  else  enum  extern  false  for  fun  if  impl
-move  mut  pd  pub  return  true  val  var  when  while
+move  mut  pd  pub  return  trait  true  val  var  when  while
 ```
 
-`fn`, `let`, `struct`, `use`, `loop`, `break`, `continue`, `match`, `trait` and
+`fn`, `let`, `struct`, `use`, `loop`, `break`, `continue`, `match` and
 `self` are **not** keywords: writing `fn` is a parse error, and `self` is an
 ordinary identifier. `in` is not a keyword either: `for x in xs` reads it as a
 separator, so a binding may be named `in`.
