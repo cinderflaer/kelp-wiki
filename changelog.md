@@ -38,7 +38,7 @@ this page is the index to it.
 
 | Version | Date | Headline |
 | --- | --- | --- |
-| Unreleased | pending | `unsafe`/`Ptr<T>` and layout control; freestanding mode and kernel 0 booting under QEMU; per-CPU storage, user `Drop`, Sv39 and the user-mode syscall ABI; freestanding `String`/`Bytes`, `std/arena` and `Ptr.try_alloc`; stack guards and probing; a typed `TlsHandle` with `TlsError`/`TlsOptions`; the `try_` surface; the `mmio` capability; a compiler memory floor; traits with static dispatch; `==`/`!=` over a declared `eq`; the `for` mutation rule; `Mutex<T>` in `std/sync`; panic locations and double-panic detection |
+| Unreleased | pending | `unsafe`/`Ptr<T>` and layout control; freestanding mode and kernel 0 booting under QEMU; per-CPU storage, user `Drop`, Sv39 and the user-mode syscall ABI; freestanding `String`/`Bytes`, `std/arena` and `Ptr.try_alloc`; stack guards and probing; a typed `TlsHandle` with `TlsError`/`TlsOptions`; the `try_` surface; the `mmio` capability; a compiler memory floor; traits with static dispatch; `==`/`!=` over a declared `eq`; the `for` mutation rule; `Mutex<T>` in `std/sync`; panic locations and double-panic detection; the `irq` and `frames` capabilities; the freestanding `std` subset; the x86-64 target |
 | [26.09.5](#26095-2026-09-28) | 2026-09-28 | `std/tls` and `https`; `coral.toml`'s `[caps]` and `[extern]`; rate-limit headers on `Response`; two assignment leaks fixed; every program now needs OpenSSL to build |
 | [26.09.4](#26094-2026-09-26) | 2026-09-26 | the LLVM backend inlines builtin bodies; `Map`'s index halved, `Map.with_capacity`; unrolled loops, `noalias`, `llvm.sqrt.f64`; the benchmark suite published |
 | [26.09.3](#26093-2026-09-25) | 2026-09-25 | `thread.sleep_ms`/`current_id`; a unit-returning worker can be joined; concurrent downloads; the memory model published; `kelpc check --text` |
@@ -55,7 +55,7 @@ this page is the index to it.
 ## Unreleased
 
 Not a version number yet: this is what has landed since 26.09.5 and is waiting
-for a release to cut. Thirteen pieces, in the order they were built.
+for a release to cut. Sixteen pieces, in the order they were built.
 
 **`unsafe`, `Ptr<T>` and layout control.** A raw pointer type `Ptr<T>` and the
 `unsafe` blocks and `unsafe fun` that are the only way to dereference one.
@@ -241,6 +241,48 @@ a double panic) and asserts each exact line. Integer overflow still wraps and
 division by zero is still an unchecked UB, so neither has a message. See
 [Freestanding mode](/language/freestanding#panic-semantics) and
 [Kernel 0](/language/kernel).
+
+**`irq` and `frames` as capabilities.** Two device capabilities beside `mmio`:
+`irq` takes a decimal line or an inclusive range (`irq = ["10", "32-47"]`) and
+`frames` the same `"0xBASE+0xLEN"` byte windows. `irq.claim(n)` and
+`frame.claim(addr)` in the shipped [`std/irq`](/stdlib/irq) and
+[`std/frame`](/stdlib/frame) are the gated constructors and the only way a
+`Line` or a `Frame` enters a program; their struct literals are sealed to their
+modules, so another module cannot forge a receipt. A constant argument must fall
+inside a granted range, a `Frame` address must be 4096-aligned, and a computed
+argument needs the whole-resource `["*"]`. Unlike `mmio`, the check is in the
+front end and applies to a hosted program and a freestanding image alike, and
+the entry module holds both domains by default, so a kernel narrows them in
+`[caps]`. `examples/kernel0-caps` claims one of each and prints them over the
+UART. See
+[Capabilities](/language/capabilities#irq-and-frames-interrupt-lines-and-physical-frames).
+
+**The freestanding standard subset.** `freestanding.rs` decides each shipped
+`std/*` module with one table row (`Pure`, `Allocator`, `Subset`, `Present`,
+`Hosted`) instead of two hand-kept lists, the call-site check and the body
+pruning are driven by the same row, and a whole-module refusal names the modules
+a freestanding project may implement. Newly admitted: `std/math`'s integer
+`abs`/`min`/`max`/`clamp` and, with the `[target] alloc`/`dealloc` pair,
+`std/list` and the `std/option`/`std/result` callback combinators. The admitted
+list is `std/arena`, `std/atomic`, `std/frame`, `std/irq`, `std/list`,
+`std/math`, `std/option`, `std/result`, `std/str`; every other module is refused
+by name with "needs a hosted runtime", and `std/math`'s libm externs and the
+rest of `std/str` are refused by name inside the admitted module. See
+[Freestanding mode](/language/freestanding#the-freestanding-standard-subset).
+
+**The x86-64 target.** `[target] triple = "x86_64-unknown-none"` (the `-elf`
+spelling too) gets the X86 target machine and an x86-64 `_start` stub: a
+`.note.Xen` `XEN_ELFNOTE_PHYS32_ENTRY` note naming the entry, 32-bit code that
+loads a GDT with a 64-bit code segment, builds an identity map for the first
+1 GiB out of 2 MiB pages in a `.boot_pt` NOBITS section, enables PAE and
+`EFER.LME`, loads CR3 and sets `CR0.PG|PE`, then far-jumps into long mode, where
+it loads `rsp`, clears BSS, enables SSE and calls the entry; every emitted
+function is `noredzone`, and the target machine uses the static relocation and
+small code models. `examples/kernel0-x86_64` is a COM1 port-I/O driver and
+`examples/kernel0-x86_64-lmode` reads CR0/CR4/EFER, prints `long mode on` and
+then triple-faults on purpose; both boot under `qemu-system-x86_64 -M q35 -cpu
+qemu64 -no-reboot`. Interrupts and an IDT, the APIC, SMP and ACPI are not part
+of it. See [Freestanding mode](/language/freestanding#the-x86-64-target).
 
 ## 26.09.5 (2026-09-28)
 
