@@ -160,7 +160,7 @@ fails the build rather than defaulting to allowed.
 | `std/list` | Allocator | every item, once `[target] alloc`/`dealloc` are configured |
 | `std/mem` | Present | nothing is callable; `std/str` imports it, and the pruning pass drops its one extern |
 | `std/rt` | Present | nothing is callable; the resolver injects it for a gated module, and its bodies are pruned |
-| `std/encoding`, `std/path`, `std/io`, `std/fs`, `std/net`, `std/tls`, `std/http`, `std/ws`, `std/process`, `std/env`, `std/time`, `std/rand`, `std/thread`, `std/sync`, `std/fmt` | Hosted | refused by name; they reach libc, the allocator or the hosted runtime (`std/fmt`'s `hex_raw`/`bytes_raw` are `snprintf`-backed) |
+| `std/encoding`, `std/regex`, `std/path`, `std/io`, `std/fs`, `std/net`, `std/tls`, `std/http`, `std/ws`, `std/process`, `std/env`, `std/time`, `std/rand`, `std/thread`, `std/sync`, `std/fmt` | Hosted | refused by name; they reach libc, the allocator or the hosted runtime (`std/fmt`'s `hex_raw`/`bytes_raw` are `snprintf`-backed, and `std/regex`'s result types carry a `String` and its `View` slices are runtime calls) |
 
 A module whose row is `Allocator` and a program with no allocator pair is
 refused with the two manifest keys named, not left to the linker. A whole-module
