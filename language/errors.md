@@ -97,6 +97,14 @@ indices, popping an empty list, `option.unwrap` on `None`, a failing syscall, a
 division by zero in [`complex.div`](/libraries/complex), a scale mismatch in
 [`decimal`](/libraries/decimal).
 
+On bare metal there is no stderr and no process to end, so a freestanding
+project names its own handler with `[target] panic` and receives the message
+there, either as `fun(msg: str)` or as the location-carrying
+`fun(msg: str, file: str, line: u32)`; a panic that fires while the handler runs
+reaches a double-panic path instead of recursing. [Freestanding
+mode](/language/freestanding#panic-semantics) has the two shapes, the
+double-panic rule and the table of checks with their messages.
+
 The one kind of failure that ships *both* ways is a narrowing number
 conversion: `n.to_u8()` panics on a value that does not fit, and `n.try_to_u8()`
 hands back an [`Option`](/stdlib/option) instead, so a value that may be out of

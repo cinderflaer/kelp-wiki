@@ -1,6 +1,6 @@
 ---
 title: "Kernel 0"
-description: "The freestanding examples that boot under QEMU: the UART driver, trap handlers, per-CPU statics, Sv39 page tables, a user-mode trap frame and syscall ABI, a bump allocator behind `List`/`String`/`Bytes`, a stack guard and `mmio` grants."
+description: "The freestanding examples that boot under QEMU: the UART driver, trap handlers, per-CPU statics, Sv39 page tables, a user-mode trap frame and syscall ABI, a bump allocator behind `List`/`String`/`Bytes`, panic locations, a stack guard and `mmio` grants."
 isPublished: true
 tags: "language, freestanding, kernel"
 ---
@@ -40,6 +40,7 @@ hello from kelp
 | `examples/kernel0` | the driver, the entry, the halt | `hello from kelp` |
 | `examples/kernel0-trap` | a trap vector, an `ecall`, `mret` | `trap: ecall` then `done` |
 | `examples/kernel0-panic` | the compiler's bounds check reaches the handler | `panic: Array.get: index out of bounds` |
+| `examples/kernel0-panic2` | the location-carrying handler, one check per boot, and a double panic | `panic: <message> at <file>:<line>` per phase, then `double panic` |
 | `examples/kernel0-bss` | `_start` erased a marker the image loaded into `.bss` | `bss clear` |
 | `examples/kernel0-heap` | `List<i32>` over a bump allocator | `heap sum 55` then `balanced` |
 | `examples/kernel0-string` | `String`/`Bytes` on the project allocator | `s: hello kelp!`, `n: 12345`, `b: 300`, `balanced` |
@@ -147,10 +148,71 @@ fun kp_panic(msg: str) {
 }
 ```
 
-`[target] panic = "kp_panic"` is what routes every bounds and overflow check to
-that `fun(msg: str)`. The message is the check's own text, byte-identical to the
+`[target] panic = "kp_panic"` is what routes every compiler-inserted check to
+that handler. `kernel0` and `kernel0-panic` declare the one-argument shape; the
+three-argument shape that also carries the source location is the section below.
+The message is the check's own text, byte-identical to the
 C backend's, which is why `kernel0-panic` can assert that the line contains
 `index out of bounds` (the line the compiler writes, not one the example chose).
+
+## Panic location and the double panic
+
+A freestanding handler may take the compiler's location as well as the message:
+`examples/kernel0-panic2` declares the three-argument form, and the compiler
+refuses every other shape by name.
+
+```kelp
+fun kp_panic(msg: str, file: str, line: u32) {
+    uart.puts("panic: ")
+    uart.puts(msg)
+    uart.puts(" at ")
+    uart.puts(file)
+    uart.puts(":")
+    put_u32(line)
+    uart.puts("\n")
+    uart.halt()
+}
+```
+
+`file` is the source file name the diagnostic's `-->` ends with (`main.kp`) and
+`line` is the 1-based line of the statement the check was inserted into. The
+location names the statement, not the exact sub-expression, because one `locate`
+per statement is what the hosted line tables carry too. A check that lives
+inside a generated accessor shared by every call site (`Array.get`, `List.get`,
+`Bytes.get`, the allocator's out-of-memory path) reads the caller's statement
+from two `.bss` globals the compiler stored before it, so the line it names is
+the user's; a panic raised inside `std/option`'s own body names `option.kp`.
+
+Every check calls one compiler-emitted entry, and the entry calls the handler
+only once: it exchanges a `.bss` flag, and a check that fires while the handler
+is already running reaches `kelp_double_panic` instead of recursing. The
+compiler defines that weakly as a `wfi` loop; `examples/kernel0-panic2` links a
+strong definition beside the object (the same link-time override the `memcpy`
+fallbacks use) and prints `double panic`.
+
+One boot can show only one check, because a panic ends the machine, so `run.sh`
+rewrites the selector in a scratch copy and boots the project once per check:
+
+```sh
+nix-shell dev-kernel.nix --run 'examples/kernel0-panic2/run.sh'
+```
+
+```text
+phase 1: panic: Array.get: index out of bounds at main.kp:37
+phase 2: panic: i32.to_u8: value out of range at main.kp:43
+phase 3: panic: str.byte: index out of bounds at str.kp:24
+phase 4: panic: deliberate panic at main.kp:54
+phase 5: panic: Option.unwrap: value is None at option.kp:68
+phase 6: double panic
+run.sh: all six phases printed the lines the compiler named
+```
+
+Every expected line is computed from the source the compiler read (the message
+from the check, the line from a `panic-line: <name>` comment in `main.kp` or
+from the stdlib file), so the assertion is QEMU's serial bytes against the
+compiler's own claim. Integer overflow wraps and division by zero is unchecked
+UB, so neither has a message. [Freestanding
+mode](/language/freestanding#panic-semantics) carries the whole table of checks.
 
 ## The trap vector
 
@@ -330,8 +392,8 @@ through a kernel buffer. Before any byte moves, the pointer is validated:
 - `ptr > USER_LIMIT - len`, with `USER_LIMIT = 2^38` (one past the highest
   canonical Sv39 low address), refuses a range that would wrap `ptr + len` and
   refuses every pointer at or above the user limit. The arithmetic is written so
-  the addition itself cannot overflow, because the compiler's own overflow check
-  would panic the kernel instead of returning an error.
+  the addition itself cannot overflow, because a wrap would slip a range past
+  the bound check instead of being refused.
 - The copy walks the program's page table one page at a time with
   `vm.user_page_pa`, which answers only when the leaf has **both** `PTE_U` and
   `PTE_R`. A kernel address that happens to be mapped (the identity map is in
@@ -461,8 +523,8 @@ The remaining gaps, in order, from
 
 - **Interrupts are not set up.** `kernel0-trap` installs `mtvec` itself and
   nothing enables `mstatus.MIE`, models the privilege transition or claims an
-  interrupt line as a capability. Panic semantics with no OS is the other half
-  of stage 10 and is not merged yet.
+  interrupt line as a capability. Panic semantics with no OS, the row's other
+  half, is the [section above](#panic-location-and-the-double-panic).
 - **The `interrupt`/calling-convention attributes** stage 5 deferred are still
   open, so a trap handler is a naked body the compiler does not understand as a
   handler.
@@ -479,10 +541,8 @@ The remaining gaps, in order, from
   [`std/arena`](/stdlib/arena); the stack guard and the `probe-stack` attribute
   (stage 14) are the section above; and the `mmio` capability (stage 16) is the
   grant every example now carries.
-- **IRQ lines and physical frames** (the rest of the capabilities row) and
-  **panic semantics with no OS** (stage 10's other half) are what remains: an
-  abort message, a register dump and a panic path beyond the handler's own lines
-  are not here.
+- **IRQ lines and physical frames** (the rest of the capabilities row) are what
+  remains: an abort message and a register dump are still not here.
 - **No C-oracle coverage.** Freestanding is LLVM-only by design, so the usual
   "both backends, same behaviour" rule does not apply to these images. It still
   holds everywhere else.

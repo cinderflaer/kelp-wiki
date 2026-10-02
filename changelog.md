@@ -38,7 +38,7 @@ this page is the index to it.
 
 | Version | Date | Headline |
 | --- | --- | --- |
-| Unreleased | pending | `unsafe`/`Ptr<T>` and layout control; freestanding mode and kernel 0 booting under QEMU; per-CPU storage, user `Drop`, Sv39 and the user-mode syscall ABI; freestanding `String`/`Bytes`, `std/arena` and `Ptr.try_alloc`; stack guards and probing; a typed `TlsHandle` with `TlsError`/`TlsOptions`; the `try_` surface; the `mmio` capability; a compiler memory floor; traits with static dispatch; `==`/`!=` over a declared `eq`; the `for` mutation rule; `Mutex<T>` in `std/sync` |
+| Unreleased | pending | `unsafe`/`Ptr<T>` and layout control; freestanding mode and kernel 0 booting under QEMU; per-CPU storage, user `Drop`, Sv39 and the user-mode syscall ABI; freestanding `String`/`Bytes`, `std/arena` and `Ptr.try_alloc`; stack guards and probing; a typed `TlsHandle` with `TlsError`/`TlsOptions`; the `try_` surface; the `mmio` capability; a compiler memory floor; traits with static dispatch; `==`/`!=` over a declared `eq`; the `for` mutation rule; `Mutex<T>` in `std/sync`; panic locations and double-panic detection |
 | [26.09.5](#26095-2026-09-28) | 2026-09-28 | `std/tls` and `https`; `coral.toml`'s `[caps]` and `[extern]`; rate-limit headers on `Response`; two assignment leaks fixed; every program now needs OpenSSL to build |
 | [26.09.4](#26094-2026-09-26) | 2026-09-26 | the LLVM backend inlines builtin bodies; `Map`'s index halved, `Map.with_capacity`; unrolled loops, `noalias`, `llvm.sqrt.f64`; the benchmark suite published |
 | [26.09.3](#26093-2026-09-25) | 2026-09-25 | `thread.sleep_ms`/`current_id`; a unit-returning worker can be joined; concurrent downloads; the memory model published; `kelpc check --text` |
@@ -55,7 +55,7 @@ this page is the index to it.
 ## Unreleased
 
 Not a version number yet: this is what has landed since 26.09.5 and is waiting
-for a release to cut. Twelve pieces, in the order they were built.
+for a release to cut. Thirteen pieces, in the order they were built.
 
 **`unsafe`, `Ptr<T>` and layout control.** A raw pointer type `Ptr<T>` and the
 `unsafe` blocks and `unsafe fun` that are the only way to dereference one.
@@ -224,6 +224,23 @@ supported way to change what a loop walks. The differential sweep is a ratchet:
 `LLVM_BUILT_BASELINE` is 362 of the 655 corpus
 targets, 0 refused, 0 mismatches, 0 crashes, and it may only rise. See
 [Backends](/compiler/backends).
+
+**Panic semantics with no OS.** A freestanding panic handler may keep the
+original `fun(msg: str)` shape or take the location as
+`fun(msg: str, file: str, line: u32)`, and any other shape is refused by name.
+Every compiler-inserted check calls one compiler-emitted entry, which carries
+the check's own message and the 1-based line of the statement it was inserted
+into: the same per-statement source-map values the hosted line tables use, read
+from two `.bss` globals when the check lives in a generated body shared by every
+call site. The entry exchanges a `.bss` flag, so a check that fires while the
+handler is already running reaches `kelp_double_panic` instead of recursing; the
+compiler defines that weakly as a `wfi`/`wfe` loop and a project may override it
+with a strong definition. `examples/kernel0-panic2` boots one phase per check
+(array bounds, narrowing, `str.byte`, the `panic` builtin, `option.unwrap`, and
+a double panic) and asserts each exact line. Integer overflow still wraps and
+division by zero is still an unchecked UB, so neither has a message. See
+[Freestanding mode](/language/freestanding#panic-semantics) and
+[Kernel 0](/language/kernel).
 
 ## 26.09.5 (2026-09-28)
 

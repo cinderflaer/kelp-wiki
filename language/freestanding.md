@@ -1,6 +1,6 @@
 ---
 title: "Freestanding mode"
-description: "A bare-metal build: no libc, no runtime preamble, a compiler-emitted `_start`, the entry and panic functions and a linker script named in `[target]`. LLVM-only. riscv64 and aarch64. The allocator hook reroutes `Box`, `List`, `Map`, `String` and `Bytes`."
+description: "A bare-metal build: no libc, no runtime preamble, a compiler-emitted `_start`, the entry and both panic shapes and a linker script named in `[target]`. LLVM-only. riscv64 and aarch64. The allocator hook reroutes `Box`, `List`, `Map`, `String` and `Bytes`."
 isPublished: true
 tags: "language, freestanding, kernel"
 ---
@@ -35,7 +35,7 @@ realloc = "krealloc"        # optional, needs the pair
 | `triple` | yes in freestanding | the LLVM triple the project targets |
 | `entry` | yes in freestanding | a bare `fun` name in the entry module, with no parameters and no return |
 | `linker_script` | yes in freestanding | a path relative to the directory holding `coral.toml` |
-| `panic` | no | the bare name of a `fun(msg: str)` that never returns normally. Without it, the compiler generates a handler whose body loops forever |
+| `panic` | no | the bare name of the handler every compiler-inserted check calls. Two shapes: `fun(msg: str)` and the location-carrying `fun(msg: str, file: str, line: u32)`; any other shape is a compile error naming both. Without it, the compiler generates a handler whose body loops forever |
 | `alloc`, `dealloc` | no | the project's own allocator; see below |
 | `realloc` | no | the growth fast path; needs `alloc`/`dealloc` |
 
@@ -119,13 +119,108 @@ cannot reference a symbol the link would miss.
   need.
 - `static`/`static mut` and `defer`.
 - A user `extern fun` whose module has its own `[extern."<id>"]` section.
-- A call to the builtin `panic(msg)`, and the arithmetic/bounds checks, which
-  all call the project's `panic` handler (or the generated infinite loop).
+- A call to the builtin `panic(msg)`, and the bounds checks, which all route
+  through the compiler's panic entry to the project's `panic` handler (or the
+  generated infinite loop); see [Panic semantics](#panic-semantics).
 
 `std/str` is the one module that is partly allowed, because a kernel that prints
 anything has to walk text. Its raw primitives are emitted into the module as
 byte loops marked `optnone`, so the target's own loop-idiom pass cannot rewrite
 the NUL scan into a `strlen` call.
+
+## Panic semantics
+
+There is no process to kill and no stderr to print to, so a check that fires
+has to say what it caught and where. `[target] panic` names the handler; two
+shapes are accepted, and any other shape is a compile error naming both:
+
+```kelp
+fun kp_panic(msg: str)                                   // the original form
+fun kp_panic(msg: str, file: str, line: u32)             // with the location
+```
+
+```text
+error: the freestanding panic handler 'kp_panic' must be a 'fun(msg: str)' or a 'fun(msg: str, file: str, line: u32)', with no return, which are the shapes the compiler's checks call
+```
+
+The three-argument form also receives the source *file name* (`main.kp`, the
+last component of the module's path, the same spelling a diagnostic's `-->`
+ends with) and the 1-based *line* of the statement the check was inserted into.
+That is the same per-statement span the hosted backends' line tables and
+`#line` directives are built from, so a freestanding panic names the same line a
+hosted one would. The line is the statement the check belongs to, not the exact
+sub-expression: one `locate` per statement is the granularity both backends
+carry.
+
+A check never calls the handler directly. Every check calls one compiler-emitted
+entry, `kelp_panic_entry(msg, file, line)`, which:
+
+1. atomically exchanges a flag (`kelp_panic_active`, an `i32` in `.bss`) from 0
+   to 1,
+2. calls the handler when the old value was 0, because this is the first panic,
+   with one or three arguments by the handler's own shape, and
+3. calls `kelp_double_panic()` when the old value was 1, because a panic is
+   already in progress, and halts if that returns.
+
+`kelp_double_panic` is emitted as a **weak** definition whose body loops on the
+target's wait-for-interrupt instruction (`wfi` on riscv64, `wfe` on aarch64),
+the same way the `mem*` fallbacks below are weak. A project that supplies a
+strong definition in an object linked beside the image wins at link time, so a
+double panic can print instead of wedging; the weak halt is always defined, so
+the image has no undefined symbol. The exchange is atomic rather than a load and
+a store so two harts that panic at once cannot both think they are first.
+
+The location of a check inside a *generated* body (`Array.get`'s bounds check,
+`List.get`, `Bytes.get`, the allocator's out-of-memory path) cannot be a
+per-call-site constant, because that body is emitted once per type and shared by
+every call site. The compiler keeps two module globals, `kelp_panic_file` (a
+`ptr` to the current file-name string) and `kelp_panic_line` (an `i32`), stores
+the current statement's file and line into them before every statement of a
+`.kp` function, and the check loads them. The caller's statement is the last
+thing stored, so a panic inside the generated body names the user's line. A
+check emitted inline in the user's own function (`to_u8`'s range check,
+`panic(msg)`, `cpu_index()`) reads the same two globals. The cost is two stores
+per statement, and only a freestanding build pays it: the globals are declared
+and written only when `mode = "freestanding"`.
+
+Every compiler-inserted check in a freestanding build calls the entry with the
+message below.
+
+| Check | Message | Where emitted |
+| --- | --- | --- |
+| `Array.get`/`get_const`/`set` index | `Array.get: index out of bounds` | generated body |
+| `List.get`/`get_const` index | `List.get: index out of bounds` | generated body |
+| `List.pop` on an empty list | `List.pop: the list is empty` | generated body |
+| `List.insert` index | `List.insert: index out of bounds` | generated body |
+| `List.remove` index | `List.remove: index out of bounds` | generated body |
+| `List.slice` range | `List.slice: range out of bounds` | generated body |
+| `Box.get` on an empty box | `Box.get: the box is empty` | generated body |
+| `Box.take` on an empty box | `Box.take: the box is empty` | generated body |
+| `Map.get` missing key | `Map.get: key not found` | generated body |
+| `Map.remove` missing key | `Map.remove: key not found` | generated body |
+| `Bytes.get`/`set` index | `Bytes.get: index out of bounds` | generated body |
+| `Bytes.read_*`/`write_*` offset | `Bytes.read_u32_le: offset out of bounds` (per accessor) | inline |
+| `View.get` index | `View.get: index out of bounds` | generated body |
+| `str.byte` index | `str.byte: index out of bounds` | generated body |
+| narrow conversion | `i32.to_u8: value out of range` (per call) | inline |
+| allocator failure | `out of memory` | generated body |
+| `panic(msg)` | the program's own message | inline |
+| `std/option.unwrap`/`expect` | `Option.unwrap: value is None` (its own `panic`) | inline |
+| `std/arena.alloc` bad alignment | its own `panic` | inline |
+| `cpu_index()` out of range (debug) | `cpu index out of range` | inline |
+
+Two things a reader might expect to find in that table are deliberately not
+checks in this language:
+
+- **Integer overflow wraps.** There is no `nsw`/`nuw` on any arithmetic
+  instruction and no runtime overflow check.
+- **Division by zero is unchecked.** `sdiv`/`udiv` by zero is UB in LLVM
+  exactly as it is in C; the only guard is constant folding in the front end.
+
+With no `[target] panic`, the compiler still emits the entry and the weak
+`kelp_double_panic`, and the entry's first-panic branch calls a generated
+infinite-loop handler. A check still stops the machine; it just prints nothing,
+which is the pre-stage behaviour.
 
 ## The allocator hook
 
