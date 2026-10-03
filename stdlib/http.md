@@ -230,10 +230,11 @@ The same module serves HTTP/1.1, with no extra capability: it is pure Kelp over
 [`std/net`](/stdlib/net). `listen`, `accept` and the connection calls are gated
 exactly as `net.listen` is, checked against the **port** of the importing
 module's `net` grant (`caps(net = ["127.0.0.1:8080"])` or `"127.0.0.1:*"`).
-**Listening cannot be restricted to one host today:** `net.listen` always binds
-`0.0.0.0`, and the host part of a grant constrains nothing for a listener (open
-item 55). A server that must not be reachable off the machine wants a reverse
-proxy or another sandbox in front of it.
+**The grant's host decides which interface the server binds:** `http.listen` goes
+through `net.listen`, so under `caps(net = ["127.0.0.1:*"])` it binds `127.0.0.1`
+only, and a grant that includes `*` (or any pattern matching `0.0.0.0`) binds
+every interface. A server that must be reachable from the network needs a grant
+that says so. See the [threat model](/reference/capability-threat-model).
 
 ### Types
 

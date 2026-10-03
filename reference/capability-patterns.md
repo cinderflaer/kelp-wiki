@@ -47,6 +47,11 @@ impl "std/net" caps(net = ["*"])                     // anything
 - The connection pool in [`std/http`](/stdlib/http) is keyed on the host as
   written for exactly this reason.
 - A bare `host` matches any port on that host.
+- A host part made only of digits, dots and `*` (`10.0.0.*`) matches **IPv4
+  literals only**, never a name like `10.0.0.xyz`.
+- For `net.listen` the host part picks the interface: `*`, `0.0.0.0` or a glob
+  matching it binds every interface, anything else binds `127.0.0.1`. See the
+  [threat model](/reference/capability-threat-model).
 
 ## `fs` and `process`
 

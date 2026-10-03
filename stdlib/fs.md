@@ -13,7 +13,8 @@ impl "std/fs" caps(fs = ["/srv/data/**"])   // a library, granted a pattern
 
 `fs` patterns are **absolute paths**, normalized lexically and resolved through
 symlinks *before* matching, so a symlink inside the grant that points outside it
-is denied. The grant is the ceiling for the whole module.
+is denied, and so is a write through a link whose target does not exist yet. The
+grant is the ceiling for the whole module.
 
 ## Types
 

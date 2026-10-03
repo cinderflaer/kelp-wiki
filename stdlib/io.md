@@ -92,7 +92,9 @@ number into its text, so `errno_text(13)` is `"Permission denied"`.
 
 - A `File` is a raw descriptor: `File(fd = 3)` is whatever the program happens to
   have open at 3. Nothing here validates that, and nothing here closes a
-  descriptor you did not open.
+  descriptor you did not open. Writing `File(fd = n)` yourself needs the `fs`,
+  `net` or `process` capability (the entry module holds all three by default); a
+  module that holds none is refused at compile time.
 - `read` returns **empty** `Bytes` at end of file, which is how the
   [`lineproto`](/libraries/lineproto) reader detects a closed peer.
 - Reading and writing do not allocate a buffer per call: `read_all` grows one.

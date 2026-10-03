@@ -16,6 +16,16 @@ impl "std/net" caps(net = ["*"])                 // anyone
 resolved address, so `127.0.0.1:*` does not cover `localhost`. A pattern is
 `host`, `host:port`, `*.host`, `*:port` or `*`.
 
+A pattern made only of digits, dots and `*` (`10.0.0.*`) matches **IPv4
+literals only**: it does not admit a host *name* such as `10.0.0.xyz`, in
+`connect` or in `resolve`.
+
+`listen(port)` is checked against the **port** of the grant, and the grant's host
+decides the interface: a grant that includes `*` or any pattern matching
+`0.0.0.0` binds every interface, and a grant of loopback or named hosts only
+(`127.0.0.1:*`, `localhost:*`) binds `127.0.0.1`. See the
+[threat model](/reference/capability-threat-model).
+
 ## Types
 
 ```kelp

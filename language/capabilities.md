@@ -146,7 +146,25 @@ Consequences worth internalizing:
   Two spellings of one address can fall under different grants, and the HTTP
   connection pool is keyed on the host as written for exactly that reason.
 - A symlink inside a granted directory that points outside it is denied, because
-  resolution happens first.
+  resolution happens first. That includes a link whose target does not exist yet:
+  writing through `data/dangling -> ../secret/new.txt` is refused as writing
+  `secret/new.txt`, not accepted because the target is missing.
+- **A numeric host pattern admits IPv4 literals only.** `10.0.0.*` (digits, dots
+  and `*`) matches `10.0.0.7` and does not match the name `10.0.0.xyz`, which
+  DNS could point anywhere; `net.connect` and `net.resolve` both refuse it.
+- **A listener binds as widely as the grant's host allows.** `net.listen(port)`
+  has no host argument, so the grant decides: a pattern whose host is `*`,
+  `0.0.0.0` or a glob matching it (or names no host) gives a listener on every
+  interface, and a grant of only loopback or named hosts (`127.0.0.1:*`,
+  `localhost:*`) gives one bound to `127.0.0.1`.
+- **`process.kill` and `process.wait` only take a child this program spawned.** A
+  pid the program did not start panics with `process.kill: not a child this
+  program started`, whatever the grant.
+- **A handle cannot be forged from a number by a module with no grant.**
+  `io.File(fd = 3)`, `net.Socket(fd = 5)` and the other descriptor handles need
+  the domain that mints them; a module holding none is refused at compile time.
+  Two modules that both hold `fs` can still use each other's descriptors (a
+  [known gap](/reference/capability-threat-model#known-gaps)).
 - **An `fs` path passed to a gated call must be absolute and must not contain
   `..`.** Build one from a relative argument with
   `path.absolute(fs.cwd(), arg)`: `fs.cwd()` reads the process's working
@@ -202,6 +220,10 @@ is a fact about the machine rather than a resource the root of trust owns. The
 whole-address-space grant has to be written where a reviewer will see it,
 `[caps] mmio = ["*"]` or `caps(mmio = ["*"])`. A range can only be delegated by
 a module that holds it, the same no-escalation rule every other domain has.
+
+A constant shift of 64 or more bits is not folded, so `0x10000000 + (0x100000 <<
+70)` is a computed address (refused under a range grant) rather than being folded
+to the granted `0x10000000`.
 
 The limits are honest and worth writing down: the check is on the address a
 pointer is **born** at, so an offset applied afterwards (`p.byte_offset(n)`,
@@ -378,6 +400,8 @@ failure as a panic from the gated call.
 
 ## See also
 
+- [Capability threat model](/reference/capability-threat-model): the attacker, the
+  seven holes fixed and the gaps that are still open
 - [Capability patterns](/reference/capability-patterns): the pattern grammar in full
 - [`std/fs`](/stdlib/fs), [`std/net`](/stdlib/net), [`std/process`](/stdlib/process),
   [`std/env`](/stdlib/env), [`std/time`](/stdlib/time), [`std/rand`](/stdlib/rand),

@@ -39,7 +39,9 @@ error: module 'main' is not listed in coral.toml [unsafe] modules
 ```
 
 An `unsafe` block or an `unsafe fun` counts as the module containing it, and
-`kelpc check` enforces the rule exactly as `kelpc build` does.
+`kelpc check` enforces the rule exactly as `kelpc build` does. The audit also
+reads the **default methods of a trait**, so an `unsafe` block in one is refused
+in an unlisted module like any other.
 
 ## `unsafe` blocks and `unsafe fun`
 

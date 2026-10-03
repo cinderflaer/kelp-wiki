@@ -185,10 +185,10 @@ output pinned or is refused with a message that says what to do next:
 - **`std/http` also serves HTTP/1.1.** The server is pure Kelp over `std/net`,
   with a `Limits` table, keep-alive, pipelining, chunked and
   `Expect: 100-continue` request bodies, and `serve_threaded` worker threads.
-  **Listening cannot be restricted to one host:** `net.listen(port)` always
-  binds `0.0.0.0`, and the host part of a `net` grant constrains nothing for a
-  listener, so a grant for `127.0.0.1:8080` still lets a module bind
-  `0.0.0.0:8080` (open item 55). `net.mono_ms`, `net.try_accept`,
+  **A listener binds the interface its grant allows:** `net.listen(port)` has no
+  host argument, so a loopback-only grant (`127.0.0.1:8080`) binds `127.0.0.1`
+  and a grant that includes `*` binds every interface
+  ([threat model](/reference/capability-threat-model)). `net.mono_ms`, `net.try_accept`,
   `Listener.set_timeout` and `net.try_shutdown_write` exist for it.
 - **(decided 2026-09-26, roadmap item 37; done, MK5-S4b-M1)** TLS shipped:
   [`std/tls`](/stdlib/tls) links the system OpenSSL, and `http.parse_url` now
