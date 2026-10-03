@@ -13,13 +13,15 @@ after it (`kelpc lint` below, the comment-run and naming-case findings, the
 `kelpc 26.09.0`.
 
 ```text
-usage: kelpc build <file.kp> [-o <out>] [-O0|-O1|-O2|-O3|-Os] [--deny-outdated] [--incremental] [--timings]
-       kelpc run <file.kp> [-O0|-O1|-O2|-O3|-Os] [--deny-outdated] [--incremental] [--timings]
+usage: kelpc build <file.kp> [-o <out>] [-O0|-O1|-O2|-O3|-Os] [--deny-outdated] [--incremental] [--timings] [--sanitize=address|undefined|thread]
+       kelpc run <file.kp> [-O0|-O1|-O2|-O3|-Os] [--deny-outdated] [--incremental] [--timings] [--sanitize=address|undefined|thread]
        kelpc check <file.kp> [--json] [--deny-outdated] [--text]
        kelpc fmt <file.kp>
        kelpc fmt -w <path>...
        kelpc fmt --check <path>...
        kelpc lint <path>...
+       kelpc doc <file.kp|project dir>... [-o <dir>] [--format md|html] [--private] [--check]
+       kelpc doc --std [-o <dir>] [--format md|html] [--private] [--check]
        kelpc cache stats|clear [--dir <dir>]
        kelpc version
 ```
@@ -42,6 +44,9 @@ above, and `kelpc version` is the version query.
 | `kelpc fmt -w <path>...` | rewrites files in place | 1 if any input fails to parse |
 | `kelpc fmt --check <path>...` | writes nothing, exits 1 if anything is not already formatted | 0 or 1 |
 | `kelpc lint <path>...` | writes warnings to stderr for the style rules a formatter cannot enforce, and writes no file | 0 even when it warns; 1 only for a path it cannot read or a file it cannot lex |
+| `kelpc build <file.kp> --sanitize=<kind>` | builds with `address`, `undefined` or `thread` sanitizing; the C backend only, so the default backend refuses it ([Sanitizer builds](/tooling/sanitizers)) | 0, or 1 on a diagnostic or the refusal |
+| `kelpc doc <file.kp\|project dir>...` | writes one documentation page per module plus an index from the `///` and `//!` comments, to `doc/` or `-o <dir>`, as Markdown or HTML ([`kelpc doc`](/tooling/kelpc-doc)) | 0, or 1 for a path it cannot read; with `--check`, 1 when a listed item has no doc |
+| `kelpc doc --std` | the same for the shipped standard library | as above |
 | `kelpc cache stats` | prints the per-unit object cache's entry count and total size | 0 |
 | `kelpc cache clear` | deletes every cached unit object | 0, or 1 when the directory cannot be removed |
 | `kelpc version` | prints the release name the binary was built from: `kelpc 0.2.2` for the release tagged `v0.1.4`, and `kelpc 26.09.0` for the first release under the `YY.MM.N` scheme (`26.09.0`; the crate carries the semver-legal `26.9.0` and this command pads the month back) | 0 |
@@ -563,7 +568,8 @@ file changes three things:
    `name`, `version` and `entry` (plus `http_pool` and `naming_case`), and it
    reads `[build]`, `[target]`, `[caps]`, `[unsafe]` and `[extern."..."]`
    itself, because those change what it compiles: `[build] incremental = true`
-   turns on the per-unit split. Every other section (`[tasks]`,
+   turns on the per-unit split, and `[build] sanitize = "address"` asks for a
+   [sanitizer build](/tooling/sanitizers). Every other section (`[tasks]`,
    `[dependencies]`, `[toolchain]`) is Coral's manifest surface, and the
    compiler skips its lines rather than rejecting them.
 
@@ -579,6 +585,9 @@ kelpc build src/main.kp -o myproject/app   # from the project root: same module 
 
 ## See also
 
+- [`kelpc doc`](/tooling/kelpc-doc)
+- [Sanitizer builds](/tooling/sanitizers)
+- [Front-end fuzzing and parser limits](/tooling/fuzzing)
 - [Coral](/tooling/coral)
 - [Tooling](/tooling)
 - [Projects and coral.toml](/getting-started/projects)

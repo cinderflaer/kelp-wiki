@@ -29,6 +29,16 @@ them.
   ([Generic traits, `From` and `?` conversion](/language/generic-traits)).
 - A function returning `Unit` has nowhere to propagate to.
 
+## Source size and shape
+
+- **Nesting is capped at 200 levels, and a chain at 800 links.** The parser
+  refuses more than 200 levels of expressions, prefix operators, types, type
+  arguments, blocks and binding patterns inside one another, and more than 800
+  links in an operator or access chain, with an ordinary error
+  (`this nests more than 200 levels deep ...`, `this chain of operators or
+  accesses is longer than 800 links ...`). Written code is nowhere near either.
+  See [Front-end fuzzing and parser limits](/tooling/fuzzing).
+
 ## Data and generics
 
 - **A tuple is read by destructuring and nothing else.** There is no positional
