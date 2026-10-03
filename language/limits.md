@@ -199,7 +199,8 @@ and `std/ws` is §16.18 of the same document.
   the codepoint helpers are the separate `char_*` set.
 - **No regular-expression literals in the language.** Patterns are data, so a
   regex is [`std/regex`](/stdlib/regex): a linear-time Pike VM over bytes with a
-  documented subset, refused in a freestanding project. [`glob`](/libraries/glob)
+  documented subset, freestanding with the `[target] alloc`/`dealloc` pair.
+  [`glob`](/libraries/glob)
   still has the `*`/`?` shell patterns.
 
 ## Not present at all

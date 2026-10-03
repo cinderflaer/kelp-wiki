@@ -77,9 +77,9 @@ message names the construct.
   `kelp_assert`), a defined `main` (the hosted entry point and its
   `argc`/`argv` globals), `Ptr.alloc`/`Ptr.free` (the hosted `malloc`/`free`),
   passdowns (`pd`, whose initializers run through the generated `kelp_init_pds`
-  that only the hosted entry point calls), `View` and `Thread` (which always
-  reach the hosted C runtime), `Box`, `List`, `Map`, `String` and `Bytes` when
-  no allocator pair is configured, and any `std/*` module except the pure ones
+  that only the hosted entry point calls), `Thread` (which always reaches the
+  hosted C runtime), `Box`, `List`, `Map`, `String` and `Bytes` when no
+  allocator pair is configured, and any `std/*` module except the admitted ones
   below.
 
 ```text
@@ -110,8 +110,9 @@ cannot reference a symbol the link would miss.
 - `Atomic<T>` and its methods, plus the admitted standard modules below:
 the pure `std/atomic`, `std/arena`, `std/irq` and `std/frame`, `std/option`'s
 and `std/result`'s value helpers, `std/math`'s integer
-`abs`/`min`/`max`/`clamp`, and `std/list` and the `std/option`/`std/result`
-callback combinators with the `[target] alloc`/`dealloc` pair configured.
+`abs`/`min`/`max`/`clamp`, and, with the `[target] alloc`/`dealloc` pair
+configured, `std/list`, `std/regex` and the `std/option`/`std/result` callback
+combinators.
 - The five `std/str` operations the compiler lowers itself: `str.len`,
   `str.byte`, `str.eq`, `str.starts_with` and `str.ptr`. With an allocator
   configured, the three builders `str.concat`, `str.from_u64` and `str.from_i64`
@@ -119,6 +120,17 @@ callback combinators with the `[target] alloc`/`dealloc` pair configured.
   of the module (and `std/mem`, which it imports) is dropped from the AST before
   inference, so its bodies and the type instances they would instantiate never
   exist.
+- `View`, the borrowed `{ptr, len}` pair with no storage of its own: all five of
+  its operations (`len`, `is_empty`, `get`, `slice`, `eq`) are lowered into the
+  module as byte loops. `View.to_string` copies into an owned `String`, so it is
+  kept only with the `[target] alloc`/`dealloc` pair.
+- A `datac` or `enum` with a `String` field. The derived key equality the
+  compiler emits for a keyable type is now a length-aware byte loop in a
+  freestanding image too, the body hosted code gets from `kelp_map_key_eq`, so
+  such a type compares and hashes with no libc behind it. `examples/kernel0-eq`
+  is the proof: it prints a `String`-field equality, a `Map` lookup through the
+  derived pair, a `Bytes`-field equality (a declared `eq` that walks the bytes),
+  a `View` slice and a `std/regex` match over the UART on riscv64 and x86-64.
 - `Ptr<T>`, the compile-time `size_of`/`align_of`/`offset_of`, `unsafe`,
   `asm` and naked functions. `Ptr.alloc`/`Ptr.free` stay refused; `Ptr.try_alloc`
   is allowed by the same `[target] alloc`/`dealloc` pair `String` and `Bytes`
@@ -158,19 +170,21 @@ fails the build rather than defaulting to allowed.
 | `std/str` | Subset | `len`, `byte`, `eq`, `starts_with`, `ptr`; with the allocator pair, `concat`, `from_u64`, `from_i64`; every other function refused by name |
 | `std/math` | Subset | the integer `abs`, `min`, `max` and `clamp`; the sixteen libm externs, the `f64` overloads of the four arithmetic ones and `sign` are refused by name |
 | `std/list` | Allocator | every item, once `[target] alloc`/`dealloc` are configured |
+| `std/regex` | Allocator | every item, once `[target] alloc`/`dealloc` are configured; the parser, the program and the Pike VM are `List` and integer code, and the derived `String` equality plus the `View` operations are lowered into the module |
 | `std/mem` | Present | nothing is callable; `std/str` imports it, and the pruning pass drops its one extern |
 | `std/rt` | Present | nothing is callable; the resolver injects it for a gated module, and its bodies are pruned |
-| `std/encoding`, `std/regex`, `std/path`, `std/io`, `std/fs`, `std/net`, `std/tls`, `std/http`, `std/ws`, `std/process`, `std/env`, `std/time`, `std/rand`, `std/thread`, `std/sync`, `std/fmt` | Hosted | refused by name; they reach libc, the allocator or the hosted runtime (`std/fmt`'s `hex_raw`/`bytes_raw` are `snprintf`-backed, and `std/regex`'s result types carry a `String` and its `View` slices are runtime calls) |
+| `std/encoding`, `std/path`, `std/io`, `std/fs`, `std/net`, `std/tls`, `std/http`, `std/ws`, `std/process`, `std/env`, `std/time`, `std/tz`, `std/rand`, `std/thread`, `std/sync`, `std/fmt` | Hosted | refused by name; they reach libc, the allocator or the hosted runtime (`std/fmt`'s `hex_raw`/`bytes_raw` are `snprintf`-backed, and `std/tz` reads a TZif file and asks the environment for `$TZDIR`) |
 
 A module whose row is `Allocator` and a program with no allocator pair is
-refused with the two manifest keys named, not left to the linker. A whole-module
+refused with the two manifest keys named, not left to the linker (`std/list`
+and `std/regex` are the two). A whole-module
 refusal says "needs a hosted runtime" and then names the modules a freestanding
 project may implement, derived from the same table so it cannot drift:
 `std/arena, std/atomic, std/frame, std/irq, std/list, std/math, std/option,
-std/result, std/str`.
+std/regex, std/result, std/str`.
 
 ```text
-error: the module 'std/time' is unavailable in a freestanding build: it needs a hosted runtime (libc or the 'kelp_rt' helpers); the std modules a freestanding project may implement are std/arena, std/atomic, std/frame, std/irq, std/list, std/math, std/option, std/result, std/str
+error: the module 'std/time' is unavailable in a freestanding build: it needs a hosted runtime (libc or the 'kelp_rt' helpers); the std modules a freestanding project may implement are std/arena, std/atomic, std/frame, std/irq, std/list, std/math, std/option, std/regex, std/result, std/str
 ```
 
 A refused item inside an admitted module is refused at the call instead, the
@@ -319,8 +333,10 @@ output calls the project's functions instead of libc's `malloc`, `realloc` and
 allocation (the project's `alloc` returns null) calls the project's panic
 handler with `"out of memory"`, so it is a panic and never a null dereference.
 
-`View` and `Thread` stay refused either way, because their operations reach
-`strlen`/`memcpy`/`realloc` in the hosted runtime.
+`Thread` stays refused either way, because its operations reach the hosted
+runtime. `View` is admitted: its accessors are byte loops lowered into the
+module, and `View.to_string` is listed with the allocator-using operations, so
+it is callable only with `[target] alloc`/`dealloc`.
 
 ### `String` and `Bytes` on the project allocator
 

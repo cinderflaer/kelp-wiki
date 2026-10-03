@@ -1,12 +1,12 @@
 ---
 title: "`std/regex`"
-description: "A linear-time regular expression engine in pure Kelp: a Pike VM over bytes, a documented pattern subset, and backreferences, lookaround and named groups refused at compile. Hosted only."
+description: "A linear-time regular expression engine in pure Kelp: a Pike VM over bytes, a documented pattern subset, and backreferences, lookaround and named groups refused at compile. Freestanding with the allocator pair."
 isPublished: true
 tags: "stdlib, text"
 ---
 A linear-time regular expression engine in pure Kelp. It needs no capability of
-its own, and it is **hosted only**: a freestanding project that imports it is
-refused by name.
+its own, and it is **freestanding-capable** with the `[target] alloc`/`dealloc`
+pair; a build with no allocator pair is refused the way any heap type is.
 
 ```kelp
 impl "std/regex"
@@ -147,15 +147,35 @@ reports the count for a test that wants to see the linearity.
 
 ## Freestanding
 
-`std/regex` is **hosted only**. It was built into a riscv64 image with an
-allocator to see whether the allocator subset was enough. The parser, the program
-and the VM link clean, because they are `List` and integer code. Two things do
-not: `Match`, `RegexErr` and `Option<String>` each carry a `String`, and the
-derived equality the compiler emits for such a `datac`/`enum` calls the hosted
-`kelp_map_key_eq`; and `View.slice`/`View.to_string` are runtime calls a
-freestanding build does not define. Both are compiler work outside the module, so
-it is `Hosted` in `freestanding::std_admission` and a freestanding project that
-imports it is refused by name with the allowed-module list.
+`std/regex` is **freestanding-capable** with the `[target] alloc`/`dealloc` pair
+(kernel stage 23), and its row in `freestanding::std_admission` is `Allocator`.
+The parser, the program and the Pike VM are `List` and integer code, so they
+always linked clean; two things beside them did not, and both are compiler work
+that shipped here.
+
+- `Match`, `RegexErr` and `Option<String>` each carry a `String`, and the derived
+  key equality the compiler emits for such a `datac`/`enum` (every type whose
+  fields are all keyable, whether or not it is ever a `Map` key) called the
+  hosted `kelp_map_key_eq`. The LLVM backend now emits that helper into a
+  freestanding image as the same length-aware byte loop `View.eq` uses, so a
+  `String`-field `datac` compares and hashes with nothing for `ld.lld` to
+  resolve.
+- `View.slice` and `View.to_string` had no freestanding lowering and the `View`
+  type itself was refused. `View` is a borrowed `{ptr, len}` pair with no storage
+  of its own, so all five of its operations are now admitted; `slice` is pointer
+  arithmetic with the same bounds panic the hosted body has, and `to_string`
+  allocates through the project's own allocator like every other `String`
+  builder.
+
+The acceptance is `examples/kernel0-eq` (riscv64) and
+`examples/kernel0-eq-x86_64`: a `String`-field `datac` with a declared `eq` and
+a `Map<Pair, i32>` that resolves through the derived pair, a `Bytes`-field
+`datac` whose declared `eq` walks the bytes, a `View.slice` and
+`View.to_string`, and a `regex.compile("[a-z]+(\\d+)")` matched against
+`"xx hello42"`, with the match text and capture group printed over the UART
+under QEMU. Both images link with no undefined symbol but the linker script's
+weak `__bss_*`, and `tests/projects/freestanding_std_regex` is the build
+project that pins the undefined-symbol check.
 
 ## Example
 

@@ -26,7 +26,7 @@ The domain each module needs comes from the compiler's own table
 | `std/math` | - | `sqrt`, `pow`, trig, `abs`/`min`/`max`/`clamp` |
 | `std/fmt` | - | number, grouping, byte-size and padding formatting into `String` |
 | `std/encoding` | - | base64, base32, base58, hex and percent encoding |
-| `std/regex` | - | a linear-time regular expression engine (hosted only) |
+| `std/regex` | - | a linear-time regular expression engine (freestanding with the allocator pair) |
 | `std/io` | - | `File`, `BufReader`, `print`/`eprint` |
 | `std/fs` | `fs` | read, write, walk, metadata |
 | `std/process` | `process` | `args`, `spawn`, `run`, `exit` |
@@ -35,6 +35,7 @@ The domain each module needs comes from the compiler's own table
 | `std/tls` | `net` (held) | client-side TLS: a typed `TlsError`, `TlsOptions` for a private CA and a timeout, a `try_` family, and truncation detection. Wraps a connection `std/http` or `std/ws` already opened, never dials its own |
 | `std/ws` | `net`, `rand` (both held) | a WebSocket client (RFC 6455) over `ws://` and `wss://`; importing it needs both delegated |
 | `std/time` | `time` | `now_unix`, `now_mono_ns`, `sleep_ms` |
+| `std/tz` | `fs`, `env` | TZif time zones: the offset at an instant, the wall clock it names, the `One`/`Ambiguous`/`Gap` answers and a `strftime` subset; hosted only |
 | `std/rand` | `rand` | unseeded `u64`, `below`, `bytes` |
 | `std/env` | `env` | `has`, `get`, `set`, `unset` |
 | `std/list` | - | `map`, `filter`, `each`, `find_index`, `any`, `all` |
@@ -87,6 +88,7 @@ The builtins are described in [Text](/language/text) and
 | `tls` | [`std/tls`](/stdlib/tls) |
 | `ws` | [`std/ws`](/stdlib/ws) |
 | `time` | [`std/time`](/stdlib/time) |
+| `tz` | [`std/tz`](/stdlib/tz) |
 | `rand` | [`std/rand`](/stdlib/rand) |
 | `env` | [`std/env`](/stdlib/env) |
 | `list` | [`std/list`](/stdlib/list) |

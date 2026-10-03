@@ -38,7 +38,10 @@ batch documented here adds the HTTP/1.1 server to `std/http`
 (`listen`/`accept`/`serve*`, `Limits`, `ServerRequest`/`ServerResponse`) with
 `net.mono_ms`, `net.try_accept`, `net.try_shutdown_write` and
 `Listener.set_timeout`, and a new module, `std/regex`, a linear-time Pike VM
-that is hosted only. The
+that is freestanding-capable with the allocator pair. The batch documented here
+adds `std/tz`, time zones over the system TZif database: the nine functions and
+five types below are the whole surface, and it is hosted only because it reads a
+file and `$TZDIR`. The
 kernel-path language surface
 (`unsafe`/`Ptr<T>`, `repr(...)`, statics, `defer`, the `[target]` manifest
 section) is not a stdlib name and lives on the [language pages](/language), not
@@ -575,6 +578,31 @@ Functions:
 - `fun now_mono_ns().R: i64`
 - `fun sleep_ms(ms: u64)`
 
+## `std/tz` (needs `fs` and `env`)
+
+Types:
+
+- `datac Zone(val times: List<i64>, val at_type: List<u8>, val offs: List<i32>, val dsts: List<bool>, val names: List<String>, val default_type: i32, val uniques: List<i32>, val tz: TzString)`
+- `datac Offset(val seconds: i32, val abbrev: String, val is_dst: bool)`
+- `datac LocalTime(val year: i32, val month: i32, val day: i32, val hour: i32, val minute: i32, val second: i32, val weekday: i32, val yday: i32, val offset: Offset)`
+- `enum Resolved`: `One(val unix: i64)`, `Ambiguous(val first: i64, val second: i64)`, `Gap`
+- `enum TzErr`: `NotFound`, `Denied`, `Corrupt(val message: String)`
+
+Functions:
+
+- `fun load(name: &str).R: result.Result<Zone, TzErr>`
+- `fun load_in(dir: &str, name: &str).R: result.Result<Zone, TzErr>`
+- `fun parse(data: move Bytes).R: result.Result<Zone, TzErr>`
+- `fun utc().R: Zone`
+- `fun fixed(offset_seconds: i32).R: Zone`
+- `fun Zone.offset_at(unix_seconds: i64).R: Offset`
+- `fun Zone.local_parts(unix_seconds: i64).R: LocalTime`
+- `fun Zone.to_unix(y: i32, m: i32, d: i32, h: i32, mi: i32, s: i32).R: Resolved`
+- `fun Zone.format(unix_seconds: i64, fmt: &str).R: String`
+
+Hosted only, because it reads a TZif file and `$TZDIR`. Full account on
+[`std/tz`](/stdlib/tz).
+
 ## `std/rand` (needs `rand`)
 
 Functions:
@@ -877,6 +905,7 @@ layer under it. The whole surface is on [`std/ws`](/stdlib/ws).
 | `std/tls` | 6 | 1 | net |
 | `std/ws` | 32 | 18 | net, rand |
 | `std/time` | 3 | 0 | time |
+| `std/tz` | 9 | 5 | fs, env |
 | `std/rand` | 3 | 0 | rand |
 | `std/env` | 4 | 0 | env |
 | `std/list` | 6 | 0 | - |
