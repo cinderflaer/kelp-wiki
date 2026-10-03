@@ -120,9 +120,10 @@ for a `val items`.
 has no `.len()` or `.as_str()`: use `str.len(t)` on it, or copy it with `String.from_str`.
 Check the return type in [`std/str`](/stdlib/str) before chaining.
 
-### Loops without `break`
+### Loops that end through the condition
 
-Put the exit in the condition:
+`break` and `continue` exist ([Iterators, `for` and `break`](/language/iterators)), but an
+exit written in the condition keeps a scanner's termination visible:
 
 ```kelp
 var found = false

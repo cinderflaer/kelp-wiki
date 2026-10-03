@@ -1,6 +1,6 @@
 ---
 title: "`std/fmt`"
-description: "Formatting into String: numbers, bytes, padding, digit grouping and byte sizes. Ungated."
+description: "Formatting into String: numbers, bytes, padding, digit grouping and byte sizes, and the Display trait that lets a datac or enum appear in a template and in print. Ungated."
 isPublished: true
 tags: "stdlib, text"
 ---
@@ -71,7 +71,26 @@ ab...
 - There is no sign control, no scientific notation, and no width/precision
   mini-language: `fmt.float(x, d)` is the whole float API.
 
+## `Display`
+
+The module also declares one trait:
+
+```kelp
+pub trait Display {
+    fun Self.to_text().R: String
+}
+```
+
+A `datac` or `enum` that implements it may appear in `"${x}"` and as the argument
+of `print`/`print!`; the front end lowers both to `x.to_text()`, so the value is
+only borrowed and stays owned. A type without it is refused with a message that
+names `Display`. Builtin types keep the formatting they always had. `to_text`
+has to build its `String` without a template (a template is not a value), for
+example with `String.empty()`, `push_str` and `fmt.int`. A worked example is
+[Operator traits and `Display`](/language/operator-traits).
+
 ## See also
 
 - [`std/str`](/stdlib/str) for `from_i64`/`from_f64` and parsing
+- [Operator traits and `Display`](/language/operator-traits)
 - [`table`](/libraries/table), which is `fmt.pad_right` over columns

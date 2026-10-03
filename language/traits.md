@@ -14,8 +14,9 @@ trait may be implemented for a **builtin** type that already carries methods. A
 bound is dispatched **statically**: the method a `T` calls is the one the
 concrete type declares, resolved once per instantiation, exactly as
 [Generics and type parameters](/language/generics) resolves any type parameter.
-The one dynamic form is a **trait object**, `&dyn Name`: a borrowed fat pair and
-a vtable, which is a section below.
+The dynamic form is a **trait object**: `&dyn Name`, a borrowed fat pair and a
+vtable, which is a section below, and the owned `Box<dyn Name>`
+([Owned trait objects](/language/box-dyn)).
 
 ## Declaring a trait
 
@@ -573,53 +574,49 @@ already had, and the borrow checker sees the same node. So:
 - a `&dyn` passed as a call argument is a call-scoped borrow, released after the
   call, exactly as the `&x` it came from is;
 - a `&dyn` never outlives its referent because it can never be stored and never
-  returned. There is no lifetime syntax in v1 and this slice does not add one.
+  returned. There is no lifetime syntax in v1 and v1 does not add one.
 
-## What is deliberately not in this slice
+## What traits still do not do
 
-Each of these is refused where it is written, with the message naming the
-follow-up:
+Later slices added [associated types](/language/associated-types),
+[generic traits and `From`](/language/generic-traits), the owned
+[`Box<dyn Name>`](/language/box-dyn), the
+[operator traits and `Display`](/language/operator-traits) and
+[`impl Trait` in argument position](/language/const-generics#impl-trait-in-argument-position),
+so each of those is no longer refused. What this page's feature set still
+refuses, each where it is written with a message that names the follow-up:
 
-- **An owned trait object (`Box<dyn Name>`).** Refused by name; the workaround
-  is an `enum`.
 - **A bare `dyn Name`** (an unsized value in place). Refused by name.
 - **`&dyn` in a field, a payload, a container element, a return type or a
   `static`.** These are the storage positions a borrow may not take, and the
-  refusal is the ordinary borrowed-type one:
+  refusal is the ordinary borrowed-type one. (`Box<dyn Name>` is the owned form
+  that can be stored and returned.)
 
   ```
   error: '&dyn Shape' cannot be a return type: a borrowed trait object points at a value the caller owns, and a return would have to name how long that borrow lives; take it as a parameter, or return an owned value
   ```
 
 - **Upcasting `&dyn B` to `&dyn A`** when `B: A`. A `&dyn` coerces only to its
-  own type.
-- **Object-unsafe traits** (returning `Self` or taking another `Self`), refused
-  as above.
-- **Associated types and consts, or any non-`fun` item inside a trait.**
-
-  ```
-  error: associated types and consts are not in this slice: a trait declares methods only
-  ```
-
-- **Trait-bounded `impl Trait` in argument position.** Name the type parameter
-  and bound it instead:
-
-  ```
-  error: a trait cannot be a parameter's type in this slice: name a type parameter and bound it ('fun f<T: Name>(x: &T)'), rather than writing 'impl Name'
-  ```
-
+  own type, and the same holds for `Box<dyn>`.
+- **Object-unsafe traits** (returning `Self` or taking another `Self`), a generic
+  trait and a trait with an associated type behind `dyn`, refused as above.
 - **`where` clauses.** Write the bound on the parameter:
 
   ```
   error: a 'where' clause is not in this slice: write the bound on the type parameter itself ('fun f<T: Name>(...)'), and write several of them separated by '+' ('fun f<T: A + B>')
   ```
 
-- **Operator overloading through a trait.** `==`/`!=` still come from a declared
-  `eq` ([Operators and expressions](/language/expressions)), and nothing else
-  looks at a trait.
-- **A generic trait** (`trait Name<T>`), a bound on a method's own type
-  parameters, an impl for a generic *instantiation*
-  (`impl Name for Pair<i32, String>`), and a second impl of a trait for a type.
+- **Blanket impls and generic impls**: an impl for a generic *instantiation*
+  (`impl Name for Pair<i32, String>`) and `impl<T: A> B for Pair<T>`:
+
+  ```
+  error: implementing a trait for a generic instantiation is not in this slice: a trait is implemented for a declared 'datac' or 'enum' name, or for a builtin type that already carries methods
+  ```
+
+- **A bound on a method's own type parameters** (a generic trait method,
+  `fun Self.map<U>(...)`), and a second impl of a trait for a type.
+- **Operators through a trait of your own.** Only the `std/ops` traits and
+  `fmt.Display` are looked at by the operators and by `"${x}"`.
 
 The bound is a guarantee that the trait's methods exist, not that they are the
 only methods in scope: a call to an inherent method of the concrete type, or to
@@ -630,6 +627,11 @@ the pair the same way at every call site.
 
 ## See also
 
+- [Associated types](/language/associated-types)
+- [Generic traits, `From` and `?` conversion](/language/generic-traits)
+- [Owned trait objects: `Box<dyn Trait>`](/language/box-dyn)
+- [Operator traits and `Display`](/language/operator-traits)
+- [Const generics and `impl Trait` arguments](/language/const-generics)
 - [Generics and type parameters](/language/generics)
 - [Methods and receivers](/language/methods)
 - [`datac` and `enum`](/language/data-types)

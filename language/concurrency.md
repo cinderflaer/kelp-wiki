@@ -63,8 +63,9 @@ keeping on record:
   first, and `Mutex<T>` is the convenience built on it.
 
 A channel still does not ship in v1 (see [Limits in v1](/language/limits)), but
-`Mutex<T>` now does: [`std/sync`](/stdlib/sync) is the lock the rule above makes
-sound, and a worker that needs to share more than one scalar takes it.
+`Mutex<T>`, `RwLock<T>` and `Condvar` do: [`std/sync`](/stdlib/sync) holds the
+locks the rule above makes sound, and a worker that needs to share more than one
+scalar takes one.
 
 ## One ordering: `SeqCst`
 
@@ -212,7 +213,8 @@ than decided speculatively; none of them blocks anything above:
   shipped: see "One ordering" above.
 - **Channels** are a reasonable addition once a program wants to pass values
   between threads rather than share a location, and a channel would not change
-  the rule above; it would be built on it. `Mutex<T>` now ships
+  the rule above; it would be built on it. A design exists, but neither channels
+  nor a thread pool were built. `Mutex<T>`, `RwLock<T>` and `Condvar` ship
   ([`std/sync`](/stdlib/sync)).
 
 ## See also

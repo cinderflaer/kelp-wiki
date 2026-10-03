@@ -138,7 +138,7 @@ and [Cursors and provenance](/language/ownership#cursors-and-provenance).
 | Symptom | Reality |
 | --- | --- |
 | `option.or_else` / `result.unwrap` on an owned payload will not type-check | the helpers whose receiver stays a borrow are `Copy`-only; `option.unwrap`, `option.unwrap_or`, `option.expect`, `result.map` and `result.map_err` take their receiver with `move`, and `if let`/`when` over an owned place binds the payload by value |
-| `?` refuses to propagate a different error type | v1 has no error conversion; `result.map_err` is the bridge |
+| `?` refuses to propagate a different error type | `?` converts a failure only through an `impl convert.From<E1> for E2`; write the impl, or use `result.map_err` ([Generic traits](/language/generic-traits)) |
 | two `fun pick(...)` overloads collide | a user module cannot overload; spell the type into the name |
 | `Shape.Empty.label()` is refused | a receiver that builds a variant names a type; bind it first (`val s = Shape.Empty`, then `s.label()`) |
 

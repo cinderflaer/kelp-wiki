@@ -53,6 +53,11 @@ val c = 7.0 / 2.0    // 3.5
   [`mathx`](/libraries/mathx).
 - Float arithmetic is IEEE: `nan`, `inf` and `-0.0` behave as usual, and
   `math.is_nan` / `math.is_finite` exist to test them.
+- A `datac` or `enum` gets `+ - * / %`, unary `-` and `< <= > >=` by implementing
+  the [`std/ops`](/stdlib/ops) traits, and `"${x}"` and `print(x)` by
+  implementing `fmt.Display`; see
+  [Operator traits and `Display`](/language/operator-traits). Builtin types keep
+  their builtin operators.
 
 ## Bitwise
 
@@ -153,8 +158,10 @@ Rules (§5.2):
 - It works on `Option` **or** `Result`: the compiler knows the *shape*, not the
   module, so a program's own declaration of either works.
 - The enclosing function must return an enum of the same shape, with the same
-  failure payload type. v1 has no error conversion, so `Result<i64, String>`
-  cannot be propagated out of a function returning `Result<i64, IoErr>`.
+  failure payload type, or one that an `impl From<E1> for E2` converts: `?` calls
+  `E2.from(e1)` when the two differ ([Generic traits](/language/generic-traits)).
+  Without such an impl, `Result<i64, String>` cannot be propagated out of a
+  function returning `Result<i64, IoErr>`.
 - A function returning `Unit` (including `main`) has nowhere to propagate to.
 - The value composes: `1 + half(n = n)?`.
 - A failure returns immediately, so the enclosing function's locals are dropped
@@ -198,5 +205,6 @@ example pushing through a `mut` receiver) works the same way a method call does.
 ## See also
 
 - [Control flow](/language/control-flow)
+- [Operator traits and `Display`](/language/operator-traits)
 - [Ownership and borrowing](/language/ownership)
 - [Errors and panics](/language/errors)

@@ -158,9 +158,18 @@ fun describe<T: Shape + Named>(s: &T).R: f64 = s.area() + s.name_length()
   generic with its own parameter, and the inner call is checked when the outer
   function is instantiated.
 - The bound goes on the parameter; a `where` clause is refused by name.
-- A trait may also be written behind a borrow as a trait object, `&dyn Name`,
-  which is dynamic dispatch through a vtable and is a different mechanism from
-  a bound; see [Traits and static dispatch](/language/traits).
+- A bound may name a trait with arguments (`<X: From<i32>>`), and a bounded
+  parameter reaches a trait's associated type as `I::Item`
+  ([Generic traits](/language/generic-traits),
+  [Associated types](/language/associated-types)).
+- A parameter may be a compile-time value, `<const N: usize>`
+  ([Const generics](/language/const-generics)), and `fun f(x: impl Trait)` is
+  sugar for a bounded parameter.
+- A trait may also be written behind a borrow as a trait object, `&dyn Name`, or
+  owned as `Box<dyn Name>`, which is dynamic dispatch through a vtable and is a
+  different mechanism from a bound; see
+  [Traits and static dispatch](/language/traits) and
+  [Owned trait objects](/language/box-dyn).
 
 ## What is not generic
 
@@ -176,4 +185,6 @@ fun describe<T: Shape + Named>(s: &T).R: f64 = s.area() + s.name_length()
 - [Functions](/language/functions)
 - [Methods and receivers](/language/methods)
 - [Traits and static dispatch](/language/traits)
+- [Const generics and `impl Trait` arguments](/language/const-generics)
+- [Associated types](/language/associated-types)
 - [Limits in v1](/language/limits)

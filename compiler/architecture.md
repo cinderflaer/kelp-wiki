@@ -48,9 +48,11 @@ expression precedence. Three constructs do not survive parsing as themselves:
 - `if let` is desugared into a match with a synthesized scrutinee binding
   (the parser names it under `IF_LET_PREFIX`), which is what lets `if let Ok(v) =
   f(x)` accept a temporary scrutinee at all.
-- `for x in xs` is desugared into the index-and-`while` walk (under `FOR_PREFIX`),
-  so no later pass knows the loop kind exists and there is no iterator protocol to
-  implement.
+- `for x in xs` is kept as a statement of its own by the parser, and `infer.rs`
+  chooses the desugar once the iterable has a type: an index-and-`while` walk for
+  a `List` or array, a `next()` loop for a type that implements
+  `std.iter.Iterator`. Both are ordinary statements by then, so no later pass
+  knows the loop kind exists.
 - A `when` whose scrutinee is not a place is desugared in `infer.rs`
   (`check_when_scrutinee`, under `WHEN_TEMP_PREFIX`) into the same block a
   hand-written `val h = ...` would give, because the arms have to read a payload

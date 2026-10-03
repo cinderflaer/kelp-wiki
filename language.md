@@ -38,13 +38,19 @@ error, and so is a `const` or `pd` after a `datac`, `enum` or `fun`
 | [Types](/language/types) | the type table, `Copy` vs owned vs borrowed, `str` and `View` |
 | [Bindings and assignment](/language/bindings) | `val` and `var`, type inference, assignment, mutable paths |
 | [Operators and expressions](/language/expressions) | precedence, arithmetic, bitwise, `?`, borrows and dereference |
-| [Control flow](/language/control-flow) | `if`/`else`, `if let`, `for`, `while`, `when`, `return` |
+| [Control flow](/language/control-flow) | `if`/`else`, `if let`, `for`, `while`, `when`, `return`, `break`, `continue` |
 | [Functions](/language/functions) | declaration, `.R: T`, named arguments, function values, closures |
 | [Return types and `return`](/language/returns) | the `.R: T` clause, bodies, the divergence rule, borrowed returns |
 | [Methods and receivers](/language/methods) | `Type.name`, `mut` receivers, generic receivers |
 | [datac and enum](/language/data-types) | records, tagged unions, generics, construction, matching |
 | [Generics and type parameters](/language/generics) | type parameters, instantiation, generic receivers and functions |
 | [Traits and static dispatch](/language/traits) | methods, default bodies, supertraits, `impl Trait for Type`, bounds, and `&dyn` trait objects |
+| [Associated types](/language/associated-types) | `type Item` in a trait, `I::Item` and `Self::Item` projections |
+| [Generic traits, `From` and `?` conversion](/language/generic-traits) | `trait Name<T>`, static methods, `std/convert`, the `?` error conversion |
+| [Owned trait objects](/language/box-dyn) | `Box<dyn Trait>`, the coercion, `get()`, drop through the vtable |
+| [Operator traits and `Display`](/language/operator-traits) | `std/ops` and `fmt.Display` for `+`, `-`, `<`, `${x}` and `print` on a user type |
+| [Iterators, `for` and `break`](/language/iterators) | the `Iterator` trait, `for x in it`, `break` and `continue`, `std/iter` |
+| [Const generics and `impl Trait` arguments](/language/const-generics) | `<const N: usize>`, inference from an array, `fun f(x: impl Trait)` |
 | [Ownership and borrowing](/language/ownership) | moves, drops, borrows, partial moves, `Box.take` |
 | [Text](/language/text) | `str`, `View`, `String`, `Bytes`, printing, conversions |
 | [Collections](/language/collections) | `List<T>`, `Map<K, V>`, `Box<T>`, the fixed-size array `[T; N]` |

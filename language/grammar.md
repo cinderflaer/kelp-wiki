@@ -25,10 +25,12 @@ grant        := ident "=" "[" string ("," string)* "]"
 // to a `datac`/`enum` or to a builtin. "Self" is an ordinary identifier used
 // as a type name in both, and stands for the implementing type. A method with
 // no body is a signature; one with a body is a default the impl may omit.
-trait        := [ "pub" ] "trait" ident [ ":" bound ("+" bound)* ] "{" ( traitmethod )* "}"
-traitmethod  := "fun" [ "mut" ] "Self" "." ident "(" [ param ("," param)* ] ")"
-                [ ".R" ":" type ] ( body | )        // no body: a signature
-traitimpl    := "impl" traitname "for" typename "{" ( method )* "}"
+trait        := [ "pub" ] "trait" ident [ typeparams ] [ ":" bound ("+" bound)* ] "{" ( assoctype | traitmethod )* "}"
+assoctype    := "type" ident [ ":" bound ("+" bound)* ]   // `type Item`, bound by each impl
+traitmethod  := "fun" [ "mut" ] ( "Self" "." )? ident "(" [ param ("," param)* ] ")"
+                [ ".R" ":" type ] ( body | )        // no body: a signature; no `Self.`: a static method
+traitimpl    := "impl" traitname [ typeargs ] "for" typename "{" ( bindtype | method )* "}"
+bindtype     := "type" ident "=" type
 traitname    := ident [ "." ident ]                    // `Shape` or `shape.Shape`
 typename     := ident [ "." ident ]
 method       := "fun" [ "mut" ] "Self" "." ident "(" [ param ("," param)* ] ")"
@@ -40,17 +42,20 @@ field        := ("val" | "var") ident ":" type
 enum         := [ "pub" ] "enum" ident [ typeparams ] "{" ( ident [ "(" [ field ("," field)* ] ")" ] )* "}"
 typeparams   := "<" typeparam ("," typeparam)* ">"
 typeparam    := ident [ ":" bound ("+" bound)* ]
-bound        := traitname
+              | "const" ident ":" type                // a value parameter: `const N: usize`
+bound        := traitname [ typeargs ]                // `Shape`, `From<i32>`
 typeargs     := "<" type ("," type)* ">"   // in an expression: adjacent to the name and to "("
 fun          := [ "pub" ] [ "extern" ] "fun" [ "mut" ] ( ident [ typeparams ] "." )? ident [ typeparams ]
                 "(" [ param ("," param)* ] ")" [ ".R" ":" type ] body
                 // `[typeparams]` after the function's own name bounds its type
                 // parameters (9.5); on a receiver it names the receiver's type
                 // arguments and takes no bounds.
-param        := ident ":" [ "mut" | "move" ] type
+param        := ident ":" [ "mut" | "move" ] ( type | "impl" traitname )   // `impl Trait`: a whole parameter type, bare or behind `&`
 body         := "=" expr | block | <nothing for extern>
 
 type         := [ "&" [ "mut" ] "dyn" ident ]  // a borrowed trait object: `&dyn T`, `&mut dyn T`
+              | "Box" "<" "dyn" ident ">"       // an owned trait object
+              | ident "::" ident                // an associated type: `I::Item`, `Self::Item`
               | [ "&" ] ( ident [ "<" type ("," type)* ">" ] [ "." ident ]
                        | "fun" "(" [ fparam ("," fparam)* ] ")" [ ".R" ":" type ]
                        | "[" type ";" expr "]"        // a fixed-size array: [T; N]
@@ -59,13 +64,14 @@ fparam       := [ "mut" | "move" ] type
 ```
 
 ```
-stmt         := "val" | "var" | "while" | "for" | "return" | expr
+stmt         := "val" | "var" | "while" | "for" | "return" | "break" | "continue" | expr
 val          := "val" ( ident [ ":" type ] | pattern ) "=" expr
 var          := "var" ( ident [ ":" type ] | pattern ) "=" expr
 pattern      := "(" position "," position ("," position)* ")"
 position     := ident | "_" | pattern
 while        := "while" expr block
 for          := "for" ident "in" expr block   // the `in` is contextual, not a keyword
+                                              // `break`/`continue` are statements, not keywords
 return       := "return" [ expr ]
 block        := "{" (line-separated stmt)* "}"
 
@@ -121,6 +127,14 @@ chain        := [ "elif" expr block chain
   recognized only after a leading `&` (or `&mut`), and the form is legal only as
   a parameter type or a local binding type; a bare `dyn Name` is refused by
   name.
+- The later trait forms: `type Item` in a trait and `type Item = T` in an impl
+  ([Associated types](/language/associated-types)); a trait's own type
+  parameters, `trait From<T>`, a static method written without `Self.`, and a
+  bound or impl that names the arguments ([Generic traits](/language/generic-traits));
+  `Box<dyn Name>` ([Owned trait objects](/language/box-dyn)); `const N: usize` as
+  a type parameter and `impl Trait` as a whole parameter type
+  ([Const generics](/language/const-generics)); and `break`/`continue`
+  ([Iterators](/language/iterators)).
 - A leading `pub` is accepted on a top-level `const`, `datac`, `enum`, `fun`,
   `extern fun` and `trait`, and nowhere else (13.4): a `pd` is module-scoped by
   design, an `impl` is not an item, and a method's reachability follows its

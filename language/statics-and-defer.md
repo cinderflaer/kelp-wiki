@@ -176,8 +176,9 @@ is a keyword, so no program that named a variable `defer` changes meaning.
   error. A `defer` that names a local declared *after* it is refused, because
   that local is not in scope where the `defer` is written.
 - A deferred action may not contain `return` (it has no caller to return to).
-  `break` and `continue` are not Kelp statements at all, so there is nothing to
-  lower at a loop exit.
+  Neither may a deferred action contain `break` or `continue`. A `defer` in a
+  loop body does run on the way out of a `break` or `continue`, once per pass
+  that reached it ([Iterators, `for` and `break`](/language/iterators)).
 
 ```kelp
 fun note(tag: &str) {

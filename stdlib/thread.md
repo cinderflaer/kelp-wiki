@@ -309,8 +309,13 @@ fun main() {
 - **A worker is a real OS thread.** `thread.spawn` starts one and `thread.join`
   waits for it; nothing here is green, pooled or scheduled by the language.
   [Limits in v1](/language/limits) records what the thread surface still does
-  not have: no `Relaxed`/`Acquire`/`Release`, no channels, no `Mutex`, no
-  thread-local storage, and no async or coroutines.
+  not have: no `Relaxed`/`Acquire`/`Release`, no channels, no thread pool, no
+  thread-local storage, and no async or coroutines. `Mutex<T>`, `RwLock<T>` and
+  `Condvar` are in [`std/sync`](/stdlib/sync).
+- **There is no thread pool in this module.** A pool (`pool.new`, `Pool.spawn`,
+  `Pool.join`) has a written design but was not built, so a program that wants
+  several workers spawns each one and joins the handles itself, as
+  `examples/download_pool.kp` does.
 - **`current_id` names a thread, not a pool slot.** v1 hands out no sequential
   worker numbers; a program that wants "worker 3 of 8" has to track that itself,
   keyed by the id if it needs a stable key.

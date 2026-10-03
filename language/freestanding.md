@@ -165,6 +165,8 @@ fails the build rather than defaulting to allowed.
 | `std/option` | Subset | `is_some`, `is_none`, `unwrap_or`, `unwrap`, `expect`; with `[target] alloc`/`dealloc`, `map`, `and_then`, `or_else`, `each` |
 | `std/result` | Subset | the value helpers as-is; with the allocator pair, `map`, `map_err`, `and_then`, `or_else`, `each` |
 | `std/arena` | Pure | every item; the region is the caller's |
+| `std/convert`, `std/ops` | Pure | every item; they are trait declarations (`From`, `Into`, `Add`, `Sub`, `Mul`, `Div`, `Rem`, `Neg`, `Ord`), so the `?` conversion and an operator on a user type lower to ordinary calls |
+| `std/iter` | Subset | `Iterator`, `Range`, `range`, `range_step`, `count`, `sum_i64`; with the allocator pair, `collect_list` |
 | `std/irq` | Pure | `claim` and `Line.number` (under an `irq` grant) |
 | `std/frame` | Pure | `claim`, `Frame.addr` and `Frame.offset` (under a `frames` grant) |
 | `std/str` | Subset | `len`, `byte`, `eq`, `starts_with`, `ptr`; with the allocator pair, `concat`, `from_u64`, `from_i64`; every other function refused by name |
@@ -173,18 +175,18 @@ fails the build rather than defaulting to allowed.
 | `std/regex` | Allocator | every item, once `[target] alloc`/`dealloc` are configured; the parser, the program and the Pike VM are `List` and integer code, and the derived `String` equality plus the `View` operations are lowered into the module |
 | `std/mem` | Present | nothing is callable; `std/str` imports it, and the pruning pass drops its one extern |
 | `std/rt` | Present | nothing is callable; the resolver injects it for a gated module, and its bodies are pruned |
-| `std/encoding`, `std/path`, `std/io`, `std/fs`, `std/net`, `std/tls`, `std/http`, `std/ws`, `std/process`, `std/env`, `std/time`, `std/tz`, `std/rand`, `std/thread`, `std/sync`, `std/fmt` | Hosted | refused by name; they reach libc, the allocator or the hosted runtime (`std/fmt`'s `hex_raw`/`bytes_raw` are `snprintf`-backed, and `std/tz` reads a TZif file and asks the environment for `$TZDIR`) |
+| `std/encoding`, `std/path`, `std/io`, `std/fs`, `std/net`, `std/tls`, `std/http`, `std/ws`, `std/process`, `std/env`, `std/time`, `std/tz`, `std/rand`, `std/thread`, `std/sync`, `std/fmt` | Hosted | refused by name; they reach libc, the allocator or the hosted runtime (`std/fmt`'s `hex_raw`/`bytes_raw` are `snprintf`-backed, `std/tz` reads a TZif file and asks the environment for `$TZDIR`, and `std/sync`'s `Mutex<T>`, `RwLock<T>` and `Condvar` are pthread objects) |
 
 A module whose row is `Allocator` and a program with no allocator pair is
 refused with the two manifest keys named, not left to the linker (`std/list`
 and `std/regex` are the two). A whole-module
 refusal says "needs a hosted runtime" and then names the modules a freestanding
 project may implement, derived from the same table so it cannot drift:
-`std/arena, std/atomic, std/frame, std/irq, std/list, std/math, std/option,
-std/regex, std/result, std/str`.
+`std/arena, std/atomic, std/convert, std/frame, std/irq, std/iter, std/list,
+std/math, std/ops, std/option, std/regex, std/result, std/str`.
 
 ```text
-error: the module 'std/time' is unavailable in a freestanding build: it needs a hosted runtime (libc or the 'kelp_rt' helpers); the std modules a freestanding project may implement are std/arena, std/atomic, std/frame, std/irq, std/list, std/math, std/option, std/regex, std/result, std/str
+error: the module 'std/time' is unavailable in a freestanding build: it needs a hosted runtime (libc or the 'kelp_rt' helpers); the std modules a freestanding project may implement are std/arena, std/atomic, std/convert, std/frame, std/irq, std/iter, std/list, std/math, std/ops, std/option, std/regex, std/result, std/str
 ```
 
 A refused item inside an admitted module is refused at the call instead, the

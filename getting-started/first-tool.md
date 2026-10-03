@@ -187,13 +187,15 @@ Each of these is one function and no new imports beyond the one named:
 | Idea | What to use | What it teaches |
 | --- | --- | --- |
 | A `--chars N` flag, so a file of accented text is cut at N characters and not N bytes | `str.char_count`, `str.byte_index`, `str.copy_range` | the byte and codepoint index sets, and why they differ |
-| A `tail` that counts back from the end | `lines.len()`, a descending `while` | indexing from the end, and a loop with no `break` in the language |
+| A `tail` that counts back from the end | `lines.len()`, a descending `while` | indexing from the end, and a loop whose exit is in its condition |
 | Several paths, with a header per file | a second loop over the arguments | `argv` as a list rather than positional slots |
 | A `total` line at the end, like `wc` | `fmt.int`, a counter | building output when `print` takes one argument |
 
-The `tail` version is the one worth doing: v1 has **no `break` and no
-`continue`**, so the loop condition is the control flow, and that constraint shows
-up in almost every program you write.
+The `tail` version is the one worth doing: counting down means the loop condition
+carries the exit, and `break` and `continue` ([Iterators, `for` and
+`break`](/language/iterators)) are there for the early exit that does not fit a
+condition. Putting the exit in the header keeps a loop's termination visible, which
+is why most programs in this documentation still do it.
 
 ## See also
 

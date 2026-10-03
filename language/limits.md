@@ -14,14 +14,22 @@ them.
 
 ## Control flow
 
-- **No `break` and no `continue`.** Iteration is a `for` over a `List`, or a
-  `while` plus an index when the loop is not a front-to-back walk.
-- No `loop` expression, no labelled loops.
+- **`break` and `continue` exist** and act on the innermost loop, in a `while`
+  and in either `for`. There is **no `loop` expression, no labelled loop and no
+  `break` with a value**, and a deferred action cannot contain either
+  ([Iterators, `for` and `break`](/language/iterators)). One compiler bug to know
+  about: on the LLVM backend, a function whose body ends in `while true { ...
+  break ... }` is compiled as if the loop could not be left; use a real loop
+  condition.
 
 ## Errors
 
-- **`?` propagates only an identical failure type.** There is no error
-  conversion, no `From`, no boxing. `result.map_err` is the bridge.
+- **`?` converts a failure only through a `From` impl.** An identical failure
+  type is moved across as is; a different one needs
+  `impl convert.From<E1> for E2`, and the operator calls `E2.from(e1)`. There is
+  no boxing, no blanket `Into`, and `?` never consults `Into`. `result.map_err`
+  is still the bridge for a one-off conversion
+  ([Generic traits, `From` and `?` conversion](/language/generic-traits)).
 - A function returning `Unit` has nowhere to propagate to.
 
 ## Data and generics
@@ -102,12 +110,13 @@ them.
   is the one array shape a `datac` element cannot take: write the elements out,
   or start from a literal and `set` each one. An array cannot be a `List` or
   `Map` element, and an array element cannot be a `List`, `Map` or `Box`.
-- **(open, roadmap A-5)** No iteration protocol: `for` is a desugared index
-  walk over a `List` or an array, and a `Map` has no iterator: iterate
-  `keys()` and look up. A reusable `iter`/`next` protocol is an open question
-  with no schedule, not a closed decision: the cheap `for` shipped in
-  MK8-S1-M3 and has been enough so far, and nothing has asked for the more
-  expensive protocol yet.
+- **The iterator protocol shipped, the adapters did not.** `for` walks a `List`,
+  an array, or any type that implements `std/iter`'s `Iterator`. There is no
+  `map`, `filter`, `take`, `skip`, `enumerate`, `zip` or `chain`, no
+  `List.iter()` or `List.into_iter()`, and a `Map` still has no iterator
+  (iterate `keys()` and look up). **(open)** The adapters need a generic trait
+  impl (`impl<I: Iterator> Iterator for Take<I>`), which the parser does not
+  accept yet ([Iterators, `for` and `break`](/language/iterators)).
 
 ## Compile-time evaluation
 
@@ -172,13 +181,16 @@ and `std/ws` is §16.18 of the same document.
   spawns a process.
 - **One ordering, and nothing else around it.** The single ordering v1 has is
   `SeqCst`; `Relaxed`, `Acquire` and `Release` are reserved, not shipped. There
-  are no channels, no async and no coroutines, with no roadmap item tracking
-  any of the three yet. `Mutex` has shipped ([`std/sync`](/stdlib/sync));
+  are no async and no coroutines, with no roadmap item tracking either yet.
+  **Channels and a thread pool are designed but not built**
+  ([`plan/sync.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/sync.md)
+  records the design and its status file records that neither was started).
+  `Mutex`, `RwLock` and `Condvar` have shipped ([`std/sync`](/stdlib/sync));
   thread-local storage is still a named backlog item (B-11, MK9-S3-M3) rather
   than ruled out, it is simply not built. Per-CPU storage has shipped: `percpu static mut` lays out
   `[target] cpus` copies and `cpu_index()`/`cpu_count()` read it back, in a
-  freestanding build only; see [Per-CPU storage](/language/percpu). Today's shared-mutable shapes for hosted threads are `Atomic<T>` and
-  `Mutex<T>`; a worker that needs to share something else still takes its own
+  freestanding build only; see [Per-CPU storage](/language/percpu). Today's shared-mutable shapes for hosted threads are `Atomic<T>`,
+  `Mutex<T>`, `RwLock<T>` and `Condvar`; a worker that needs to share something else still takes its own
   copy instead, the way
   `examples/download_pool.kp` gives each thread its own `http.Pool`. Two leaks
   are admitted: a panicking worker's frame is abandoned, and a handle nobody
@@ -206,10 +218,12 @@ and `std/ws` is §16.18 of the same document.
 ## Not present at all
 
 **Settled for good**, with no roadmap item working toward them: no
-exceptions, no garbage collector, no macros, no operator overloading. These
-are the headline design, not gaps: ownership without a GC, `Result` instead
-of throwing, and text substitution (`kelpc`'s aliases) instead of a hygienic
-macro system.
+exceptions, no garbage collector, no macros. These are the headline design, not
+gaps: ownership without a GC, `Result` instead of throwing, and text
+substitution (`kelpc`'s aliases) instead of a hygienic macro system. Operators
+are overloaded only through the `std/ops` traits on a `datac`/`enum`
+([Operator traits and `Display`](/language/operator-traits)); there is no
+`derive`, no bitwise or `&&`/`||` overloading and no user operator trait.
 
 **(open)** The rest of this list is absent from v1 today but is either an
 active roadmap item or a named future milestone, not a closed decision:
@@ -227,20 +241,27 @@ active roadmap item or a named future milestone, not a closed decision:
   address-space model, which is why a granted range admits any address reachable
   from it by arithmetic. `AtomicPtr`, `transmute` and a read of a non-`Copy`
   element are absent too.
-- **Traits, interfaces, `dyn` dispatch.** A-12. Slice 1 shipped (a
-  `datac`/`enum` can declare its own `hash`/`eq` pair, and a concrete `enum`
-  can declare a receiver method). Named traits with **static** dispatch shipped
-  in slice 2 (`trait`/`impl Trait for Type` and `fun f<T: A + B>` bounds),
-  slice 3 added default methods, supertraits and impls for builtins that
-  already carry methods, and slice 4 added the borrowed trait object `&dyn
-  Name` / `&mut dyn Name`, dispatched through a vtable (a freestanding riscv64
-  image dispatches through one); see [Traits and static
-  dispatch](/language/traits). What is still absent is the owned trait object
-  (`Box<dyn Name>`), an upcast between trait objects, associated types, `impl
-  Trait` in argument position, `where` clauses, generic traits, `dyn` in a
-  field or a return type, and the rest of the refusal list on that page. A user
-  `Drop` is a smaller thing that shipped on its own, `fun mut T.drop()`, and is
-  not a trait; see [User `Drop`](/language/drop).
+- **Traits: what is still absent.** A-12. Named traits shipped in slices:
+  static dispatch and bounds, default methods, supertraits and builtin impls,
+  the borrowed trait object `&dyn Name`, [associated types](/language/associated-types),
+  [generic traits and `From`](/language/generic-traits), the owned
+  [`Box<dyn Name>`](/language/box-dyn), the [operator traits and
+  `Display`](/language/operator-traits), and
+  [`impl Trait` in argument position](/language/const-generics); see
+  [Traits and static dispatch](/language/traits). What is still absent: an upcast
+  between trait objects, `where` clauses, blanket impls, generic impls
+  (`impl<T: A> B for Pair<T>`, which is also what blocks the iterator adapters),
+  a bound or equality constraint on an associated type in a bound
+  (`I: Iterator<Item = i64>`), default or generic associated types and
+  associated consts, generic trait methods, `impl Trait` in a return position,
+  `dyn` of a generic trait or of a trait with an associated type, `dyn` in a
+  field or a return type when it is a `&dyn`, and the rest of the refusal list
+  on those pages. A user `Drop` is a smaller thing that shipped on its own,
+  `fun mut T.drop()`, and is not a trait; see [User `Drop`](/language/drop).
+- **Const generics: value parameters only.** `<const N: usize>` shipped
+  ([Const generics](/language/const-generics)); arithmetic on the parameter
+  inside a type (`[T; N + 1]`), a const parameter on a trait and a non-integer,
+  non-`bool` const parameter are refused.
 - **Lifetime syntax, and the borrows it would allow in fields.** A-11/A-8.
   Two of A-11's pieces have shipped: a bound borrow ends at its last use rather
   than at the end of its scope, and a reference binding remembers the owner its

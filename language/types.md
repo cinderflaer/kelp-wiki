@@ -26,8 +26,11 @@ valid inside the scope that lent it.
 | `List<T>` | owned | growable sequence, one instantiation per element type |
 | `Map<K, V>` | owned | keyed container, keeps insertion order; `Map<V>` means a `String` key |
 | `Box<T>` | owned | one heap cell holding a `T` or nothing |
+| `Box<dyn Name>` | owned | an owned trait object: the address of a heap value plus a vtable, two words, **not `Copy`**, dropped through the vtable. See [Owned trait objects](/language/box-dyn) |
 | `Atomic<T>` | owned | one location every access to which is a single atomic operation; **not `Copy`**, owns nothing and needs no drop. `T` is `bool` or an integer type. See [`std/atomic`](/stdlib/atomic) |
 | `Ptr<T>` | Copy | a raw pointer: one machine address, may be null, owns nothing, needs no drop, carries no borrow tracking. `T` is a scalar, `bool`, `char`, a `datac`/`enum`, a fixed-size array, an `extern type` handle or another `Ptr`. Building one and doing arithmetic on it are safe; dereferencing it needs `unsafe`. See [Unsafe code and raw pointers](/language/unsafe) |
+| `Mutex<T>`, `RwLock<T>` | owned | a lock around one owned value, reached only through a scoped block; **not `Copy`**, hosted only. See [`std/sync`](/stdlib/sync) |
+| `Condvar` | owned | a condition variable paired with a `Mutex<T>` through `wait_while`; **not `Copy`**, hosted only. See [`std/sync`](/stdlib/sync) |
 | `Thread<T>` | owned | a handle on one worker the runtime owns; **not `Copy`**, one pointer to a worker record. `T` is the entry point's return type. Accepted as a local, a `datac`/`enum` field and a parameter, refused as a `List`/`Map`/`Box`/array element, because joining is a one-shot thing a container's own routines would duplicate. See [`std/thread`](/stdlib/thread) |
 | `[T; N]` | Copy / owned | fixed-size array: `N` elements held **inline**, with the length part of the type and nothing allocated. `Copy` when `T` is, otherwise an owner that drops each element |
 | `datac` name | owned | record with per-field `val`/`var`, optionally with type parameters |

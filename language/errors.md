@@ -57,10 +57,14 @@ fun quarter(n: i64).R: result.Result<i64, str.ParseErr> {
 }
 ```
 
-- The enclosing function must return the same shape with the **same failure
-  payload type**. v1 has no error conversion: `Result<i64, String>` cannot be
-  propagated out of a function returning `Result<i64, IoErr>`: `result.map_err`
-  is the bridge.
+- The enclosing function must return the same shape. When the failure payload
+  type is the same, it is moved across as is. When it differs, `?` converts it
+  through `From`: with `impl convert.From<str.ParseErr> for AppErr`, a
+  `Result<_, str.ParseErr>` can be propagated out of a function returning
+  `Result<_, AppErr>`, and the operator calls `AppErr.from(e)`. With no such
+  impl the error names both types and the impl to write. `Option` has no payload
+  to convert. See [Generic traits, `From` and `?` conversion](/language/generic-traits);
+  `result.map_err` still works for a one-off conversion.
 - A function returning `Unit` (including `main`) has nowhere to propagate to.
 - The value composes: `1 + half(n = n)?`.
 - A failure returns immediately, dropping the frame's locals exactly as a
@@ -142,4 +146,5 @@ of an `if`/`when` used as a value.
 - [`std/option`](/stdlib/option), [`std/result`](/stdlib/result)
 - [Return types and `return`](/language/returns)
 - [Control flow](/language/control-flow) for `if let` and `when`
+- [Generic traits, `From` and `?` conversion](/language/generic-traits)
 - [Pitfalls](/language/pitfalls)

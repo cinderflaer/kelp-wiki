@@ -181,6 +181,12 @@ Functions:
 - `fun commas_i64(n: i64).R: String`
 - `fun human_size(bytes: u64).R: String`
 
+Trait:
+
+- `pub trait Display { fun Self.to_text().R: String }`, the trait a `datac` or
+  `enum` implements to appear in `"${x}"` and `print`
+  ([Operator traits and `Display`](/language/operator-traits)).
+
 ## `std/encoding`
 
 Types:
@@ -767,6 +773,48 @@ panic inside the block releases the lock and poisons the mutex, so a later
 holds any owned, borrow-free value. The whole surface is on
 [`std/sync`](/stdlib/sync).
 
+`RwLock<T>` and `Condvar` are builtins of the same kind:
+
+- `fun RwLock.new(value: move T).R: RwLock<T>`
+- `fun RwLock<T>.read(block: scoped fun(&T).R: R).R: R`
+- `fun RwLock<T>.write(block: scoped fun(mut T).R: R).R: R`
+- `fun RwLock<T>.try_read(block: scoped fun(&T).R: R).R: Option<R>`
+- `fun RwLock<T>.try_write(block: scoped fun(mut T).R: R).R: Option<R>`
+- `fun RwLock<T>.into_inner().R: T`
+- `fun Condvar.new().R: Condvar`
+- `fun Condvar.notify_one()`
+- `fun Condvar.notify_all()`
+- `fun Mutex<T>.wait_while(cv: &Condvar, pred: fun(&T).R: bool, block: scoped fun(mut T).R: R).R: R`
+- `fun Mutex<T>.wait_while_timeout(cv: &Condvar, pred: fun(&T).R: bool, millis: i64, block: scoped fun(mut T).R: R).R: Option<R>`
+
+There are no channels and no thread pool.
+
+## `std/iter`
+
+- `pub trait Iterator { type Item  fun mut Self.next().R: option.Option<Self::Item> }`
+- `pub datac Range(var lo: i64, val hi: i64, val step: i64)`, which implements `Iterator`
+- `fun range(a: i64, b: i64).R: Range`
+- `fun range_step(a: i64, b: i64, step: i64).R: Range`
+- `fun count<I: Iterator>(it: move I).R: usize`
+- `fun sum_i64<I: Iterator>(it: move I).R: i64`
+- `fun collect_list<I: Iterator>(it: move I).R: List<I::Item>`
+
+The whole surface is on [`std/iter`](/stdlib/iter).
+
+## `std/ops`
+
+Traits, each with one method: `Add`, `Sub`, `Mul`, `Div` and `Rem`
+(`fun Self.name(rhs: &Self).R: Self`), `Neg` (`fun Self.neg().R: Self`) and `Ord`
+(`fun Self.cmp(other: &Self).R: i32`). The whole surface is on
+[`std/ops`](/stdlib/ops).
+
+## `std/convert`
+
+- `pub trait From<T> { fun from(value: T).R: Self }`
+- `pub trait Into<T> { fun Self.into().R: T }`
+
+The whole surface is on [`std/convert`](/stdlib/convert).
+
 ## `std/thread`
 
 Types:
@@ -894,7 +942,7 @@ layer under it. The whole surface is on [`std/ws`](/stdlib/ws).
 | `std/str` | 37 | 1 | - |
 | `std/path` | 12 | 0 | - |
 | `std/math` | 29 | 3 | - |
-| `std/fmt` | 10 | 0 | - |
+| `std/fmt` | 10 | 1 | - |
 | `std/encoding` | 26 | 4 | - |
 | `std/regex` | 16 | 4 | - |
 | `std/io` | 27 | 3 | - |
@@ -914,6 +962,9 @@ layer under it. The whole surface is on [`std/ws`](/stdlib/ws).
 | `std/arena` | 6 | 1 | - |
 | `std/atomic` | 10 | 1 | - |
 | `std/thread` | 5 | 1 | - |
+| `std/iter` | 5 | 2 | - |
+| `std/ops` | 0 | 7 | - |
+| `std/convert` | 0 | 2 | - |
 
 ## Not part of the stdlib surface
 
