@@ -116,7 +116,8 @@ construct is the parser's business and can change.
 
 ## See also
 
-- [Limits in v1](/language/limits)
+- [Limits in v1](/language/limits), including how long chains and large literals
+  scale in compile time
 - [Sanitizer builds](/tooling/sanitizers), which cover runtime behavior of the
   compiled programs
 - [`kelpc` CLI](/tooling/kelpc-cli)

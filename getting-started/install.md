@@ -33,6 +33,9 @@ cargo build --release -p kelpc
 
 The binary lands at `target/release/kelpc`.
 
+A prebuilt release binary installs with the verifying `build/install.sh` instead
+(see [Release tooling](/tooling/release-tooling)).
+
 ## Run a file
 
 ```sh

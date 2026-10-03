@@ -49,7 +49,7 @@ above, and `kelpc version` is the version query.
 | `kelpc doc --std` | the same for the shipped standard library | as above |
 | `kelpc cache stats` | prints the per-unit object cache's entry count and total size | 0 |
 | `kelpc cache clear` | deletes every cached unit object | 0, or 1 when the directory cannot be removed |
-| `kelpc version` | prints the release name the binary was built from: `kelpc 0.2.2` for the release tagged `v0.1.4`, and `kelpc 26.09.0` for the first release under the `YY.MM.N` scheme (`26.09.0`; the crate carries the semver-legal `26.9.0` and this command pads the month back) | 0 |
+| `kelpc version [--verbose]` | with `--verbose` it also prints the commit, build date, rustc and LLVM versions ([Release tooling](/tooling/release-tooling)). Plain form: prints the release name the binary was built from: `kelpc 0.2.2` for the release tagged `v0.1.4`, and `kelpc 26.09.0` for the first release under the `YY.MM.N` scheme (`26.09.0`; the crate carries the semver-legal `26.9.0` and this command pads the month back) | 0 |
 
 Two behaviours worth knowing:
 

@@ -39,6 +39,47 @@ them.
   accesses is longer than 800 links ...`). Written code is nowhere near either.
   See [Front-end fuzzing and parser limits](/tooling/fuzzing).
 
+## Compile time
+
+Large generated programs (long method chains, deeply nested calls and generics,
+nested blocks, 300-arm `elif` ladders, 200-field `datac`s, a 5,000-element list
+literal) are built on both backends by `kelpc/tests/scaling.rs`, and a step over
+20 seconds fails the test. The notes are
+[`plan/scaling.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/scaling.md).
+
+- **Long method chains and nested generic calls take linear time now.** Type
+  checking used to infer a method call's receiver twice (once to find its type,
+  once as the `self` argument), so each link doubled the work of the link below:
+  `a.f().f().f()...` took 0.4 s at 16 links and 21 s at 22 (the plan's figures),
+  and a chain of 400 never finished. Arguments of a generic call or a generic
+  `datac`/`enum` construction were checked twice in the same way, so
+  `id(id(id(...)))` was exponential too. The checker keeps the first result and
+  reuses it; no program that was accepted or refused changed, and no diagnostic
+  did. A 400-link chain of a `datac` method (`x.inc().inc()...`) passes `kelpc
+  check`, and built with the prebuilt compiler (LLVM, default `-O2`) in about
+  0.2 s and printed `400`.
+- **The parser limits are the real ceiling.** The parser refuses more than 800
+  links in a chain and more than 200 levels of nesting
+  ([Front-end fuzzing and parser limits](/tooling/fuzzing)), so a 400-link chain, 90
+  nested calls and 60 nested `if` blocks are about the largest shapes a program
+  can reach. Both limits were kept.
+- **A very large array literal is slow at `-O2`.** (open) Every other generated
+  shape finishes each step in about a second or less. A literal of 5,000
+  elements takes 4.0-4.6 s to build on the LLVM backend at `-O2` in the plan's
+  debug-build measurement, 2,500 elements 1.0 s and 1,250 elements 0.5 s: the time
+  grows with the square of the length and sits inside LLVM's optimizer, which is
+  handed the literal as one `[N x i32]` aggregate value (`-O0` takes 0.85 s for
+  5,000). The all-constant literal is now emitted as one constant array, which
+  halved `-O0` and left `-O2` unchanged. Emitting it as a private global plus a
+  copy would remove the rest, and was left alone because it changes the IR of
+  every array literal. Re-measured for this page with the release-built prebuilt
+  compiler: a 5,000-element `[i32; 5000]` literal took about 2.9 s at `-O2` and
+  about 0.5 s at `-O0`. Split a table that big into smaller literals or build it
+  with a loop.
+- Smaller costs the plan lists, all linear: 150 chained closures take about 1 s on
+  LLVM and 1.6-2.2 s on the C oracle, and 50 nested generic enum constructions
+  take 1.1-1.5 s.
+
 ## Data and generics
 
 - **A tuple is read by destructuring and nothing else.** There is no positional

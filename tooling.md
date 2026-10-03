@@ -75,6 +75,9 @@ builds itself. It is the only one of the three that runs while you type.
   ASan report.
 - [Front-end fuzzing and parser limits](/tooling/fuzzing): the fuzzer, and the
   200-level nesting and 800-link chain limits with their exact errors.
+- [Release tooling](/tooling/release-tooling): `build/release.sh`, the reproducibility
+  check, the verifying installer `build/install.sh` and `kelpc version --verbose`,
+  with real output and what a reproducible build does not promise.
 - [Coral](/tooling/coral): the manifest key by key, the command surface, the dependency
   model, what a sync installs and fetches, the toolchain store, environment
   variables, and a transcript of a real session.
