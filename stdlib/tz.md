@@ -11,7 +11,7 @@ for the database directory.
 
 ```kelp
 impl "std/tz" caps(fs = ["/**"], env = ["TZDIR"])
-impl "std/tz" caps(fs = ["/etc/static/zoneinfo/**"], env = ["TZDIR"])
+impl "std/tz" caps(fs = ["/nix/store/**/share/zoneinfo/**"], env = ["TZDIR"])
 ```
 
 The design is
@@ -84,9 +84,11 @@ reachable and the `env` grant must name `TZDIR` itself, because the environment
 check is a name check. A grant too narrow for a path is the compiler's own
 call-site **panic** rather than a returned `Denied` (open item 73,
 [`plan/roadmap.md`](https://homelabone.xenoo.dev/gitea/Juniper/kelp/src/branch/main/plan/roadmap.md)).
-`zoneinfo` on NixOS is a symlink into the store (`/etc/zoneinfo` to
-`/etc/static/zoneinfo`), and the capability check resolves symlinks before
-matching, so a grant has to name the resolved path, or the whole tree.
+`zoneinfo` on NixOS is a symlink into the store twice over (`/etc/zoneinfo` to
+`/etc/static/zoneinfo`, which is itself a link to
+`/nix/store/<hash>-tzdata-<version>/share/zoneinfo`). The capability check
+resolves the whole chain before matching, so a grant has to name that store
+tree, or the whole filesystem: `/etc/static/zoneinfo/**` is refused at the call.
 
 ## `One`, `Ambiguous` and `Gap`
 
