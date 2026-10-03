@@ -53,8 +53,8 @@ than a dependency line.
 | Library | What it does | Needs |
 | --- | --- | --- |
 | [`fsx`](/libraries/fsx) | Atomic writes, recursive `copy_dir`, `tail`, `files_equal`, a depth-capped `survey` | `fs` |
-| [`dedup`](/libraries/dedup) | Duplicate-file grouping and tree snapshot/drift over `List<Entry>` | — |
-| [`httpx`](/libraries/httpx) | Query strings, Basic Auth, PUT/DELETE/PATCH, `Set-Cookie` | — |
+| [`dedup`](/libraries/dedup) | Duplicate-file grouping and tree snapshot/drift over `List<Entry>` | - |
+| [`httpx`](/libraries/httpx) | Query strings, Basic Auth, PUT/DELETE/PATCH, `Set-Cookie` | - |
 | [`lineproto`](/libraries/lineproto) | CRLF line protocols over a socket | `net` |
 | [`discord`](/libraries/discord) | Discord bots and webhooks over `std/http` and `std/ws`: payload builders, a gateway loop, webhooks, and every opcode and close code the raw path needs | `net`, `rand`, `time` |
 
@@ -62,18 +62,18 @@ than a dependency line.
 
 | Library | What it does | Needs |
 | --- | --- | --- |
-| [`argparse`](/libraries/argparse) | Flags, `--name[=value]` options, positionals, `--help` text | — |
+| [`argparse`](/libraries/argparse) | Flags, `--name[=value]` options, positionals, `--help` text | - |
 | [`term`](/libraries/term) | ANSI SGR colors, cursor control, `NO_COLOR` handling | `env` |
 | [`log`](/libraries/log) | Leveled log records to stderr with a timestamp | `time` |
-| [`table`](/libraries/table) | Column layout with auto-sized widths | — |
-| [`testkit`](/libraries/testkit) | `check()`/`check_eq_*` helpers with a pass/fail `Report` | — |
+| [`table`](/libraries/table) | Column layout with auto-sized widths | - |
+| [`testkit`](/libraries/testkit) | `check()`/`check_eq_*` helpers with a pass/fail `Report` | - |
 | [`benchkit`](/libraries/benchkit) | Warmup + repeat timing, median/percentile over the runs | `time` |
 
 ## Native UI
 
 | Library | What it does | Needs |
 | --- | --- | --- |
-| [`polyp`](/libraries/polyp) | Declarative GTK4 UI in the Elm shape: a pure `view` over state, an exhaustive `when` over a `Msg` enum, a builder with trailing blocks, and keyed children patched in place | `ui` |
+| [`polyp`](/libraries/polyp) | Declarative native UI in the Elm shape over a backend-neutral core: a pure `view` over state, an exhaustive `when` over a `Msg` enum, a builder with trailing blocks, keyed children patched in place, and GTK or a bare framebuffer as the backend | `ui` (GTK backend only) |
 
 ## Adding one
 

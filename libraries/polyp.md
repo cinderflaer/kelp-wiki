@@ -1,31 +1,115 @@
 ---
-title: "`polyp`: a declarative native UI library over GTK4"
-description: "Polyp is the Elm architecture over GTK4, patching the live widget tree: `view` is a pure function of your state, `update` an exhaustive `when` over a `Msg` enum, and keyed children let a moved row keep its widget, focus and scroll."
+title: "`polyp`: a declarative native UI library for Kelp"
+description: "Polyp is the Elm architecture with a backend-neutral core: `view` is a pure function of your state, `update` an exhaustive `when`, and the keyed diff is a `List<Patch>` a backend applies, GTK or a bare framebuffer."
 isPublished: true
 tags: "library, ui"
 ---
-A declarative native UI library for Kelp, over GTK4. The application describes
-what the screen should be for the current state; Polyp owns the loop and, since
-v2, **patches** the live GTK widget tree instead of rebuilding it. It wraps GTK's
-own widgets rather than drawing, so a Polyp window is a GTK window.
+A declarative native UI library for Kelp. The application describes what the
+screen should be for the current state; Polyp owns the loop and **patches** the
+live widget tree instead of rebuilding it. Since v3 the tree, the keyed diff and
+the loop live in a **backend-neutral core**, and GTK is one backend behind an
+interface: a second, pure-Kelp **software backend** draws the same UI into a
+framebuffer with no display server, hosted or bare metal. GTK is the desktop
+backend, and a Polyp window is a GTK window.
 
-Gated on `ui` (the display domain, [Capabilities](/language/capabilities)).
+Gated on `ui` (the display domain, [Capabilities](/language/capabilities)). Only
+the GTK backend needs the grant; the core, the headless backend and the software
+backend name no display symbol and need no capability.
 
 Polyp is **not** an `fpl` folder. It ships in the compiler's own repository at
-`examples/polyp/` (v2), with `examples/polyp-v0/` as a frozen copy of the earlier
+`examples/polyp/`, with `examples/polyp-v0/` as a frozen copy of the earlier
 plain-constructor API and `examples/polyp-counter-v0/` its counter, because a
 consumer declares its native surface in its own `coral.toml` rather than
 depending on a folder (see [Using the library](#using-the-library)).
 
-**v2** keeps the live widget tree and **patches** it. A child can carry a key, a
-matched widget is updated in place, a moved keyed child is reordered rather than
-rebuilt, and focus, selection and scroll offset survive. It adds the widgets
-`scrolled`, `checkbox`, `progress` and `separator`, the layout options `spacing`,
-`margin`, `expand`, `align` and `class`, and the app-level `polyp.css`.
-`examples/polyp-todo/` is the keyed-list program and `plan/polyp-v2.md` is the
-design note. `examples/polyp-counter/` and `examples/polyp-counter-v0/` keep
-working unchanged. There is no published version number; "v2" is the patch plus
-what is listed here.
+There is no published version number. **v2** added the keyed patch, `scrolled`,
+`checkbox`, `progress`, `separator`, the layout options and `polyp.css`.
+**v3** split the library into a core and one module per backend, and added the
+display-free path; the application surface is unchanged apart from the tree's
+type, which is `core.Node<M>` now that it lives in the core. The design is
+[`plan/polyp-v3.md`](https://homelabone.xenoo.dev/gitea/Juniper/kelp/src/branch/main/plan/polyp-v3.md).
+
+## The layering
+
+```
+application            view(S) -> core.Node<M>      update(mut S, M)
+      |
+polyp (lib.kp)         the v1/v2 surface a program imports: column { },
+      |                row { }, keyed { }, widgets, class, css, run, stats
+      v
+core.kp  (hosted, pure Kelp: no GTK, no extern, no unsafe)
+      |
+      +-- gtk_backend.kp       the live GTK widget tree, real signals
+      +-- headless_backend.kp  an in-memory retained tree, a scripted event
+      |                        list and a text dump, for display-free tests
+      +-- soft_backend.kp      a retained tree over the integer rasterizer,
+                               for a framebuffer, hosted or bare metal
+```
+
+`core.kp` holds the loop, the tree and the matching. It names no GTK symbol,
+calls no `extern fun` and uses no `unsafe`, so it is also the module the soft
+backend reuses unchanged. A backend holds widgets and knows nothing about the
+application's `Msg`: it never sees a `Node`, only the plain `Props` a patch
+carries, and the events it produces carry only integers and, for a programmatic
+edit, a string.
+
+What changed between two renders is a pure function of two trees:
+
+```kelp
+pub fun diff<M>(old: &Node<M>, new: &Node<M>).R: List<Patch>
+pub fun diff_into<M>(old: &Node<M>, new: &Node<M>, out: mut List<Patch>)
+
+pub enum Patch {
+    Create(val path: Path, val kind: i32, val props: Props)
+    Update(val path: Path, val props: Props)
+    Remove(val path: Path)
+    Move(val path: Path, val to_index: i32)
+}
+```
+
+`path` is a `Path`, a list of `Seg` from the root; the last segment is `Index(i)`
+for an unkeyed child and `Keyed(i, key)` for a keyed one. `kind` is one of the
+`KIND_*` integers the backend maps to its own widget, and `props` is plain data:
+`text`, `size`, `bold`, `label`, `checked`, `permille`, `spacing`, `height`,
+`margin`, `expand`, `align` and `classes`. `diff_into` is `diff` with a
+caller-owned list, so a driver can reuse one buffer across frames. The backend
+interface itself:
+
+```kelp
+pub trait Backend {
+    fun mut Self.apply(patches: &List<Patch>)          // one line: core.apply_patches
+    fun mut Self.make(path: &Path, at: i32, kind: i32, props: &Props)
+    fun mut Self.patch_widget(path: &Path, props: &Props)
+    fun mut Self.drop_widget(path: &Path)
+    fun mut Self.place_widget(path: &Path, to_index: i32)
+    fun mut Self.pump()
+    fun mut Self.poll().R: Event
+    fun Self.path_of(id: i32).R: option.Option<Path>
+    fun Self.focus().R: option.Option<i32>
+    fun mut Self.set_focus(id: i32)
+    fun mut Self.set_entry_text(id: i32, text: &str)
+    fun Self.entry_text(id: i32).R: String
+    fun Self.entry_ids().R: List<i32>
+    fun Self.entries_built().R: i32
+    fun Self.stats().R: Stats
+}
+```
+
+`apply` is implemented once per backend as a one-line delegation to
+`core.apply_patches`, so the walk that turns a path into a widget call, and the
+id rule, live in one place and cannot drift between backends. `run<B: Backend,
+S, M>(backend, init, view, update) -> S` owns the state, the path-to-id table,
+the focus check and the counters, and it names no backend.
+
+The **headless** backend (`examples/polyp/headless_backend.kp`) applies the same
+patches to an in-memory tree and prints a text dump; it needs no display, so a
+whole program can run in a test. `examples/polyp-core-test/` asserts the pure
+diff (identical trees produce nothing, a text change one `Update`, a keyed
+reorder `Move`s and no create or remove, and a duplicate key panics naming it)
+and runs the todo program on the headless backend with the same counters the GTK
+smoke run prints. The **soft** backend is
+[Polyp on a framebuffer](/libraries/polyp-soft), and its bare-metal proof is
+[Polyp on bare metal](/libraries/polyp-freestanding).
 
 ## The programming model: the Elm architecture
 
@@ -45,10 +129,12 @@ allow:
   (`syntax.md` §7.4), and Kelp has no shared-ownership type to put the
   application state behind.
 - So no callback captures the state at all. A button's handler is a closure
-  whose entire environment is one small integer. It posts that integer to a
-  fixed-size C queue, and the loop, which **does** own the state, reads it back,
-  finds the `Msg` in that slot of its grow-only table, calls `update`, re-runs
-  `view` and patches the widgets.
+  whose entire environment is one small integer. It posts that integer to the
+  backend's event queue (the GTK backend's is the fixed-size C queue in
+  `include/polyp_queue.h`; the headless and soft backends queue it in Kelp), and
+  the loop, which **does** own the state, reads it back, resolves the id to the
+  node it names, takes that node's `Msg` from a fresh `view`, calls `update`,
+  re-runs `view` and patches the widgets.
 
 GTK callbacks and the loop run on the same thread (`g_signal_connect` handlers
 run inside `g_main_context_iteration`, which the loop calls), so the queue needs
@@ -85,15 +171,16 @@ A Kelp library has no manifest, and a project's modules resolve only under its o
    ln -s ../../../polyp src/deps/polyp
    ```
 
-   The library's own `impl "deps/polyp/gtk"` / `"deps/polyp/queue"` lines already
-   spell that location, so the copy has to land exactly there.
+   The library's own `impl "deps/polyp/core"`, `"deps/polyp/gtk_backend"` and
+   `"deps/polyp/queue"` lines already spell that location, so the copy has to
+   land exactly there.
 
 2. **Paste the `[extern.*]` sections into your `coral.toml`.** The native
    symbols, the headers and the `pkg-config` package live in the consumer's
    manifest, because a library has none of its own. The section ids are the
    `impl` paths the library uses. This is the list
    `examples/polyp-todo/coral.toml` carries, and it is the list the library needs
-   as of v2:
+   as of v3:
 
    ```toml
    [extern."deps/polyp/gtk"]
@@ -146,6 +233,8 @@ pub enum Align {
 pub datac Opts(var margin: i32, var expand: bool, var align: i32, var classes: List<String>)
 pub datac Child<M>(val key: Key, val node: Node<M>, val opts: Opts)
 
+// The tree type lives in `core.kp` now, so a view is written
+// `fun (S).R: core.Node<M>` and the example imports `deps/polyp/core` too.
 pub enum Node<M> {
     Column(val children: List<Child<M>>, val spacing: i32)
     Row(val children: List<Child<M>>, val spacing: i32)
@@ -154,7 +243,7 @@ pub enum Node<M> {
     Entry(val text: String, val on_change: fun (String).R: M)
     Button(val label: String, val on_click: M)
     Checkbox(val label: String, val checked: bool, val on_toggle: M)
-    Progress(val fraction: f64)
+    Progress(val permille: i32)
     Separator
     Scrolled(val children: List<Child<M>>, val spacing: i32)
 }
@@ -169,7 +258,7 @@ fun mut Children<M>.spacer(height: i32)
 fun mut Children<M>.button(label: str, on_click: move M)
 fun mut Children<M>.entry(value: str, on_change: fun (String).R: M)
 fun mut Children<M>.checkbox(label: str, checked: bool, on_toggle: move M)
-fun mut Children<M>.progress(fraction: f64)
+fun mut Children<M>.progress(permille: i32)
 fun mut Children<M>.separator()
 fun mut Children<M>.column(block: scoped fun(mut Children<M>))
 fun mut Children<M>.row(block: scoped fun(mut Children<M>))
@@ -231,7 +320,11 @@ pub fun schedule_focus_entry(delay_ms: u32, index: i32)
   `Msg`.
 - `checkbox(label, checked, on_toggle)` posts `on_toggle` on `toggled`; the
   application reads the new state from its own model, exactly as a button does.
-  `progress(fraction)` is a `GtkProgressBar`. `separator()` is a horizontal rule.
+  `progress(permille)` is a `GtkProgressBar`, with the permille in `0..=1000`;
+  the core carries the progress as an integer because a float comparison is a
+  soft-float call on a bare-metal target (see
+  [Polyp on bare metal](/libraries/polyp-freestanding)). `separator()` is a
+  horizontal rule.
 - `scrolled(block)` puts the block's children in a `GtkScrolledWindow`, laid out
   in a vertical box inside it. The window is patched in place, so the scroll
   offset survives.
@@ -252,13 +345,13 @@ pub fun schedule_focus_entry(delay_ms: u32, index: i32)
 - `css(text)` loads a `GtkCssProvider` on the default display at
   `GTK_STYLE_PROVIDER_PRIORITY_APPLICATION`, so ordinary CSS applies to every
   widget that carries a matching class.
-- **Ids are slots.** The loop owns one grow-only table for the run; a button,
-  checkbox or entry takes the next slot at creation and its handler captures that
-  index forever. `QUIT_ID` is `-2`, because `polyp_poll` answers `-1` for an empty
-  queue. A surviving widget keeps its id, and the patch writes the current tree's
-  `Msg` into that slot; a removed widget's slot becomes `Dead`, so a queued id
-  whose widget is gone is dropped instead of reaching `update`. An application
-  should still carry a `Msg` rather than post a raw id.
+- **An id is an interactive widget's.** The core and the backend derive the same
+  integer from the same rule: the nth `Entry`, `Button` or `Checkbox` a run
+  creates is id n, ids only grow and are never reused, and a handler captures its
+  id forever. `QUIT_ID` is `-2`, because `polyp_poll` answers `-1` for an empty
+  queue. A surviving widget keeps its id; a removed one's id resolves to no path,
+  so a queued id whose widget is gone is dropped instead of reaching `update`.
+  An application should still carry a `Msg` rather than post a raw id.
 - `schedule_post` / `schedule_quit` post an id after a delay;
   `schedule_set_entry` asks the loop to set an entry's text after a delay, which
   fires that entry's real `changed` signal; `schedule_focus_entry` sets the
@@ -285,6 +378,7 @@ nothing keeps it after the widgets exist.
 its `src/deps/polyp` link points at `examples/polyp/`:
 
 ```kelp
+impl "deps/polyp/core"
 impl "deps/polyp/lib" caps(ui = ["*"])
 impl "std/env"
 impl "std/fmt"
@@ -301,7 +395,7 @@ enum Msg {
 
 fun changed(text: String).R: Msg = Msg.Changed(text = String.from_str(text.as_str()))
 
-fun view(s: Counter).R: polyp.Node<Msg> {
+fun view(s: Counter).R: core.Node<Msg> {
     return polyp.column { k ->
         k.text_styled("a counter", 0, true)
         val shown_count = fmt.int(s.count.to_i64())
@@ -366,7 +460,7 @@ fun main() {
 The plain-constructor style of the same view still compiles:
 
 ```kelp
-var kids: List<polyp.Node<Msg>> = List.empty()
+var kids: List<core.Node<Msg>> = List.empty()
 kids.push(polyp.text(String.from_str("hi")))
 kids.push(polyp.button(String.from_str("+1"), Msg.Inc))
 return polyp.plain_column(kids)
@@ -374,13 +468,13 @@ return polyp.plain_column(kids)
 
 ## The keyed todo list
 
-`examples/polyp-todo/` is the v2 program: an entry and an add button at the top,
+`examples/polyp-todo/` is the keyed-list program: an entry and an add button at the top,
 a scrolled list of keyed rows, and a progress bar of done over total. Each row is
 one `keyed` child whose key is the item's own id, never its index, so a row is
 the same row after a move or a removal above it. Its `view` is:
 
 ```kelp
-fun view(s: Model).R: polyp.Node<Msg> {
+fun view(s: Model).R: core.Node<Msg> {
     return polyp.column { k ->
         k.spacing(8)
         k.margin(12)
@@ -416,7 +510,7 @@ fun view(s: Model).R: polyp.Node<Msg> {
                 i += 1
             }
         }
-        k.progress(fraction(s))
+        k.progress(permille(s))
     }
 }
 ```
@@ -483,6 +577,12 @@ examples/polyp-counter-v0/smoke.sh
 examples/polyp-todo/smoke.sh
 ```
 
+The loop is also tested with no display at all: `examples/polyp-core-test/` runs
+the same todo program on the headless backend with no GTK and no Xvfb, and
+[Polyp on a framebuffer](/libraries/polyp-soft) covers the software backend's
+layout, input and damage tests. Those run in the plain development shell on both
+compiler backends.
+
 ## Reconciliation, exactly
 
 Every state change calls `view` for the whole tree, but the loop keeps the live
@@ -494,7 +594,7 @@ child):
   `Button` is never patched into a `Text`.
 - A matched widget is **updated in place**: label markup, button label, checkbox
   label and active state, entry text (only when it differs and the entry does not
-  hold the focus), progress fraction, spacer height, box spacing, margins,
+  hold the focus), progress permille, spacer height, box spacing, margins,
   expand, alignment and CSS classes. It is the same GTK object, so its focus,
   text selection and scroll offset survive by construction. Focus is checked: the
   loop records the widget focused before a patch and sets a flag if a later
@@ -504,11 +604,24 @@ child):
   (`gtk_box_reorder_child_after`), not rebuilt. When the matched sequence is
   still in order the survivors are not touched at all, which is what keeps a
   removal from disturbing the focus.
-- A child the new tree does not name is removed from its container and its slots
-  are retired as `Dead`; its subtree is counted as destroyed.
+- A child the new tree does not name is removed from its container and its id
+  resolves to no path, so a queued id for it is dropped; its subtree is counted
+  as destroyed.
 - A programmatic write to a checkbox or an entry blocks that widget's signal
   first (`g_signal_handler_block`), so setting the widget's state to match the
   model cannot post the `Msg` that state came from.
+
+The patch list is ordered, and the order is what makes each path valid at the
+moment its patch is applied. For each container, depth first: `Update` for every
+matched child in new order, each followed by that child's own subtree; `Remove`
+for unmatched old children in descending old index (so a lower index is still the
+index it was); `Create` for unmatched new children in new order; and `Move` for
+matched children whose position changed, in increasing new index, only when the
+matched sequence is not already increasing. One v2 rule was tightened: a new
+child without a key takes the old child at the same index only when it is unused,
+of the same kind, **and unkeyed too**, because letting it take a keyed old child
+would change the node's identity from a key to a position and so cannot be
+expressed as a stable path.
 
 The old v1 rule (the `i`-th `Entry` reuses the `i`-th entry widget) is gone; the
 patch subsumes it, and it works for any widget, not only an entry. The counter's
@@ -517,18 +630,12 @@ entry is a matched child and not because an ordinal rule reused it.
 
 ## Known limits
 
-- **No lazy or virtualized lists.** Every child in the model is a live widget; a
-  list of 10,000 rows builds 10,000 widgets. A keyed patch makes the updates
-  cheap, not the first build.
+- **No lazy or virtualized lists.** Every child in the model is a live widget on
+  every backend; a list of 10,000 rows builds 10,000 widgets. A keyed patch makes
+  the updates cheap, not the first build.
 - **No animation and no transitions.** A patch sets a property in one step;
-  there is no interpolator and no per-frame hook.
-- **No theming beyond CSS.** `polyp.css` is the only hook: no palette, no
-  dark-mode switch, no per-widget style object.
-- **No platform but GTK on Linux.** The library is a GTK binding, not an
-  abstraction over one.
-- **Ids are slots, so they are stable but internal.** An application that posts
-  a raw id (rather than carrying a `Msg`) is leaning on creation order; the smoke
-  runs do, deliberately, because they have no user to click anything.
+  there is no interpolator and no per-frame hook. The soft backend's frame
+  deadline bounds one tick, it does not add animation.
 - **No exclusive captures.** A builder block may read the borrowed state, but
   `state.count += 1` inside a block is still a language error
   (`plan/scoped-blocks.md`); a mutation goes through a `Msg`.
@@ -536,15 +643,33 @@ entry is a matched child and not because an ordinal rule reused it.
   consumer pastes the `[extern.*]` sections and places the sources under
   `src/deps/polyp/`. This is the one thing that makes Polyp awkward to consume,
   and it is the same for every Kelp library.
-- **GTK is required to build and run.** There is no pure-Kelp proof of the loop
-  without a display; the smoke tests run a real GTK window under Xvfb, which is
-  what this machine can do. The focus tests read the toplevel's focus widget by
-  handle rather than `gtk_widget_has_focus`, which needs a window manager to hand
-  over global input focus.
+- **An id still leans on creation order.** An interactive widget's id comes from
+  counting interactive `make` calls, so an application that posts a raw id
+  (rather than carrying a `Msg`) relies on the order widgets are created in; the
+  smoke runs do, deliberately, because they have no user to click anything.
+- **The soft backend's limits are its own.** No vector text or shaping, no bold
+  face, no images, no accessibility, no GPU, no stylesheet parser; the full list
+  is on
+  [Polyp on a framebuffer](/libraries/polyp-soft#what-the-display-free-path-does-not-do).
+- **A display is required to *draw* with GTK.** The GTK smoke tests run a real
+  window under Xvfb, and the focus tests read the toplevel's focus widget rather
+  than `gtk_widget_has_focus`, which needs a window manager to hand over global
+  input focus. The loop itself needs no display: the headless backend runs the
+  whole program in a test, and the soft backend runs it with no display at all.
+- **Theming has two hooks.** `polyp.css` is GTK's; the soft backend's equivalent
+  is the `Theme` `datac` and its `class_style` table, not a stylesheet parser or
+  a selector engine.
 
 ## See also
 
+- [Polyp on a framebuffer](/libraries/polyp-soft): the software rasterizer, the
+  soft backend, the five-function `Platform` contract, the work budgets and the
+  benchmark
+- [Polyp on bare metal](/libraries/polyp-freestanding): the two QEMU kernels and
+  the framebuffer equivalence proof
 - [Coral: the manifest](/tooling/coral#extern-user-modules-that-bind-a-native-symbol)
 - [User FFI](/language/externs)
 - [Functions](/language/functions#trailing-blocks-and-scoped-parameters)
 - [Capabilities](/language/capabilities)
+- [`plan/polyp-v3.md`](https://homelabone.xenoo.dev/gitea/Juniper/kelp/src/branch/main/plan/polyp-v3.md):
+  the design record
