@@ -545,7 +545,7 @@ The server surface (a plain HTTP/1.1 server; see the
 
 ## `std/tls` (needs `net`)
 
-Client-side TLS for `https` (MK5-S4b-M1). Never dials or closes a socket
+Client and server TLS (MK5-S4b-M1; the server side, ALPN and client certificates are on [`std/tls`](/stdlib/tls#serving-tls), with `ServerOptions`, `ServerConfig`, `TlsClientOptions`, `server_config_pem`, `server_config_pem_with`, `accept`, `try_handshake_opts` and `TlsStream.alpn`/`peer_cert_subject`; `std/tlsfile` has `read_pem`). Client side for `https`. Never dials or closes a socket
 itself: a capability grant is resolved one hop from the importing program's
 own `impl` line, so `handshake` takes an already-connected `net.Socket`
 instead of calling `net.connect`. Full account on [`std/tls`](/stdlib/tls).
@@ -787,7 +787,21 @@ holds any owned, borrow-free value. The whole surface is on
 - `fun Mutex<T>.wait_while(cv: &Condvar, pred: fun(&T).R: bool, block: scoped fun(mut T).R: R).R: R`
 - `fun Mutex<T>.wait_while_timeout(cv: &Condvar, pred: fun(&T).R: bool, millis: i64, block: scoped fun(mut T).R: R).R: Option<R>`
 
-There are no channels and no thread pool.
+- `fun Mutex<T>.share().R: Mutex<T>`, `fun Condvar.share().R: Condvar`, `fun Mutex<T>.swap(value: move T).R: T`
+- `fun sync.bounded<T>(cap: usize).R: (Sender<T>, Receiver<T>)` and `fun sync.unbounded<T>().R: (Sender<T>, Receiver<T>)`
+- `fun Sender<T>.send(value: move T).R: option.Option<T>`, `Sender<T>.clone()`
+- `fun Receiver<T>.recv().R: result.Result<T, RecvErr>`, `try_recv().R: option.Option<T>`, `recv_timeout(millis: i64).R: result.Result<T, RecvTimeout>`, and `for v in rx`
+
+Channels are written in Kelp in `std/sync` (see [Channels](/stdlib/sync#channels)).
+
+## `std/pool`
+
+- `fun pool.new(workers: i32).R: Pool`
+- `fun Pool.spawn(job: move closure())`
+- `fun Pool.join()`
+- `fun Pool.panicked().R: i32`
+
+Full account on [`std/pool`](/stdlib/pool).
 
 ## `std/iter`
 

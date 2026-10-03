@@ -440,11 +440,108 @@ served 2 request(s)
 
 ### Not here
 
-TLS (the server speaks plain HTTP), HTTP/2, `Date` and `Server` headers, `Host`
+HTTP/2 (an HTTPS server still speaks HTTP/1.1), `Date` and `Server` headers, `Host`
 enforcement, absolute-form and `CONNECT` targets, ranges, compression, cookies,
 response streaming (bodies are always `Content-Length`-framed, so no chunked
 responses), a send deadline (a client that never reads blocks its worker), a
 connection limit, and `Expect` on anything but `100-continue`.
+
+### Serving HTTPS
+
+`http.serve_tls(port, config, handler)`, `serve_tls_n(port, config, handler, max_requests)`
+and `serve_tls_on(&server, config, handler, &limits, max_requests)` are `serve`,
+`serve_n` and `serve_on` with every accepted connection put through
+[`tls.accept`](/stdlib/tls#serving-tls) first. `config` is a `tls.ServerConfig`,
+shared and never changed, and the limits, status table and per-connection rules
+are the plain server's. A client whose handshake fails (no certificate where one
+is required, no common protocol, a reset) costs that socket and nothing else: it
+is closed and the loop goes on. `serve_tls_n` returns the number of requests
+answered. Like `net.listen`, `serve_tls` binds every interface.
+
+On the client side, `http.try_get_tls(url, &opts)`, `http.get_tls` and
+`Client.try_send_tls(req, &opts)` take a `tls.TlsClientOptions` (private CA,
+client certificate, ALPN).
+
+This program serves one HTTPS request on a second thread and fetches it with a
+private CA (the certificate files are made as in
+[`std/tls`](/stdlib/tls#making-a-test-certificate); `/etc/myapp/certs` was
+replaced by a scratch directory for the run):
+
+```kelp
+impl "std/http" caps(net = ["*"])
+impl "std/tls"
+impl "std/tlsfile" caps(fs = ["/etc/myapp/certs/**"])
+impl "std/thread"
+impl "std/result"
+impl "std/fmt"
+
+fun hello(req: &http.ServerRequest).R: http.ServerResponse {
+    return http.ok_text("hello over tls")
+}
+
+fun serve(fd: i32).R: u64 {
+    val cert = tlsfile.read_pem("/etc/myapp/certs/server.pem", "certificate chain")
+    val key = tlsfile.read_pem("/etc/myapp/certs/server.key", "private key")
+    return when cert {
+        Ok(c) -> when key {
+            Ok(k) -> serve_with(c, k, fd)
+            Err(_) -> 0
+        }
+        Err(_) -> 0
+    }
+}
+
+fun serve_with(cert: move Bytes, key: move Bytes, fd: i32).R: u64 {
+    return when tls.server_config_pem(cert, key) {
+        Ok(cfg) -> {
+            val server = http.Server(fd = fd)
+            val limits = http.default_limits()
+            val n = http.serve_tls_on(&server, cfg, hello, &limits, 1)
+            cfg.free()
+            n
+        }
+        Err(e) -> 0
+    }
+}
+
+fun main() {
+    val server = http.listen(0)
+    server.set_accept_timeout(10000)
+    val port = server.port()
+    val h = thread.spawn(serve, server.fd)
+
+    var url = String.from_str("https://localhost:")
+    val digits = fmt.uint(port.to_u64())
+    url.push_str(digits.as_str())
+    url.push_str("/")
+    val opts = tls.client_options().with_ca_file("/etc/myapp/certs/ca.pem").with_timeout_ms(10000)
+    when http.try_get_tls(url.as_str(), &opts) {
+        Ok(resp) -> {
+            print(resp.status)
+            print(String.from_bytes(resp.body.clone()))
+        }
+        Err(e) -> print(http.http_error_text(&e))
+    }
+    when thread.join(h) {
+        Ok(n) -> print(n)
+        Err(_) -> print("server thread failed")
+    }
+    server.close()
+}
+```
+
+Both backends print:
+
+```text
+200
+hello over tls
+1
+```
+
+I also ran `http.serve_tls_n(36010, &cfg, handler, 2)` as a stand-alone server
+and fetched it with `curl --cacert ca.pem https://localhost:36010/hello`, which
+answered `hello over tls`, and a path the handler does not know, which answered
+`404`; the server then returned and printed `2`, on both backends.
 
 ## Notes
 
