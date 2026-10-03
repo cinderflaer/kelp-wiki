@@ -53,8 +53,9 @@ keeping on record:
   the source. A dynamic checker is still wanted as a *testing instrument*
   (a Miri-equivalent, proposed for MK11-S2-M1) — evidence about the checker,
   not the enforcement mechanism.
-- **Not channels-only.** A channel is a value type a program may use, and a
-  reasonable one to add later, but it cannot be *the* mechanism: a
+- **Not channels-only.** A channel is a value type a program may use (it
+  ships, in [`std/sync`](/stdlib/sync#channels)), but it cannot be *the*
+  mechanism: a
   channel-only model still lets two threads hold a `&mut T` to one location if
   nothing refuses it. The rule above is what makes the race unwritable; a
   channel would be one of the ways to obey it.
@@ -62,10 +63,12 @@ keeping on record:
   needs the same checker rule to be sound underneath it, so the rule came
   first, and `Mutex<T>` is the convenience built on it.
 
-A channel still does not ship in v1 (see [Limits in v1](/language/limits)), but
-`Mutex<T>`, `RwLock<T>` and `Condvar` do: [`std/sync`](/stdlib/sync) holds the
-locks the rule above makes sound, and a worker that needs to share more than one
-scalar takes one.
+[`std/sync`](/stdlib/sync) holds the locks the rule above makes sound
+(`Mutex<T>`, `RwLock<T>`, `Condvar`), and a worker that needs to share more than
+one scalar takes one. It also holds the channels, which move owned values
+between threads instead of sharing a location, and [`std/pool`](/stdlib/pool)
+is a fixed pool of workers over one queue. The limits of both are on their pages:
+hosted only, an owned element, one thread created per pool job.
 
 ## One ordering: `SeqCst`
 
@@ -211,11 +214,12 @@ than decided speculatively; none of them blocks anything above:
   extensions), where the vocabulary for it lives.
 - **`Relaxed`, `Acquire` and `Release`** are reserved argument values, not
   shipped: see "One ordering" above.
-- **Channels** are a reasonable addition once a program wants to pass values
-  between threads rather than share a location, and a channel would not change
-  the rule above; it would be built on it. A design exists, but neither channels
-  nor a thread pool were built. `Mutex<T>`, `RwLock<T>` and `Condvar` ship
-  ([`std/sync`](/stdlib/sync)).
+- **Channels and a pool shipped without changing the rule above.** They are
+  built on it: a channel is a `Mutex`-guarded queue whose two ends share one
+  runtime record through `Mutex.share()`, and a pool is the same queue of
+  closures ([`std/sync`](/stdlib/sync), [`std/pool`](/stdlib/pool)). What is
+  still absent is a `select` over several channels and a rendezvous
+  (capacity 0) channel.
 
 ## See also
 

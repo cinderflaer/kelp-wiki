@@ -309,13 +309,16 @@ fun main() {
 - **A worker is a real OS thread.** `thread.spawn` starts one and `thread.join`
   waits for it; nothing here is green, pooled or scheduled by the language.
   [Limits in v1](/language/limits) records what the thread surface still does
-  not have: no `Relaxed`/`Acquire`/`Release`, no channels, no thread pool, no
-  thread-local storage, and no async or coroutines. `Mutex<T>`, `RwLock<T>` and
-  `Condvar` are in [`std/sync`](/stdlib/sync).
-- **There is no thread pool in this module.** A pool (`pool.new`, `Pool.spawn`,
-  `Pool.join`) has a written design but was not built, so a program that wants
-  several workers spawns each one and joins the handles itself, as
-  `examples/download_pool.kp` does.
+  not have: no `Relaxed`/`Acquire`/`Release`, no thread-local storage, and no
+  async or coroutines. `Mutex<T>`, `RwLock<T>`, `Condvar` and channels are in
+  [`std/sync`](/stdlib/sync), and a thread pool is [`std/pool`](/stdlib/pool).
+- **The thread pool is a module of its own.** [`std/pool`](/stdlib/pool)
+  (`pool.new`, `Pool.spawn`, `Pool.join`) is built on `thread.spawn`, but a
+  module cannot call its own builtins by name, so it is not part of
+  `std/thread`. A program that wants a handle to each worker still spawns and
+  joins them itself, as `examples/download_pool.kp` does. `spawn` takes one
+  argument, so a worker that needs several values (a channel's `Sender` and a
+  number, say) is handed a `datac` that holds them.
 - **`current_id` names a thread, not a pool slot.** v1 hands out no sequential
   worker numbers; a program that wants "worker 3 of 8" has to track that itself,
   keyed by the id if it needs a stable key.
@@ -326,6 +329,7 @@ fun main() {
 
 ## See also
 
+- [`std/pool`](/stdlib/pool) for a fixed pool of workers over one job queue
 - [`std/atomic`](/stdlib/atomic) for `Ordering`, `Atomic<T>` and the shared cell a worker and its joiner both reach
 - [Concurrency in v1](/language/concurrency) for the model `spawn`, `join` and the fence are part of
 - [Types](/language/types) for `Thread<T>` in the builtin type table

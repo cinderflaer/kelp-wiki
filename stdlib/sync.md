@@ -1,12 +1,15 @@
 ---
 title: "`std/sync`"
-description: "`Mutex<T>`, `RwLock<T>` and `Condvar`: guarded access through scoped blocks, released on every exit and poisoned by a panic, plus `wait_while` for waiting on a condition. Hosted only. Channels and a thread pool are not shipped."
+description: "`Mutex<T>`, `RwLock<T>` and `Condvar` through scoped blocks, plus bounded and unbounded channels (`sync.bounded`, `Sender`, `Receiver`, `for v in rx`) and `Mutex.share`/`swap`. Hosted only. The thread pool is `std/pool`."
 isPublished: true
 tags: "stdlib, concurrency"
 ---
 `Mutex<T>`, `RwLock<T>` and `Condvar`: guarded access through scoped blocks,
 released on every exit and poisoned by a panic, and a condition wait that
-releases the lock around the sleep. Hosted only.
+releases the lock around the sleep. On top of them sit channels
+(`sync.bounded`, `sync.unbounded`, `Sender<T>`, `Receiver<T>`) and the two
+small operations they are built from, `share` and `swap`. A thread pool is
+[`std/pool`](/stdlib/pool). Hosted only.
 
 ```kelp
 impl "std/sync"
@@ -342,17 +345,285 @@ true
 Nothing notifies, so the first wait times out (`is_none` is `true`); after the
 value changes the predicate is already false and the second returns `Some(7)`.
 
-## Channels and a thread pool
+## `Mutex.share` and `Mutex.swap`
 
-**Not shipped.** A design for channels (`Sender<T>`/`Receiver<T>`, `for v in rx`)
-and a worker pool (`Pool.spawn`/`join`) is written down in
-[`plan/sync.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/sync.md),
-and its status file says neither was started: a channel needs tuple construction
-in both code generators and a builtin iterator, and the pool needs the panic path
-to be able to catch a job's panic so the same worker survives. There is no `chan`
-module, no `Sender`, `Receiver` or `Pool`, and nothing to call. Today a program
-shares state through `Atomic<T>`, `Mutex<T>`, `RwLock<T>` and `Condvar`, or gives
-each worker its own copy and joins it.
+Two small builtin operations carry everything a channel or a pool needs.
+
+```
+fun Mutex<T>.share().R: Mutex<T>
+fun Condvar.share().R: Condvar
+fun Mutex<T>.swap(value: move T).R: T
+```
+
+- `share()` returns **another owned handle to the same runtime record**. The
+  record has a reference count, and the last handle's drop frees it. It is how
+  two threads each own a mutex without a `pd`. `into_inner` on a mutex whose
+  record is still shared panics, because the value is still reachable through
+  the other handle.
+- `swap(value)` moves an owned value in and the old one out in one locked step.
+  It exists because a scoped block captures an owned value by borrow only, so a
+  block cannot move a value across by itself.
+
+```kelp
+impl "std/sync"
+
+fun bump(m: move Mutex<i64>) {
+    m.lock { v -> *v = *v + 1 }
+}
+
+fun main() {
+    val m: Mutex<i64> = Mutex.new(5)
+    val other = m.share()
+    bump(m.share())
+    print(other.lock { v -> *v })
+    val old = other.swap(40)
+    print(old)
+    print(m.lock { v -> *v })
+}
+```
+
+`bump` takes a handle by `move` and drops it on return; the other two handles
+still see the value. It prints, on the LLVM backend and under `KELPC_ORACLE=c`
+alike:
+
+```
+6
+6
+40
+```
+
+## Channels
+
+A channel moves **owned values** between threads instead of sharing a location.
+Both ends are ordinary Kelp values written in `std/sync` over `Mutex`, `Condvar`,
+`share` and `swap`; there is no new runtime record.
+
+```
+fun sync.bounded<T>(cap: usize).R: (Sender<T>, Receiver<T>)
+fun sync.unbounded<T>().R: (Sender<T>, Receiver<T>)
+fun Sender<T>.send(value: move T).R: option.Option<T>
+fun Sender<T>.clone().R: Sender<T>
+fun Receiver<T>.recv().R: result.Result<T, RecvErr>
+fun Receiver<T>.try_recv().R: option.Option<T>
+fun Receiver<T>.recv_timeout(millis: i64).R: result.Result<T, RecvTimeout>
+for v in rx { ... }
+```
+
+| Call | Returns | Notes |
+| --- | --- | --- |
+| `sync.bounded<T>(cap)` | `(Sender<T>, Receiver<T>)` | at most `cap` queued values; `send` waits while it is full. `cap` of 0 panics |
+| `sync.unbounded<T>()` | `(Sender<T>, Receiver<T>)` | no limit; `send` never waits |
+| `tx.send(value)` | `Option<T>` | `None` means it was queued; `Some(value)` hands the value back because the receiver is gone |
+| `tx.clone()` | `Sender<T>` | another sender on the same channel |
+| `rx.recv()` | `Result<T, RecvErr>` | waits while the queue is empty and a sender is alive; `Err(RecvErr.Closed)` once it is empty and every sender is gone |
+| `rx.try_recv()` | `Option<T>` | the oldest value now; never waits |
+| `rx.recv_timeout(ms)` | `Result<T, RecvTimeout>` | `Err(Timeout)` when the wait ran out with a sender still alive, `Err(Closed)` when every sender is gone |
+| `for v in rx` | one value per pass | ends when the channel is closed and drained |
+
+The pair is a tuple, so it is taken apart with a destructuring binding. Write
+`var (tx, rx) = ...` when a `for` over `rx` needs a mutable place, and `val`
+otherwise. `thread.spawn` takes one argument, so a worker that needs a sender
+gets it inside a `datac`. Two producers and one consumer, the producers
+`send`ing three values each through a channel of capacity 2:
+
+```kelp
+impl "std/thread"
+impl "std/result"
+impl "std/sync"
+
+datac Job(val tx: sync.Sender<i64>, val base: i64)
+
+fun produce(job: move Job) {
+    val tx = job.tx
+    val base = job.base
+    var i: i64 = 0
+    while i < 3 {
+        val back = tx.send(base + i)
+        i += 1
+    }
+}
+
+fun main() {
+    var (tx, rx) = sync.bounded<i64>(2)
+    val a = thread.spawn(produce, Job(tx = tx.clone(), base = 10))
+    val b = thread.spawn(produce, Job(tx = tx, base = 20))
+    var total: i64 = 0
+    var n = 0
+    for v in rx {
+        total += v
+        n += 1
+    }
+    print(n)
+    print(total)
+    when thread.join(a) {
+        Ok(_) -> {}
+        Err(e) -> print(e.message)
+    }
+    when thread.join(b) {
+        Ok(_) -> {}
+        Err(e) -> print(e.message)
+    }
+}
+```
+
+The loop ends by itself: `main`'s own `tx` was moved into the second job, so
+the channel closes when both workers have returned and dropped their senders.
+Both backends print:
+
+```
+6
+96
+```
+
+The six values sum to 10 + 11 + 12 + 20 + 21 + 22 = 96; their order depends on
+the threads, so the program prints only the count and the sum.
+
+### `try_recv` and `recv_timeout`
+
+```kelp
+impl "std/result"
+impl "std/option"
+impl "std/sync"
+
+fun show(o: move option.Option<i64>).R: i64 = when o {
+    Some(v) -> v
+    None -> -1
+}
+
+fun main() {
+    val (tx, rx) = sync.unbounded<i64>()
+    val none = tx.send(5)
+    val none2 = tx.send(6)
+    print(show(rx.try_recv()))
+    when rx.recv_timeout(10) {
+        Ok(v) -> print(v)
+        Err(e) -> when e {
+            Timeout -> print("timeout")
+            Closed -> print("closed")
+        }
+    }
+    when rx.recv_timeout(10) {
+        Ok(v) -> print(v)
+        Err(e) -> when e {
+            Timeout -> print("timeout")
+            Closed -> print("closed")
+        }
+    }
+    print(show(rx.try_recv()))
+}
+```
+
+```
+5
+6
+timeout
+-1
+```
+
+The queue is first-in first-out. The third call times out because `tx` is still
+alive; with the sender gone it would answer `closed`.
+
+### Closing
+
+A channel closes when **every sender has dropped**, or when **the receiver has
+dropped**. Closing is the drop of a hidden non-generic end each handle owns, so
+it needs no call.
+
+- With every sender gone, `recv` first drains what is queued and then answers
+  `Err(RecvErr.Closed)`; `for v in rx` ends at that point.
+- With the receiver gone, `send` returns `Some(value)`: the value comes back to
+  the sender instead of being lost.
+
+```kelp
+impl "std/result"
+impl "std/option"
+impl "std/sync"
+
+fun fill(tx: move sync.Sender<i64>) {
+    val a = tx.send(1)
+    val b = tx.send(2)
+}
+
+fun hang_up(rx: move sync.Receiver<String>) {
+}
+
+fun main() {
+    // every sender gone: queued values drain, then recv answers Err
+    val (tx, rx) = sync.unbounded<i64>()
+    fill(tx)
+    var total: i64 = 0
+    var open = true
+    while open {
+        when rx.recv() {
+            Ok(v) -> total += v
+            Err(_) -> open = false
+        }
+    }
+    print(total)
+
+    // receiver gone: send hands the value back
+    val (tx3, rx3) = sync.bounded<String>(1)
+    hang_up(rx3)
+    when tx3.send(String.from_str("back")) {
+        Some(s) -> print(s)
+        None -> print("lost")
+    }
+}
+```
+
+```
+3
+back
+```
+
+### Limits of channels
+
+- **The element must be an owned, borrow-free value.** A `str` or `View` would be
+  a thread reading text another frame owns, and a `Mutex`, `RwLock` or `Condvar`
+  is reached by borrowing it, never by moving it through a queue. Both are
+  refused when the channel is made. `sync.bounded<str>(2)` says:
+
+  ```
+  error: in 'std.sync.bounded<str>': in 'std.sync.Sender<str>': 'str' is a borrowed view: a 'List' element is owned by the list, so it has to outlive it (v1 has no lifetime syntax to say otherwise); use a scalar, 'String', 'Bytes', a 'datac', an 'enum', another 'List', or a 'Box'
+  ```
+
+  and `sync.bounded<Mutex<i64>>(2)` says:
+
+  ```
+  error: in 'std.sync.bounded<Mutex<i64>>': in 'std.sync.Sender<Mutex<i64>>': 'Mutex<i64>' cannot be a 'List' element: a mutex owns a runtime record and is reached by borrowing it, while a container's own routines move and drop an element like a plain location. Keep the mutex in a local or a field ('val m = Mutex.new(0)') and lock it there
+  ```
+
+- **No zero-capacity (rendezvous) channel.** `sync.bounded<i64>(0)` panics with
+  `sync.bounded: the capacity must be at least 1`.
+- **`send` returns `Option<T>`, not `Result<(), E>`**, because no expression
+  produces `unit` to put in an `Ok`. `None` is success. The compiler does **not**
+  force you to look at the result (v1 has no `must_use`), so `tx.send(1)` on its
+  own line compiles and silently drops the value that comes back when the
+  receiver is gone. The examples bind it (`val back = tx.send(v)`) to say so.
+- **No `select`** over several channels, no `try_send`, and no receive with a
+  deadline on more than one channel. A receiver has one owner: it is not
+  cloneable, so there is no multi-consumer queue (use a [pool](/stdlib/pool)).
+- **`for v in rx` needs a mutable place**, so bind the pair with `var`. A trait
+  impl cannot name a generic instantiation, so `Receiver<T>` is not an
+  `Iterator` implementor: the compiler's `for` accepts a generic `datac` whose
+  template declares `fun mut Receiver<T>.next().R: option.Option<T>`, which is
+  an ordinary `next()` call underneath.
+- **Hosted only.** `std/sync` is a hosted module, so a freestanding build names
+  the module:
+
+  ```
+  error: the module 'std/sync' is unavailable in a freestanding build: it needs a hosted runtime (libc or the 'kelp_rt' helpers); the std modules a freestanding project may implement are std/arena, std/atomic, std/convert, std/frame, std/irq, std/iter, std/list, std/math, std/ops, std/option, std/regex, std/result, std/str
+  ```
+
+  The same program passes on the LLVM backend and under `KELPC_ORACLE=c`; the
+  tests are `chan_bounded_mpsc` (four producers, one consumer, sum 124500),
+  `chan_close`, `chan_recv_timeout`, `chan_zero_capacity`, `chan_non_sendable`
+  and `chan_send_a_lock`.
+
+## The thread pool
+
+A worker pool is its own module, [`std/pool`](/stdlib/pool), built from
+`Mutex`, `Condvar` and `thread.spawn`.
 
 ## Hosted only
 
@@ -386,6 +657,8 @@ by design, and neither backend can lower a mutex without the hosted runtime.
 
 - A try-lock or timed lock on `Mutex<T>` itself (`RwLock<T>` has `try_read` and
   `try_write`), and an ordering slot.
+- A `select` over several channels, a rendezvous (capacity 0) channel and a
+  multi-consumer receiver (see [Limits of channels](#limits-of-channels)).
 - A `lock` that returns a guard value: the scoped block is the whole reason the
   borrow cannot escape, and a returned guard would reintroduce the escape.
 - A blocking `Condvar.wait` that hands back a guard; `wait_while` is the shape.
@@ -396,5 +669,6 @@ by design, and neither backend can lower a mutex without the hosted runtime.
 
 - [`std/atomic`](/stdlib/atomic)
 - [`std/thread`](/stdlib/thread)
+- [`std/pool`](/stdlib/pool)
 - [Concurrency in v1](/language/concurrency)
 - [Limits in v1](/language/limits)

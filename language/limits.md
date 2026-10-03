@@ -71,6 +71,48 @@ them.
   **(still open)** `extern "C"` block syntax, function-pointer types for user
   externs, and a `repr(C)` struct crossing by value.
 
+## Scoped blocks
+
+A trailing block (`f { x -> ... }`) passes a `scoped fun(...)` parameter, and it
+may write what it captures ([Trailing blocks and scoped
+parameters](/language/functions#trailing-blocks-and-scoped-parameters)). The
+limits of that rule:
+
+- **A block cannot be stored**, returned or put in a container: a scoped value is
+  a type of its own and lives exactly as long as the call it was written in. A
+  retained callback (a button's `on_click`) is still a message value, not a block.
+- **A block inside a block cannot capture the outer block's exclusive capture**,
+  even to read it. The message names the two ways out: pass the name to the inner
+  call as an argument, or capture it in the outer function.
+- **One owner, one exclusive capture per call.** A second capture of the same
+  owner in the same call, a call whose other arguments or receiver mention the
+  owner, and a borrow of the owner still used after the call are all refused.
+- **Borrow roots are whole variables**, so a block writing `s.count` while the
+  callee borrows `s.items` conflicts: there is no disjoint-field capture.
+- A block that writes through an exclusive capture **cannot return a borrow**
+  (`str`, `View`, `&T`); return an owned value.
+- A general hole older than this rule is still open: two reborrows of one `mut`
+  *parameter* in one ordinary call (`g(s, s)` with two `mut` parameters) are not
+  checked. The block case is closed; the plain call is not.
+- `kelpc fmt` has no rule for re-wrapping a trailing block yet (open item 75).
+
+## Feature interactions
+
+Every pair of the 2026-10 language features that had not been tested together is
+a fixture (`matrix_*.kp`) run on both backends. Each cell either works with its
+output pinned or is refused with a message that says what to do next:
+
+| Pair | Result |
+| --- | --- |
+| associated types with `Box<dyn>` | refused by name: use a bounded type parameter (`<T: Source>`) instead |
+| generic traits with operator traits | refused: `ops.Add` takes no type argument, the right-hand side is always `&Self`, so there is no `impl Add<Vec2> for Vec2` |
+| iterators with `defer` | works: a `defer` in a loop body runs once per iteration, including the one a `return` leaves; a function-level `defer` runs last |
+| iterators with const generics | limit: `impl Iterator for Ring<3>` is a trait for a generic instantiation, refused; wrap it in a non-generic cursor `datac` that walks the `Ring<N>` through a generic function |
+| `From` with `?` inside an iterator's `next` | refused where the shapes differ (`next` returns an `Option`, so `?` there can only propagate `None`); convert in a helper that returns a `Result` and turn the failure into `None` with a `when` |
+| `Display` with a generic function | works: `<T: fmt.Display>` calls `to_text`, and the same value interpolates in a template |
+| `Ord` with `Map` keys | works, and `Ord` is never consulted: a declared `hash`/`eq` (or the derived field-wise pair) decides key identity, so an `Ord` that calls every pair equal still leaves two keys in the map |
+| operator traits in a freestanding build | works: `std/ops` is in the freestanding allowed set |
+
 ## Ownership
 
 - **A partial move takes one projection of an owned local.** `val xs = bag.xs`
@@ -143,6 +185,16 @@ them.
   accepts `https`, and `ws.parse_url` accepts `wss` (`ws.connect_url` runs the
   WebSocket handshake over the same TLS layer, taking the scheme off the parsed
   URL).
+- **TLS also serves.** [`std/tls`](/stdlib/tls#serving-tls) builds a
+  `ServerConfig` from PEM bytes (`tls.server_config_pem`), accepts with
+  `tls.accept`, negotiates ALPN, and can require client certificates (mutual
+  TLS); [`std/http`](/stdlib/http#serving-https) serves HTTPS with
+  `http.serve_tls`. Its limits: verification cannot be turned off on either
+  side; a key file's permissions are not checked (keep it `0600`); an
+  **encrypted private key is refused**; a built `ServerConfig` is immutable, so a
+  new certificate means building a new config; `net.listen` binds every
+  interface, so `serve_tls` does too; and the HTTP server speaks HTTP/1.1 only,
+  so ALPN names a protocol but does not make the server speak `h2`.
 - **`std/ws` is a client, not a server.** Not scheduled anywhere on the
   roadmap: a WebSocket server, extensions (`Sec-WebSocket-Extensions`, so
   `permessage-deflate` and the `zlib-stream` transport a compressed gateway
@@ -179,15 +231,20 @@ and `std/ws` is §16.18 of the same document.
 - **One ordering, and nothing else around it.** The single ordering v1 has is
   `SeqCst`; `Relaxed`, `Acquire` and `Release` are reserved, not shipped. There
   are no async and no coroutines, with no roadmap item tracking either yet.
-  **Channels and a thread pool are designed but not built**
-  ([`plan/sync.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/sync.md)
-  records the design and its status file records that neither was started).
+  **Channels and a thread pool have shipped**, hosted only:
+  `sync.bounded`/`sync.unbounded` with `Sender<T>` and `Receiver<T>` in
+  [`std/sync`](/stdlib/sync#channels), and [`std/pool`](/stdlib/pool). A channel
+  carries owned borrow-free values only, has no `select` and no zero-capacity
+  form, and `send` returns an `Option` the compiler does not force a caller to
+  read; a pool creates one thread per job, so it bounds concurrency rather than
+  thread creation.
   `Mutex`, `RwLock` and `Condvar` have shipped ([`std/sync`](/stdlib/sync));
   thread-local storage is still a named backlog item (B-11, MK9-S3-M3) rather
   than ruled out, it is simply not built. Per-CPU storage has shipped: `percpu static mut` lays out
   `[target] cpus` copies and `cpu_index()`/`cpu_count()` read it back, in a
   freestanding build only; see [Per-CPU storage](/language/percpu). Today's shared-mutable shapes for hosted threads are `Atomic<T>`,
-  `Mutex<T>`, `RwLock<T>` and `Condvar`; a worker that needs to share something else still takes its own
+  `Mutex<T>`, `RwLock<T>` and `Condvar`, and values move between threads over a
+  channel; a worker that needs to share something else still takes its own
   copy instead, the way
   `examples/download_pool.kp` gives each thread its own `http.Pool`. Two leaks
   are admitted: a panicking worker's frame is abandoned, and a handle nobody

@@ -636,9 +636,11 @@ entry is a matched child and not because an ordinal rule reused it.
 - **No animation and no transitions.** A patch sets a property in one step;
   there is no interpolator and no per-frame hook. The soft backend's frame
   deadline bounds one tick, it does not add animation.
-- **No exclusive captures.** A builder block may read the borrowed state, but
-  `state.count += 1` inside a block is still a language error
-  (`plan/scoped-blocks.md`); a mutation goes through a `Msg`.
+- **A stored callback cannot write state.** A builder block may now write a
+  `var` or `mut` parameter it captures
+  ([Exclusive captures](/language/functions#exclusive-captures)), but only during
+  the call that runs it. A widget's `on_click` outlives the call that built it, so
+  it stays a `Msg` value, and a mutation still goes through the update function.
 - **No library manifest.** See [Using the library](#using-the-library): the
   consumer pastes the `[extern.*]` sections and places the sources under
   `src/deps/polyp/`. This is the one thing that makes Polyp awkward to consume,

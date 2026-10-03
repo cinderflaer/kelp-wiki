@@ -166,16 +166,158 @@ fun main() {
 
 - A scoped value may be re-bound or passed to another scoped parameter: both stay
   inside the call.
-- **Exclusive captures are refused.** A block that writes through a captured
-  binding is an error, and the message names the shared alternative. A builder
-  that needs a mutation takes the `Msg` shape instead (see
-  [`polyp`](/libraries/polyp)).
+- **A block may write what it captures** ([Exclusive
+  captures](#exclusive-captures) below), under rules the compiler checks.
 - A scoped value may not be stored in a `datac` field, returned, put in a
   container, passed to a plain parameter, or captured by another closure. Each of
   those is an ordinary type mismatch, because `scoped fun(...)` is a type of its
   own.
 - The builder shape this exists for is `polyp.column { k -> k.text(s.title) }`,
   where the block reads the view's borrowed state.
+
+### Exclusive captures
+
+A block captures a binding **by exclusive borrow exactly when its body needs
+one**. There is no annotation: writing through a capture (`s.count += n`,
+`total = 5`), taking `&mut` of it, calling a `mut`-receiver method on it
+(`xs.push(n)`) or passing it to a `mut` parameter makes that capture exclusive
+for the whole call the block is written in. Every other capture stays what it
+was: a shared borrow of an owned binding, or a copy of a `Copy` binding the block
+only reads.
+
+A needs-exclusive capture is accepted when the enclosing binding is an owned
+`var` (a `datac`, a collection, a `String`, or a `Copy` scalar) or a `mut`
+parameter, which the block reborrows for the call only. This program runs on
+both backends:
+
+```kelp
+impl "std/sync"
+
+datac State(var count: i32, var seen: List<i32>)
+
+fun each(f: scoped fun(i32)) {
+    f(1)
+    f(2)
+    f(3)
+}
+
+fun tally(s: mut State) {
+    each { n ->
+        s.count += n
+        s.seen.push(n * 10)
+    }
+}
+
+fun main() {
+    var total = 0
+    var calls = 0
+    each { n ->
+        total += n
+        calls += 1
+    }
+    print(total)
+    print(calls)
+
+    var s = State(count = 100, seen = List.empty())
+    tally(s)
+    print(s.count)
+    print(s.seen.len())
+
+    // a lock block can update a local accumulator too
+    val m: Mutex<i64> = Mutex.new(7)
+    var grabbed: i64 = 0
+    m.lock { v -> grabbed += *v }
+    print(grabbed)
+}
+```
+
+```text
+6
+3
+106
+3
+7
+```
+
+`total` and `calls` are `Copy` scalars the block writes, so they are captured by
+pointer and the new values are visible after the call. `tally` reborrows its
+`mut` parameter. The owner is free again as soon as the call returns.
+
+Inside the block an exclusive capture behaves like a `mut` parameter, so it can be
+passed on to a function that takes `mut`, which is what lets an Elm-style drain
+loop write the model without threading it through the callback (this is the body
+of `pump` in the `excl_capture_drain` fixture, which prints `1`, `6`, `8`, `8` on
+both backends):
+
+```text
+q.drain { msg ->
+    update(model, msg)
+    mark(model)
+}
+```
+
+A `return` inside the block leaves only the block, and a `defer` in the block
+runs when the block returns, once per call of it.
+
+**What is refused**, each with the compiler's own text.
+
+- Writing a `val`:
+
+  ```
+  error: cannot write to captured 'frozen': it is not declared 'var' in the enclosing function; declare it 'var' so a scoped block can write it
+  ```
+
+- Writing through a parameter that is only a shared borrow (`fun bump_all(s: State)`):
+
+  ```
+  error: cannot write to captured 's': it is a shared borrow in the enclosing function, so a block cannot write through it; take it as a 'mut' parameter there
+  ```
+
+- The same owner captured twice in one call, whether by two blocks or by a block
+  and an ordinary argument (`two(s) { n -> s.count += n }` with
+  `two(s: mut State, ...)`, or `both(fun(n: i32) { s.count += n }, fun(n: i32) { s.count += n * 2 })`):
+
+  ```
+  error: cannot borrow 's': already borrowed exclusively
+  ```
+
+- The owner is the call's receiver (`s.each { n -> s.count += n }`), or a field of
+  it, or the callee's other argument is a shared view of it:
+
+  ```
+  error: cannot borrow 's' as exclusive: already borrowed exclusively
+  error: cannot borrow 's' as exclusive: already borrowed as shared
+  ```
+
+  The second also covers a borrow taken before the call and still used after it
+  (`val first = s.items.get(0)` ... `print(first)`): borrows end at their last
+  use, so the same borrow dead before the call is fine.
+
+- A `mut` parameter passed on in the same call that holds it in a block:
+
+  ```
+  error: cannot borrow 's' as exclusive: this call also uses it, and a block that writes through a captured exclusive borrow needs the call's other arguments to leave it alone
+  ```
+
+- A block inside a block that uses a name the outer block captures exclusively:
+
+  ```
+  error: cannot capture 's' into this nested block: it is an exclusive capture of the enclosing block, and a block inside a block cannot hold it; pass 's' to the inner call as an ordinary argument, or capture it in the outer function
+  ```
+
+- Returning a borrow from a block that holds an exclusive capture:
+
+  ```
+  error: this block writes through 's' (an exclusive capture) and returns a borrow ('str'): the borrow would outlive the call that holds 's' exclusively; return an owned value (a copy or a 'String.from_str(...)') instead
+  ```
+
+- Storing the block is still refused, unchanged: it may only be passed to another
+  `scoped fun(...)` parameter, so a callback that must outlive the call is a
+  message value, not a block.
+
+The same rule is the reason [`Mutex.lock`](/stdlib/sync) and the other block APIs
+can update a local accumulator. Its remaining limits are listed under
+[Scoped blocks](/language/limits#scoped-blocks) in Limits in v1.
 
 ## `pd` passdowns as hidden parameters
 
