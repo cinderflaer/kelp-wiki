@@ -17,10 +17,7 @@ them.
 - **`break` and `continue` exist** and act on the innermost loop, in a `while`
   and in either `for`. There is **no `loop` expression, no labelled loop and no
   `break` with a value**, and a deferred action cannot contain either
-  ([Iterators, `for` and `break`](/language/iterators)). One compiler bug to know
-  about: on the LLVM backend, a function whose body ends in `while true { ...
-  break ... }` is compiled as if the loop could not be left; use a real loop
-  condition.
+  ([Iterators, `for` and `break`](/language/iterators)).
 
 ## Errors
 

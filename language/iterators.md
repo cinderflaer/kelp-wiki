@@ -229,13 +229,6 @@ done 7
 - **`List.iter()` and `List.into_iter()`.** A borrowing iterator would need a way
   to say how long the borrow lives, and a `List` method cannot be added by a
   shipped module. Walk a list with `for x in xs`.
-- **`while true { ... break ... }` at the end of a function.** Known compiler
-  bug at the time of writing: the LLVM backend treats a function body that ends
-  in `while true` as if the loop could never be left, even when it contains a
-  `break`, and the compiled program crashes where the C backend runs it
-  correctly. Put the exit in the loop condition instead. The iterator `for`
-  (which lowers to such a loop internally) and a `while` with a real condition
-  are not affected.
 
 ## See also
 
