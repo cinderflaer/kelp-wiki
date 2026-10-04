@@ -30,3 +30,4 @@ the [Language chapter](/language), the [Standard library](/stdlib) and the
 7. [Errors: Option, Result and panic](/tutorial/07-errors)
 8. [Collections](/tutorial/08-collections)
 9. [Traits and generics](/tutorial/09-traits)
+10. [Closures and scoped blocks](/tutorial/10-closures)
