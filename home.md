@@ -34,6 +34,13 @@ by the first few lines of a file instead of by auditing it.
     Read [Getting started](/getting-started): the language in one page,
     then a program, a tool with an exit code, and tests around it.
 
+-   **Tutorial**
+
+    ---
+
+    The [Tutorial](/tutorial) is a hands-on book for readers who program but
+    have not seen Kelp: every program was built and run on both backends.
+
 -   **The language**
 
     ---
