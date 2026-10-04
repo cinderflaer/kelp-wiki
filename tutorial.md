@@ -26,3 +26,4 @@ the [Language chapter](/language), the [Standard library](/stdlib) and the
 3. [Control flow and iterators](/tutorial/03-control-flow)
 4. [Text](/tutorial/04-text)
 5. [Records, enums and methods](/tutorial/05-data)
+6. [Ownership, borrowing and moves](/tutorial/06-ownership)
