@@ -27,3 +27,4 @@ the [Language chapter](/language), the [Standard library](/stdlib) and the
 4. [Text](/tutorial/04-text)
 5. [Records, enums and methods](/tutorial/05-data)
 6. [Ownership, borrowing and moves](/tutorial/06-ownership)
+7. [Errors: Option, Result and panic](/tutorial/07-errors)
