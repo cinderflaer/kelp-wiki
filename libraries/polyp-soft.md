@@ -9,9 +9,10 @@ uses; the other is the **soft backend**, a pure-Kelp renderer that draws through
 integer software rasterizer into a framebuffer and links no GTK, no display server
 and no libc. It is the half a custom operating system, a test harness or a
 bare-metal image uses, and it is what makes a whole Polyp program testable with no
-display at all. The design is
+display at all. The original design is
 [`plan/polyp-v3.md`](https://homelabone.xenoo.dev/gitea/Juniper/kelp/src/branch/main/plan/polyp-v3.md),
-stages 2, 3 and 5.
+stages 2, 3 and 5; [`plan/polyp-v4.md`](https://homelabone.xenoo.dev/gitea/Juniper/kelp/src/branch/main/plan/polyp-v4.md)
+adds clocks, animation, UTF-8, accessibility and memoisation.
 
 The layering, from the application down:
 
@@ -84,8 +85,9 @@ hashes the alpha byte. `checksum_rgb(fb)` is the same over blue, green and red
 with a constant `0xFF` where alpha goes, because the renderer writes glyph
 coverage into a text pixel's alpha; that is the checksum a screen can match.
 
-`draw_text` advances the pen by `6 * scale` per **byte** and returns the pixels
-written. The embedded font has one weight: a `bold` flag is carried and ignored.
+`draw_text` advances the pen by `6 * scale` per UTF-8 unit and returns the pixels
+written. Malformed runs and unsupported code points each occupy one replacement
+box. The embedded font has one weight: a `bold` flag is carried and ignored.
 
 ## The soft backend
 
@@ -341,20 +343,16 @@ the same counts per frame; the table above is a full run.
   path allocates nothing and the patch list is reused, but `view` rebuilds the
   application tree through Kelp's one allocator every time a message arrives. The
   counters measure the backend, not the application.
-- **No animation and no timers.** The backend has no clock of its own and no
-  interpolated state; every frame is a response to input or a patch. The deadline
-  bounds how much of one tick a frame takes, it does not add animation.
 - **No vector text, no shaping, no sub-pixel positioning.** The embedded 5x7
-  ASCII face is the only font, at integer scales 1 to 4, one pen step of
-  `6 * scale` per byte. A byte outside 32..126 is one replacement box, and a
-  multi-byte UTF-8 sequence is one box per byte. There is no bold face.
+  face has selected Latin, Greek, Cyrillic and symbol glyphs at integer scales
+  1 to 4. There is no bold face and unsupported code points use a replacement box.
 - **No images.** The primitives are fills, strokes, lines, blends and the glyph
   mask blit; there is no image or texture primitive, no gradient and no pattern
   fill, and no colour type beyond `u32`.
 - **No horizontal scrolling, no scrollbar dragging, no smooth scrolling.** The
   wheel moves by a fixed step and clamps.
 - **No text selection, clipboard, IME or multi-line entry.** The caret is a byte
-  offset and the font is byte-oriented.
+  offset kept on UTF-8 unit boundaries.
 - **No GPU and no display server.** The renderer is the integer software raster
   in `examples/polyp/soft/`; the only hardware fact is the platform's pixel
   pointer.
@@ -362,8 +360,8 @@ the same counts per frame; the table above is a full run.
   value a platform can replace, and class overrides are `class_style`
   comparisons. There is no stylesheet parser and no selector engine; `polyp.css`
   is GTK's hook.
-- **No accessibility.** There is no focus announcement, role tree or
-  screen-reader bridge.
+- **No screen-reader bridge.** The soft backend has an on-demand role tree and
+  actions, but it does not connect to a host accessibility service.
 - **Timing is the host's.** The benchmark's clock measures the process, not a
   display's frame pacing, and the numbers are one host's at one moment.
 

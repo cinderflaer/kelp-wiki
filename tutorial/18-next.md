@@ -1,6 +1,6 @@
 ---
 title: "Tutorial 18: Where to go next"
-description: "Chapter 18 of the Kelp tutorial: a small capstone, where the reference, library, tooling and plan pages are, and the compiler quirks and wiki mismatches found while checking this tutorial against the compiler."
+description: "Chapter 18 of the Kelp tutorial: a small capstone, where the reference, library, tooling and plan pages are, and the fixes made after checking this tutorial against the compiler."
 isPublished: true
 tags: "tutorial, getting-started"
 ---
@@ -77,66 +77,22 @@ for `From` and `?`, [Concurrency in v1](/language/concurrency) for chapter 13,
 [`std/tls`](/stdlib/tls) for mutual TLS and ALPN, [Freestanding mode](/language/freestanding)
 and [Polyp on bare metal](/libraries/polyp-freestanding) for chapters 16 and 17.
 
-## Known quirks
+## Fixes made while checking the book
 
-These came up while every program in this book was built and run on both backends. They are
-reported as observed with the `kelpc 26.09.5` prebuilt compiler (current `main` when this was
-written), not as judgements about what the design should be.
+The tutorial initially found three compiler bugs. They are fixed for this
+release, and their fixtures run on both backends:
 
-**1. A template's embedded calls ran in a different order on the two backends.** A template
-that holds two calls with side effects can print different text depending on the backend:
+- Expressions evaluate strictly left to right, including template pieces, call
+  arguments, operators and aggregate fields. A template may therefore contain
+  two side-effecting calls without the C backend reordering them.
+- Several lock-typed `pd val` globals now initialise on LLVM just as they do on
+  the C backend. A `Mutex`, `RwLock`, `Condvar` and lock-protected collection
+  can appear together and be used from worker threads.
+- `kelpc doc` keeps a record comment on its record. A same-line field without
+  its own comment is listed without a description.
 
-```kelp
-fun main() {
-    var m: Map<String, i32> = Map.new()
-    m.insert(key = "a", v = 1)
-    m.insert(key = "b", v = 2)
-    print("removed ${m.remove(key = "a")}, ${m.len()} left")
-}
-```
-
-```text
-llvm backend:
-removed 1, 1 left
-C oracle:
-removed 1, 2 left
-```
-
-On the default LLVM backend the pieces ran left to right (`remove`, then `len`); the C oracle
-ran them the other way. This is how a program of mine first disagreed between backends
-(chapter 8 now binds the `remove` result to a `val` first). Until it is settled, do not put
-two side-effecting calls in one template: bind each result to a name first.
-
-**2. Two lock-typed `pd val` globals made the LLVM backend fail to build.** One `pd val`
-`Mutex` or `RwLock` works; a second one in the same program does not:
-
-```kelp
-impl "std/sync"
-
-pd val hits: Mutex<i64> = Mutex.new(0)
-pd val other: Mutex<i64> = Mutex.new(1)
-
-fun main() {
-    print("hits ${hits.lock { v -> *v }} ${other.lock { v -> *v }}")
-}
-```
-
-```text
-$ kelpc build quirk4.kp
-error: Basic Block in function 'kelp_init_pds' does not have terminator!
-label %alloc.ok
-
-$ KELPC_ORACLE=c kelpc build quirk4.kp && ./quirk4
-hits 0 1
-```
-
-The C oracle builds and runs it. A `Mutex` and an `RwLock` together fail the same way. Chapter
-13 keeps the `RwLock` as a local to avoid it. This looks like a compiler bug in the module that
-initialises the globals, not a language rule.
-
-**3. Two small things worth knowing.** `kelpc doc` gave a field with no doc comment of its own
-the text of its record's comment (chapter 15). And an AddressSanitizer binary cannot run under
-`ulimit -v`, so the bound there is `ulimit -t` and `timeout`.
+The sanitizer constraint remains: an AddressSanitizer binary cannot run under
+`ulimit -v`, so the bound in chapter 15 is `ulimit -t` and `timeout`.
 
 ## What was not run
 

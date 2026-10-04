@@ -59,6 +59,25 @@ val c = 7.0 / 2.0    // 3.5
   [Operator traits and `Display`](/language/operator-traits). Builtin types keep
   their builtin operators.
 
+## Evaluation order
+
+Kelp evaluates expressions **strictly left to right**. This includes call
+arguments, template interpolations, binary operands, constructor fields and
+list elements. Each expression is evaluated once. `&&` and `||` keep their
+usual short-circuit rule: the right side runs only when the left side requires
+it, and runs after the left side.
+
+This is a language rule, not a property of one backend. It makes side effects
+in a template predictable:
+
+```kelp
+print("removed ${items.remove(0)}, ${items.len()} left")
+```
+
+removes first, then reads the length, on both the LLVM backend and the C
+backend. Code may still bind intermediate results when that makes it easier to
+read, but it does not need to do so for backend agreement.
+
 ## Bitwise
 
 `& | ^ << >> ~` require two integers **of the same type** (or one, for `~`) and

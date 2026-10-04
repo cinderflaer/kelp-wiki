@@ -28,6 +28,9 @@ There is no published version number. **v2** added the keyed patch, `scrolled`,
 display-free path; the application surface is unchanged apart from the tree's
 type, which is `core.Node<M>` now that it lives in the core. The design is
 [`plan/polyp-v3.md`](https://homelabone.xenoo.dev/gitea/Juniper/kelp/src/branch/main/plan/polyp-v3.md).
+**v4** adds timers and integer animation, UTF-8 text in the soft backend, an
+on-demand accessibility tree, and memoised pure subtrees. Its implementation
+record is [`plan/polyp-v4.md`](https://homelabone.xenoo.dev/gitea/Juniper/kelp/src/branch/main/plan/polyp-v4.md).
 
 ## The layering
 
@@ -628,14 +631,40 @@ patch subsumes it, and it works for any widget, not only an entry. The counter's
 smoke run still prints one entry built across all its renders, now because the
 entry is a matched child and not because an ordinal rule reused it.
 
+## Polyp v4
+
+The core can drive timers through `subscriptions(state)`: `core.every(ms, msg)`
+repeats and `core.after(ms, msg)` fires once. A platform supplies monotonic
+`Tick(now_us)` events; no tick means no timer or animation advances. The soft
+backend exposes `wants_frames()` for active animation or paint work and
+`core.next_wake_us()` for the next timer deadline.
+
+`anim.lerp(from, to, ms, ease)` supplies integer linear, ease-in, ease-out and
+ease-in-out animation. Builder options animate progress or spacer values and can
+animate opacity and paint offsets. The backend damages only the rectangles whose
+animation changed; layout still uses the unanimated rectangle for hit testing.
+
+Soft text is UTF-8 by code point rather than byte. The bundled face covers ASCII,
+Latin, Greek, Cyrillic, selected punctuation, arrows and box drawing; unsupported
+or malformed units draw as one replacement box and take one caret step.
+
+`SoftBackend.a11y_tree()` constructs an accessibility tree only when requested.
+It has roles, names, values, state, bounds and actions for interactive widgets;
+`a11y_act` and `a11y_set_value` drive the same message path as input. The new
+`k.disabled()` mutes and removes a soft-backend interactive widget from pointer,
+keyboard and accessibility actions. GTK currently ignores that option.
+
+For a large pure region, `k.memo(key, deps, build)` stores its last subtree in a
+caller-owned `MemoStore`. Equal explicit dependencies keep the retained subtree;
+keyed reorders preserve hits. The dependency list is the contract: omitting a
+value read by `build` can leave stale pixels. `MemoStore` reports hits, misses and
+view calls, but is a small linear cache with no eviction beyond removing a memo.
+
 ## Known limits
 
 - **No lazy or virtualized lists.** Every child in the model is a live widget on
   every backend; a list of 10,000 rows builds 10,000 widgets. A keyed patch makes
   the updates cheap, not the first build.
-- **No animation and no transitions.** A patch sets a property in one step;
-  there is no interpolator and no per-frame hook. The soft backend's frame
-  deadline bounds one tick, it does not add animation.
 - **A stored callback cannot write state.** A builder block may now write a
   `var` or `mut` parameter it captures
   ([Exclusive captures](/language/functions#exclusive-captures)), but only during
@@ -650,7 +679,7 @@ entry is a matched child and not because an ordinal rule reused it.
   (rather than carrying a `Msg`) relies on the order widgets are created in; the
   smoke runs do, deliberately, because they have no user to click anything.
 - **The soft backend's limits are its own.** No vector text or shaping, no bold
-  face, no images, no accessibility, no GPU, no stylesheet parser; the full list
+  face, no images, no GPU, no stylesheet parser or screen-reader bridge; the full list
   is on
   [Polyp on a framebuffer](/libraries/polyp-soft#what-the-display-free-path-does-not-do).
 - **A display is required to *draw* with GTK.** The GTK smoke tests run a real

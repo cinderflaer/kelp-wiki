@@ -228,7 +228,9 @@ pub fun perimeter(r: &Rect).R: i32
 ```
 ```
 
-A field with no doc comment of its own shows its record's text, as the output above does.
+A field with no doc comment of its own is listed without a description. A
+record's comment belongs to the record only; it is never inherited by its
+fields.
 `--check` writes nothing and fails when a listed item has no doc comment:
 
 ```text

@@ -29,6 +29,10 @@ The text is plain Markdown-ish prose. Lines starting with `- ` stay a list, and 
 backticked name that matches exactly one type or trait among the documented
 modules becomes a link to it.
 
+A comment on a `datac` documents that type only. Fields inherit no text: give a
+field its own `///` block when it needs a description, and it is otherwise shown
+without one.
+
 A module to document, `ledger.kp`:
 
 ```kelp
