@@ -75,6 +75,9 @@ builds itself. It is the only one of the three that runs while you type.
   ASan report.
 - [Front-end fuzzing and parser limits](/tooling/fuzzing): the fuzzer, and the
   200-level nesting and 800-link chain limits with their exact errors.
+- [Benchmarks](/tooling/benchmarks): the thirteen-program Kelp, C and Rust suite, its
+  rules, the shared-machine noise statement, the full tables, the cause of every
+  ratio above 1.5, the `str.split` bug it found and the findings still open.
 - [Release tooling](/tooling/release-tooling): `build/release.sh`, the reproducibility
   check, the verifying installer `build/install.sh` and `kelpc version --verbose`,
   with real output and what a reproducible build does not promise.

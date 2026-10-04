@@ -97,3 +97,7 @@ N-body pair loop. It also rewrote two benchmark programs whose output shape made
 the three languages incomparable, and it is what showed that the `capabilities`
 row, once the worst gap in the suite, is now 2.87x ahead of the C++ that calls
 `getenv` in the same loop. Each of those is an entry in the [changelog](/changelog).
+
+A second, newer suite compares Kelp with C and Rust (not C++) with bounds checks
+stated per language and every ratio above 1.5 explained: see
+[Benchmarks: Kelp against C and Rust](/tooling/benchmarks).
