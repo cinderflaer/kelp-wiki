@@ -37,3 +37,4 @@ the [Language chapter](/language), the [Standard library](/stdlib) and the
 14. [Networking, HTTP and TLS](/tutorial/14-networking)
 15. [Testing and tooling](/tutorial/15-tooling)
 16. [Freestanding, a tiny kernel](/tutorial/16-freestanding)
+17. [Polyp UI](/tutorial/17-polyp)
