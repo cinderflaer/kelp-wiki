@@ -45,12 +45,12 @@ fun main() {
 }
 ```
 
-Running it (the directory `/tmp/kelp-tut` existed; the compiled program's path
-prefix in the panic line is where this author's checkout lives):
+Running it (the directory `/tmp/kelp-tut` existed; the panic line's file path is shortened here to be
+relative to the directory the programs were built in):
 
 ```text
 $ ./capdemo; echo "exit $?"
-/home/juniper/Projects/kelp-native-ui/overnight/wtc-book/scratch/t/capdemo/src/logger.kp:4:5: panic: '/tmp/outside.txt' is outside the fs capability granted to module 'logger'
+capdemo/src/logger.kp:4:5: panic: '/tmp/outside.txt' is outside the fs capability granted to module 'logger'
   granted:
     /tmp/kelp-tut/**
 wrote inside the grant
@@ -115,7 +115,7 @@ Run with `KELP_TUT_NAME=ada` set:
 
 ```text
 $ KELP_TUT_NAME=ada ./cap_env; echo "exit $?"
-/home/juniper/Projects/kelp-native-ui/overnight/wtc-book/scratch/t/cap_env/src/settings.kp:4:8: panic: 'HOME' is outside the env capability granted to module 'settings'
+cap_env/src/settings.kp:4:8: panic: 'HOME' is outside the env capability granted to module 'settings'
   granted:
     KELP_TUT_*
 name: ada
@@ -126,7 +126,7 @@ Even asking whether `HOME` is set is gated: `env.has` panicked before `env.get` 
 run. With `caps(env = [])` nothing is allowed, not even `KELP_TUT_NAME`:
 
 ```text
-/home/juniper/Projects/kelp-native-ui/overnight/wtc-book/scratch/t/cap_empty/src/settings.kp:4:8: panic: 'KELP_TUT_NAME' is outside the env capability granted to module 'settings'
+cap_empty/src/settings.kp:4:8: panic: 'KELP_TUT_NAME' is outside the env capability granted to module 'settings'
   granted: (nothing)
 exit 1
 ```
