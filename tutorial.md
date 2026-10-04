@@ -33,3 +33,4 @@ the [Language chapter](/language), the [Standard library](/stdlib) and the
 10. [Closures and scoped blocks](/tutorial/10-closures)
 11. [Projects and modules](/tutorial/11-projects)
 12. [Capabilities](/tutorial/12-capabilities)
+13. [Concurrency](/tutorial/13-concurrency)
