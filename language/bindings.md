@@ -36,7 +36,7 @@ step. A `datac` field is assignable only when both of these hold:
 
 Failing either condition is its own error. The same rule decides which methods may
 be called: `fun mut Type.name()` needs a mutable path, so it fails with
-`cannot borrow 'c' as exclusive` on a `val` binding
+`cannot assign to 'c': not declared 'var'` on a `val` binding
 ([Methods and receivers](/language/methods)).
 
 ```kelp

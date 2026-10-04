@@ -152,6 +152,7 @@ function. `if let` handles one on the spot:
 
 ```kelp
 impl "std/str"
+impl "std/result"
 
 fun half(n: i64).R: result.Result<i64, str.ParseErr> {
     if n < 0 {

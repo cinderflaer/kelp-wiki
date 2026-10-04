@@ -48,9 +48,11 @@ expression precedence. Three constructs do not survive parsing as themselves:
 - `if let` is desugared into a match with a synthesized scrutinee binding
   (the parser names it under `IF_LET_PREFIX`), which is what lets `if let Ok(v) =
   f(x)` accept a temporary scrutinee at all.
-- `for x in xs` is desugared into the index-and-`while` walk (under `FOR_PREFIX`),
-  so no later pass knows the loop kind exists and there is no iterator protocol to
-  implement.
+- `for x in xs` is kept as a statement of its own by the parser, and `infer.rs`
+  chooses the desugar once the iterable has a type: an index-and-`while` walk for
+  a `List` or array, a `next()` loop for a type that implements
+  `std.iter.Iterator`. Both are ordinary statements by then, so no later pass
+  knows the loop kind exists.
 - A `when` whose scrutinee is not a place is desugared in `infer.rs`
   (`check_when_scrutinee`, under `WHEN_TEMP_PREFIX`) into the same block a
   hand-written `val h = ...` would give, because the arms have to read a payload
@@ -122,7 +124,7 @@ Two milestones in one pass, over the typed IR:
 | Rule | Detail |
 | --- | --- |
 | Moves | scalars and `&str` are `Copy`; a `datac` is not, so a bare identifier read moves it, while a `.field` read through a borrow consumes nothing. A read by value directly off an owned local is a **partial move**: the field or `enum` payload moves out and its slot is cleared, so the local keeps the projections that stayed |
-| Borrows | a `datac` parameter is a shared borrow unless `mut`-marked; a borrow lives to the end of its scope, with a statement-sized exception for a borrow taken inside an initializer |
+| Borrows | a `datac` parameter is a shared borrow unless `mut`-marked; a bound borrow ends at its last use, not at the end of its scope, and a reference-typed binding carries the root set of owners its value may borrow from, so a pointer local is a usable cursor. A borrow taken inside an initializer ends with that statement |
 | Drops | the pass produces a **drop plan** keyed by span, which the code generators consult: no second walk, and no lockstep between two passes |
 
 The drop plan is why `codegen_c.rs` only has to ask "which locals die at the end of
@@ -166,6 +168,18 @@ own `extern fun` bodies as the C text `externs.rs` holds, compiled with the C
 backend's own includes and prototypes, so it is built per program rather than
 shipped fixed: one body calls a `std/path` function only the resolver injects,
 and another names a per-program container typedef.
+
+### The memory floor
+
+`driver.rs` also starts the watchdog in `guard.rs` for `build` and `run`: it
+reads `MemAvailable` from `/proc/meminfo` every 200 ms and, below
+`KELPC_MIN_AVAILABLE_MB` (default 384; `0` turns it off), kills the external
+children the driver spawned (`cc`, `ld.lld`, `pkg-config`) and leaves with
+`_exit(75)` rather than letting the kernel OOM killer choose a victim. It is
+`_exit` because the main thread is still inside LLVM. `kelpc run` stops the
+guard before the compiled program starts, so a program's own memory is never
+policed by it, and `fmt`/`lint`/`check`/`version` never start it. See [`kelpc`
+CLI](/tooling/kelpc-cli#the-memory-floor).
 
 ## Following one program through the passes
 
@@ -214,7 +228,7 @@ fun main() {
 | A library or object target | "Using a library" means copying or fetching a folder of `.kp` sources: see [Libraries](/libraries) |
 | A module dependency list | `kelpc check --json` answers with diagnostics; which module depends on which is still not askable outside the compiler, which is the other half of the interface a build cache wants |
 | An optimiser | There is no separate hook to add: `-O0`, `-O1`, `-O2`, `-O3` and `-Os` select the LLVM pass pipeline and the target machine's codegen level, and the same `-O` is given to the per-program C object and the final link. `-O2` is the default. |
-| Incremental compilation and a build cache | [Coral](/getting-started/install) owns the project-level cache |
+| Incremental compilation and a build cache | `kelpc build --incremental` splits the backend into per-module units and caches their objects by a hash of each unit's IR (see [Incremental builds](/compiler/incremental)); the front end is still whole-program, and [Coral](/getting-started/install) owns the project-level up-to-date check |
 
 ## See also
 

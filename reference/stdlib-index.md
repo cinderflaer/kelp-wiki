@@ -29,7 +29,23 @@ three helpers that keep the panicking `connect` wrappers honest (`handshake`,
 two names that are ordinary `.kp` signatures rather than compiler builtins. The
 latest batch is `std/tls`, a new module (MK5-S4b-M1), plus `std/http`'s
 `RateLimit`/`Conn` types and `retry_after`/`rate_limit` accessors
-(`MISSING-p5Xtr`), all at `kelp` `e33ea55`.
+(`MISSING-p5Xtr`), all at `kelp` `e33ea55`. The batch after it is the typed
+error surface: `std/tls`'s `TlsError`/`TlsOptions` and its `try_` family,
+`std/http`'s `HttpErr` and `try_get`/`try_send`, and `std/net`'s `NetErr` with
+`try_send_all`/`try_recv`/`try_recv_into`. The batch after that is `std/arena`,
+kernel stage 13's bump arena, whose six functions and one type are below. The
+batch documented here adds the HTTP/1.1 server to `std/http`
+(`listen`/`accept`/`serve*`, `Limits`, `ServerRequest`/`ServerResponse`) with
+`net.mono_ms`, `net.try_accept`, `net.try_shutdown_write` and
+`Listener.set_timeout`, and a new module, `std/regex`, a linear-time Pike VM
+that is freestanding-capable with the allocator pair. The batch documented here
+adds `std/tz`, time zones over the system TZif database: the nine functions and
+five types below are the whole surface, and it is hosted only because it reads a
+file and `$TZDIR`. The
+kernel-path language surface
+(`unsafe`/`Ptr<T>`, `repr(...)`, statics, `defer`, the `[target]` manifest
+section) is not a stdlib name and lives on the [language pages](/language), not
+here.
 
 `std/rt` has no section: it ships inside the binary but is the compiler's own
 runtime module rather than part of the stdlib surface. `impl "std/rt"` resolves
@@ -165,6 +181,12 @@ Functions:
 - `fun commas_i64(n: i64).R: String`
 - `fun human_size(bytes: u64).R: String`
 
+Trait:
+
+- `pub trait Display { fun Self.to_text().R: String }`, the trait a `datac` or
+  `enum` implements to appear in `"${x}"` and `print`
+  ([Operator traits and `Display`](/language/operator-traits)).
+
 ## `std/encoding`
 
 Types:
@@ -205,6 +227,37 @@ Functions:
 - `fun push_u32_be(out: mut Bytes, v: u32)`
 - `fun form_encode(text: &str).R: String`
 - `fun form_decode(text: &str).R: result.Result<String, DecodeErr>`
+
+## `std/regex`
+
+A linear-time regular expression engine (a Pike VM over bytes). Hosted only.
+Full account on [`std/regex`](/stdlib/regex).
+
+Types:
+
+- `datac Regex(op: List<i32>, ax: List<i32>, ay: List<i32>, classes: List<u8>, ngroups: usize, var tl_pc: List<i32>, var tl_cap: List<i32>, var cnt: List<usize>, var mark: List<i64>, var gen: i64, var stk_a: List<i32>, var stk_b: List<i32>, var wcap: List<i32>, var res: List<i32>, var nsteps: i64)`
+- `datac RegexErr(val message: String, val offset: usize)`
+- `datac Match(val start: usize, val end: usize, val text: String)`
+- `datac Captures(val text: String, val slots: List<i32>)`
+
+Functions:
+
+- `fun compile(pattern: &str).R: result.Result<Regex, RegexErr>`
+- `fun is_match(pattern: &str, text: &str).R: bool`
+- `fun mut Regex.is_match(text: &str).R: bool`
+- `fun mut Regex.find(text: &str).R: option.Option<Match>`
+- `fun mut Regex.find_at(text: &str, start: usize).R: option.Option<Match>`
+- `fun mut Regex.captures(text: &str).R: option.Option<Captures>`
+- `fun mut Regex.find_all(text: &str).R: List<Match>`
+- `fun mut Regex.replace(text: &str, replacement: &str).R: String`
+- `fun mut Regex.replace_all(text: &str, replacement: &str).R: String`
+- `fun mut Regex.split(text: &str).R: List<String>`
+- `fun Regex.steps().R: i64`
+- `fun mut Regex.reset_steps()`
+- `fun Regex.group_count().R: usize`
+- `fun Captures.get(i: usize).R: option.Option<String>`
+- `fun Captures.span(i: usize).R: option.Option<Match>`
+- `fun Captures.len().R: usize`
 
 ## `std/io`
 
@@ -315,6 +368,7 @@ Types:
 - `datac Socket(val fd: i32)`
 - `datac Listener(val fd: i32)`
 - `datac ConnectErr(val reason: String)`
+- `datac NetErr(val reason: String)`
 
 Functions:
 
@@ -322,14 +376,21 @@ Functions:
 - `fun try_connect(host: &str, port: u16).R: result.Result<Socket, ConnectErr>`
 - `fun listen(port: u16).R: Listener`
 - `fun accept(l: Listener).R: Socket`
+- `fun try_accept(l: Listener).R: result.Result<Socket, NetErr>`
 - `fun close(s: Socket)`
 - `fun Listener.close()`
+- `fun Listener.set_timeout(ms: u64)`
 - `fun shutdown_write(s: Socket)`
+- `fun try_shutdown_write(s: Socket).R: bool`
+- `fun mono_ms().R: i64`
 - `fun send(s: Socket, data: Bytes).R: usize`
 - `fun send_all(s: Socket, data: Bytes).R: usize`
 - `fun send_text(s: Socket, text: &str)`
 - `fun recv(s: Socket, max: usize).R: Bytes`
 - `fun recv_into(s: Socket, buf: mut Bytes, at: usize).R: usize`
+- `fun try_send_all(s: Socket, data: Bytes).R: result.Result<usize, NetErr>`
+- `fun try_recv(s: Socket, max: usize).R: result.Result<Bytes, NetErr>`
+- `fun try_recv_into(s: Socket, buf: mut Bytes, at: usize).R: result.Result<usize, NetErr>`
 - `fun Socket.wait_readable(timeout_ms: u64).R: bool`
 - `fun Socket.wait_writable(timeout_ms: u64).R: bool`
 - `fun mut Socket.set_timeout(ms: u64)`
@@ -351,6 +412,12 @@ Types:
 - `datac Lease(val fd: i32, val tls_handle: usize, val reused: bool)`
 - `datac Conn(val fd: i32, val tls_handle: usize)`
 - `datac Cursor(val fd: i32, val tls_handle: usize, var buf: Bytes, var start: usize)`
+- `enum HttpErr { Dial(val reason: String), Exchange(val reason: String), Redirects(val reason: String) }`
+- `datac Limits(val max_request_line: usize, val max_header_bytes: usize, val max_headers: usize, val max_body: usize, val head_timeout_ms: u64, val body_timeout_ms: u64, val idle_timeout_ms: u64, val max_requests_per_conn: usize)`
+- `datac ServerRequest(val method: String, val target: String, val path: String, val query: String, val headers: List<Header>, val body: Bytes)`
+- `datac ServerResponse(val status: i32, val headers: List<Header>, val body: Bytes)`
+- `datac Server(val fd: i32)`
+- `datac ServerConn(val fd: i32, var buf: Bytes, var start: usize, var served: usize, var close_after: bool, var head_only: bool, var keep_alive_header: bool)`
 
 Constants:
 
@@ -366,6 +433,9 @@ Functions:
 - `fun conn_send_all(c: Conn, data: Bytes).R: usize`
 - `fun conn_recv(c: Conn, max: usize).R: Bytes`
 - `fun conn_recv_into(c: Conn, buf: mut Bytes, at: usize).R: usize`
+- `fun conn_send_all_try(c: Conn, data: Bytes).R: result.Result<usize, HttpErr>`
+- `fun conn_recv_try(c: Conn, max: usize).R: result.Result<Bytes, HttpErr>`
+- `fun conn_recv_into_try(c: Conn, buf: mut Bytes, at: usize).R: result.Result<usize, HttpErr>`
 - `fun conn_close(c: Conn)`
 - `fun connect_configured(host: &str, port: u16, timeout_ms: u64, use_tls: bool).R: Conn`
 - `fun Cursor.conn().R: Conn`
@@ -412,6 +482,7 @@ Functions:
 - `fun follow_url(client: Client, base: Url, resp: Response, hops: i32).R: String`
 - `fun default_client().R: Client`
 - `fun Client.send(req: Request).R: Response`
+- `fun Client.try_send(req: Request).R: result.Result<Response, HttpErr>`
 - `fun send_fresh(`
 - `fun exchange(c: Conn, req: Request).R: Response`
 - `fun pool(host: &str, port: u16).R: Pool`
@@ -421,18 +492,60 @@ Functions:
 - `fun Lease.conn().R: Conn`
 - `fun mut Pool.warm(use_tls: bool)`
 - `fun mut Pool.checkout(use_tls: bool).R: Lease`
+- `fun mut Pool.try_checkout(use_tls: bool).R: result.Result<Lease, HttpErr>`
 - `fun mut Pool.release(lease: Lease, reusable: bool)`
 - `fun mut Pool.close_all()`
 - `fun pool_matches(p: Pool, u: Url).R: bool`
 - `fun mut Pool.send(req: Request).R: Response`
+- `fun mut Pool.try_send(req: Request).R: result.Result<Response, HttpErr>`
 - `fun pooled_hop(`
 - `fun get(url: &str).R: Response`
+- `fun try_get(url: &str).R: result.Result<Response, HttpErr>`
 - `fun make_get(url: &str).R: Request`
 - `fun post_text(url: &str, body: &str, content_type: &str).R: Response`
 
+The server surface (a plain HTTP/1.1 server; see the
+[`std/http`](/stdlib/http#the-server) page):
+
+- `fun ok_text(text: &str).R: ServerResponse`
+- `fun json(text: &str).R: ServerResponse`
+- `fun html(text: &str).R: ServerResponse`
+- `fun status(code: i32).R: ServerResponse`
+- `fun not_found().R: ServerResponse`
+- `fun bad_request(message: &str).R: ServerResponse`
+- `fun ServerRequest.header(name: &str).R: String`
+- `fun ServerRequest.has_header(name: &str).R: bool`
+- `fun ServerRequest.text().R: String`
+- `fun ServerRequest.query_param(name: &str).R: option.Option<String>`
+- `fun ServerRequest.path_segments().R: List<String>`
+- `fun ServerResponse.with_header(name: &str, value: &str).R: ServerResponse`
+- `fun mut ServerResponse.add_header(name: &str, value: &str)`
+- `fun listen(port: u16).R: Server`
+- `fun Server.port().R: u16`
+- `fun Server.set_accept_timeout(ms: u64)`
+- `fun Server.close()`
+- `fun Server.accept().R: ServerConn`
+- `fun Server.try_accept().R: result.Result<ServerConn, HttpErr>`
+- `fun ServerConn.read_request(limits: &Limits).R: result.Result<ServerRequest, HttpErr>`
+- `fun mut ServerConn.write_response(resp: &ServerResponse).R: result.Result<usize, HttpErr>`
+- `fun mut ServerConn.write_error(e: &HttpErr).R: result.Result<usize, HttpErr>`
+- `fun mut ServerConn.mark_close()`
+- `fun ServerConn.wants_close().R: bool`
+- `fun ServerConn.close()`
+- `fun default_limits().R: Limits`
+- `fun Limits.with_timeouts(head_ms: u64, body_ms: u64, idle_ms: u64).R: Limits`
+- `fun Limits.dup().R: Limits`
+- `fun serve(port: u16, handler: fun(&ServerRequest).R: ServerResponse)`
+- `fun serve_n(port: u16, handler: fun(&ServerRequest).R: ServerResponse, max_requests: u64).R: u64`
+- `fun serve_on(server: &Server, handler: fun(&ServerRequest).R: ServerResponse, limits: &Limits, max_requests: u64).R: u64`
+- `fun serve_threaded(port: u16, handler: fun(&ServerRequest).R: ServerResponse, workers: usize)`
+- `fun serve_threaded_on(server: &Server, handler: fun(&ServerRequest).R: ServerResponse, limits: &Limits, workers: usize, idle_ms: u64).R: u64`
+- `fun http_error_status(e: &HttpErr).R: i32`
+- `fun http_error_text(e: &HttpErr).R: String`
+
 ## `std/tls` (needs `net`)
 
-Client-side TLS for `https` (MK5-S4b-M1). Never dials or closes a socket
+Client and server TLS (MK5-S4b-M1; the server side, ALPN and client certificates are on [`std/tls`](/stdlib/tls#serving-tls), with `ServerOptions`, `ServerConfig`, `TlsClientOptions`, `server_config_pem`, `server_config_pem_with`, `accept`, `try_handshake_opts` and `TlsStream.alpn`/`peer_cert_subject`; `std/tlsfile` has `read_pem` and `ca_pem`, both read through `fs`). Client side for `https`. Never dials or closes a socket
 itself: a capability grant is resolved one hop from the importing program's
 own `impl` line, so `handshake` takes an already-connected `net.Socket`
 instead of calling `net.connect`. Full account on [`std/tls`](/stdlib/tls).
@@ -440,15 +553,28 @@ instead of calling `net.connect`. Full account on [`std/tls`](/stdlib/tls).
 Types:
 
 - `datac TlsStream(val fd: i32, val handle: usize)`
+- `pub datac TlsOptions(val ca_pem: Bytes, val timeout_ms: u64)`
+- `pub enum TlsError { Untrusted, Expired, HostMismatch, ProtocolTooOld, HandshakeFailed(val reason: String), PeerClosedUncleanly, Timeout, Io(val reason: String) }`
 
 Functions:
 
 - `fun handshake(s: net.Socket, host: &str).R: TlsStream`
+- `fun handshake_with(s: net.Socket, host: &str, opts: TlsOptions).R: TlsStream`
+- `fun handshake_timeout(s: net.Socket, host: &str, ms: u64).R: TlsStream`
+- `fun try_handshake(s: net.Socket, host: &str).R: result.Result<TlsStream, TlsError>`
+- `fun try_handshake_with(s: net.Socket, host: &str, opts: TlsOptions).R: result.Result<TlsStream, TlsError>`
+- `fun try_handshake_timeout(s: net.Socket, host: &str, ms: u64).R: result.Result<TlsStream, TlsError>`
+- `fun set_timeout(t: TlsStream, ms: u64)`
 - `fun write(t: TlsStream, data: Bytes).R: usize`
 - `fun write_all(t: TlsStream, data: Bytes).R: usize`
 - `fun read(t: TlsStream, max: usize).R: Bytes`
 - `fun read_into(t: TlsStream, buf: mut Bytes, at: usize).R: usize`
+- `fun try_write(t: TlsStream, data: Bytes).R: result.Result<usize, TlsError>`
+- `fun try_write_all(t: TlsStream, data: Bytes).R: result.Result<usize, TlsError>`
+- `fun try_read(t: TlsStream, max: usize).R: result.Result<Bytes, TlsError>`
+- `fun try_read_into(t: TlsStream, buf: mut Bytes, at: usize).R: result.Result<usize, TlsError>`
 - `fun shutdown(t: TlsStream)`
+- `fun try_shutdown(t: TlsStream).R: result.Result<bool, TlsError>`
 
 ## `std/time` (needs `time`)
 
@@ -457,6 +583,31 @@ Functions:
 - `fun now_unix().R: i64`
 - `fun now_mono_ns().R: i64`
 - `fun sleep_ms(ms: u64)`
+
+## `std/tz` (needs `fs` and `env`)
+
+Types:
+
+- `datac Zone(val times: List<i64>, val at_type: List<u8>, val offs: List<i32>, val dsts: List<bool>, val names: List<String>, val default_type: i32, val uniques: List<i32>, val tz: TzString)`
+- `datac Offset(val seconds: i32, val abbrev: String, val is_dst: bool)`
+- `datac LocalTime(val year: i32, val month: i32, val day: i32, val hour: i32, val minute: i32, val second: i32, val weekday: i32, val yday: i32, val offset: Offset)`
+- `enum Resolved`: `One(val unix: i64)`, `Ambiguous(val first: i64, val second: i64)`, `Gap`
+- `enum TzErr`: `NotFound`, `Denied`, `Corrupt(val message: String)`
+
+Functions:
+
+- `fun load(name: &str).R: result.Result<Zone, TzErr>`
+- `fun load_in(dir: &str, name: &str).R: result.Result<Zone, TzErr>`
+- `fun parse(data: move Bytes).R: result.Result<Zone, TzErr>`
+- `fun utc().R: Zone`
+- `fun fixed(offset_seconds: i32).R: Zone`
+- `fun Zone.offset_at(unix_seconds: i64).R: Offset`
+- `fun Zone.local_parts(unix_seconds: i64).R: LocalTime`
+- `fun Zone.to_unix(y: i32, m: i32, d: i32, h: i32, mi: i32, s: i32).R: Resolved`
+- `fun Zone.format(unix_seconds: i64, fmt: &str).R: String`
+
+Hosted only, because it reads a TZif file and `$TZDIR`. Full account on
+[`std/tz`](/stdlib/tz).
 
 ## `std/rand` (needs `rand`)
 
@@ -525,6 +676,58 @@ Functions:
 - `fun or_else<T, E, F>(r: &Result<T, E>, f: closure(&E).R: Result<T, F>).R: Result<T, F>`
 - `fun each<T, E>(r: &Result<T, E>, f: closure(&T))`
 
+## `std/arena`
+
+Types:
+
+- `datac Arena(var base: Ptr<u8>, val cap: usize, var used: usize)`
+
+Functions:
+
+- `fun new(base: Ptr<u8>, cap: usize).R: Arena`
+- `fun Arena.used().R: usize`
+- `fun Arena.remaining().R: usize`
+- `fun mut Arena.reset()`
+- `fun mut Arena.alloc(size: usize, align: usize).R: Ptr<u8>`
+- `fun mut Arena.alloc_zeroed(size: usize, align: usize).R: Ptr<u8>`
+
+A bump arena over a caller-owned byte region. It allocates nothing, so it works
+in a freestanding image and needs no `[target] alloc` pair. On
+[`std/arena`](/stdlib/arena).
+
+## `std/irq` (needs `irq`)
+
+Types:
+
+- `datac Line(val n: u32)`
+
+Functions:
+
+- `fun claim(n: u32).R: Line`
+- `fun Line.number().R: u32`
+
+An interrupt line as a capability. `claim` is the only constructor and its
+argument is checked against the calling module's `irq` grant, so the `Line` is
+the receipt for the grant. The constructor is sealed to `std/irq`, so another
+module cannot build one. On [`std/irq`](/stdlib/irq).
+
+## `std/frame` (needs `frames`)
+
+Types:
+
+- `datac Frame(val addr: usize)`
+
+Functions:
+
+- `fun claim(addr: usize).R: Frame`
+- `fun Frame.addr().R: usize`
+- `fun Frame.offset(byte: usize).R: usize`
+
+A physical frame as a capability. `claim` is the only constructor, its argument
+must fall inside the calling module's `frames` grant and be 4 KiB-aligned, and
+the `Frame` is the receipt for the grant. `offset` is bounds-checked against
+the frame's own 4096. On [`std/frame`](/stdlib/frame).
+
 ## `std/atomic`
 
 Types:
@@ -551,6 +754,80 @@ The element set is `bool` and the integer types, spelled with the names
 `AtomicI32`, `AtomicI64` and `AtomicIsize`; there is no `AtomicI8`/`AtomicI16`.
 The `fetch_*` set exists on the integer instantiations only, never on
 `AtomicBool`.
+
+## `std/sync`
+
+`Mutex<T>` guarded access. The three calls are compiler builtins rather than
+declarations in `std/sync.kp`; the module exists so a program can name the
+surface it is using, and the type is reachable without the import and is
+refused in a freestanding project.
+
+- `fun Mutex.new(value: move T).R: Mutex<T>`
+- `fun Mutex<T>.lock(block: scoped fun(mut T).R: R).R: R`
+- `fun Mutex<T>.into_inner().R: T`
+
+`lock` runs the block while the mutex is held, hands the block `v: mut T`, and
+releases the lock on every exit, including a `return` or `?` out of the block; a
+panic inside the block releases the lock and poisons the mutex, so a later
+`lock` panics with `mutex poisoned`. `into_inner` consumes the mutex. The slot
+holds any owned, borrow-free value. The whole surface is on
+[`std/sync`](/stdlib/sync).
+
+`RwLock<T>` and `Condvar` are builtins of the same kind:
+
+- `fun RwLock.new(value: move T).R: RwLock<T>`
+- `fun RwLock<T>.read(block: scoped fun(&T).R: R).R: R`
+- `fun RwLock<T>.write(block: scoped fun(mut T).R: R).R: R`
+- `fun RwLock<T>.try_read(block: scoped fun(&T).R: R).R: Option<R>`
+- `fun RwLock<T>.try_write(block: scoped fun(mut T).R: R).R: Option<R>`
+- `fun RwLock<T>.into_inner().R: T`
+- `fun Condvar.new().R: Condvar`
+- `fun Condvar.notify_one()`
+- `fun Condvar.notify_all()`
+- `fun Mutex<T>.wait_while(cv: &Condvar, pred: fun(&T).R: bool, block: scoped fun(mut T).R: R).R: R`
+- `fun Mutex<T>.wait_while_timeout(cv: &Condvar, pred: fun(&T).R: bool, millis: i64, block: scoped fun(mut T).R: R).R: Option<R>`
+
+- `fun Mutex<T>.share().R: Mutex<T>`, `fun Condvar.share().R: Condvar`, `fun Mutex<T>.swap(value: move T).R: T`
+- `fun sync.bounded<T>(cap: usize).R: (Sender<T>, Receiver<T>)` and `fun sync.unbounded<T>().R: (Sender<T>, Receiver<T>)`
+- `fun Sender<T>.send(value: move T).R: option.Option<T>`, `Sender<T>.clone()`
+- `fun Receiver<T>.recv().R: result.Result<T, RecvErr>`, `try_recv().R: option.Option<T>`, `recv_timeout(millis: i64).R: result.Result<T, RecvTimeout>`, and `for v in rx`
+
+Channels are written in Kelp in `std/sync` (see [Channels](/stdlib/sync#channels)).
+
+## `std/pool`
+
+- `fun pool.new(workers: i32).R: Pool`
+- `fun Pool.spawn(job: move closure())`
+- `fun Pool.join()`
+- `fun Pool.panicked().R: i32`
+
+Full account on [`std/pool`](/stdlib/pool).
+
+## `std/iter`
+
+- `pub trait Iterator { type Item  fun mut Self.next().R: option.Option<Self::Item> }`
+- `pub datac Range(var lo: i64, val hi: i64, val step: i64)`, which implements `Iterator`
+- `fun range(a: i64, b: i64).R: Range`
+- `fun range_step(a: i64, b: i64, step: i64).R: Range`
+- `fun count<I: Iterator>(it: move I).R: usize`
+- `fun sum_i64<I: Iterator>(it: move I).R: i64`
+- `fun collect_list<I: Iterator>(it: move I).R: List<I::Item>`
+
+The whole surface is on [`std/iter`](/stdlib/iter).
+
+## `std/ops`
+
+Traits, each with one method: `Add`, `Sub`, `Mul`, `Div` and `Rem`
+(`fun Self.name(rhs: &Self).R: Self`), `Neg` (`fun Self.neg().R: Self`) and `Ord`
+(`fun Self.cmp(other: &Self).R: i32`). The whole surface is on
+[`std/ops`](/stdlib/ops).
+
+## `std/convert`
+
+- `pub trait From<T> { fun from(value: T).R: Self }`
+- `pub trait Into<T> { fun Self.into().R: T }`
+
+The whole surface is on [`std/convert`](/stdlib/convert).
 
 ## `std/thread`
 
@@ -588,10 +865,12 @@ Holds `net` for the socket and `rand` for the sixteen bytes of
 both: `impl "std/ws" caps(net = ["host:port"], rand = [])`. The `net` half of
 the check is the host-and-port check `net.connect` gives, against the host as
 written, before name resolution. `ws.try_connect` is the fallible connect beside
-the panicking `ws.connect`: a refused dial comes back as `WsErr.Dial` and an
+the panicking `ws.connect`: a refused dial comes back as `WsErr.Dial`, a refused
+`wss` handshake or certificate check as `WsErr.Tls` and an
 answer that is not `101` as `WsErr.Handshake`, while a head that is not HTTP and a
 peer that closes mid-handshake still panic, because neither has a status to
-report.
+report. The scheme comes off a parsed URL in the `connect_url`/`try_connect_url`
+spellings, which is what reaches `wss`.
 
 Types:
 
@@ -599,13 +878,15 @@ Types:
 - `datac Header(val name: String, val value: String)`
 - `datac Frame(val fin: bool, val opcode: u8, val data: Bytes)`
 - `datac Conn(val fd: i32, var buf: Bytes, var start: usize, var frag_opcode: u8, var frag_data: Bytes)`
-- `enum WsErr { Dial(val reason: String), Handshake(val status: i32, val reason: String) }`
+- `enum WsErr { Dial(val reason: String), Handshake(val status: i32, val reason: String), Tls(val reason: String) }`
 - `enum Msg { Text(val text: String), Binary(val data: Bytes), Ping(val data: Bytes), Pong(val data: Bytes), Close(val code: u16, val reason: String) }`
 
 Constants:
 
 - `const DEFAULT_PORT: u16 = 80`
+- `const DEFAULT_WSS_PORT: u16 = 443`
 - `const DEFAULT_SCHEME: str = "ws"`
+- `const WSS_SCHEME: str = "wss"`
 - `const WS_GUID: str = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"`
 - `const MAX_FRAME: usize = 1048576`
 - `const MAX_HEAD: usize = 8192`
@@ -620,12 +901,13 @@ Constants:
 Functions:
 
 - `fun parse_url(s: &str).R: Url`
-- `fun split_authority(rest: &str).R: Url`
-- `fun make_url(authority: String, path: &str).R: Url`
+- `fun default_port_for(scheme: &str).R: u16`
+- `fun split_authority(rest: &str, scheme: &str).R: Url`
+- `fun make_url(authority: String, path: &str, scheme: &str).R: Url`
 - `fun parse_port(text: &str).R: u16`
 - `fun accept_for(key: &str).R: String`
 - `fun with_number(prefix: &str, n: u64, suffix: &str).R: String`
-- `fun build_head(host: &str, port: u16, path: &str, key: &str).R: String`
+- `fun build_head(scheme: &str, host: &str, port: u16, path: &str, key: &str).R: String`
 - `fun find_head_end(b: Bytes).R: usize`
 - `fun head_text(b: Bytes, end: usize).R: String`
 - `fun name_eq(a: &str, b: &str).R: bool`
@@ -634,10 +916,19 @@ Functions:
 - `fun parse_status(head: &str).R: i32`
 - `fun status_code(text: &str).R: i32`
 - `fun try_connect(host: &str, port: u16, path: &str).R: result.Result<Conn, WsErr>`
-- `fun handshake(s: net.Socket, host: &str, port: u16, path: &str, key_text: &str, expected: &str).R: result.Result<Conn, WsErr>`
+- `fun try_connect_url(u: Url).R: result.Result<Conn, WsErr>`
+- `fun try_connect_scheme(scheme: &str, host: &str, port: u16, path: &str).R: result.Result<Conn, WsErr>`
+- `fun conn_send_all(fd: i32, tls_handle: option.Option<tls.TlsHandle>, data: Bytes).R: usize`
+- `fun conn_recv(fd: i32, tls_handle: option.Option<tls.TlsHandle>, max: usize).R: Bytes`
+- `fun conn_recv_into(fd: i32, tls_handle: option.Option<tls.TlsHandle>, buf: mut Bytes, at: usize).R: usize`
+- `fun conn_close(fd: i32, tls_handle: option.Option<tls.TlsHandle>)`
+- `fun handshake(scheme: &str, fd: i32, tls_handle: move option.Option<tls.TlsHandle>, host: &str, port: u16, path: &str, key_text: &str, expected: &str).R: result.Result<Conn, WsErr>`
+- `fun connect_tls(scheme: &str, s: net.Socket, host: &str).R: result.Result<option.Option<tls.TlsHandle>, WsErr>`
 - `fun refusal_text(e: move WsErr).R: String`
 - `fun fail_connect(e: move WsErr).R: Conn`
 - `fun connect(host: &str, port: u16, path: &str).R: Conn`
+- `fun connect_url(u: Url).R: Conn`
+- `fun connect_scheme(scheme: &str, host: &str, port: u16, path: &str).R: Conn`
 - `fun Conn.send_frame(opcode: u8, data: &Bytes)`
 - `fun Conn.send_text(text: &str)`
 - `fun Conn.send_binary(data: &Bytes)`
@@ -661,27 +952,33 @@ layer under it. The whole surface is on [`std/ws`](/stdlib/ws).
 
 | Module | Functions | Types/constants | Domain |
 | --- | ---: | ---: | --- |
-| `std/mem` | 1 | 0 | — |
-| `std/str` | 37 | 1 | — |
-| `std/path` | 12 | 0 | — |
-| `std/math` | 29 | 3 | — |
-| `std/fmt` | 10 | 0 | — |
+| `std/mem` | 1 | 0 | - |
+| `std/str` | 37 | 1 | - |
+| `std/path` | 12 | 0 | - |
+| `std/math` | 29 | 3 | - |
+| `std/fmt` | 10 | 1 | - |
 | `std/encoding` | 26 | 4 | - |
-| `std/io` | 27 | 3 | — |
+| `std/regex` | 16 | 4 | - |
+| `std/io` | 27 | 3 | - |
 | `std/fs` | 30 | 1 | fs |
 | `std/process` | 14 | 3 | process |
-| `std/net` | 18 | 3 | net |
-| `std/http` | 67 | 15 | — |
+| `std/net` | 22 | 3 | net |
+| `std/http` | 102 | 20 | - |
 | `std/tls` | 6 | 1 | net |
 | `std/ws` | 32 | 18 | net, rand |
 | `std/time` | 3 | 0 | time |
+| `std/tz` | 9 | 5 | fs, env |
 | `std/rand` | 3 | 0 | rand |
 | `std/env` | 4 | 0 | env |
-| `std/list` | 6 | 0 | — |
-| `std/option` | 9 | 1 | — |
-| `std/result` | 12 | 1 | — |
+| `std/list` | 6 | 0 | - |
+| `std/option` | 9 | 1 | - |
+| `std/result` | 12 | 1 | - |
+| `std/arena` | 6 | 1 | - |
 | `std/atomic` | 10 | 1 | - |
 | `std/thread` | 5 | 1 | - |
+| `std/iter` | 5 | 2 | - |
+| `std/ops` | 0 | 7 | - |
+| `std/convert` | 0 | 2 | - |
 
 ## Not part of the stdlib surface
 

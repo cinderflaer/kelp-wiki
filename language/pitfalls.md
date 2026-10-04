@@ -23,6 +23,20 @@ the fix. Source: [`syntax.md` §18 and §22](https://homelabone.xenoo.dev/gittea
 | `this is a borrow of a borrow` (with the operand named) | `&o` where `o` is already a borrow, which a parameter always is | pass the parameter itself: `o`, not `&o` |
 | `cannot borrow a temporary value` | `&expr` needs a place, and a call's result is not one, nor is a field of one | bind the call to a `val` and borrow the field of that: `val h = mk()` then `&h.name` |
 | `operator requires matching numeric operands, found 'mut i64' and 'i32'` (with the `write '*sink'` note) | a `mut T` parameter is an exclusive borrow, so it is read and written through `*` | write `*sink`, not `sink`, wherever the value is used |
+| `cannot borrow 'names' as exclusive: already borrowed as shared` | the owner is mutated while a bound borrow into it is still used later in the block, or later in the same loop | move the mutation after the borrow's last use; a use inside a loop body keeps the borrow live for the whole loop |
+| `cannot assign to 'list' while it is borrowed` | a cursor or a view into `list` is still used when `list` is reassigned | stop using the cursor first, or rebind the cursor to a different owner |
+| `cannot borrow 'a': already borrowed exclusively` | two live exclusive borrows of one place: two `mut` cursors, or copying a `&mut` into a second binding | keep one exclusive borrow at a time; shared cursors into the same owner are fine |
+| `cannot move 'list' while it is borrowed` | an owner is moved while a cursor into it is live | stop using the cursor first |
+| `cannot return a borrow of 'local': ...` | a borrow rooted in a frame local is returned | return a borrow derived from the first reference parameter, or return an owned value instead |
+
+Two borrow errors that used to be common no longer appear. A bound borrow ends
+at its last use, so `val first = names.get(0); print(first.as_str());
+names.push(x)` compiles without wrapping the read in an extra `{ }`; that
+workaround is obsolete. And a reference binding remembers the owner its value
+came from, so `var cur = &list; cur = cur.next.get()` is accepted and
+`cannot assign to 'cur' while it is borrowed` no longer names the cursor. See
+[Borrows end at their last use](/language/ownership#borrows-end-at-their-last-use)
+and [Cursors and provenance](/language/ownership#cursors-and-provenance).
 
 ## Text
 
@@ -33,8 +47,17 @@ the fix. Source: [`syntax.md` §18 and §22](https://homelabone.xenoo.dev/gittea
 | `.as_str()` on a temporary is refused | bind the `String` to a `val` first (same for `.view()`); a chained call is the same temporary one step out (`fmt.int(n).as_str()`) |
 | a template is refused as a value | `a string template can only be printed`: build the text with `str.concat`, `fmt.*` or a `String`, or print it where it is written |
 | `field 'text' is a borrowed type ('View')` | a view cannot be stored: store a `String` |
-| `cannot compare 'View' values with '=='` | use `v.eq(other)`, which compares bytes and lengths |
+| comparing two `str` values | a `str` is a borrowed pointer, so `==` would compare addresses: use `str.eq`, or compare two `View`s with `v == w` |
 | `field 'text' is a borrowed type (str)` | same as the `View` case: a field must be owned |
+
+## Equality
+
+| Message | What happened | Fix |
+| --- | --- | --- |
+| `cannot compare 'P' values with '=='` | a `datac`/`enum` gets `==`/`!=` only from a declared `eq`, and nothing is derived | declare `fun P.eq(other: &P).R: bool`, which `a == b` lowers to (`a.eq(&b)`); or compare the fields directly, or match with `when` |
+| `cannot compare 'P' values with '<'` | `<`/`<=`/`>`/`>=` are refused on every owned `datac`/`enum`, declared `eq` or not | compare the fields you mean, or write the ordering method you want |
+| `'P.eq' takes exactly one parameter, a shared borrow of 'P'` | the `eq` method has the wrong signature | write `fun P.eq(other: &P).R: bool`: one parameter, a shared borrow of the type, returning `bool` |
+| `cannot compare 'A' with 'B'` | the two operands are different types | make both sides the same type |
 
 ## Characters and integers
 
@@ -58,7 +81,7 @@ the fix. Source: [`syntax.md` §18 and §22](https://homelabone.xenoo.dev/gittea
 | `List.empty()` / `Map.new()` has no element type | nothing said what is inside and nothing decided it: write it on the binding (`var xs: List<i32> = List.empty()`), or `push`/`insert`/`set` a value, which decides the element |
 | a `Map` value or an array element is a container | a `List` element and a `Box` element may be a `List` or a `Box`, but a `Map` value and an array element may not be a container at all; wrap the inner one in a one-field `datac` |
 | `Map` key type refused | a key is keyable when the compiler can derive its hash and its equality: `String`, an integer, `bool`, `char`, or a `datac`/`enum`/tuple whose fields, variant payloads or positions are all keyable, and a `datac`/`enum` outside that set becomes a key by declaring `hash` and `eq`. The message names the field that is not, or the half of the pair that is missing |
-| `for` cannot `push` to what it walks | the loop borrows its iterable; iterate over a copy or index the source |
+| `cannot mutate 'xs' while iterating over it` | the body may read the list it walks but not change it; walk a different list, or change the source by index in a `while` |
 
 ## Tuples
 
@@ -101,9 +124,9 @@ the fix. Source: [`syntax.md` §18 and §22](https://homelabone.xenoo.dev/gittea
 | --- | --- |
 | `cannot find module` / a name resolves nowhere | `impl` the file, and note that paths are relative to the project's `src/` |
 | `'lib.hidden' is private: 'hidden' is declared in module 'lib' without 'pub' ...` | the item exists but another module cannot reach it; add `pub` to its declaration, or call it from inside its own module. A name that does not exist at all gets `module 'lib' has no item 'hidden'` instead, and a "did you mean" hint never offers a private item |
-| `'pub' applies to a top-level 'fun', 'extern fun', 'datac', 'enum' or 'const', found ...` | `pub` goes in front of one of those declarations and nowhere else |
+| `'pub' applies to a top-level 'fun', 'extern fun', 'extern type', 'datac', 'enum' or 'const', found ...` | `pub` goes in front of one of those declarations and nowhere else |
 | `pub` is refused on a `pd` or on a method | a passdown is module-scoped by design, and a method's reachability follows its declaring type: mark the type `pub` instead |
-| `'lib.make' is exported but its signature names 'lib.Hidden', which module 'lib' does not export ...` | the declaration is reachable from another module, so every type its signature names has to be reachable too; add `pub` to the type, or make the declaration private. It covers a `pub fun`'s parameters and return, a method inside a `pub datac` or `pub enum`, a `pub extern fun`, a `pub datac`'s fields and a `pub enum`'s variant payloads, and the type arguments of a container, an array, a borrow or a function type |
+| `'lib.make' is exported but its signature names 'lib.Hidden', which module 'lib' does not export ...` | the declaration is reachable from another module, so every type its signature names has to be reachable too; add `pub` to the type, or make the declaration private. It covers a `pub fun`'s parameters and return, a method inside a `pub datac` or `pub enum`, a `pub extern fun`, a `pub extern type`'s parent, a `pub datac`'s fields and a `pub enum`'s variant payloads, and the type arguments of a container, an array, a borrow or a function type |
 | a gated call is refused and names a domain | write the grant on the `impl` line: `caps(fs = ["/srv/data/**"])` |
 | `... needs the 'fs' capability, which module 'x' was not granted` and `x` is not the module you wrote the call in | the module that holds nothing is the middle one; the message names the `impl` line that imported it without a `caps(...)` clause, and that line is the one to change |
 | a path with `..` or a relative path is refused | `fs`/`process` patterns match absolute, normalized paths |
@@ -115,7 +138,7 @@ the fix. Source: [`syntax.md` §18 and §22](https://homelabone.xenoo.dev/gittea
 | Symptom | Reality |
 | --- | --- |
 | `option.or_else` / `result.unwrap` on an owned payload will not type-check | the helpers whose receiver stays a borrow are `Copy`-only; `option.unwrap`, `option.unwrap_or`, `option.expect`, `result.map` and `result.map_err` take their receiver with `move`, and `if let`/`when` over an owned place binds the payload by value |
-| `?` refuses to propagate a different error type | v1 has no error conversion; `result.map_err` is the bridge |
+| `?` refuses to propagate a different error type | `?` converts a failure only through an `impl convert.From<E1> for E2`; write the impl, or use `result.map_err` ([Generic traits](/language/generic-traits)) |
 | two `fun pick(...)` overloads collide | a user module cannot overload; spell the type into the name |
 | `Shape.Empty.label()` is refused | a receiver that builds a variant names a type; bind it first (`val s = Shape.Empty`, then `s.label()`) |
 

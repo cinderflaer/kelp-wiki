@@ -45,6 +45,7 @@ archived in
 ## Pages
 
 - [Pipeline](/compiler/architecture): each stage, and what it is responsible for
+- [Incremental builds](/compiler/incremental): per-module compilation units, the content-addressed object cache, parallel workers, and the measured numbers
 - [Backends](/compiler/backends): `llvm`, the one backend, and why `c` stays the oracle
 - [Runtime](/compiler/runtime): the C that is still C, and the capability matcher
 - [Tests](/compiler/tests): the fixture suite, the differential sweeps, the memory gate

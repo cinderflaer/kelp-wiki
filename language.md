@@ -38,12 +38,19 @@ error, and so is a `const` or `pd` after a `datac`, `enum` or `fun`
 | [Types](/language/types) | the type table, `Copy` vs owned vs borrowed, `str` and `View` |
 | [Bindings and assignment](/language/bindings) | `val` and `var`, type inference, assignment, mutable paths |
 | [Operators and expressions](/language/expressions) | precedence, arithmetic, bitwise, `?`, borrows and dereference |
-| [Control flow](/language/control-flow) | `if`/`else`, `if let`, `for`, `while`, `when`, `return` |
+| [Control flow](/language/control-flow) | `if`/`else`, `if let`, `for`, `while`, `when`, `return`, `break`, `continue` |
 | [Functions](/language/functions) | declaration, `.R: T`, named arguments, function values, closures |
 | [Return types and `return`](/language/returns) | the `.R: T` clause, bodies, the divergence rule, borrowed returns |
 | [Methods and receivers](/language/methods) | `Type.name`, `mut` receivers, generic receivers |
 | [datac and enum](/language/data-types) | records, tagged unions, generics, construction, matching |
 | [Generics and type parameters](/language/generics) | type parameters, instantiation, generic receivers and functions |
+| [Traits and static dispatch](/language/traits) | methods, default bodies, supertraits, `impl Trait for Type`, bounds, and `&dyn` trait objects |
+| [Associated types](/language/associated-types) | `type Item` in a trait, `I::Item` and `Self::Item` projections |
+| [Generic traits, `From` and `?` conversion](/language/generic-traits) | `trait Name<T>`, static methods, `std/convert`, the `?` error conversion |
+| [Owned trait objects](/language/box-dyn) | `Box<dyn Trait>`, the coercion, `get()`, drop through the vtable |
+| [Operator traits and `Display`](/language/operator-traits) | `std/ops` and `fmt.Display` for `+`, `-`, `<`, `${x}` and `print` on a user type |
+| [Iterators, `for` and `break`](/language/iterators) | the `Iterator` trait, `for x in it`, `break` and `continue`, `std/iter` |
+| [Const generics and `impl Trait` arguments](/language/const-generics) | `<const N: usize>`, inference from an array, `fun f(x: impl Trait)` |
 | [Ownership and borrowing](/language/ownership) | moves, drops, borrows, partial moves, `Box.take` |
 | [Text](/language/text) | `str`, `View`, `String`, `Bytes`, printing, conversions |
 | [Collections](/language/collections) | `List<T>`, `Map<K, V>`, `Box<T>`, the fixed-size array `[T; N]` |
@@ -51,6 +58,13 @@ error, and so is a `const` or `pd` after a `datac`, `enum` or `fun`
 | [Modules and imports](/language/modules) | `impl`, aliases, visibility, projects |
 | [Constants and passdowns](/language/passdowns) | `const`, `pd` passdowns and the hidden borrow |
 | [Capabilities](/language/capabilities) | the model, grants, patterns, delegation |
+| [User FFI](/language/externs) | `extern fun`, `extern type` handles, variadics, `move closure` callbacks |
+| [Unsafe code and raw pointers](/language/unsafe) | `unsafe` blocks and `unsafe fun`, `Ptr<T>`, volatile access, `repr(...)`, `size_of`/`offset_of`, byte order |
+| [Statics and `defer`](/language/statics-and-defer) | `static`/`static mut`/`pub static`, `Atomic` statics, `section(...)`, `defer` |
+| [User `Drop`](/language/drop) | `fun mut T.drop()`, the order of drops, what is refused, no unwinding |
+| [Per-CPU storage](/language/percpu) | `percpu static mut`, `[target] cpus`, `cpu_index()`/`cpu_count()`, the `.percpu` array |
+| [Freestanding mode](/language/freestanding) | the `[target]` manifest section, the allowed set, the allocator hook, riscv64 and aarch64 |
+| [Kernel 0](/language/kernel) | the bare-metal examples under QEMU with their serial output, the timer scheduler and the x86-64 IDT |
 | [Errors and panics](/language/errors) | `Option`, `Result`, `?`, `panic`, `assert` |
 | [Limits in v1](/language/limits) | what the language deliberately does not have |
 | [Style](/language/style) | indentation, naming, file order, comments |
@@ -60,6 +74,8 @@ error, and so is a `const` or `pd` after a `datac`, `enum` or `fun`
 ## The 60-second version
 
 ```kelp
+impl "std/str"
+
 datac Point(var x: i32, var y: i32)
 
 fun area(p: &Point).R: i32 = p.x * p.y

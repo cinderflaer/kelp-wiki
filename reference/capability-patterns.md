@@ -29,7 +29,8 @@ the compiler for a module you do not want to let out.
 | `process` | absolute program path, same wildcards as `fs` | the program path, normalized as for `fs` |
 | `env` | variable name, `*` | the name string |
 | `time` | no pattern | (an empty list is the whole grant) |
-| `rand` | no pattern | — |
+| `rand` | no pattern | (an empty list is the whole grant) |
+| `ui` | `*` only | the domain gate alone: no display call names the display |
 
 ## `net`
 
@@ -46,6 +47,11 @@ impl "std/net" caps(net = ["*"])                     // anything
 - The connection pool in [`std/http`](/stdlib/http) is keyed on the host as
   written for exactly this reason.
 - A bare `host` matches any port on that host.
+- A host part made only of digits, dots and `*` (`10.0.0.*`) matches **IPv4
+  literals only**, never a name like `10.0.0.xyz`.
+- For `net.listen` the host part picks the interface: `*`, `0.0.0.0` or a glob
+  matching it binds every interface, anything else binds `127.0.0.1`. See the
+  [threat model](/reference/capability-threat-model).
 
 ## `fs` and `process`
 
@@ -81,6 +87,19 @@ No pattern exists: the domain is the grant:
 impl "std/time" caps(time = [])
 impl "std/rand" caps(rand = [])
 ```
+
+## `ui`
+
+No pattern is enforceable: a call in this domain carries no argument that names
+the display server, so the wildcard is the only accepted grant.
+
+```kelp
+impl "display" caps(ui = ["*"])
+```
+
+An empty list or any named pattern is refused where it is written. This is the
+domain gate alone, and it is what a GTK binding asks for (see
+[User FFI](/language/externs)).
 
 ## Delegation
 

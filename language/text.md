@@ -133,6 +133,11 @@ val owned: String = v.slice(4, 9)   // copies by length, not by strlen
 | `v.eq(other: View)` | `bool`: compares bytes and lengths |
 | `v.to_string()` | `String` |
 
+A `str` has no stored length, so `str.len(s)` and `str.byte(s, i)` each read as
+much of the string as they need to (all of it, and `i + 1` bytes). Indexing a
+long `str` in a loop is quadratic; take `s.view()` once and scan the view, whose
+`len` and `get` are constant time.
+
 A `View` is `Copy`, but it cannot be stored: a field, `List` element, `Map` value
 or `Box` content may not be a borrow. Text you must keep is a `String`.
 

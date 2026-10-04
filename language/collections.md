@@ -192,6 +192,10 @@ list = Node(value = 2, next = Box.of(list))
 | `set(v)` | `Unit` |
 | `take()` | the value, moved out; the box is left empty. **Panics** on an empty box |
 
+A `Box` can also hold a trait object, `Box<dyn Name>`, which has its own method
+surface (no `take` or `set`) and is the owned form of `&dyn Name`; see
+[Owned trait objects](/language/box-dyn).
+
 ## `[T; N]`
 
 A fixed-size array: `N` elements of `T` held inline, with the length part of the

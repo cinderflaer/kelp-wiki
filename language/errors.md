@@ -57,10 +57,14 @@ fun quarter(n: i64).R: result.Result<i64, str.ParseErr> {
 }
 ```
 
-- The enclosing function must return the same shape with the **same failure
-  payload type**. v1 has no error conversion: `Result<i64, String>` cannot be
-  propagated out of a function returning `Result<i64, IoErr>`: `result.map_err`
-  is the bridge.
+- The enclosing function must return the same shape. When the failure payload
+  type is the same, it is moved across as is. When it differs, `?` converts it
+  through `From`: with `impl convert.From<str.ParseErr> for AppErr`, a
+  `Result<_, str.ParseErr>` can be propagated out of a function returning
+  `Result<_, AppErr>`, and the operator calls `AppErr.from(e)`. With no such
+  impl the error names both types and the impl to write. `Option` has no payload
+  to convert. See [Generic traits, `From` and `?` conversion](/language/generic-traits);
+  `result.map_err` still works for a one-off conversion.
 - A function returning `Unit` (including `main`) has nowhere to propagate to.
 - The value composes: `1 + half(n = n)?`.
 - A failure returns immediately, dropping the frame's locals exactly as a
@@ -96,6 +100,14 @@ Almost everything that can fail with no value to return panics: out-of-range
 indices, popping an empty list, `option.unwrap` on `None`, a failing syscall, a
 division by zero in [`complex.div`](/libraries/complex), a scale mismatch in
 [`decimal`](/libraries/decimal).
+
+On bare metal there is no stderr and no process to end, so a freestanding
+project names its own handler with `[target] panic` and receives the message
+there, either as `fun(msg: str)` or as the location-carrying
+`fun(msg: str, file: str, line: u32)`; a panic that fires while the handler runs
+reaches a double-panic path instead of recursing. [Freestanding
+mode](/language/freestanding#panic-semantics) has the two shapes, the
+double-panic rule and the table of checks with their messages.
 
 The one kind of failure that ships *both* ways is a narrowing number
 conversion: `n.to_u8()` panics on a value that does not fit, and `n.try_to_u8()`
@@ -134,4 +146,5 @@ of an `if`/`when` used as a value.
 - [`std/option`](/stdlib/option), [`std/result`](/stdlib/result)
 - [Return types and `return`](/language/returns)
 - [Control flow](/language/control-flow) for `if let` and `when`
+- [Generic traits, `From` and `?` conversion](/language/generic-traits)
 - [Pitfalls](/language/pitfalls)

@@ -20,28 +20,39 @@ The domain each module needs comes from the compiler's own table
 
 | Module | Domain | Notes |
 | --- | --- | --- |
-| `std/mem` | — | `alloc` |
-| `std/str` | — | text: search, slice, split, parse, format |
-| `std/path` | — | lexical path handling |
-| `std/math` | — | `sqrt`, `pow`, trig, `abs`/`min`/`max`/`clamp` |
-| `std/fmt` | — | number, grouping, byte-size and padding formatting into `String` |
-| `std/encoding` | — | base64, base32, base58, hex and percent encoding |
-| `std/io` | — | `File`, `BufReader`, `print`/`eprint` |
+| `std/mem` | - | `alloc` |
+| `std/str` | - | text: search, slice, split, parse, format |
+| `std/path` | - | lexical path handling |
+| `std/math` | - | `sqrt`, `pow`, trig, `abs`/`min`/`max`/`clamp` |
+| `std/fmt` | - | number, grouping, byte-size and padding formatting into `String`, and the `Display` trait |
+| `std/encoding` | - | base64, base32, base58, hex and percent encoding |
+| `std/regex` | - | a linear-time regular expression engine (freestanding with the allocator pair) |
+| `std/io` | - | `File`, `BufReader`, `print`/`eprint` |
 | `std/fs` | `fs` | read, write, walk, metadata |
 | `std/process` | `process` | `args`, `spawn`, `run`, `exit` |
-| `std/net` | `net` | TCP connect/listen/accept, `send`/`recv` |
-| `std/http` | `net` (held) | an HTTP/1.1 client, `http` and `https`; ungated itself, but importing it needs `net` delegated |
-| `std/tls` | `net` (held) | client-side TLS for `https`; wraps a connection `std/http` already opened, never dials its own |
-| `std/ws` | `net`, `rand` (both held) | a WebSocket client (RFC 6455) over `ws://`; importing it needs both delegated, `net` for the socket and `rand` for the handshake key and every masking key |
+| `std/net` | `net` | TCP connect/listen/accept, `send`/`recv`, and the `try_connect`/`try_send_all`/`try_recv`/`try_recv_into` value returns |
+| `std/http` | `net` (held) | an HTTP/1.1 client and server; the client speaks `http` and `https`, the server is HTTP/1.1 (plain, or HTTPS through `serve_tls`) with request limits and worker threads. Ungated itself, but importing it needs `net` delegated. The `try_get`/`try_send` family returns `HttpErr` |
+| `std/tls` | `net` (held) | client and server TLS: a typed `TlsError`, a private CA, a `try_` family, truncation detection, `ServerOptions`/`tls.accept`, ALPN and client certificates. Wraps a socket, never dials its own |
+| `std/tlsfile` | `fs` | `read_pem(path, what)`: the one gated file read behind `std/tls`'s PEM-bytes functions |
+| `std/ws` | `net`, `rand` (both held) | a WebSocket client (RFC 6455) over `ws://` and `wss://`; importing it needs both delegated |
 | `std/time` | `time` | `now_unix`, `now_mono_ns`, `sleep_ms` |
+| `std/tz` | `fs`, `env` | TZif time zones: the offset at an instant, the wall clock it names, the `One`/`Ambiguous`/`Gap` answers and a `strftime` subset; hosted only |
 | `std/rand` | `rand` | unseeded `u64`, `below`, `bytes` |
 | `std/env` | `env` | `has`, `get`, `set`, `unset` |
-| `std/list` | — | `map`, `filter`, `each`, `find_index`, `any`, `all` |
-| `std/option` | — | `Option<T>` and its combinators |
-| `std/result` | — | `Result<T, E>` and its combinators |
+| `std/list` | - | `map`, `filter`, `each`, `find_index`, `any`, `all` |
+| `std/option` | - | `Option<T>` and its combinators |
+| `std/result` | - | `Result<T, E>` and its combinators |
+| `std/arena` | - | a bump arena over a caller-owned byte region; pure pointer arithmetic, so it needs no allocator and works freestanding |
+| `std/irq` | `irq` | an interrupt line as a capability: `irq.claim(n)` is the only constructor, checked against the calling module's `irq` grant |
+| `std/frame` | `frames` | a physical frame as a capability: `frame.claim(addr)` is the only constructor, checked against the calling module's `frames` grant and 4 KiB-aligned |
 | `std/atomic` | - | `Atomic<T>` and the one ordering v1 has |
 | `std/thread` | - | `spawn`, `join`, `fence(order)`, `sleep_ms`, `current_id` and the `ThreadErr` a join hands back |
-| `std/rt` | — | the compiler's own runtime module (the capability matcher), injected for a program that imports a gated module; not part of the stdlib surface |
+| `std/sync` | - | `Mutex<T>`, `RwLock<T>` and `Condvar` through scoped blocks, plus channels (`sync.bounded`, `sync.unbounded`, `Sender`, `Receiver`) and `Mutex.share`/`swap`; hosted only |
+| `std/pool` | - | a fixed thread pool: `pool.new`, `Pool.spawn`, `join`, `panicked`; hosted only |
+| `std/iter` | - | the `Iterator` trait `for` walks, `Range`, and `count`/`sum_i64`/`collect_list` |
+| `std/ops` | - | the operator traits `Add`, `Sub`, `Mul`, `Div`, `Rem`, `Neg` and `Ord` |
+| `std/convert` | - | the `From<T>` and `Into<T>` traits; `?` converts a failure through `From` |
+| `std/rt` | - | the compiler's own runtime module (the capability matcher), injected for a program that imports a gated module; not part of the stdlib surface |
 
 ## Compiler builtins
 
@@ -56,6 +67,11 @@ These are generated by the compiler, not the standard library, and need no
 | `List<T>` | `empty`, `of`, `len`, `is_empty`, `get`, `set`, `push`, `pop`, `insert`, `remove`, `clear`, `sort`, `reverse`, `contains`, `slice` |
 | `Map<K, V>` | `new`, `with_capacity`, `empty`, `len`, `is_empty`, `insert`, `get`, `get_or`, `has`, `remove`, `keys`, `values`, `clear` |
 | `Box<T>` | `empty`, `of`, `is_empty`, `get`, `set`, `take` |
+| `Ptr<T>` | the raw pointer: `null`, `from_addr`, `from_ref`, `from_mut`, `from_fn`, `addr`, `is_null`, `offset`, `byte_offset`, `cast`, `read`, `write`, `read_volatile`, `write_volatile`, `read_unaligned`, `write_unaligned`, `alloc`, `try_alloc`, `free`. Every access needs `unsafe` (see [Unsafe code and raw pointers](/language/unsafe)) |
+| `Atomic<T>` | `new`, `load`, `store`, `swap`, `compare_exchange`, `fetch_add`/`sub`/`and`/`or`/`xor` |
+| `Mutex<T>` | `new`, `lock`, `wait_while`, `wait_while_timeout`, `share`, `swap`, `into_inner` (see [`std/sync`](/stdlib/sync)) |
+| `RwLock<T>` | `new`, `read`, `write`, `try_read`, `try_write`, `into_inner` (see [`std/sync`](/stdlib/sync)) |
+| `Condvar` | `new`, `notify_one`, `notify_all` (see [`std/sync`](/stdlib/sync)) |
 
 The builtins are described in [Text](/language/text) and
 [Collections](/language/collections).
@@ -70,21 +86,32 @@ The builtins are described in [Text](/language/text) and
 | `math` | [`std/math`](/stdlib/math) |
 | `fmt` | [`std/fmt`](/stdlib/fmt) |
 | `encoding` | [`std/encoding`](/stdlib/encoding) |
+| `regex` | [`std/regex`](/stdlib/regex) |
 | `io` | [`std/io`](/stdlib/io) |
 | `fs` | [`std/fs`](/stdlib/fs) |
 | `process` | [`std/process`](/stdlib/process) |
 | `net` | [`std/net`](/stdlib/net) |
 | `http` | [`std/http`](/stdlib/http) |
 | `tls` | [`std/tls`](/stdlib/tls) |
+| `tlsfile` | [`std/tls`](/stdlib/tls#reading-the-files-stdtlsfile) |
 | `ws` | [`std/ws`](/stdlib/ws) |
 | `time` | [`std/time`](/stdlib/time) |
+| `tz` | [`std/tz`](/stdlib/tz) |
 | `rand` | [`std/rand`](/stdlib/rand) |
 | `env` | [`std/env`](/stdlib/env) |
 | `list` | [`std/list`](/stdlib/list) |
 | `option` | [`std/option`](/stdlib/option) |
 | `result` | [`std/result`](/stdlib/result) |
+| `arena` | [`std/arena`](/stdlib/arena) |
+| `irq` | [`std/irq`](/stdlib/irq) |
+| `frame` | [`std/frame`](/stdlib/frame) |
 | `atomic` | [`std/atomic`](/stdlib/atomic) |
+| `sync` | [`std/sync`](/stdlib/sync) |
+| `pool` | [`std/pool`](/stdlib/pool) |
 | `thread` | [`std/thread`](/stdlib/thread) |
+| `iter` | [`std/iter`](/stdlib/iter) |
+| `ops` | [`std/ops`](/stdlib/ops) |
+| `convert` | [`std/convert`](/stdlib/convert) |
 
 Two conventions worth knowing before reading a page:
 

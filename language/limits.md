@@ -14,15 +14,71 @@ them.
 
 ## Control flow
 
-- **No `break` and no `continue`.** Iteration is a `for` over a `List`, or a
-  `while` plus an index when the loop is not a front-to-back walk.
-- No `loop` expression, no labelled loops.
+- **`break` and `continue` exist** and act on the innermost loop, in a `while`
+  and in either `for`. There is **no `loop` expression, no labelled loop and no
+  `break` with a value**, and a deferred action cannot contain either
+  ([Iterators, `for` and `break`](/language/iterators)).
 
 ## Errors
 
-- **`?` propagates only an identical failure type.** There is no error
-  conversion, no `From`, no boxing. `result.map_err` is the bridge.
+- **`?` converts a failure only through a `From` impl.** An identical failure
+  type is moved across as is; a different one needs
+  `impl convert.From<E1> for E2`, and the operator calls `E2.from(e1)`. There is
+  no boxing, no blanket `Into`, and `?` never consults `Into`. `result.map_err`
+  is still the bridge for a one-off conversion
+  ([Generic traits, `From` and `?` conversion](/language/generic-traits)).
 - A function returning `Unit` has nowhere to propagate to.
+
+## Source size and shape
+
+- **Nesting is capped at 200 levels, and a chain at 800 links.** The parser
+  refuses more than 200 levels of expressions, prefix operators, types, type
+  arguments, blocks and binding patterns inside one another, and more than 800
+  links in an operator or access chain, with an ordinary error
+  (`this nests more than 200 levels deep ...`, `this chain of operators or
+  accesses is longer than 800 links ...`). Written code is nowhere near either.
+  See [Front-end fuzzing and parser limits](/tooling/fuzzing).
+
+## Compile time
+
+Large generated programs (long method chains, deeply nested calls and generics,
+nested blocks, 300-arm `elif` ladders, 200-field `datac`s, a 5,000-element list
+literal) are built on both backends by `kelpc/tests/scaling.rs`, and a step over
+20 seconds fails the test. The notes are
+[`plan/scaling.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/scaling.md).
+
+- **Long method chains and nested generic calls take linear time now.** Type
+  checking used to infer a method call's receiver twice (once to find its type,
+  once as the `self` argument), so each link doubled the work of the link below:
+  `a.f().f().f()...` took 0.4 s at 16 links and 21 s at 22 (the plan's figures),
+  and a chain of 400 never finished. Arguments of a generic call or a generic
+  `datac`/`enum` construction were checked twice in the same way, so
+  `id(id(id(...)))` was exponential too. The checker keeps the first result and
+  reuses it; no program that was accepted or refused changed, and no diagnostic
+  did. A 400-link chain of a `datac` method (`x.inc().inc()...`) passes `kelpc
+  check`, and built with the prebuilt compiler (LLVM, default `-O2`) in about
+  0.2 s and printed `400`.
+- **The parser limits are the real ceiling.** The parser refuses more than 800
+  links in a chain and more than 200 levels of nesting
+  ([Front-end fuzzing and parser limits](/tooling/fuzzing)), so a 400-link chain, 90
+  nested calls and 60 nested `if` blocks are about the largest shapes a program
+  can reach. Both limits were kept.
+- **A very large array literal is slow at `-O2`.** (open) Every other generated
+  shape finishes each step in about a second or less. A literal of 5,000
+  elements takes 4.0-4.6 s to build on the LLVM backend at `-O2` in the plan's
+  debug-build measurement, 2,500 elements 1.0 s and 1,250 elements 0.5 s: the time
+  grows with the square of the length and sits inside LLVM's optimizer, which is
+  handed the literal as one `[N x i32]` aggregate value (`-O0` takes 0.85 s for
+  5,000). The all-constant literal is now emitted as one constant array, which
+  halved `-O0` and left `-O2` unchanged. Emitting it as a private global plus a
+  copy would remove the rest, and was left alone because it changes the IR of
+  every array literal. Re-measured for this page with the release-built prebuilt
+  compiler: a 5,000-element `[i32; 5000]` literal took about 2.9 s at `-O2` and
+  about 0.5 s at `-O0`. Split a table that big into smaller literals or build it
+  with a loop.
+- Smaller costs the plan lists, all linear: 150 chained closures take about 1 s on
+  LLVM and 1.6-2.2 s on the C oracle, and 50 nested generic enum constructions
+  take 1.1-1.5 s.
 
 ## Data and generics
 
@@ -53,15 +109,60 @@ them.
   missing.
 - **No user overloading** (permanent: `abs`, `min`, `max`, `clamp` are the
   only overloads in the language, and they are stdlib-only). User `extern`
-  bodies are no longer refused outright (MK9-S1-M1, roadmap B-1): a
-  `coral.toml` `[extern."<module id>"]` section assigns a user module one of
-  the six existing capability domains plus a native library and an
-  allowlisted symbol set, so its `extern fun` declarations bind to a real
-  symbol instead of a compiler-supplied body, gated exactly like a stdlib
-  module — see [Coral: the manifest](/tooling/coral#extern-user-modules-that-bind-a-native-symbol).
-  **(still open)** `extern "C"` block syntax, variadics, function-pointer
-  types for user externs, and link-flag/library-path vocabulary beyond one
-  `library` name per section.
+  bodies bind to real symbols (MK9-S1-M1, roadmap B-1): a `coral.toml`
+  `[extern."<module id>"]` section assigns a user module one of the seven
+  capability domains (`ui` included) plus a native library, a `header`,
+  `include_dirs`/`library_dirs`, an optional `pkg_config` package and an
+  allowlisted symbol set, so its `extern fun` declarations bind a real C
+  symbol under a name the section can rename, gated exactly like a stdlib
+  module. `extern type` handles with parents, `null()`/`cast()`, `...`
+  variadics and `move closure(...)` callbacks all ship; see
+  [User FFI](/language/externs) and
+  [Coral: the manifest](/tooling/coral#extern-user-modules-that-bind-a-native-symbol).
+  **(still open)** `extern "C"` block syntax, function-pointer types for user
+  externs, and a `repr(C)` struct crossing by value.
+
+## Scoped blocks
+
+A trailing block (`f { x -> ... }`) passes a `scoped fun(...)` parameter, and it
+may write what it captures ([Trailing blocks and scoped
+parameters](/language/functions#trailing-blocks-and-scoped-parameters)). The
+limits of that rule:
+
+- **A block cannot be stored**, returned or put in a container: a scoped value is
+  a type of its own and lives exactly as long as the call it was written in. A
+  retained callback (a button's `on_click`) is still a message value, not a block.
+- **A block inside a block cannot capture the outer block's exclusive capture**,
+  even to read it. The message names the two ways out: pass the name to the inner
+  call as an argument, or capture it in the outer function.
+- **One owner, one exclusive capture per call.** A second capture of the same
+  owner in the same call, a call whose other arguments or receiver mention the
+  owner, and a borrow of the owner still used after the call are all refused.
+- **Borrow roots are whole variables**, so a block writing `s.count` while the
+  callee borrows `s.items` conflicts: there is no disjoint-field capture.
+- A block that writes through an exclusive capture **cannot return a borrow**
+  (`str`, `View`, `&T`); return an owned value.
+- A general hole older than this rule is still open: two reborrows of one `mut`
+  *parameter* in one ordinary call (`g(s, s)` with two `mut` parameters) are not
+  checked. The block case is closed; the plain call is not.
+- `kelpc fmt` has no rule for re-wrapping a trailing block yet (open item 75).
+
+## Feature interactions
+
+Every pair of the 2026-10 language features that had not been tested together is
+a fixture (`matrix_*.kp`) run on both backends. Each cell either works with its
+output pinned or is refused with a message that says what to do next:
+
+| Pair | Result |
+| --- | --- |
+| associated types with `Box<dyn>` | refused by name: use a bounded type parameter (`<T: Source>`) instead |
+| generic traits with operator traits | refused: `ops.Add` takes no type argument, the right-hand side is always `&Self`, so there is no `impl Add<Vec2> for Vec2` |
+| iterators with `defer` | works: a `defer` in a loop body runs once per iteration, including the one a `return` leaves; a function-level `defer` runs last |
+| iterators with const generics | limit: `impl Iterator for Ring<3>` is a trait for a generic instantiation, refused; wrap it in a non-generic cursor `datac` that walks the `Ring<N>` through a generic function |
+| `From` with `?` inside an iterator's `next` | refused where the shapes differ (`next` returns an `Option`, so `?` there can only propagate `None`); convert in a helper that returns a `Result` and turn the failure into `None` with a `when` |
+| `Display` with a generic function | works: `<T: fmt.Display>` calls `to_text`, and the same value interpolates in a template |
+| `Ord` with `Map` keys | works, and `Ord` is never consulted: a declared `hash`/`eq` (or the derived field-wise pair) decides key identity, so an `Ord` that calls every pair equal still leaves two keys in the map |
+| operator traits in a freestanding build | works: `std/ops` is in the freestanding allowed set |
 
 ## Ownership
 
@@ -99,12 +200,13 @@ them.
   is the one array shape a `datac` element cannot take: write the elements out,
   or start from a literal and `set` each one. An array cannot be a `List` or
   `Map` element, and an array element cannot be a `List`, `Map` or `Box`.
-- **(open, roadmap A-5)** No iteration protocol: `for` is a desugared index
-  walk over a `List` or an array, and a `Map` has no iterator: iterate
-  `keys()` and look up. A reusable `iter`/`next` protocol is an open question
-  with no schedule, not a closed decision: the cheap `for` shipped in
-  MK8-S1-M3 and has been enough so far, and nothing has asked for the more
-  expensive protocol yet.
+- **The iterator protocol shipped, the adapters did not.** `for` walks a `List`,
+  an array, or any type that implements `std/iter`'s `Iterator`. There is no
+  `map`, `filter`, `take`, `skip`, `enumerate`, `zip` or `chain`, no
+  `List.iter()` or `List.into_iter()`, and a `Map` still has no iterator
+  (iterate `keys()` and look up). **(open)** The adapters need a generic trait
+  impl (`impl<I: Iterator> Iterator for Take<I>`), which the parser does not
+  accept yet ([Iterators, `for` and `break`](/language/iterators)).
 
 ## Compile-time evaluation
 
@@ -121,13 +223,29 @@ them.
 
 ## Networking
 
+- **`std/http` also serves HTTP/1.1.** The server is pure Kelp over `std/net`,
+  with a `Limits` table, keep-alive, pipelining, chunked and
+  `Expect: 100-continue` request bodies, and `serve_threaded` worker threads.
+  **A listener binds the interface its grant allows:** `net.listen(port)` has no
+  host argument, so a loopback-only grant (`127.0.0.1:8080`) binds `127.0.0.1`
+  and a grant that includes `*` binds every interface
+  ([threat model](/reference/capability-threat-model)). `net.mono_ms`, `net.try_accept`,
+  `Listener.set_timeout` and `net.try_shutdown_write` exist for it.
 - **(decided 2026-09-26, roadmap item 37; done, MK5-S4b-M1)** TLS shipped:
   [`std/tls`](/stdlib/tls) links the system OpenSSL, and `http.parse_url` now
-  accepts `https`. `ws.parse_url` still refuses `wss` by name
-  (`ws.parse_url: 'wss' is not supported: v1 has no TLS, so only 'ws://' is
-  reachable`), rather than parsing the URL and failing later: WebSocket-over-TLS
-  was not this milestone, and the two clients shipped ahead of TLS because the
-  framing of a WebSocket does not depend on the transport.
+  accepts `https`, and `ws.parse_url` accepts `wss` (`ws.connect_url` runs the
+  WebSocket handshake over the same TLS layer, taking the scheme off the parsed
+  URL).
+- **TLS also serves.** [`std/tls`](/stdlib/tls#serving-tls) builds a
+  `ServerConfig` from PEM bytes (`tls.server_config_pem`), accepts with
+  `tls.accept`, negotiates ALPN, and can require client certificates (mutual
+  TLS); [`std/http`](/stdlib/http#serving-https) serves HTTPS with
+  `http.serve_tls`. Its limits: verification cannot be turned off on either
+  side; a key file's permissions are not checked (keep it `0600`); an
+  **encrypted private key is refused**; a built `ServerConfig` is immutable, so a
+  new certificate means building a new config; `net.listen` binds every
+  interface, so `serve_tls` does too; and the HTTP server speaks HTTP/1.1 only,
+  so ALPN names a protocol but does not make the server speak `h2`.
 - **`std/ws` is a client, not a server.** Not scheduled anywhere on the
   roadmap: a WebSocket server, extensions (`Sec-WebSocket-Extensions`, so
   `permessage-deflate` and the `zlib-stream` transport a compressed gateway
@@ -163,17 +281,28 @@ and `std/ws` is §16.18 of the same document.
   spawns a process.
 - **One ordering, and nothing else around it.** The single ordering v1 has is
   `SeqCst`; `Relaxed`, `Acquire` and `Release` are reserved, not shipped. There
-  are no channels, no async and no coroutines, with no roadmap item tracking
-  any of the three yet. **(open)** `Mutex` and thread-local/per-CPU storage
-  are different: both are named backlog items (`Mutex` alongside the threads
-  work; thread-local storage as B-11, MK9-S3-M3) rather than ruled out, they
-  are simply not built. Today's one shared-mutable shape is `Atomic<T>`; a
-  worker that needs to share something bigger takes its own copy instead, the
-  way `examples/download_pool.kp` gives each thread its own `http.Pool`. Two
-  leaks are admitted: a panicking worker's frame is abandoned,
-  and a handle nobody joins is detached with its worker record leaked, because
-  v1 has no `must_use` and no user `Drop`. A worker that returns `unit` joins
-  to `Result<unit, ThreadErr>` with nothing in its `Ok`, the same shape
+  are no async and no coroutines, with no roadmap item tracking either yet.
+  **Channels and a thread pool have shipped**, hosted only:
+  `sync.bounded`/`sync.unbounded` with `Sender<T>` and `Receiver<T>` in
+  [`std/sync`](/stdlib/sync#channels), and [`std/pool`](/stdlib/pool). A channel
+  carries owned borrow-free values only, has no `select` and no zero-capacity
+  form, and `send` returns an `Option` the compiler does not force a caller to
+  read; a pool creates one thread per job, so it bounds concurrency rather than
+  thread creation.
+  `Mutex`, `RwLock` and `Condvar` have shipped ([`std/sync`](/stdlib/sync));
+  thread-local storage is still a named backlog item (B-11, MK9-S3-M3) rather
+  than ruled out, it is simply not built. Per-CPU storage has shipped: `percpu static mut` lays out
+  `[target] cpus` copies and `cpu_index()`/`cpu_count()` read it back, in a
+  freestanding build only; see [Per-CPU storage](/language/percpu). Today's shared-mutable shapes for hosted threads are `Atomic<T>`,
+  `Mutex<T>`, `RwLock<T>` and `Condvar`, and values move between threads over a
+  channel; a worker that needs to share something else still takes its own
+  copy instead, the way
+  `examples/download_pool.kp` gives each thread its own `http.Pool`. Two leaks
+  are admitted: a panicking worker's frame is abandoned, and a handle nobody
+  joins is detached with its worker record leaked, because v1 has no `must_use`.
+  A user `Drop` now exists ([User `Drop`](/language/drop)), but it does not run
+  on the panic path: there is still no unwinding. A worker that returns `unit`
+  joins to `Result<unit, ThreadErr>` with nothing in its `Ok`, the same shape
   `None` already has.
   `thread.fence(order)` in [`std/thread`](/stdlib/thread) joins the total order
   while naming no location, and changes nothing a single-threaded program can
@@ -185,33 +314,71 @@ and `std/ws` is §16.18 of the same document.
 - `str.to_upper`/`to_lower` are **ASCII-only**.
 - A string is UTF-8 by convention and bytes by API: most functions count bytes and
   the codepoint helpers are the separate `char_*` set.
-- No regular expressions anywhere. [`glob`](/libraries/glob) has `*`/`?`,
-  and that is the whole pattern language.
+- **No regular-expression literals in the language.** Patterns are data, so a
+  regex is [`std/regex`](/stdlib/regex): a linear-time Pike VM over bytes with a
+  documented subset, freestanding with the `[target] alloc`/`dealloc` pair.
+  [`glob`](/libraries/glob)
+  still has the `*`/`?` shell patterns.
 
 ## Not present at all
 
 **Settled for good**, with no roadmap item working toward them: no
-exceptions, no garbage collector, no macros, no operator overloading. These
-are the headline design, not gaps: ownership without a GC, `Result` instead
-of throwing, and text substitution (`kelpc`'s aliases) instead of a hygienic
-macro system.
+exceptions, no garbage collector, no macros. These are the headline design, not
+gaps: ownership without a GC, `Result` instead of throwing, and text
+substitution (`kelpc`'s aliases) instead of a hygienic macro system. Operators
+are overloaded only through the `std/ops` traits on a `datac`/`enum`
+([Operator traits and `Display`](/language/operator-traits)); there is no
+`derive`, no bitwise or `&&`/`||` overloading and no user operator trait.
 
 **(open)** The rest of this list is absent from v1 today but is either an
 active roadmap item or a named future milestone, not a closed decision:
 
-- **`unsafe`, raw pointers, pointer arithmetic, casts.** Backlog item B-3,
-  MK9-S2-M1. Without it there is no kernel, no driver, no allocator, no FFI:
-  the one structural reason systems work is out of reach today.
-- **Traits, interfaces, `dyn` dispatch.** A-12. Slice 1 already shipped (a
-  `datac`/`enum` can declare its own `hash`/`eq` pair, and a concrete `enum`
-  can declare a receiver method); named traits, user `Drop` and dynamic
-  dispatch are slice 2 and beyond, unscheduled but named.
+- **Provenance and address-space control.** `unsafe`, raw pointers and the
+  layout and data-format surface the kernel path needed have shipped
+  (`unsafe` blocks and `unsafe fun`, `Ptr<T>` with
+  `offset`/`byte_offset`/`cast`/`addr`, volatile and unaligned access,
+  `alloc`/`free` and the fallible `try_alloc`, `repr(c)`/`repr(packed)`/
+  `repr(align(N))`, `size_of`/`align_of`/`offset_of`, the byte-order
+  conversions, the `[unsafe] modules` gate, and the [`std/arena`](/stdlib/arena)
+  bump region): see [Unsafe code and raw
+  pointers](/language/unsafe). `from_addr` names an address, and a freestanding
+  module must hold an `mmio` grant to do it, but there is still no provenance or
+  address-space model, which is why a granted range admits any address reachable
+  from it by arithmetic. `AtomicPtr`, `transmute` and a read of a non-`Copy`
+  element are absent too.
+- **Traits: what is still absent.** A-12. Named traits shipped in slices:
+  static dispatch and bounds, default methods, supertraits and builtin impls,
+  the borrowed trait object `&dyn Name`, [associated types](/language/associated-types),
+  [generic traits and `From`](/language/generic-traits), the owned
+  [`Box<dyn Name>`](/language/box-dyn), the [operator traits and
+  `Display`](/language/operator-traits), and
+  [`impl Trait` in argument position](/language/const-generics); see
+  [Traits and static dispatch](/language/traits). What is still absent: an upcast
+  between trait objects, `where` clauses, blanket impls, generic impls
+  (`impl<T: A> B for Pair<T>`, which is also what blocks the iterator adapters),
+  a bound or equality constraint on an associated type in a bound
+  (`I: Iterator<Item = i64>`), default or generic associated types and
+  associated consts, generic trait methods, `impl Trait` in a return position,
+  `dyn` of a generic trait or of a trait with an associated type, `dyn` in a
+  field or a return type when it is a `&dyn`, and the rest of the refusal list
+  on those pages. A user `Drop` is a smaller thing that shipped on its own,
+  `fun mut T.drop()`, and is not a trait; see [User `Drop`](/language/drop).
+- **Const generics: value parameters only.** `<const N: usize>` shipped
+  ([Const generics](/language/const-generics)); arithmetic on the parameter
+  inside a type (`[T; N + 1]`), a const parameter on a trait and a non-integer,
+  non-`bool` const parameter are refused.
 - **Lifetime syntax, and the borrows it would allow in fields.** A-11/A-8.
-  This is why a `str`/`View` cannot be a `datac` field or an `enum` payload
-  today, and why a closure cannot capture a borrow: both need a way to say
-  what a stored borrow is tied to, which v1 does not have yet.
-- No undefined-behaviour escape hatch: this one stays true even once
-  `unsafe` ships, the same way Rust's `unsafe` does not mean "UB is allowed."
+  Two of A-11's pieces have shipped: a bound borrow ends at its last use rather
+  than at the end of its scope, and a reference binding remembers the owner its
+  value came from, so a pointer local can walk a structure as a cursor
+  ([Ownership and borrowing](/language/ownership#cursors-and-provenance)).
+  What stays out is explicit lifetime syntax (`'a`), which is why a `str`/`View`
+  cannot be a `datac` field or an `enum` payload today, and why a closure cannot
+  capture a borrow: both need a way to say what a stored borrow is tied to,
+  which v1 does not have yet.
+- No undefined-behaviour escape hatch: `unsafe` marks the operations the
+  compiler cannot check, it does not make undefined behaviour allowed, the same
+  way Rust's `unsafe` does not.
 - **Named nested functions.** No roadmap item names this one at all, closures
   (a `fun` literal capturing a binding) shipped instead and cover most of
   what a nested function would be for; a named one that can recurse or be

@@ -77,7 +77,7 @@ example whose output was checked against `kelpc`, and what it deliberately does
 
 ## Pages
 
-- [Catalogue](/libraries/catalogue): all twenty-eight, grouped by what they do
+- [Catalogue](/libraries/catalogue): every library, grouped by what they do
 - [Writing a library](/libraries/writing-a-library): what a library has to be
 
 ## See also

@@ -142,8 +142,10 @@ mechanisms do that, and each one came from a test that broke without it:
 - **Bytes, not characters.** Every scanner works on `u8` with `str.byte`. Multi-byte UTF-8
   passes through untouched because none of its bytes is ASCII, and the slug function keeps
   bytes at or above 128.
-- **No regular expressions and no `break`.** Kelp v1 has neither, so loops end through a
-  condition (`while i < n && !found`). It costs a flag per loop and keeps every scanner's
+- **No regular-expression literals, and loops that end through a condition.** The language
+  has no regex literal (a regex is data through [`std/regex`](/stdlib/regex)), and WebKelp
+  was written before `break` and `continue` existed, so its loops end through a condition
+  (`while i < n && !found`). It costs a flag per loop and keeps every scanner's
   termination visible.
 - **Small `datac`s instead of tuples.** `Split(body, attrs)`, `Fence(ch, len, rest)`,
   `Marker(indent, ordered, width, num)` and `Braces(attrs, end)` are returned where another

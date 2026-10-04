@@ -38,6 +38,7 @@ this page is the index to it.
 
 | Version | Date | Headline |
 | --- | --- | --- |
+| [26.10.0](#26100-2026-10-04) | 2026-10-04 | traits and unsafe/freestanding Kelp; server TLS and capability hardening; the Polyp v4 UI path; incremental builds, benchmarks, sanitizers and docs |
 | [26.09.5](#26095-2026-09-28) | 2026-09-28 | `std/tls` and `https`; `coral.toml`'s `[caps]` and `[extern]`; rate-limit headers on `Response`; two assignment leaks fixed; every program now needs OpenSSL to build |
 | [26.09.4](#26094-2026-09-26) | 2026-09-26 | the LLVM backend inlines builtin bodies; `Map`'s index halved, `Map.with_capacity`; unrolled loops, `noalias`, `llvm.sqrt.f64`; the benchmark suite published |
 | [26.09.3](#26093-2026-09-25) | 2026-09-25 | `thread.sleep_ms`/`current_id`; a unit-returning worker can be joined; concurrent downloads; the memory model published; `kelpc check --text` |
@@ -50,6 +51,248 @@ this page is the index to it.
 | [0.1.2](#012-2026-09-19) | 2026-09-19 | `View`, `char` literals, bitwise operators, `str` to `String` coercion |
 | [0.1.1](#011-2026-09-19) | 2026-09-19 | the `for` loop, `spawn_in`/`run_in`, fallible `try_run`, `fs.symlink` |
 | [0.1.0](#010-no-release) | 2026-09-19 | first tag: the core language, modules, containers, capabilities, stdlib |
+
+## 26.10.0 (2026-10-04)
+
+[Release](https://homelabone.xenoo.dev/gitea/Juniper/kelp/releases/tag/v26.10.0)
+
+**Release additions.** Shift counts are checked on both backends, with
+`wrapping_shl` and `wrapping_shr` as the deliberate masking forms. TLS trust
+anchors are PEM bytes supplied by `TlsClientOptions.with_ca_pem`; file access
+moved to `std/tlsfile`, behind the `fs` capability. The new 13-program benchmark
+suite checks Kelp, C and Rust checksums before reporting timings, and `str.split`
+is linear. Polyp v4 adds timer subscriptions, integer animation, UTF-8 text,
+an on-demand accessibility tree and memoised pure subtrees. Expressions now
+evaluate left to right on both backends; several lock-typed `pd val` globals
+initialise on LLVM; and `kelpc doc` no longer gives an undocumented field its
+record's comment.
+
+**`unsafe`, `Ptr<T>` and layout control.** A raw pointer type `Ptr<T>` and the
+`unsafe` blocks and `unsafe fun` that are the only way to dereference one.
+`p.read`/`write` and their `read_volatile`/`write_volatile` twins (volatile is
+never merged, reordered or elided), the unaligned pair, `Ptr.alloc`/`free`,
+`offset`/`byte_offset`/`cast`/`addr`/`is_null`, and `Ptr.from_ref`/`from_mut`/
+`from_fn`. A module may contain any of it only if `coral.toml` lists it under
+`[unsafe] modules`, parsed like `[extern.*]`, so the set of modules that leave
+the checked language is short and reviewable, and a project with no `[unsafe]`
+section is unchanged. `repr(c)` (the default, now a guarantee), `repr(packed)`
+and `repr(align(N))`, the compile-time `size_of`/`align_of`/`offset_of`, and
+explicit discriminants on a field-less enum with `repr(u8|...|i64)` storage and
+`to_int`/`from_int`. Every integer wider than a byte has `swap_bytes`/
+`to_be`/`to_le` and the static `from_be`/`from_le`, the direction asked of the
+*target* rather than assumed, and `Bytes` has bounds-checked
+`read_u16_le`...`read_i64_be`/`write_*` accessors with no alignment
+requirement. Both backends write the same layout and the same bytes; a C helper
+in `tests/projects/ffi_layout` checks the packed layout against a real C
+compiler. See [Unsafe code and raw pointers](/language/unsafe).
+
+**Freestanding mode, and kernel 0 boots.** A project with `[target] mode =
+"freestanding"` in `coral.toml` gets no libc, no runtime preamble, a
+compiler-emitted `_start` that sets `sp` and clears `[__bss_start,
+__bss_end)`, the entry and panic functions and a linker script it names, and an
+`ld.lld -T` static link with no runtime object. Everything that would reach
+libc is a compile error, and so is any `std/*` module except the pure ones and
+the `str` operations the compiler lowers itself. `static`/`static mut` and
+`defer` are allowed, `asm` and naked functions are allowed, and a `[target]
+alloc`/`dealloc`/`realloc` hook reroutes `Box`/`List`/`Map` onto the project's
+own allocator. With that pair configured, `String` and `Bytes` join them: their
+bodies are byte loops over the project's own buffers, so a kernel builds text
+with `str.concat` and `str.from_u64`/`from_i64` and grows a `Bytes` by doubling,
+with no `strlen` or `memcpy` in the image and a null allocation reaching the
+handler with `"out of memory"`. The five
+`memcpy`/`memmove`/`memset`/`memcmp`/`bcmp` routines LLVM's own aggregate
+copies call are defined weakly in every freestanding object. Freestanding is LLVM-only: the C backend's preamble is libc, so
+`KELPC_ORACLE=c` refuses such a project by name. `examples/kernel0` boots on
+QEMU's riscv64 `virt` machine and prints `hello from kelp`; so do the trap, BSS,
+panic, heap and string variants, and `examples/kernel0-aarch64` boots the second
+architecture. See [Freestanding mode](/language/freestanding) and
+[Kernel 0](/language/kernel).
+
+**Per-CPU storage, user `Drop`, Sv39 address spaces and user mode.**
+`percpu static mut NAME: T = INIT` lays out `[target] cpus` copies (an integer
+`1..=64`, default 1) as one 64-byte-aligned array in `.percpu`, and the
+freestanding-only `cpu_index()`/`cpu_count()` read the register the kernel sets
+(`tp` on riscv64, `TPIDR_EL1` on aarch64); the riscv64 `_start` stub parks every
+hart but hart 0 before it loads `sp`. `fun mut T.drop()` gives a user `datac` or
+`enum` a destructor that runs first at each drop point the plan already had,
+with a moved value not dropped, a partial move refused, and no unwinding on a
+panic. The kernel examples grew with it: `examples/kernel0-vm` builds Sv39 page
+tables, drops to S-mode and aliases a high page, `examples/kernel0-vm-fault`
+takes a load and a store page fault in an S-mode handler, and
+`examples/kernel0-user` adds the trap frame, the `ecall` ABI and
+untrusted-pointer validation for a program in U-mode. See
+[Per-CPU storage](/language/percpu), [User `Drop`](/language/drop) and
+[Kernel 0](/language/kernel).
+
+**Arenas and fallible allocation.** `Ptr.try_alloc<T>(count)` is `Ptr.alloc`'s
+non-panicking twin: unsafe like it, the same element set and alignment promise,
+but a failed allocation is the null `Ptr<T>`, and a count whose
+`count * size_of::<T>()` product would wrap `usize` is refused before the
+allocator is asked. Hosted it is `malloc` on both backends; freestanding it is
+the project's own `[target] alloc`, admitted by the same pair `Box`/`List`/`Map`
+need. `std/arena` is a bump arena over a caller-owned region, in Kelp with no
+externs and no libc, so it works hosted and freestanding and needs no allocator
+hook: `arena.new(base, cap)` hands out aligned `Ptr<u8>` blocks, answers the
+null pointer when a request does not fit or would wrap, panics on a
+non-power-of-two `align`, and `reset` reclaims the whole region. `alloc_zeroed`
+is the module's one unsafe operation, admitted by the compiler's own
+`stdlib::UNSAFE_MODULES` list rather than a project manifest. See [Unsafe code
+and raw pointers](/language/unsafe) and [`std/arena`](/stdlib/arena).
+
+**Stack guards and probing.** Every function a freestanding LLVM build emits
+carries `"probe-stack"="inline-asm"`, so a frame larger than a page is built by
+touching each page from the top and an unmapped guard page traps it.
+`examples/kernel0-stack` puts a 16 KiB trap stack below the image, an unmapped
+4 KiB guard above it and an 8 KiB kernel stack above the guard, then takes both
+overflows in one boot: a small-frame recursion into the guard, and a single
+`[u8; 16384]` frame the probe walks down page by page. Both print `scause 0xf`
+and an `stval` inside the guard bounds. Hosted builds carry no attribute. See
+[Kernel 0](/language/kernel).
+
+**Stable TLS, and the `try_` surface on the network modules.** `std/tls` gains
+the typed `TlsError`, `TlsOptions` (a private CA file or directory, a timeout)
+and a `try_handshake`/`try_read`/`try_write`/`try_shutdown` family beside the
+panicking wrappers. `TlsStream` now carries the OpenSSL handle as a typed
+`extern type TlsHandle` instead of a `usize`, so it cannot be forged from an
+integer or confused with another handle, and `std/http`/`std/ws` carry the
+plain-or-TLS choice as `Option<TlsHandle>` rather than an integer sentinel. A
+stream that ends without a `close_notify` is
+`PeerClosedUncleanly`, never a clean EOF, by design. `wss://` works over
+[`std/ws`](/stdlib/ws). `std/http` gains `try_get` and `HttpErr` (`Dial`,
+`Exchange`, `Redirects`), and `std/net` gains `try_send_all`/`try_recv`/
+`try_recv_into` with `NetErr`. OpenSSL is linked, and its headers included, only
+when a program reaches `std/tls` (which `std/http` and `std/ws` do). See
+[`std/tls`](/stdlib/tls).
+
+**`mmio` as a capability.** An eighth capability domain, `mmio`, gates
+`Ptr.from_addr` in a freestanding project: a grant is a list of half-open ranges
+`"0xBASE+0xLEN"` or the whole address space as `["*"]`. A constant address must
+fall inside a granted range, a computed one is refused unless the grant is
+`["*"]`, and a module with no grant is refused by name. `mmio` is the one
+domain the entry module does not hold by default and the one `caps(*)` leaves
+out, so the whole-space grant is written where a reviewer sees it. Every
+`examples/kernel0*` manifest now carries a grant. The check is on the address a
+pointer is born at, so an offset applied afterwards is not revisited. See
+[Capabilities](/language/capabilities#mmio-device-registers).
+
+**The compiler's memory floor.** `kelpc build` and `kelpc run` watch
+`MemAvailable` and, below `KELPC_MIN_AVAILABLE_MB` (default 384; `0` turns it
+off), kill the `cc`/`ld.lld`/`pkg-config` children they spawned, print one
+`error:` line and leave with `_exit(75)` (`EX_TEMPFAIL`) instead of letting the
+kernel OOM killer pick a victim. `kelpc run` stops the guard before the compiled
+program starts, and `fmt`/`lint`/`check`/`version` do not start it. See [`kelpc`
+CLI](/tooling/kelpc-cli#the-memory-floor).
+
+**`==`/`!=` over a declared `eq`.** The front end lowers `a == b` to
+`a.eq(&b)` and `a != b` to `!a.eq(&b)` for a `datac`/`enum` that declares
+`fun T.eq(other: &T).R: bool`, before borrow checking and code generation, so
+both backends run the declared body and no operator is added anywhere. `eq`
+alone is now a complete declaration: it gives the operator without making the
+type a `Map` key, and a lone `hash` is still refused. Nothing is derived, so a
+type with no declared `eq` keeps the old refusal, `<`/`>` stay refused, and
+`View` against `View` or a `str` lowers to the builtin `View.eq`. See
+[Operators and expressions](/language/expressions).
+
+**Traits with static dispatch.** A `trait Name { fun [mut] Self.method(...) }`
+is a named set of method signatures, `impl Name for Type { ... }` gives them to
+a `datac`/`enum` in the trait's module or the type's, and `fun f<T: A + B>`
+bounds a type parameter. At most one impl of a trait for a type, every
+signature matched exactly, and an inherent method of the same name is refused
+at the impl. Dispatch is static: the bound is checked at every call and
+instantiation, and the body is then monomorphized per concrete type exactly as
+generics already are, so neither backend nor the freestanding mode needed a new
+lowering. `dyn` and trait objects, default methods, associated types, `impl
+Trait` in argument position, a trait on a builtin or on a generic
+instantiation, `where` clauses, supertraits and operator overloading through a
+trait are each refused by name. See [Traits and static
+dispatch](/language/traits).
+
+**`Mutex<T>` in `std/sync`.** A compiler builtin generic in the shape
+`Atomic<T>`/`Thread<T>` have: one monomorphized type per element, not `Copy`,
+with a drop. The value is reached only through the scoped block
+`m.lock { v -> ... }`, which passes `v: mut T` to a `scoped fun(mut T).R: R`, so
+the borrow cannot escape; the block's tail is the call's value, and a `return`
+or `?` inside it still releases the lock. A panic inside the block releases the
+lock and marks the mutex POISONED, so a later `lock` panics with
+`mutex poisoned`, and `into_inner` consumes the mutex. A `&Mutex<T>` crosses to
+a worker exactly as a `&Atomic<T>` does. Hosted only: a freestanding manifest
+refuses it by name and points at a spin lock over an `Atomic<T>`. See
+[`std/sync`](/stdlib/sync).
+
+**Bugfix pass.** The compiler's own warnings are zero, the differential fuzz ran
+1500 generated programs plus the 24-program corpus with 0 mismatches, and one
+real bug was fixed: `u8`/`u16` arithmetic was not narrowed to its declared width
+in the C backend, so `u8 + u8` of 300 printed 300 where LLVM wrapped to 44. It
+also closed the `for` rule: a body may no longer mutate the list it walks,
+because an owned element already bound as a borrow but a `Copy` element did not,
+so `for x in xs { xs.push(x) }` grew the list the loop re-read until memory ran
+out. The body may read the iterated place and change a different list; a `mut`
+receiver method, an assignment, a move, `&mut xs`, a `mut` argument and a
+capturing `fun` literal are one error, `cannot mutate 'xs' while iterating over
+it`, reported on the `for` line, and walking by index in a `while` is the
+supported way to change what a loop walks. The differential sweep is a ratchet:
+`LLVM_BUILT_BASELINE` is 362 of the 655 corpus
+targets, 0 refused, 0 mismatches, 0 crashes, and it may only rise. See
+[Backends](/compiler/backends).
+
+**Panic semantics with no OS.** A freestanding panic handler may keep the
+original `fun(msg: str)` shape or take the location as
+`fun(msg: str, file: str, line: u32)`, and any other shape is refused by name.
+Every compiler-inserted check calls one compiler-emitted entry, which carries
+the check's own message and the 1-based line of the statement it was inserted
+into: the same per-statement source-map values the hosted line tables use, read
+from two `.bss` globals when the check lives in a generated body shared by every
+call site. The entry exchanges a `.bss` flag, so a check that fires while the
+handler is already running reaches `kelp_double_panic` instead of recursing; the
+compiler defines that weakly as a `wfi`/`wfe` loop and a project may override it
+with a strong definition. `examples/kernel0-panic2` boots one phase per check
+(array bounds, narrowing, `str.byte`, the `panic` builtin, `option.unwrap`, and
+a double panic) and asserts each exact line. Integer overflow still wraps and
+division by zero is still an unchecked UB, so neither has a message. See
+[Freestanding mode](/language/freestanding#panic-semantics) and
+[Kernel 0](/language/kernel).
+
+**`irq` and `frames` as capabilities.** Two device capabilities beside `mmio`:
+`irq` takes a decimal line or an inclusive range (`irq = ["10", "32-47"]`) and
+`frames` the same `"0xBASE+0xLEN"` byte windows. `irq.claim(n)` and
+`frame.claim(addr)` in the shipped [`std/irq`](/stdlib/irq) and
+[`std/frame`](/stdlib/frame) are the gated constructors and the only way a
+`Line` or a `Frame` enters a program; their struct literals are sealed to their
+modules, so another module cannot forge a receipt. A constant argument must fall
+inside a granted range, a `Frame` address must be 4096-aligned, and a computed
+argument needs the whole-resource `["*"]`. Unlike `mmio`, the check is in the
+front end and applies to a hosted program and a freestanding image alike, and
+the entry module holds both domains by default, so a kernel narrows them in
+`[caps]`. `examples/kernel0-caps` claims one of each and prints them over the
+UART. See
+[Capabilities](/language/capabilities#irq-and-frames-interrupt-lines-and-physical-frames).
+
+**The freestanding standard subset.** `freestanding.rs` decides each shipped
+`std/*` module with one table row (`Pure`, `Allocator`, `Subset`, `Present`,
+`Hosted`) instead of two hand-kept lists, the call-site check and the body
+pruning are driven by the same row, and a whole-module refusal names the modules
+a freestanding project may implement. Newly admitted: `std/math`'s integer
+`abs`/`min`/`max`/`clamp` and, with the `[target] alloc`/`dealloc` pair,
+`std/list` and the `std/option`/`std/result` callback combinators. The admitted
+list is `std/arena`, `std/atomic`, `std/frame`, `std/irq`, `std/list`,
+`std/math`, `std/option`, `std/result`, `std/str`; every other module is refused
+by name with "needs a hosted runtime", and `std/math`'s libm externs and the
+rest of `std/str` are refused by name inside the admitted module. See
+[Freestanding mode](/language/freestanding#the-freestanding-standard-subset).
+
+**The x86-64 target.** `[target] triple = "x86_64-unknown-none"` (the `-elf`
+spelling too) gets the X86 target machine and an x86-64 `_start` stub: a
+`.note.Xen` `XEN_ELFNOTE_PHYS32_ENTRY` note naming the entry, 32-bit code that
+loads a GDT with a 64-bit code segment, builds an identity map for the first
+1 GiB out of 2 MiB pages in a `.boot_pt` NOBITS section, enables PAE and
+`EFER.LME`, loads CR3 and sets `CR0.PG|PE`, then far-jumps into long mode, where
+it loads `rsp`, clears BSS, enables SSE and calls the entry; every emitted
+function is `noredzone`, and the target machine uses the static relocation and
+small code models. `examples/kernel0-x86_64` is a COM1 port-I/O driver and
+`examples/kernel0-x86_64-lmode` reads CR0/CR4/EFER, prints `long mode on` and
+then triple-faults on purpose; both boot under `qemu-system-x86_64 -M q35 -cpu
+qemu64 -no-reboot`. Interrupts and an IDT, the APIC, SMP and ACPI are not part
+of it. See [Freestanding mode](/language/freestanding#the-x86-64-target).
 
 ## 26.09.5 (2026-09-28)
 

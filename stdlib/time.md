@@ -20,6 +20,7 @@ any function in the module is the authority.
 | `time.sleep_ms(ms: u64)` | `Unit` | |
 
 ```kelp
+impl "deps/datetime/lib"
 impl "std/time"
 
 fun main() {

@@ -69,12 +69,15 @@ print((*r).count)     // dereference, then read a field
 
 Rules the checker enforces:
 
-- A borrow lives **until the end of its scope**, not until its last use: with
-  one statement-sized exception: a borrow taken *inside an initializer* ends with
-  that statement, because the bound value does not borrow it. So
-  `val back = str.parse_i64(cand.as_str())` borrows `cand` for one call and keeps
-  nothing of it; `return cand` a few lines later is fine. A binding that *is* the
-  borrow (`val v = l.get(0)`) still pins its owner for as long as `v` lives.
+- A borrow ends at its **last use**, not at the end of its scope. A `val` that
+  holds a borrow pins its owner until the binding is last read; after that the
+  owner may be mutated, moved or reassigned. A borrow taken *inside an
+  initializer* still ends with that statement, because the bound value does not
+  borrow it: so `val back = str.parse_i64(cand.as_str())` borrows `cand` for one
+  call and keeps nothing of it, and `return cand` a few lines later is fine. A
+  binding that *is* the borrow (`val v = l.get(0)`) pins its owner until `v`'s
+  last use, and a use inside a loop body counts for every iteration, so the
+  borrow is live for the whole loop.
 - While a value is borrowed exclusively, nothing else may borrow it and the owner
   may not be assigned or moved.
 - While a value is borrowed shared, it cannot be borrowed exclusively, and it
@@ -93,6 +96,93 @@ Rules the checker enforces:
       panic("json.as_str: value is not a string")
   }
   ```
+
+## Borrows end at their last use
+
+A bound borrow is live until its last use, so the owner can be mutated once the
+borrow is dead. `first` below is read once, and the `push` after that read no
+longer conflicts, even though `first` is still in scope:
+
+```kelp
+impl "std/str"
+
+fun main() {
+    var names: List<String> = List.empty()
+    names.push(String.from_str("alpha"))
+    val first = names.get(0)
+    print(first.as_str())
+    names.push(String.from_str("beta"))   // accepted: `first` is dead here
+    print(names.len())
+}
+```
+
+That program prints `alpha` then `2`, on both backends. The order is what
+matters: move the `push` before the `print` and the borrow is still used after
+the mutation, so it is refused:
+
+```text
+$ kelpc check swap.kp
+error: cannot borrow 'names' as exclusive: already borrowed as shared
+  --> swap.kp:10:5
+```
+
+Two structured cases follow from statement granularity. A use inside a loop body
+keeps the borrow live for the whole loop, including the statements before the use
+in the body, because the next iteration reaches them. A use in one arm of an
+`if` keeps the borrow live through the whole `if`, because the branch point is
+before the statement; a mutation in the other arm is therefore still refused.
+
+Before this rule a bound borrow lived to the end of its block, and the workaround
+was to wrap the read in an extra `{ }` so its scope ended early. That workaround
+is obsolete and should not be written: the borrow ends at the last use on its
+own.
+
+## Cursors and provenance
+
+A binding whose type is a reference, a `View`, a `str` or a `&dyn` carries a
+**root set**: the owners its current value may borrow from. A `val`/`var` sets it
+from the initializer, `cur = expr` replaces it and releases the root the cursor
+left, and an `if`/`when` or a loop that assigns different owners unions the arms'
+roots. A borrow made through the cursor is a borrow of the **owner**, so the
+owner stays pinned while any cursor into it is live, while rebinding the cursor
+itself is accepted. That is what makes a pointer local a usable cursor:
+
+```kelp
+datac Node(val value: i32, val next: Box<Node>)
+
+fun main() {
+    var list = Node(value = 1, next = Box.of(Node(value = 2, next = Box.of(Node(value = 3, next = Box.empty())))))
+    var cur = &list
+    var sum = 0
+    sum += cur.value
+    while !cur.next.is_empty() {
+        cur = cur.next.get()   // accepted: `cur` is rebound, `list` stays the root
+        sum += cur.value
+    }
+    print(sum)
+}
+```
+
+That prints `6`, on both backends. The same shape works over a `List` by index:
+`var cur = xs.get(0)`, then `cur = xs.get(i)` in a loop, keeps `xs` pinned for as
+long as `cur` is used. Re-pointing a cursor from one owner to another releases
+the first at the assignment, so the first owner is mutable again.
+
+What stays refused, each with the message it produces:
+
+- mutating an owner while a cursor into it is still used:
+  `cannot assign to 'list' while it is borrowed`;
+- two exclusive cursors into one root, or copying a `&mut` into a second binding
+  (`val q = p` where `p: &mut T`, refused because Kelp references are `Copy`):
+  `cannot borrow 'a': already borrowed exclusively`;
+- moving an owner while a cursor into it is live:
+  `cannot move 'list' while it is borrowed`;
+- returning a cursor derived from a frame local:
+  `cannot return a borrow of 'local': '&Node' borrows from its first reference parameter 'start', so the returned value must be derived from 'start'`.
+
+The older message `cannot assign to 'cur' while it is borrowed` no longer appears
+for `cur = cur.next.get()`: the assignment is accepted now. It survives only as
+the owner-mutation refusal above, with the owner's name instead of the cursor's.
 
 ## Partial moves
 
@@ -197,7 +287,8 @@ Owned values are freed at the end of the scope that owns them, on every exit pat
 including `return` and either branch of an `if`. A `datac` drops its fields, a
 `List` drops its elements and then its buffer, and a `Box` drops what it holds.
 An owned `pd` is freed once at process exit. There is no `free`, no `deinit`, and
-no way to leak deliberately.
+no way to leak deliberately. A type can hook these drop points with its own
+destructor, `fun mut T.drop()`; see [User `Drop`](/language/drop).
 
 ## The two rules that explain most borrow errors
 

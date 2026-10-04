@@ -53,6 +53,30 @@ val c = 7.0 / 2.0    // 3.5
   [`mathx`](/libraries/mathx).
 - Float arithmetic is IEEE: `nan`, `inf` and `-0.0` behave as usual, and
   `math.is_nan` / `math.is_finite` exist to test them.
+- A `datac` or `enum` gets `+ - * / %`, unary `-` and `< <= > >=` by implementing
+  the [`std/ops`](/stdlib/ops) traits, and `"${x}"` and `print(x)` by
+  implementing `fmt.Display`; see
+  [Operator traits and `Display`](/language/operator-traits). Builtin types keep
+  their builtin operators.
+
+## Evaluation order
+
+Kelp evaluates expressions **strictly left to right**. This includes call
+arguments, template interpolations, binary operands, constructor fields and
+list elements. Each expression is evaluated once. `&&` and `||` keep their
+usual short-circuit rule: the right side runs only when the left side requires
+it, and runs after the left side.
+
+This is a language rule, not a property of one backend. It makes side effects
+in a template predictable:
+
+```kelp
+print("removed ${items.remove(0)}, ${items.len()} left")
+```
+
+removes first, then reads the length, on both the LLVM backend and the C
+backend. Code may still bind intermediate results when that makes it easier to
+read, but it does not need to do so for backend agreement.
 
 ## Bitwise
 
@@ -60,10 +84,67 @@ val c = 7.0 / 2.0    // 3.5
 produce that type. `bool` is not a bitwise domain: `a & b` on two booleans reads
 as a non-short-circuiting `and`, and `&&` is right there.
 
-A shift count is the same type as the value, and a shift by ≥ the width is
-undefined, exactly as in C. `>>` on a signed type is arithmetic
-(sign-propagating), and `~x` is `0 - x - 1`, so on a `u32` it flips all 32 bits.
-Mask it (`~x & 255`) when you wanted a byte.
+A shift count is the same type as the value. A shift by an amount outside
+`0..width` (a negative one included, on a signed type) is checked at run time
+like an out-of-bounds index and panics with `shift amount out of range`, on both
+backends, hosted and freestanding. A shift by a *constant* amount that is already
+out of range is a compile error naming the type and the amount. `>>` on a signed
+type is arithmetic (sign-propagating), and `~x` is `0 - x - 1`, so on a `u32` it
+flips all 32 bits. Mask it (`~x & 255`) when you wanted a byte.
+
+`x.wrapping_shl(n)` and `x.wrapping_shr(n)` are the escapes that mask the amount
+to `n & (width - 1)` instead of panicking. A shift whose amount is a literal in
+range carries no check.
+
+```kelp
+fun shift(x: u32, n: u32).R: u32 = x << n
+
+fun main() {
+    print(shift(1, 31))
+    print(shift(1, 32))
+    print("unreachable")
+}
+```
+
+Both the default backend and `KELPC_ORACLE=c` print the same (run with the
+current main on 2026-10-04; the panic goes to standard error and the `print` is
+buffered, so the panic line shows first):
+
+```text
+panic: shift amount out of range
+2147483648
+```
+
+The exit status is 1 and `unreachable` is never printed; the panic names no
+amount.
+
+A constant amount never reaches run time:
+
+```kelp
+fun main() {
+    val x: u32 = 1
+    print(x << 33)
+}
+```
+
+```text
+error: a shift by 33 is not defined for a 'u32', whose width is 32 bits: the amount has to be in 0..32 (use wrapping_shl/wrapping_shr to mask it)
+  --> shift_const_too_wide.kp:5:11
+```
+
+A named `const` amount is folded and refused the same way (`x >> AMOUNT` with
+`const AMOUNT: u8 = 8` on a `u8`: "a shift by 8 is not defined for a 'u8', whose
+width is 8 bits"). The masking forms, with `one: u32 = 1` and `big: u32 = 0x80000000`:
+
+```kelp
+print(one.wrapping_shl(33))   // 2, the amount is 33 & 31
+print(one.wrapping_shl(32))   // 1
+print(big.wrapping_shr(35))   // 268435456, the amount is 35 & 31
+```
+
+The legal extremes behave as written: `1u8 << 7` is `128`, `255u8 << 4` is `240`
+(the high bits are lost, as in every wrapping step), `1i32 << 31` is
+`-2147483648` and `-8i32 >> 31` is `-1`.
 
 ```kelp
 val masked = flags & 3
@@ -71,6 +152,57 @@ val high = byte >> 4
 val low = byte & 15
 val flipped = ~byte
 ```
+
+## Equality
+
+`==` and `!=` work for scalars, for two `View` values (byte-wise and
+length-aware, exactly like `view.eq`), and for a `View` against a `str` (the
+`str` is viewed first). Comparing two `str` values is refused, because it would
+compare addresses; use `str.eq`.
+
+**A type gets `==`/`!=` by declaring `eq`.** A `datac` or `enum` `T` that
+declares `fun T.eq(other: &T).R: bool` gets the operators from that method:
+
+```kelp
+datac P(val x: i32, val tag: i32)
+
+fun P.eq(other: &P).R: bool = self.x == other.x && self.tag == other.tag
+
+fun main() {
+    val a = P(x = 1, tag = 1)
+    val b = P(x = 1, tag = 1)
+    val c = P(x = 2, tag = 1)
+    print(a == b)   // true
+    print(a != c)   // true
+}
+```
+
+- `a == b` means `a.eq(&b)` and `a != b` means `!a.eq(&b)`. The front end
+  rewrites the operator into that call *before* borrow checking and code
+  generation, so both are ordinary calls of the declared body and no backend
+  gains an operator. Each operand is evaluated exactly once, left to right, and
+  is only borrowed, never moved, so an owned binding, a `&T`/`mut T` borrow, or
+  a mix of the two all compare.
+- `eq` alone is enough for the operator. A `Map` *key* still needs the pair,
+  `hash` and `eq`, and a lone `hash` is still refused
+  ([Collections](/language/collections)).
+- The signature is fixed: exactly one parameter, a **shared borrow** of `T`,
+  returning `bool`. A different signature is refused where the method is
+  declared, with the spelling to write:
+
+  ```
+  error: 'P.eq' takes exactly one parameter, a shared borrow of 'P', so write 'fun P.eq(other: &P).R: bool'
+  ```
+
+- **Nothing is derived.** A `datac`/`enum` without a declared `eq` keeps the
+  refusal, and so does `<`/`<=`/`>`/`>=` on any such type:
+
+  ```
+  error: cannot compare 'P' values with '==': a datac has no generated equality
+  error: cannot compare 'P' values with '<': a datac has no generated equality
+  ```
+
+- The two operands must be the same type: `cannot compare 'A' with 'B'`.
 
 ## Borrows and dereference
 
@@ -102,8 +234,10 @@ Rules (§5.2):
 - It works on `Option` **or** `Result`: the compiler knows the *shape*, not the
   module, so a program's own declaration of either works.
 - The enclosing function must return an enum of the same shape, with the same
-  failure payload type. v1 has no error conversion, so `Result<i64, String>`
-  cannot be propagated out of a function returning `Result<i64, IoErr>`.
+  failure payload type, or one that an `impl From<E1> for E2` converts: `?` calls
+  `E2.from(e1)` when the two differ ([Generic traits](/language/generic-traits)).
+  Without such an impl, `Result<i64, String>` cannot be propagated out of a
+  function returning `Result<i64, IoErr>`.
 - A function returning `Unit` (including `main`) has nowhere to propagate to.
 - The value composes: `1 + half(n = n)?`.
 - A failure returns immediately, so the enclosing function's locals are dropped
@@ -147,5 +281,6 @@ example pushing through a `mut` receiver) works the same way a method call does.
 ## See also
 
 - [Control flow](/language/control-flow)
+- [Operator traits and `Display`](/language/operator-traits)
 - [Ownership and borrowing](/language/ownership)
 - [Errors and panics](/language/errors)

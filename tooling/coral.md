@@ -250,9 +250,11 @@ is well-formed.
 
 `coral.toml` is the flat `name`/`version`/`entry` manifest `kelpc` reads, plus the
 sections Coral owns. `kelpc` stops parsing the flat keys at the first
-`[section]`, and skips over every section except one: `[caps]` (below), which
-restricts the entry module's own capability grant, is read by `kelpc` itself
-rather than left for Coral.
+`[section]`, and reads four of them itself rather than leaving them for Coral:
+`[caps]` (below), which restricts the entry module's own capability grant,
+`[extern."<module id>"]`, which assigns a user module a capability domain and
+native surface, `[unsafe]`, which lists the modules allowed to contain `unsafe`,
+and `[target]`, which selects a bare-metal build.
 
 ```toml
 name = "myproject"
@@ -298,7 +300,9 @@ does not know yet.
 | Section | Shape | Notes |
 | --- | --- | --- |
 | `[caps]` | `domain = ["pattern", ...]` | read by `kelpc`, not Coral: it restricts the entry module's own capability grant; see [below](#caps-the-entry-modules-own-grant) |
-| `[extern."<module id>"]` | `domain`/`library`/`symbols` | read by `kelpc`, not Coral: it assigns a user module a capability domain and a native FFI surface; see [below](#extern-user-modules-that-bind-a-native-symbol) |
+| `[extern."<module id>"]` | `domain`, `library`, `symbols`, `header`, `include_dirs`, `library_dirs`, `pkg_config` | read by `kelpc`, not Coral: it assigns a user module a capability domain and a native FFI surface; see [below](#extern-user-modules-that-bind-a-native-symbol) |
+| `[unsafe]` | `modules = ["<module id>", ...]` | read by `kelpc`, not Coral: the modules allowed to contain `unsafe`, an `unsafe fun`, a `static mut` access or an `asm`; see [below](#unsafe-modules-that-may-leave-the-checked-language) |
+| `[target]` | `mode`, `triple`, `entry`, `linker_script`, `panic`, `alloc`, `dealloc`, `realloc`, `cpus` | read by `kelpc`, not Coral: a bare-metal build; see [below](#target-a-freestanding-build) |
 | `[tasks]` | `name = "path/to/file.kp"` | each task compiles as its own unit, and `src/tasks/` is where `init` puts them |
 | `[dependencies]` | `name = "owner/repo[/folder]"` | see [Dependencies](#dependencies) |
 | `[toolchain]` | `kelp = "v0.1.4"` | written by `coral toolchain kelp pin`, a line edit that leaves comments and section order alone |
@@ -336,9 +340,12 @@ net = ["api.example.com:443"]
   a `caps(domain = [...])` clause on an `impl` line uses: `fs` and `process`
   patterns are absolute, glob paths; `net` is `host`, `host:port`, `*.host`,
   `*:port` or `*`; `env` is a variable name or `*`; `time` and `rand` take no
-  pattern (an empty list, `time = []`, still holds the domain). An unknown
-  domain, or a pattern its vocabulary refuses, is the same error `caps(...)`
-  gives on an `impl` line, at the manifest instead.
+  pattern (an empty list, `time = []`, still holds the domain); `ui` takes only
+  `["*"]`; `mmio` and `frames` take half-open ranges `"0xBASE+0xLEN"` or the
+  wildcard `["*"]` alone; `irq` takes decimal line numbers or inclusive ranges
+  (`"10"`, `"32-47"`) or the wildcard alone. An unknown domain, or a pattern its
+  vocabulary refuses, is the same error `caps(...)` gives on an `impl` line, at
+  the manifest instead.
 - **No `[caps]` section at all is the old default**: `main` holds the whole
   resource of every domain (`/**` for a path domain, `*` for a name domain),
   exactly as before this section existed. A `coral.toml` written before
@@ -361,18 +368,50 @@ net = ["api.example.com:443"]
   `main`'s own delegations against, instead of the wildcard always satisfying
   it.
 
+`mmio` is the one domain the entry module does **not** hold by default, and the
+one `caps(*)` leaves out, so a freestanding project that builds a pointer from a
+device address writes the grant in `[caps]` and delegates it to each driver on
+the `impl` line. The compiler reads this section only for a freestanding
+project; a hosted manifest's `mmio` line is inert. The two device-value domains
+behave like every other domain instead: the entry module holds `irq` and
+`frames` as `["*"]` unless the section narrows them, and a kernel that wants the
+narrow story writes those lines too.
+
+```toml
+# mykernel/coral.toml
+name = "mykernel"
+entry = "src/main.kp"
+
+[caps]
+mmio = ["0x10000000+0x100"]
+irq = ["10"]
+frames = ["0x80100000+0x100000"]
+```
+
+```kelp
+// mykernel/src/main.kp
+impl "uart" caps(mmio = ["0x10000000+0x100"])
+impl "drv" caps(irq = ["10"], frames = ["0x80100000+0x100000"])
+```
+
+The range covers `[base, base + len)`. A module that builds a pointer from a
+**computed** address cannot be covered by a range and needs the
+whole-address-space `mmio = ["*"]`, the line to grep for in a review. See
+[Capabilities](/language/capabilities#mmio-device-registers) for what the
+check does and does not decide.
+
 ### `[extern."<module id>"]`: user modules that bind a native symbol
 
 `extern fun` used to be compiler-only: user code got "only compiler-shipped
 stdlib modules may declare 'extern fun'", because a raw `extern fun` bypasses
 `caps(...)` by construction, so nothing would check what it actually reaches.
-MK9-S1-M1 (roadmap B-1) opened that door for a manifest-declared module
-instead of removing the check: `coral.toml` assigns a user `.kp` module one of
-the **six existing capability domains** (`fs`, `net`, `process`, `env`,
-`time`, `rand`, no new domain vocabulary) plus the native `library` and the
-exact `symbols` its `extern fun` declarations may bind to. Once assigned, the
-module is gated exactly like a stdlib one: an importer writes
-`impl "sys" caps(process = [pattern])` the same as it would for `std/process`.
+MK9-S1-M1 (roadmap B-1) opened that door for a manifest-declared module instead
+of removing the check: `coral.toml` assigns a user `.kp` module one of the
+**seven capability domains** (`fs`, `net`, `process`, `env`, `time`, `rand`,
+`ui`) plus the native surface its `extern fun` and `extern type` declarations may
+bind to. Once assigned, the module is gated exactly like a stdlib one: an
+importer writes `impl "sys" caps(process = [pattern])` the same as it would for
+`std/process`. The language side is [User FFI](/language/externs).
 
 ```toml
 # myproject/coral.toml
@@ -403,20 +442,82 @@ fun main() {
   under, `"sys"` for `src/sys.kp`), quoted, as `[extern."<module id>"]`; a
   bare `[extern.sys]` is refused, since the header has to carry an arbitrary
   module id rather than a bare TOML key.
-- **`domain`** must be one of the six existing names; an unknown one is the
-  same error an unknown domain gives on a `caps(...)` clause. **`library`** is
-  linked (`-l<library>`) on both backends' link lines, the same "an unused
-  library is free to link" reasoning `-lm`/`-lssl` already use. **`symbols`**
-  is the allowlist: an `extern fun` in that module typechecks only if its bare
-  name is in the list, and user FFI stays a 1:1 name mapping (no rename or
-  alias vocabulary in v1), so the symbol `codegen_c.rs` calls is the function's
-  own name.
+- **`domain`** must be one of the seven existing names; an unknown one is the
+  same error an unknown domain gives on a `caps(...)` clause. `ui` is the
+  display domain, and it accepts only the wildcard.
+- **`library`** is linked (`-l<library>`) on both backends' link lines, the same
+  "an unused library is free to link" reasoning `-lm`/`-lssl` already use.
+- **`symbols`** is the allowlist: an `extern fun` in that module typechecks only
+  if its bare name is in the list. An entry may rename it,
+  `"kelp_name=c_symbol"`, so the Kelp function and the C symbol can differ and
+  two libraries that share a symbol name are both bindable.
+- **`header`** names one C header, emitted as `#include <header>` after the
+  runtime preamble (deduplicated and sorted across sections). The generated C
+  does not invent a prototype: the header is what gives the symbol its real
+  signature.
+- **`include_dirs`** and **`library_dirs`** add `-I`/`-L`, resolved against the
+  directory holding `coral.toml`. **`pkg_config`** names a package whose
+  `pkg-config --cflags --libs` output reaches the compile and the link line of
+  both backends; a package `pkg-config` cannot resolve fails the build.
 - **A module gets at most one `[extern.*]` entry**, and it must appear before
   any other section that isn't `[caps]` (the same manifest-ordering rule
   `[caps]` follows).
-- **What's not here yet**: `extern "C"` block syntax, variadics,
-  function-pointer types for user externs, and any link-flag/library-path
-  vocabulary beyond one `library` name per section.
+- **What's not here yet**: `extern "C"` block syntax, function-pointer types for
+  user externs, and a `repr(C)` struct crossing by value. `extern type` handles
+  (with parents, `null()` and `cast()`), `...` variadics and
+  `move closure(...)` callbacks all ship; see [User FFI](/language/externs).
+
+### `[unsafe]`: modules that may leave the checked language
+
+A module may contain an `unsafe` block, an `unsafe fun`, a `static mut` access
+or an `asm` only if this section lists it. The list is the set of modules
+aloud to leave the checked language, and it is short and reviewable on purpose:
+a dependency cannot grant itself the power. The language side is
+[Unsafe code and raw pointers](/language/unsafe).
+
+```toml
+# myproject/coral.toml
+name = "myproject"
+entry = "src/main.kp"
+
+[unsafe]
+modules = ["main", "uart"]
+```
+
+A module is named by the path it is imported under, exactly as
+`[extern."<module id>"]` names one: `"uart"` for `src/uart.kp` and `"main"` for
+the entry module `src/main.kp`. A project with no `[unsafe]` section is
+unchanged: no module may contain `unsafe`, and no `Ptr` operation is reachable
+at all. A construct in an unlisted module is a compile error naming the module,
+and `kelpc check` enforces the same list `kelpc build` does.
+
+### `[target]`: a freestanding build
+
+A project opts into bare metal with this section. `mode` is `"hosted"` or
+`"freestanding"` and is required; a project with no `[target]` section, or with
+`mode = "hosted"`, builds for the host exactly as before. In freestanding mode
+`triple`, `entry` and `linker_script` are required, and `panic`, `alloc`,
+`dealloc`, `realloc` and `cpus` are optional, and the `mmio`, `irq` and `frames`
+grants a device driver needs live in `[caps]` rather than in `[target]`. `cpus`
+is the per-CPU copy count (`1` to `64`, default `1`) a `percpu static mut` is
+laid out with; see
+[Per-CPU storage](/language/percpu). The full account, including the allowed
+set and the allocator signatures, is [Freestanding mode](/language/freestanding).
+
+```toml
+# myproject/coral.toml
+name = "kernel0"
+
+[target]
+mode = "freestanding"
+triple = "riscv64-unknown-none-elf"
+entry = "kmain"
+linker_script = "kernel.ld"
+panic = "kp_panic"
+
+[unsafe]
+modules = ["uart"]
+```
 
 ## A worked session
 

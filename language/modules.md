@@ -61,10 +61,13 @@ pub fun scale(v: f64, k: f64).R: f64 = v * k
 pub extern fun clock_ticks().R: u64
 ```
 
-- `pub` is accepted only on a top-level `fun`, `extern fun`, `datac`, `enum` or
-  `const`. Written anywhere else it is a parse error that names those forms:
-  `'pub' applies to a top-level 'fun', 'extern fun', 'datac', 'enum' or 'const',
-  found Val`.
+- `pub` is accepted only on a top-level `fun`, `extern fun`, `extern type`,
+  `datac`, `enum` or `const`. Written anywhere else it is a parse error that
+  names those forms:
+
+  ```text
+  'pub' applies to a top-level 'fun', 'extern fun', 'extern type', 'datac', 'enum' or 'const', found Val
+  ```
 - A `pd` never takes `pub`: a passdown is module-scoped by design, so
   `pub pd ...` is refused where it is written: `a 'pd' cannot be 'pub': a
   passdown is module-scoped by design, so another module cannot reach it; a

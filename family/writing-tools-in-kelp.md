@@ -29,9 +29,10 @@ See [Testing what you write](/getting-started/testing) for Coral's own fixture r
 
 ## A small server
 
-`std/http` is a client. A server is written on `std/net`: `net.listen(port)`, `net.accept`, then `net.recv`,
-`net.send_all` and `net.close` on each socket. The [playground backend](/family/webkelp-playground) is a worked
-example. Points that mattered:
+[`std/http`](/stdlib/http#the-server) now has a server, with `Limits`, keep-alive and worker threads. A server
+can also be written directly on `std/net`: `net.listen(port)`, `net.accept`, then `net.recv`,
+`net.send_all` and `net.close` on each socket, which is what the
+[playground backend](/family/webkelp-playground) does. Points that mattered:
 
 - **Bound everything the client controls.** Cap the header and body size, and use `sock.wait_readable(ms)`
   before each `recv` so a client that stops sending cannot hold the loop.
@@ -119,9 +120,10 @@ for a `val items`.
 has no `.len()` or `.as_str()`: use `str.len(t)` on it, or copy it with `String.from_str`.
 Check the return type in [`std/str`](/stdlib/str) before chaining.
 
-### Loops without `break`
+### Loops that end through the condition
 
-Put the exit in the condition:
+`break` and `continue` exist ([Iterators, `for` and `break`](/language/iterators)), but an
+exit written in the condition keeps a scanner's termination visible:
 
 ```kelp
 var found = false

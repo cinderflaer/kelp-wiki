@@ -7,9 +7,11 @@ tags: "language"
 Source section:
 [`syntax.md` §6](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
 
-Kelp has `if`/`else` (with `if let`), `for`, `while`, `when` and `return`. There
-is no `break`, no `continue`, no `loop`, no `goto` and no exceptions: a
-condition that must end a loop early goes in the `while` header.
+Kelp has `if`/`else` (with `if let`), `for`, `while`, `when`, `return`, and
+`break` and `continue` inside a loop. There is no `loop`, no labelled loop, no
+`goto` and no exceptions. `break` leaves the innermost loop and `continue` goes
+on to its next pass ([Iterators, `for` and `break`](/language/iterators)); a
+condition that ends a loop can still go in the `while` header.
 
 ## `if` / `else`
 
@@ -110,7 +112,10 @@ may be empty (`while !file.is_open() { }`), which is how a spin-wait is written.
 
 ## `for`
 
-`for` walks a `List<T>` or a `[T; N]` front to back:
+`for` walks a `List<T>` or a `[T; N]` front to back, and any type that implements
+`std/iter`'s `Iterator` with a `next()` loop
+([Iterators, `for` and `break`](/language/iterators)). The rest of this section
+is the list and array walk:
 
 ```kelp
 for x in xs {
@@ -118,18 +123,35 @@ for x in xs {
 }
 ```
 
-- The iterable must be a `List<T>` or a `[T; N]`
-  ([Collections](/language/collections)). `for` is **desugared by the parser**
-  into the index-and-`while` walk, so anything with `.len()` and `.get(i)` walks
-  the same way, no later pass knows it exists, and there is no iterator protocol
-  to implement.
+- The iterable must be a `List<T>`, a `[T; N]`
+  ([Collections](/language/collections)) or a type that implements `Iterator`;
+  anything else is refused with a message that names the trait. A `List` or array
+  is walked as an index-and-`while` loop, where the index advances before the
+  body runs so that `continue` reaches the next element. A type with an
+  `Iterator` impl is walked by calling `next()` until `None`.
 - The element binding gives exactly what `List.get` gives: a copy of a `Copy`
   element, a shared borrow of an owned one. `for n in numbers` reads `n: i32`;
   `for name in names` reads `name: &String`, so a `str` call wants
   `name.as_str()`. An array's `get` gives the same thing, and its `len` is the
   type's own length.
-- The iterable is *borrowed* when it is a place, so the body cannot `push` to
-  what it walks.
+- The body may **read** the place it walks (`xs.get(i)`, `xs.len()`, `&xs`), and
+  may walk or change a **different** list, but it may not mutate the one it
+  walks. A `mut` receiver method on it (`push`, `pop`, `remove`, `insert`,
+  `set`, `clear`, `sort`, `reverse`), an assignment to it, a move of it, taking
+  `&mut xs`, and passing it to a `mut` parameter are all one compile error,
+  reported on the `for` line:
+
+  ```
+  error: cannot mutate 'xs' while iterating over it
+  ```
+
+  A `fun` literal written in the body cannot capture it either: a capture moves
+  or copies, and the move is refused the same way. The rule names the place, so
+  `for x in self.items { self.other.push(x) }` is legal while
+  `for x in self.items { self.items.push(x) }` reports
+  `cannot mutate 'self.items' while iterating over it`.
+- When the loop has to change what it walks, walk it by index with `while`
+  instead: that is the supported pattern, and no such rule applies to it.
 - Anything else (a call, a literal, or a field of one) is bound to a temporary
   the loop owns and frees, and is evaluated **once**. A field chain over a
   temporary stages its *root*: `for x in mk().items` binds `mk()` once and walks
@@ -215,6 +237,7 @@ arm of an `if`/`when` used as a value.
 
 ## See also
 
+- [Iterators, `for` and `break`](/language/iterators)
 - [Functions](/language/functions)
 - [Return types and `return`](/language/returns)
 - [Errors and panics](/language/errors)

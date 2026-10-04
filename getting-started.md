@@ -28,7 +28,8 @@ than a reference: eight pages, each one a step you can run.
 
 Kelp is a compiled, statically typed language with capability-based security.
 Values are owned (`String`, `Bytes`, `List`, `Map`, `Box`, `datac`, `enum`) or
-borrowed (`str`, `View`, `&T`); there is no garbage collector and no `unsafe`.
+borrowed (`str`, `View`, `&T`); there is no garbage collector, and `unsafe` is
+opt-in per module through `coral.toml`.
 Functions are declared with `fun`, return types with `.R: T`, errors are
 `Option`/`Result` values, and pattern matching is `when`. A module states what it
 may touch on its `impl` lines, and that is the only thing that grants authority.

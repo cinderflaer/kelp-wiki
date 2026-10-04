@@ -135,6 +135,42 @@ fun empty_of<T>().R: List<T> = List.empty()
   element: `get` borrows it, and only a `Copy` value can come back out of a borrow
   ([Ownership and borrowing](/language/ownership)).
 
+## Bounding a type parameter
+
+A type parameter may carry one or more **bounds** after a `:`, separated by
+`+`. The bound names a `trait` ([Traits and static dispatch](/language/traits)):
+
+```kelp
+fun area_of<T: Shape>(s: &T).R: f64 = s.area()
+fun describe<T: Shape + Named>(s: &T).R: f64 = s.area() + s.name_length()
+```
+
+- At every call, the type argument must implement every bound, and a call that
+  does not is an error naming the callee, the type and the trait. The check runs
+  where the instantiation is created, so a satisfied call compiles to the same
+  monomorphized function it would have without the bound. A supertrait is
+  satisfied transitively: a type implementing `B`, where `B: A`, satisfies a
+  `T: A` bound and may call `A`'s methods through a `<T: B>`.
+- Inside the body, a method call on a `T` resolves against the concrete type
+  each instantiation binds, so the code the bound admits is the type's own
+  direct call. Dispatch stays static: a bound never adds a vtable.
+- Bounds are checked transitively. A bounded generic may call another bounded
+  generic with its own parameter, and the inner call is checked when the outer
+  function is instantiated.
+- The bound goes on the parameter; a `where` clause is refused by name.
+- A bound may name a trait with arguments (`<X: From<i32>>`), and a bounded
+  parameter reaches a trait's associated type as `I::Item`
+  ([Generic traits](/language/generic-traits),
+  [Associated types](/language/associated-types)).
+- A parameter may be a compile-time value, `<const N: usize>`
+  ([Const generics](/language/const-generics)), and `fun f(x: impl Trait)` is
+  sugar for a bounded parameter.
+- A trait may also be written behind a borrow as a trait object, `&dyn Name`, or
+  owned as `Box<dyn Name>`, which is dynamic dispatch through a vtable and is a
+  different mechanism from a bound; see
+  [Traits and static dispatch](/language/traits) and
+  [Owned trait objects](/language/box-dyn).
+
 ## What is not generic
 
 - No method type parameters beyond the receiver's own.
@@ -148,4 +184,7 @@ fun empty_of<T>().R: List<T> = List.empty()
 - [`datac` and `enum`](/language/data-types)
 - [Functions](/language/functions)
 - [Methods and receivers](/language/methods)
+- [Traits and static dispatch](/language/traits)
+- [Const generics and `impl Trait` arguments](/language/const-generics)
+- [Associated types](/language/associated-types)
 - [Limits in v1](/language/limits)

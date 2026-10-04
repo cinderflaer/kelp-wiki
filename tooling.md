@@ -67,6 +67,20 @@ builds itself. It is the only one of the three that runs while you type.
 - [`kelpc` CLI](/tooling/kelpc-cli): every subcommand and flag, where artifacts land, the
   one backend and its oracle, `fmt`'s rules and its refusals, environment
   variables, and what a project changes about module resolution.
+- [`kelpc doc`](/tooling/kelpc-doc): the documentation generator: `///` and `//!`
+  comments, its options and `--check`, what a page shows, its limits, and the lint
+  warning for a comment that documents nothing.
+- [Sanitizer builds](/tooling/sanitizers): `--sanitize=address|undefined|thread`
+  and `[build] sanitize`, the C-backend-only rule, what each catches, and a real
+  ASan report.
+- [Front-end fuzzing and parser limits](/tooling/fuzzing): the fuzzer, and the
+  200-level nesting and 800-link chain limits with their exact errors.
+- [Benchmarks](/tooling/benchmarks): the thirteen-program Kelp, C and Rust suite, its
+  rules, the shared-machine noise statement, the full tables, the cause of every
+  ratio above 1.5, the `str.split` bug it found and the findings still open.
+- [Release tooling](/tooling/release-tooling): `build/release.sh`, the reproducibility
+  check, the verifying installer `build/install.sh` and `kelpc version --verbose`,
+  with real output and what a reproducible build does not promise.
 - [Coral](/tooling/coral): the manifest key by key, the command surface, the dependency
   model, what a sync installs and fetches, the toolchain store, environment
   variables, and a transcript of a real session.

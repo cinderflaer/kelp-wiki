@@ -34,6 +34,13 @@ by the first few lines of a file instead of by auditing it.
     Read [Getting started](/getting-started): the language in one page,
     then a program, a tool with an exit code, and tests around it.
 
+-   **Tutorial**
+
+    ---
+
+    The [Tutorial](/tutorial) is a hands-on book for readers who program but
+    have not seen Kelp: every program was built and run on both backends.
+
 -   **The language**
 
     ---
@@ -131,17 +138,21 @@ to be updated when it moves.
 | | |
 | --- | --- |
 | Types | `i32` `i64` `u8` `u16` `u32` `u64` `usize` `isize` `f32` `f64` `bool` `char`, plus borrowed text as `str` and `View` |
-| Data | `datac` records with `val`/`var` fields, tuple types read by a destructuring binding, `enum` tagged unions, exhaustive `when`, `if let`, type parameters, `const`, `pd` passdowns |
+| Data | `datac` records with `val`/`var` fields, tuple types read by a destructuring binding, `enum` tagged unions, exhaustive `when`, `if let`, type parameters (including `const N: usize`), `const`, `pd` passdowns |
 | Ownership | owned builtins `String`, `Bytes`, `List<T>`, `Map<K, V>`, `Box<T>` and the fixed-size array `[T; N]`; moves, shared and `mut` borrows, drops at end of scope, no garbage collector |
-| Errors | `Option`, `Result`, the `?` operator, `panic`/`assert` |
+| Memory | `static`/`static mut`, `defer`, `Atomic<T>`, and `unsafe` with `Ptr<T>`, volatile access and `repr(...)` layout control, gated per module by `coral.toml`'s `[unsafe]` list |
+| Errors | `Option`, `Result`, the `?` operator (converting a failure through `From`), `panic`/`assert` |
 | Functions | `fun`, named arguments, function values and closures, receiver methods, stdlib-only argument-type overloading |
+| Traits | `trait`/`impl`, default methods, supertraits, associated types, generic traits, `&dyn` and `Box<dyn>`, operator and `Display` traits, the `Iterator` trait behind `for` |
 | Modules | `impl "std/fs"`, local-file imports, aliases, `pd` passdowns |
 | Capabilities | `fs`, `net`, `process`, `env`, `time`, `rand` |
-| Stdlib | `mem` `str` `path` `math` `fmt` `io` `fs` `process` `net` `http` `ws` `encoding` `time` `rand` `env` `list` `option` `result` `atomic` `thread` |
+| Stdlib | `mem` `str` `path` `math` `fmt` `io` `fs` `process` `net` `http` `ws` `encoding` `time` `rand` `env` `list` `option` `result` `atomic` `thread` `sync` `iter` `ops` `convert` |
 | Toolchain | `kelpc` (compiler), [Coral](/tooling) (build tool and package manager), [Lighthouse](/tooling) (editor support) |
 
-There is deliberately **no** `unsafe`, no exceptions, no undefined-behaviour
-escape hatch, no garbage collector, and no macros.
+There are deliberately **no** exceptions, no garbage collector, and no macros.
+`unsafe` exists, but it is not ambient: a module may contain it only if
+`coral.toml` lists that module under `[unsafe] modules` (see
+[Unsafe code and raw pointers](/language/unsafe)).
 
 ## A program
 

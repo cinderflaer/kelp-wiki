@@ -64,6 +64,7 @@ parses the rest.
 
 ```kelp
 impl "std/process"
+impl "std/result"
 
 fun main() {
     val argv = process.args()
@@ -93,7 +94,10 @@ fun main() {
 - `run` collects both streams into `Bytes`; read them with `.as_str()`. There is
   no streaming form other than `spawn` plus the `Child` pipes.
 - A `Child` is not reaped automatically: call `wait()`, or `is_running()` to poll.
-- `kill` takes a POSIX signal number.
+- `kill` takes a POSIX signal number. `kill` and `wait` accept **only a child this
+  program started with `spawn`**; any other pid, including one in a hand-built
+  `Child`, panics with `process.kill: not a child this program started`. A
+  reaped child leaves the table.
 - `try_run` decides everything it can (missing program, not executable, missing
   working directory) **before** the fork, which is why `ProcErr` has that
   particular shape.
