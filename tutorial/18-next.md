@@ -134,22 +134,7 @@ The C oracle builds and runs it. A `Mutex` and an `RwLock` together fail the sam
 13 keeps the `RwLock` as a local to avoid it. This looks like a compiler bug in the module that
 initialises the globals, not a language rule.
 
-**3. A wiki example that does not compile.** The `std/tls` page's HTTPS example calls
-`tls.client_options().with_ca_file(...)`, and the compiler says:
-
-```text
-error: datac 'std.tls.TlsClientOptions' has no method 'with_ca_file'
-```
-
-The method that exists is `with_ca_pem(bytes)`, with the PEM read through `tlsfile.read_pem`,
-which is what chapter 14 uses.
-
-**4. A wiki error message that is not what the compiler prints.** The
-[Methods](/language/methods) page says calling a `mut` method on a `val` binding fails with
-`cannot borrow 'c' as exclusive`; the compiler used here printed `cannot assign to 'c': not
-declared 'var'` (chapter 5).
-
-**5. Two small things worth knowing.** `kelpc doc` gave a field with no doc comment of its own
+**3. Two small things worth knowing.** `kelpc doc` gave a field with no doc comment of its own
 the text of its record's comment (chapter 15). And an AddressSanitizer binary cannot run under
 `ulimit -v`, so the bound there is `ulimit -t` and `timeout`.
 

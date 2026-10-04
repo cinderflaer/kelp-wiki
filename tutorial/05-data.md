@@ -182,8 +182,7 @@ error: cannot assign to 'c': not declared 'var'
   --> c5bad4.kp:9:5
 ```
 
-(The language page quotes this error as `cannot borrow 'c' as exclusive`; the
-compiler used for this tutorial says what is above.) A method on an `enum` is
+A method on an `enum` is
 called on a value, not on a variant path: bind `val s = Shape.Empty` first.
 
 ## Exercises

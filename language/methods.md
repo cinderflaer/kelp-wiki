@@ -37,7 +37,7 @@ print(c.total())
   called on a `val` binding.
 - `fun mut Type.name()` takes an **exclusive** borrow, so the receiver must be
   reachable mutably: a `var` binding, a `mut` parameter, or a field of one.
-  Calling it on a `val` binding fails with `cannot borrow 'c' as exclusive`.
+  Calling it on a `val` binding fails with `cannot assign to 'c': not declared 'var'`.
 - Passing a receiver to a method does not move it: the receiver is always
   borrowed, which is why there is no `fun move Type.name()`.
 - An **exclusive receiver's borrow starts after its own arguments are checked**,
