@@ -221,7 +221,7 @@ whole-address-space grant has to be written where a reviewer will see it,
 `[caps] mmio = ["*"]` or `caps(mmio = ["*"])`. A range can only be delegated by
 a module that holds it, the same no-escalation rule every other domain has.
 
-A constant shift of 64 or more bits is not folded, so `0x10000000 + (0x100000 <<
+A constant shift of 64 or more bits is not folded (and a `u32` operand folds at 32 bits, as the program computes it), so `0x10000000 + (0x100000 <<
 70)` is a computed address (refused under a range grant) rather than being folded
 to the granted `0x10000000`.
 
@@ -401,7 +401,7 @@ failure as a panic from the gated call.
 ## See also
 
 - [Capability threat model](/reference/capability-threat-model): the attacker, the
-  seven holes fixed and the gaps that are still open
+  nine holes fixed and the gaps that are still open
 - [Capability patterns](/reference/capability-patterns): the pattern grammar in full
 - [`std/fs`](/stdlib/fs), [`std/net`](/stdlib/net), [`std/process`](/stdlib/process),
   [`std/env`](/stdlib/env), [`std/time`](/stdlib/time), [`std/rand`](/stdlib/rand),

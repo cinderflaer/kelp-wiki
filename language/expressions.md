@@ -65,10 +65,67 @@ val c = 7.0 / 2.0    // 3.5
 produce that type. `bool` is not a bitwise domain: `a & b` on two booleans reads
 as a non-short-circuiting `and`, and `&&` is right there.
 
-A shift count is the same type as the value, and a shift by ≥ the width is
-undefined, exactly as in C. `>>` on a signed type is arithmetic
-(sign-propagating), and `~x` is `0 - x - 1`, so on a `u32` it flips all 32 bits.
-Mask it (`~x & 255`) when you wanted a byte.
+A shift count is the same type as the value. A shift by an amount outside
+`0..width` (a negative one included, on a signed type) is checked at run time
+like an out-of-bounds index and panics with `shift amount out of range`, on both
+backends, hosted and freestanding. A shift by a *constant* amount that is already
+out of range is a compile error naming the type and the amount. `>>` on a signed
+type is arithmetic (sign-propagating), and `~x` is `0 - x - 1`, so on a `u32` it
+flips all 32 bits. Mask it (`~x & 255`) when you wanted a byte.
+
+`x.wrapping_shl(n)` and `x.wrapping_shr(n)` are the escapes that mask the amount
+to `n & (width - 1)` instead of panicking. A shift whose amount is a literal in
+range carries no check.
+
+```kelp
+fun shift(x: u32, n: u32).R: u32 = x << n
+
+fun main() {
+    print(shift(1, 31))
+    print(shift(1, 32))
+    print("unreachable")
+}
+```
+
+Both the default backend and `KELPC_ORACLE=c` print the same (run with the
+current main on 2026-10-04; the panic goes to standard error and the `print` is
+buffered, so the panic line shows first):
+
+```text
+panic: shift amount out of range
+2147483648
+```
+
+The exit status is 1 and `unreachable` is never printed; the panic names no
+amount.
+
+A constant amount never reaches run time:
+
+```kelp
+fun main() {
+    val x: u32 = 1
+    print(x << 33)
+}
+```
+
+```text
+error: a shift by 33 is not defined for a 'u32', whose width is 32 bits: the amount has to be in 0..32 (use wrapping_shl/wrapping_shr to mask it)
+  --> shift_const_too_wide.kp:5:11
+```
+
+A named `const` amount is folded and refused the same way (`x >> AMOUNT` with
+`const AMOUNT: u8 = 8` on a `u8`: "a shift by 8 is not defined for a 'u8', whose
+width is 8 bits"). The masking forms, with `one: u32 = 1` and `big: u32 = 0x80000000`:
+
+```kelp
+print(one.wrapping_shl(33))   // 2, the amount is 33 & 31
+print(one.wrapping_shl(32))   // 1
+print(big.wrapping_shr(35))   // 268435456, the amount is 35 & 31
+```
+
+The legal extremes behave as written: `1u8 << 7` is `128`, `255u8 << 4` is `240`
+(the high bits are lost, as in every wrapping step), `1i32 << 31` is
+`-2147483648` and `-8i32 >> 31` is `-1`.
 
 ```kelp
 val masked = flags & 3

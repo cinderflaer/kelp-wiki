@@ -1,6 +1,6 @@
 ---
 title: "Capability threat model"
-description: "What the capability system protects, who it assumes the attacker is, what is out of scope, the seven holes the 71 attack tests found and closed (as behaviour changes), and the gaps that are still open."
+description: "What the capability system protects, who it assumes the attacker is, what is out of scope, the nine holes the attack tests found and closed (as behaviour changes), and the three gaps that are still open."
 isPublished: true
 tags: "reference, capability"
 ---
@@ -60,17 +60,17 @@ Nine domains of attack, each with several shapes (`..`, `//`, a sibling
 that shares a prefix, case, embedded NUL, paths past `PATH_MAX`, look-alike
 Unicode, links of every kind, glob characters, aliases and numeric spellings of
 a host, forged handles, `unsafe` hidden in twelve expression positions, and so
-on). Apart from the seven holes below, every attack in the suite was refused, or
+on). Apart from the nine holes below, every attack in the suite was refused, or
 ran without getting the attacker anything, except the open gaps further down. The domains covered are `fs`, `process`, `env`, `net`, handles, `unsafe`
 and `asm`, `mmio`, indirect use (closures, generics, trait defaults, re-exports)
 and delegation. `irq` and `frames` are covered by their own suite
 (`tests/irq_frames.rs`).
 
-## The seven fixed holes
+## The nine fixed holes
 
-Each of these let a module do something its grant did not allow. Each is a
-behaviour change a program can see; the programs below were built and run on
-both backends on 2026-10-03 with `kelpc 26.09.5`, and the output is quoted as
+Each of these let a module do something its grant did not allow, or (item 8) behaved differently on the two backends. Each is a
+behaviour change a program can see; items 1 to 7 were built and run on
+both backends on 2026-10-03 with `kelpc 26.09.5`, items 8 and 9 on 2026-10-04 with the compiler built from main, and the output is quoted as
 printed (paths shortened to the scratch directory they ran in, and the output
 was the same from the LLVM backend and from `KELPC_ORACLE=c` unless stated).
 
@@ -242,9 +242,53 @@ rc=1
 
 Freestanding mode is LLVM-only, so this one has no C-oracle run.
 
+### 8. Shifts of any width are checked, on both backends
+
+A shift by the type's width or more was poison on LLVM and `0` or garbage in C
+(the plan recorded `1u32 << 33` printing garbage on one backend and `0` on the
+other), and the `irq` and `frames` constant folder masked to 64 bits rather than
+the operand's width. It is now one rule on both backends, hosted and
+freestanding: an amount outside `0..width` (negative included) panics with
+`shift amount out of range`, a constant amount out of range is a compile error
+naming the type and the amount, and `wrapping_shl`/`wrapping_shr` mask the
+amount. A `u32` line now folds at 32 bits, as the program computes it. No attack
+on a grant was known; this closes a behaviour the plan listed as a gap. The full
+rule and examples are in [Expressions](/language/expressions#bitwise).
+
+```text
+$ ./prog      # shift(1, 32) on a u32 with the amount hidden behind a parameter
+panic: shift amount out of range
+$ kelpc build shift_const_too_wide.kp -o prog     # x << 33 on a u32
+error: a shift by 33 is not defined for a 'u32', whose width is 32 bits: the amount has to be in 0..32 (use wrapping_shl/wrapping_shr to mask it)
+  --> .../shift_const_too_wide.kp:5:11
+```
+
+Both backends print the same (rerun on 2026-10-04: `u32`, `u64`, `u8 >>` and a
+negative `i32` amount all panic with that line and exit with status 1, under the
+LLVM backend and `KELPC_ORACLE=c`).
+
+### 9. TLS `ca_file` and `ca_dir` are removed
+
+The handshake opened the CA paths in `TlsOptions` with no `fs` check, so a module
+with `net` and no `fs` could make the client read a PEM path and learn whether
+verification succeeded. The options now take PEM bytes (`TlsOptions(ca_pem,
+timeout_ms)`, `TlsClientOptions.with_ca_pem`), the runtime never opens a path,
+and a file is read with `tlsfile.ca_pem(path)`, which goes through `fs`. `ca_dir`
+has no bytes form and is gone.
+
+```text
+error: datac 'std.tls.TlsClientOptions' has no method 'with_ca_file'
+error: 'std.fs.try_read' needs the 'fs' capability, which module 'std/tlsfile' was not granted; the module that imports this one must delegate it (`impl "<this module>" caps(fs = ["<pattern>"])`)
+```
+
+The first is the old spelling, the second a module that imports `std/tlsfile`
+with no `fs` grant; a path outside the grant is the ordinary `fs` denial and is
+never opened (`n09`, `n09b`, `n09c`). The migration is on
+[`std/tls`](/stdlib/tls#reading-the-files-stdtlsfile).
+
 ## Known gaps
 
-These are open and stated as such. None was fixed by the work above.
+These are open and stated as such.
 
 - **Descriptors shared between two *granted* modules.** Module B with
   `fs = data/**` can run `io.File(fd = 3).read(..)` and read a descriptor module A
@@ -256,15 +300,6 @@ These are open and stated as such. None was fixed by the work above.
 - **Pointer offsets after birth.** An `mmio` range is checked at the address a
   pointer is *born* at; `p.byte_offset(n)` afterwards reaches anywhere (`m05`,
   ignored). The fix is provenance, which is on the roadmap.
-- **Shifts on narrow types are undefined and differ between backends.** A shift by
-  the type's width or more on `u32` and smaller is not defined, and the backends
-  disagree (the plan records `1u32 << 33` printing garbage on LLVM and `0` in C).
-  Constant folding for `irq` and `frames` also masks to 64 bits rather than the
-  operand's width. No attack on a grant is known, but the behaviour is not fixed.
-- **TLS `ca_file` and `ca_dir`** are read by the handshake without an `fs` check,
-  so a module with `net` can make the client read a PEM path and learn only
-  whether verification succeeded. The fix is to route them through `fs` or to
-  accept PEM bytes only; it is not done (task `tl7` is still open).
 - **Children inherit open descriptors.** There is no close-on-exec sweep, so a
   spawned program holds every descriptor the parent had open.
 - **By design, not gaps:** a module with a broad grant serves any caller, and
@@ -278,10 +313,10 @@ These are open and stated as such. None was fixed by the work above.
 | `fs` | resolution gate, path normalization and link resolution, glob match | dangling symlink write | none known |
 | `process` | gate, program path check, table of spawned children | kill of a foreign pid | none (a shell grant is documented breadth) |
 | `env` | gate, name check | none needed | none |
-| `net` | gate, host, port and host-port checks, bind verdict | loopback listener, numeric pattern | TLS `ca_file`/`ca_dir` |
+| `net` | gate, host, port and host-port checks, bind verdict | loopback listener, numeric pattern, TLS CA paths | none known |
 | handles | constructor rule | forging a handle with no grant | forging between two granted modules |
 | `unsafe` / `asm` | `[unsafe] modules` audit walk | trait default methods | none known |
-| `mmio`, `irq`, `frames` | `Ptr.from_addr` fold and range check, sealed constructors | oversized shift | offset after birth, narrow-type shifts |
+| `mmio`, `irq`, `frames` | `Ptr.from_addr` fold and range check, sealed constructors | oversized shift, narrow-type shifts | offset after birth |
 | indirect use, delegation | the lexical module of the call site, no-escalation rule | none needed | none |
 
 ## See also

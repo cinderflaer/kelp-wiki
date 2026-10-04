@@ -51,8 +51,14 @@ pub enum TlsError {
     Io(val reason: String)
 }
 
-pub datac TlsOptions(val ca_file: String, val ca_dir: String, val timeout_ms: u64)
+pub datac TlsOptions(val ca_pem: Bytes, val timeout_ms: u64)
 ```
+
+`TlsOptions.ca_pem` is the PEM text of extra trusted CA certificates (empty means
+the system store only). It is bytes, never a path: the TLS runtime does not open
+files, so a module that holds only `net` cannot make the handshake read one. To
+read a CA file, use `tlsfile.ca_pem(path)` ([below](#reading-the-files-stdtlsfile)),
+which goes through the `fs` capability.
 
 `TlsStream` pairs a plain `fd` with the OpenSSL handle bound to it, not a
 `net.Socket`, because a `net.Socket` and its `TlsStream` would then be two owners
@@ -85,7 +91,7 @@ wrapper that panics with the error's own text.
 | Fallible | Panicking | Returns | Notes |
 | --- | --- | --- | --- |
 | `try_handshake(s, host)` | `handshake(s, host)` | `Result<TlsStream, TlsError>` / `TlsStream` | the TLS handshake over an already-connected socket |
-| `try_handshake_with(s, host, opts)` | `handshake_with(s, host, opts)` | as above, with `TlsOptions` | private CA, timeout |
+| `try_handshake_with(s, host, opts)` | `handshake_with(s, host, opts)` | as above, with `TlsOptions` | private CA bytes, timeout |
 | `try_handshake_timeout(s, host, ms)` | `handshake_timeout(s, host, ms)` | as above, with a deadline | shorthand for `TlsOptions` with only `timeout_ms` |
 | `try_write(t, data)` | `write(t, data)` | `Result<usize, TlsError>` / `usize` | one write, may be partial |
 | `try_write_all(t, data)` | `write_all(t, data)` | `Result<usize, TlsError>` / `usize` | loops until everything is written |
@@ -191,6 +197,7 @@ TlsStream.peer_cert_subject().R: Option<String>   // RFC 2253 subject of the pee
 
 // std/tlsfile
 tlsfile.read_pem(path: &str, what: &str).R: Result<Bytes, TlsError>
+tlsfile.ca_pem(path: &str).R: Result<Bytes, TlsError>   // read_pem with the role "CA certificate"
 ```
 
 - **A configuration is built once from PEM bytes and never changes.** The
@@ -202,9 +209,9 @@ tlsfile.read_pem(path: &str, what: &str).R: Result<Bytes, TlsError>
   it keep working until they end.
 - **The certificate chain goes leaf first**, as PEM text. The key is a plain
   (unencrypted) PEM private key.
-- **`TlsOptions` is unchanged.** ALPN and a client certificate live in the new
+- **`TlsOptions` stays two fields.** ALPN and a client certificate live in
   `TlsClientOptions` (`tls.client_options()`, then `.alpn(...)`,
-  `.client_cert_pem(cert, key)`, `.with_ca_file(...)`, `.with_timeout_ms(...)`),
+  `.client_cert_pem(cert, key)`, `.with_ca_pem(bytes)`, `.with_timeout_ms(...)`),
   used with `tls.try_handshake_opts(s, host, &opts)`.
 - **`TlsError` has no new variant.** A file that cannot be read is `Io`; a
   malformed PEM, a key that does not match the certificate, a CA file with no
@@ -235,6 +242,38 @@ val cert = tlsfile.read_pem(cert_path, "certificate chain")?
 val key = tlsfile.read_pem(key_path, "private key")?
 val cfg = tls.server_config_pem(cert, key)?
 ```
+
+The same module reads a private CA for a client, which is how a client trusts a
+server whose certificate was not issued by a public CA:
+
+```kelp
+val ca = tlsfile.ca_pem("/etc/myapp/certs/ca.pem")?
+val opts = tls.client_options().with_ca_pem(ca).with_timeout_ms(10000)
+```
+
+**`ca_file` and `ca_dir` are gone.** Earlier releases took a CA *path* in
+`TlsOptions(ca_file, ca_dir, timeout_ms)` and `TlsClientOptions.with_ca_file`, and
+the handshake opened the path itself, with no `fs` check: a module holding only
+`net` could make the client read any PEM path and learn from the result whether
+verification succeeded (item 9 of the
+[capability threat model](/reference/capability-threat-model#the-nine-fixed-holes)). Now a module
+that wants a CA from a file needs `std/tlsfile`, which needs an `fs` grant; a
+module with no `fs` grant is refused at compile time ("needs the 'fs'
+capability"), and a path outside the grant is the ordinary `fs` denial and is
+never opened. A directory of CAs (`ca_dir`) has no bytes form; read the
+certificates you want and concatenate the PEM text. The old spellings are compile errors on both backends (checked on 2026-10-04):
+
+```text
+error: datac 'std.tls.TlsClientOptions' has no method 'with_ca_file'
+```
+
+and importing `std/tlsfile` without delegating `fs` is refused with
+`'std.fs.try_read' needs the 'fs' capability, which module 'std/tlsfile' was not
+granted; the module that imports this one must delegate it (`impl "<this module>"
+caps(fs = ["<pattern>"])`)`. To migrate, replace
+`.with_ca_file(path)` with `.with_ca_pem(tlsfile.ca_pem(path)?)` and
+`TlsOptions(ca_file = ..., ca_dir = ..., timeout_ms = ...)` with
+`TlsOptions(ca_pem = ..., timeout_ms = ...)`.
 
 ### Making a test certificate
 
@@ -405,7 +444,11 @@ fun serve_one(fd: i32).R: String {
 }
 
 fun client(port: u16, with_cert: bool).R: String {
-    var opts = tls.client_options().with_ca_file("/etc/myapp/certs/ca.pem").with_timeout_ms(10000)
+    var opts = tls.client_options().with_timeout_ms(10000)
+    when tlsfile.ca_pem("/etc/myapp/certs/ca.pem") {
+        Ok(pem) -> opts = opts.with_ca_pem(pem)
+        Err(_) -> {}
+    }
     var protos: List<String> = List.empty()
     protos.push(String.from_str("http/1.1"))
     protos.push(String.from_str("h2"))
@@ -536,8 +579,8 @@ The same holds on the server: it only ever *adds* `SSL_VERIFY_PEER` together wit
 `SSL_VERIFY_FAIL_IF_NO_PEER_CERT` when a client CA is given, and a peer that ends
 without `close_notify` is `PeerClosedUncleanly` on a server stream too. There is
 no `insecure` flag on either side. What there is, is a way to *add* a private CA:
-`TlsOptions(ca_file = ..., ca_dir = ..., timeout_ms = ...)` calls
-`SSL_CTX_load_verify_locations` with the named file or directory. It can never
+`TlsOptions(ca_pem = ..., timeout_ms = ...)` adds the certificates in the PEM
+bytes to the verification store (the runtime never opens a path). It can never
 remove the requirement to verify and it does not lower the TLS 1.2 minimum.
 
 ## `wss`

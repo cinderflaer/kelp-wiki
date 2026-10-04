@@ -10,7 +10,7 @@ Lookup pages: the things you come back to rather than read through.
 | --- | --- |
 | [Standard library index](/reference/stdlib-index) | every public name in `std/*`, one line each |
 | [Capability patterns](/reference/capability-patterns) | the pattern grammar for `fs`, `net`, `process`, `env`, `time`, `rand` |
-| [Capability threat model](/reference/capability-threat-model) | what the grants protect, the attacker assumed, the seven holes closed, the gaps still open |
+| [Capability threat model](/reference/capability-threat-model) | what the grants protect, the attacker assumed, the nine holes closed, the gaps still open |
 
 ## The language chapter's own lookup pages
 

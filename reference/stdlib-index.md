@@ -545,7 +545,7 @@ The server surface (a plain HTTP/1.1 server; see the
 
 ## `std/tls` (needs `net`)
 
-Client and server TLS (MK5-S4b-M1; the server side, ALPN and client certificates are on [`std/tls`](/stdlib/tls#serving-tls), with `ServerOptions`, `ServerConfig`, `TlsClientOptions`, `server_config_pem`, `server_config_pem_with`, `accept`, `try_handshake_opts` and `TlsStream.alpn`/`peer_cert_subject`; `std/tlsfile` has `read_pem`). Client side for `https`. Never dials or closes a socket
+Client and server TLS (MK5-S4b-M1; the server side, ALPN and client certificates are on [`std/tls`](/stdlib/tls#serving-tls), with `ServerOptions`, `ServerConfig`, `TlsClientOptions`, `server_config_pem`, `server_config_pem_with`, `accept`, `try_handshake_opts` and `TlsStream.alpn`/`peer_cert_subject`; `std/tlsfile` has `read_pem` and `ca_pem`, both read through `fs`). Client side for `https`. Never dials or closes a socket
 itself: a capability grant is resolved one hop from the importing program's
 own `impl` line, so `handshake` takes an already-connected `net.Socket`
 instead of calling `net.connect`. Full account on [`std/tls`](/stdlib/tls).
@@ -553,7 +553,7 @@ instead of calling `net.connect`. Full account on [`std/tls`](/stdlib/tls).
 Types:
 
 - `datac TlsStream(val fd: i32, val handle: usize)`
-- `pub datac TlsOptions(val ca_file: String, val ca_dir: String, val timeout_ms: u64)`
+- `pub datac TlsOptions(val ca_pem: Bytes, val timeout_ms: u64)`
 - `pub enum TlsError { Untrusted, Expired, HostMismatch, ProtocolTooOld, HandshakeFailed(val reason: String), PeerClosedUncleanly, Timeout, Io(val reason: String) }`
 
 Functions:

@@ -460,8 +460,9 @@ is closed and the loop goes on. `serve_tls_n` returns the number of requests
 answered. Like `net.listen`, `serve_tls` binds every interface.
 
 On the client side, `http.try_get_tls(url, &opts)`, `http.get_tls` and
-`Client.try_send_tls(req, &opts)` take a `tls.TlsClientOptions` (private CA,
-client certificate, ALPN).
+`Client.try_send_tls(req, &opts)` take a `tls.TlsClientOptions` (private CA as
+PEM bytes, client certificate, ALPN). The CA bytes come from
+`tlsfile.ca_pem(path)`, which needs an `fs` grant; there is no `ca_file` option.
 
 This program serves one HTTPS request on a second thread and fetches it with a
 private CA (the certificate files are made as in
@@ -515,13 +516,18 @@ fun main() {
     val digits = fmt.uint(port.to_u64())
     url.push_str(digits.as_str())
     url.push_str("/")
-    val opts = tls.client_options().with_ca_file("/etc/myapp/certs/ca.pem").with_timeout_ms(10000)
-    when http.try_get_tls(url.as_str(), &opts) {
-        Ok(resp) -> {
-            print(resp.status)
-            print(String.from_bytes(resp.body.clone()))
+    when tlsfile.ca_pem("/etc/myapp/certs/ca.pem") {
+        Ok(ca) -> {
+            val opts = tls.client_options().with_ca_pem(ca).with_timeout_ms(10000)
+            when http.try_get_tls(url.as_str(), &opts) {
+                Ok(resp) -> {
+                    print(resp.status)
+                    print(String.from_bytes(resp.body.clone()))
+                }
+                Err(e) -> print(http.http_error_text(&e))
+            }
         }
-        Err(e) -> print(http.http_error_text(&e))
+        Err(_) -> print("cannot read the CA file")
     }
     when thread.join(h) {
         Ok(n) -> print(n)
