@@ -38,7 +38,7 @@ this page is the index to it.
 
 | Version | Date | Headline |
 | --- | --- | --- |
-| Unreleased | pending | `unsafe`/`Ptr<T>` and layout control; freestanding mode and kernel 0 booting under QEMU; per-CPU storage, user `Drop`, Sv39 and the user-mode syscall ABI; freestanding `String`/`Bytes`, `std/arena` and `Ptr.try_alloc`; stack guards and probing; a typed `TlsHandle` with `TlsError`/`TlsOptions`; the `try_` surface; the `mmio` capability; a compiler memory floor; traits with static dispatch; `==`/`!=` over a declared `eq`; the `for` mutation rule; `Mutex<T>` in `std/sync`; panic locations and double-panic detection; the `irq` and `frames` capabilities; the freestanding `std` subset; the x86-64 target |
+| [26.10.0](#26100-2026-10-04) | 2026-10-04 | traits and unsafe/freestanding Kelp; server TLS and capability hardening; the Polyp v4 UI path; incremental builds, benchmarks, sanitizers and docs |
 | [26.09.5](#26095-2026-09-28) | 2026-09-28 | `std/tls` and `https`; `coral.toml`'s `[caps]` and `[extern]`; rate-limit headers on `Response`; two assignment leaks fixed; every program now needs OpenSSL to build |
 | [26.09.4](#26094-2026-09-26) | 2026-09-26 | the LLVM backend inlines builtin bodies; `Map`'s index halved, `Map.with_capacity`; unrolled loops, `noalias`, `llvm.sqrt.f64`; the benchmark suite published |
 | [26.09.3](#26093-2026-09-25) | 2026-09-25 | `thread.sleep_ms`/`current_id`; a unit-returning worker can be joined; concurrent downloads; the memory model published; `kelpc check --text` |
@@ -52,10 +52,20 @@ this page is the index to it.
 | [0.1.1](#011-2026-09-19) | 2026-09-19 | the `for` loop, `spawn_in`/`run_in`, fallible `try_run`, `fs.symlink` |
 | [0.1.0](#010-no-release) | 2026-09-19 | first tag: the core language, modules, containers, capabilities, stdlib |
 
-## Unreleased
+## 26.10.0 (2026-10-04)
 
-Not a version number yet: this is what has landed since 26.09.5 and is waiting
-for a release to cut. Sixteen pieces, in the order they were built.
+[Release](https://homelabone.xenoo.dev/gitea/Juniper/kelp/releases/tag/v26.10.0)
+
+**Release additions.** Shift counts are checked on both backends, with
+`wrapping_shl` and `wrapping_shr` as the deliberate masking forms. TLS trust
+anchors are PEM bytes supplied by `TlsClientOptions.with_ca_pem`; file access
+moved to `std/tlsfile`, behind the `fs` capability. The new 13-program benchmark
+suite checks Kelp, C and Rust checksums before reporting timings, and `str.split`
+is linear. Polyp v4 adds timer subscriptions, integer animation, UTF-8 text,
+an on-demand accessibility tree and memoised pure subtrees. Expressions now
+evaluate left to right on both backends; several lock-typed `pd val` globals
+initialise on LLVM; and `kelpc doc` no longer gives an undocumented field its
+record's comment.
 
 **`unsafe`, `Ptr<T>` and layout control.** A raw pointer type `Ptr<T>` and the
 `unsafe` blocks and `unsafe fun` that are the only way to dereference one.
