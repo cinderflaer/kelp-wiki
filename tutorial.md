@@ -38,3 +38,4 @@ the [Language chapter](/language), the [Standard library](/stdlib) and the
 15. [Testing and tooling](/tutorial/15-tooling)
 16. [Freestanding, a tiny kernel](/tutorial/16-freestanding)
 17. [Polyp UI](/tutorial/17-polyp)
+18. [Where to go next](/tutorial/18-next)
