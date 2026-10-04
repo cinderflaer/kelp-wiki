@@ -35,3 +35,4 @@ the [Language chapter](/language), the [Standard library](/stdlib) and the
 12. [Capabilities](/tutorial/12-capabilities)
 13. [Concurrency](/tutorial/13-concurrency)
 14. [Networking, HTTP and TLS](/tutorial/14-networking)
+15. [Testing and tooling](/tutorial/15-tooling)
