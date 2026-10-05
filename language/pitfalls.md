@@ -19,7 +19,7 @@ the fix. Source: [`syntax.md` §18 and §22](https://homelabone.xenoo.dev/gittea
 | `cannot use 'bag' as a whole value: its field 'xs' was moved out` | using or borrowing the binding as a whole after one of its fields was moved out | use the fields that stayed, or assign a fresh value into the moved field on a `var` local |
 | `use of moved value 'h.text'` | that `enum` payload was read by value already | a payload of an owned place is taken once, exactly as a field is: match the payloads that stayed, or match a borrow of the enum |
 | `cannot use 'h' as a whole value: its payload 'text' was moved out` | using the enum as a whole after one of its payloads was moved out | match only the payloads that stayed, or match a borrow of the enum instead |
-| `this call returns a borrow of its parameter 'self', so that argument has to be a variable or a field` | a method that returns a borrow of its receiver was called on a temporary | bind the receiver first: `val u = set.union(a, b)` then `u.len()`; a field of a returned `datac` (`mkName().name.as_str()`) is the same case one projection deeper |
+| `this call returns a borrow of its parameter 'self', so that argument has to be a variable or a field` | a borrow-returning call was used outside a supported direct text-view binding | bind the owned receiver first; `val view = String.from_str("x").as_str()` and `val name = mkName().name.as_str()` promote their temporary owner |
 | `this is a borrow of a borrow` (with the operand named) | `&o` where `o` is already a borrow, which a parameter always is | pass the parameter itself: `o`, not `&o` |
 | `cannot borrow a temporary value` | `&expr` needs a place, and a call's result is not one, nor is a field of one | bind the call to a `val` and borrow the field of that: `val h = mk()` then `&h.name` |
 | `operator requires matching numeric operands, found 'mut i64' and 'i32'` (with the `write '*sink'` note) | a `mut T` parameter is an exclusive borrow, so it is read and written through `*` | write `*sink`, not `sink`, wherever the value is used |
@@ -44,11 +44,11 @@ and [Cursors and provenance](/language/ownership#cursors-and-provenance).
 | --- | --- |
 | `argument 'b' has type 'String', expected 'str'` | the parameter takes a view: add `.as_str()` |
 | `argument 'x' has type 'View', expected 'str'` | a slice has no NUL after it: `v.to_string()` |
-| `.as_str()` on a temporary is refused | bind the `String` to a `val` first (same for `.view()`); a chained call is the same temporary one step out (`fmt.int(n).as_str()`) |
+| a returned borrow of a temporary is refused | a direct `val` binding may promote `String.from_str("x").as_str()` or `.view()`; return an owned `String` instead when the borrow would escape |
 | a template is refused as a value | `a string template can only be printed`: build the text with `str.concat`, `fmt.*` or a `String`, or print it where it is written |
-| `field 'text' is a borrowed type ('View')` | a view cannot be stored: store a `String` |
+| `field 'text' stores a borrowed 'View'` | move the String/Bytes that owns the view into an earlier field of the same `datac`, or store an owned `String` |
 | comparing two `str` values | a `str` is a borrowed pointer, so `==` would compare addresses: use `str.eq`, or compare two `View`s with `v == w` |
-| `field 'text' is a borrowed type (str)` | same as the `View` case: a field must be owned |
+| `field 'text' stores a borrowed 'str'` | a string literal is static; otherwise move its String/Bytes owner into an earlier field of the same `datac` |
 
 ## Equality
 

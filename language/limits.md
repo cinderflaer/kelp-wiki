@@ -372,10 +372,11 @@ active roadmap item or a named future milestone, not a closed decision:
   than at the end of its scope, and a reference binding remembers the owner its
   value came from, so a pointer local can walk a structure as a cursor
   ([Ownership and borrowing](/language/ownership#cursors-and-provenance)).
-  What stays out is explicit lifetime syntax (`'a`), which is why a `str`/`View`
-  cannot be a `datac` field or an `enum` payload today, and why a closure cannot
-  capture a borrow: both need a way to say what a stored borrow is tied to,
-  which v1 does not have yet.
+  A direct text-view binding may promote its temporary owner, and a `datac` may
+  store `str`/`View` when construction moves its String/Bytes owner into an
+  earlier field of the same value. What stays out is explicit lifetime syntax
+  (`'a`), enum-payload and container borrows, raw reference fields, and closures
+  that capture a borrow.
 - No undefined-behaviour escape hatch: `unsafe` marks the operations the
   compiler cannot check, it does not make undefined behaviour allowed, the same
   way Rust's `unsafe` does not.

@@ -125,22 +125,20 @@ fun as_str(v: &Json).R: &str {
   (`if let S(s) = v { return s.as_str() }`) instead of returning the `when`.
 - A `fun` literal cannot return a borrow: an indirect call has no parameter an
   elided lifetime could bind to. Return an owned value.
-- A call that returns a borrow of its receiver cannot be made on a temporary,
-  because the temporary would be freed before the borrow could be used. Bind the
-  receiver first ([Methods and receivers](/language/methods)):
+- A direct `as_str()` or `view()` binding promotes its temporary receiver, so the
+  result remains valid for that binding's scope. A returned borrow still cannot
+  escape the function, because its promoted owner ends with the frame:
 
   ```kelp
-  // error: this call returns a borrow of its parameter 'self'
-  print(set.union(a, b).len())
+  // error: this returns a borrow of a temporary
+  fun bad().R: str = String.from_str("x").as_str()
 
-  val u = set.union(a, b)     // bind it first
-  print(u.len())
+  val ok = String.from_str("x").as_str()
+  print(ok.len())
   ```
 
-  A field of a call's result is the same case one projection deeper, except that
-  the compiler stages that temporary for the length of one call: reading the field
-  or passing it as a borrow is fine, while handing the borrow back
-  (`mkName().name.as_str()`) needs the binding.
+  A field of a call's result follows the same rule: `val name =
+  mkName().name.as_str()` is valid, while returning that borrow is not.
 
 ## See also
 
