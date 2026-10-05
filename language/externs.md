@@ -1,6 +1,6 @@
 ---
 title: "User FFI"
-description: "`extern fun` and `extern type` bind a project's own modules to native symbols. A `coral.toml` section names the domain, the library, the header and the allowlisted symbols; `...` takes extra arguments and `move closure(...)` passes a callback."
+description: "`extern fun` and `extern type` bind a project's own modules to native symbols. A `coral.toml` section names the domain, the library, the header and the allowlisted symbols; `...` takes extra arguments, `fun(...)` passes a function pointer and `move closure(...)` passes a retained callback."
 isPublished: true
 tags: "language, capability"
 ---
@@ -319,12 +319,22 @@ fun main() {
 A plain function value widens to a closure with no environment, and the
 destructor still frees the box.
 
+## Plain function pointers: `fun(...)`
+
+A `fun(P0, P1, ...).R: T` parameter or return in a user `extern fun` is a typed
+plain C function pointer. Use it when the native function borrows the callback
+for the call. For example, `fun(i32).R: i32` maps to `int (*)(int)`: the
+`ffi_fn_pointer` regression passes one to a C helper and receives one back on
+both backends.
+
+The pointer carries no captured environment and the native side must not retain
+it beyond the call. Use `move closure(...)` instead when the native API needs a
+callback it owns after the call returns, because its thunk, environment and
+destructor make that ownership explicit.
+
 ## What is not here yet
 
 - **`extern "C"` block syntax.** Each symbol is one `extern fun` declaration.
-- **Function-pointer types for user externs.** A callback parameter is written
-  `move closure(...)` (the `(thunk, env, destroy)` shape); a bare C function
-  pointer is not a parameter type.
 - **Generated prototypes.** A `header` makes the real C declaration visible, so
   the compiler does not generate a second one.
 - **`repr(C)` layout.** An opaque handle crosses as a pointer, but a C struct by

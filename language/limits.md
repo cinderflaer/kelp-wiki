@@ -172,8 +172,8 @@ output pinned or is refused with a message that says what to do next:
   out of an owned place is the same partial move, which is what a `when`/`if let`
   over an owned place does with the payload it binds. A position of a tuple read
   out of an owned binding is the same partial move, and read out of a borrow it
-  is refused. A projection read out of a
-  borrowed structure or out of a nested place is still refused.
+  is refused. A nested owned field path is supported: it moves only its final
+  field, leaving sibling fields readable; a borrowed structure is still refused.
 - **The helpers whose receiver stays a borrow are `Copy`-only.** `option.unwrap`
   on an `Option<String>` and `result.map` over a `Result<T, MyErr>` take their
   receiver with `move` now, so both work. `option.or_else`, `result.unwrap`,

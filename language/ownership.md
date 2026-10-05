@@ -205,17 +205,20 @@ the field is gone for good; on a `var` local a fresh value assigned into the
 field owns it again. A move on one branch of an `if` takes the field only on
 that path, and after the merge only the fields that stayed are read by name.
 
-The field has to be a **direct field of a local this frame owns**: a `val` local,
-a `var` local, or a `move T` parameter. A borrow, a temporary and a field chain
-are all refused, because the frame has nothing of its own to give away there:
+The field path has to start at a local this frame owns: a `val` local, a `var`
+local, or a `move T` parameter. A borrow and a temporary are refused, because
+the frame has nothing of its own to give away there. An owned field chain is
+also a path into that local, so it may move its final owned field while its
+siblings remain usable:
 
 ```kelp
 fun steal(b: &Bag).R: List<i32> = b.xs
 // error: cannot move the field 'xs' out of 'b': the value is borrowed
 ```
 
-To take a field out of a chain, move each hop into a local first: `val inner =
-outer.inner` then `val xs = inner.xs`.
+After `val text = person.name.text`, `person.name.id` and `person.city` remain
+readable, but `person.name` and `person` cannot be used as whole values. A
+fresh assignment to the moved nested field on a `var` local restores that path.
 
 Once a field is gone, reading it again and handing the binding on as a whole are
 both refused, because the empty slot would go with it:
