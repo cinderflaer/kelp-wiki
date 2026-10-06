@@ -48,6 +48,8 @@ datac Child(
 | `spawn_in(dir, program, args)` | `Child` | with a working directory; `""` keeps the parent's |
 | `run(program, args)` | `RunResult` | runs to completion, collects both streams; panics if it cannot start |
 | `run_in(dir, program, args)` | `RunResult` | |
+| `run_inherit(program, args)` | `RunResult` | the child keeps this process's stdin, stdout and stderr: output is live, the two streams interleave as written, `isatty` sees the parent's terminal. `out` and `err` are empty; `code` and `signal` are the child's |
+| `run_inherit_in(dir, program, args)` | `RunResult` | with a working directory |
 | `try_run(program, args)` | `result.Result<RunResult, ProcErr>` | the fallible form |
 | `try_run_in(dir, program, args)` | `result.Result<RunResult, ProcErr>` | |
 | `executable(program)` | `bool` | |

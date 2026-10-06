@@ -352,6 +352,8 @@ Functions:
 - `fun spawn(program: &str, args: List<String>).R: Child`
 - `fun run_in(dir: &str, program: &str, args: List<String>).R: RunResult`
 - `fun run(program: &str, args: List<String>).R: RunResult`
+- `fun run_inherit_in(dir: &str, program: &str, args: List<String>).R: RunResult`
+- `fun run_inherit(program: &str, args: List<String>).R: RunResult`
 - `fun executable(program: &str).R: bool`
 - `fun try_run_in(dir: &str, program: &str, args: List<String>).R: result.Result<RunResult, ProcErr>`
 - `fun try_run(program: &str, args: List<String>).R: result.Result<RunResult, ProcErr>`
