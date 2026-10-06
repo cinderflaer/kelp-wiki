@@ -27,6 +27,7 @@ The domain each module needs comes from the compiler's own table
 | `std/mem` | - | `alloc` |
 | `std/str` | - | text: search, slice, split, parse, format |
 | `std/path` | - | lexical path handling |
+| `std/sys` | - | `os()` and `arch()`: the build target's names |
 | `std/math` | - | `sqrt`, `pow`, trig, `abs`/`min`/`max`/`clamp` |
 | `std/fmt` | - | number, grouping, byte-size and padding formatting into `String`, and the `Display` trait |
 | `std/encoding` | - | base64, base32, base58, hex and percent encoding |
@@ -89,6 +90,7 @@ The builtins are described in [Text](/language/text) and
 | `mem` | [`std/mem`](/stdlib/mem) |
 | `str` | [`std/str`](/stdlib/str) |
 | `path` | [`std/path`](/stdlib/path) |
+| `sys` | [`std/sys`](/stdlib/sys) |
 | `math` | [`std/math`](/stdlib/math) |
 | `fmt` | [`std/fmt`](/stdlib/fmt) |
 | `encoding` | [`std/encoding`](/stdlib/encoding) |
