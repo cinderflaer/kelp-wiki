@@ -53,6 +53,7 @@ datac Metadata(val size: u64, val mtime: i64, val mode: u32, val is_dir: bool, v
 | `copy(from, to)` | `Unit` | one file |
 | `symlink(target, link)` | `Unit` | |
 | `touch(path)` | `Unit` | |
+| `set_mode(path, mode)` | `Unit` | sets the low 12 permission bits, the ones `Metadata.mode` reads; `493` is octal 755 |
 | `sync(path)` | `Unit` | flush to disk |
 | `open(path, mode)` | `io.File` | panics on failure |
 | `try_open(path, mode)` | `Result<io.File, io.IoErr>` | the fallible `open` |
