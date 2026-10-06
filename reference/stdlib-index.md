@@ -308,7 +308,9 @@ Functions:
 - `fun read(path: &str).R: Bytes`
 - `fun read_text(path: &str).R: String`
 - `fun write(path: &str, data: Bytes)`
+- `fun try_write(path: &str, data: Bytes).R: option.Option<io.IoErr>`
 - `fun write_text(path: &str, text: String)`
+- `fun try_write_text(path: &str, text: String).R: option.Option<io.IoErr>`
 - `fun exists(path: &str).R: bool`
 - `fun is_file(path: &str).R: bool`
 - `fun is_dir(path: &str).R: bool`
@@ -319,16 +321,23 @@ Functions:
 - `fun try_read_text(path: &str).R: result.Result<String, io.IoErr>`
 - `fun size(path: &str).R: u64`
 - `fun remove(path: &str)`
+- `fun try_remove(path: &str).R: option.Option<io.IoErr>`
 - `fun rename(from: &str, to: &str)`
+- `fun try_rename(from: &str, to: &str).R: option.Option<io.IoErr>`
 - `fun mkdir(path: &str)`
 - `fun append(path: &str, data: Bytes)`
+- `fun try_append(path: &str, data: Bytes).R: option.Option<io.IoErr>`
 - `fun sync(path: &str)`
 - `fun list(path: &str).R: List<String>`
+- `fun try_list(path: &str).R: result.Result<List<String>, io.IoErr>`
 - `fun mkdir_all(path: &str)`
+- `fun try_mkdir_all(path: &str).R: option.Option<io.IoErr>`
 - `fun remove_all(target: &str)`
+- `fun try_remove_all(target: &str).R: option.Option<io.IoErr>`
 - `fun walk(dir: &str).R: List<String>`
 - `fun copy(from: &str, to: &str)`
 - `fun symlink(target: &str, link: &str)`
+- `fun try_symlink(target: &str, link: &str).R: option.Option<io.IoErr>`
 - `fun touch(path: &str)`
 - `fun open(path: &str, mode: &str).R: io.File`
 - `fun try_open(path: &str, mode: &str).R: result.Result<io.File, io.IoErr>`

@@ -173,8 +173,9 @@ if let Ok(body) = text {
 }
 ```
 
-`try_read`, `try_read_text` and `try_open` are the three that fail by value;
-everything else in [`std/fs`](/stdlib/fs) still panics.
+`try_read`, `try_read_text` and `try_open` fail by value with a `Result`, and the
+mutators (`try_write`, `try_mkdir_all`, `try_remove` and five more) fail by value
+with an `Option<io.IoErr>`; everything else in [`std/fs`](/stdlib/fs) still panics.
 
 **Exit codes are the interface.** 0 is success, 2 is a usage error, 1 is a
 failure. `kelpc run` forwards the program's status, so a shell script can act on
