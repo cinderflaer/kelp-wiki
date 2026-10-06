@@ -9,6 +9,10 @@ text functions are reviewable Kelp rather than a C blob. It is imported with
 `impl "std/<module>"`; a module that touches the outside world needs the domain
 **delegated on the `impl` line**.
 
+`std/internal/...` is reserved for compiler implementation modules. It is not
+part of the public library: a project cannot import it or place its own source
+under that path.
+
 ```kelp
 impl "std/fs"                                          // needs fs
 impl "std/net" caps(net = ["api.example.com:443"]) // names the host it may dial
