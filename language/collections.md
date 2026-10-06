@@ -42,6 +42,7 @@ while !xs.is_empty() {
 | Method | Takes | Returns |
 | --- | --- | --- |
 | `List.empty()` | nothing | empty list; element type from the context, or from the first `push`/`insert`/`set` |
+| `List.with_capacity(n)` | `usize` or `i64` | an empty list with room for at least `n` elements, so filling it with `push` allocates once; the element type comes from the binding, and the list still grows past `n` |
 | `List.of(x)` | one value | a list holding it |
 | `len()` / `is_empty()` | shared | `usize` / `bool` |
 | `get(i)` | shared, `usize` | the element, or a borrow of it |
