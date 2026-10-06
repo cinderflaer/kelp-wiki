@@ -19,7 +19,7 @@ is no resource argument to match.
 ## Types
 
 ```kelp
-datac RunResult(val code: i32, val out: Bytes, val err: Bytes)
+datac RunResult(val code: i32, val signal: i32, val out: Bytes, val err: Bytes)
 
 enum ProcErr {
     NotFound        // no such program
@@ -34,6 +34,7 @@ datac Child(
     val stderr: io.File,
     var exited: bool,
     var code: i32,
+    var signal: i32,
 )
 ```
 
@@ -101,8 +102,9 @@ fun main() {
 - `try_run` decides everything it can (missing program, not executable, missing
   working directory) **before** the fork, which is why `ProcErr` has that
   particular shape.
-- An exit code of a killed child is the signal-based value the OS reports, not a
-  synthesized one.
+- A killed child's `code` is `128 + signal`, and `signal` holds the signal
+  number (0 for a child that exited by itself). A child's own `exit 143` has the
+  same `code` as one killed by SIGTERM; `signal` is what tells them apart.
 
 ## See also
 

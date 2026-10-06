@@ -340,8 +340,8 @@ Functions:
 
 Types:
 
-- `datac Child(val pid: i32, val stdin: io.File, val stdout: io.File, val stderr: io.File, var exited: bool, var code: i32)`
-- `datac RunResult(val code: i32, val out: Bytes, val err: Bytes)`
+- `datac Child(val pid: i32, val stdin: io.File, val stdout: io.File, val stderr: io.File, var exited: bool, var code: i32, var signal: i32)`
+- `datac RunResult(val code: i32, val signal: i32, val out: Bytes, val err: Bytes)`
 - `enum ProcErr { NotFound, NotExecutable, DirNotFound }`
 
 Functions:
