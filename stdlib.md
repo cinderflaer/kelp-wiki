@@ -36,6 +36,7 @@ The domain each module needs comes from the compiler's own table
 | `std/tlsfile` | `fs` | `read_pem(path, what)`: the one gated file read behind `std/tls`'s PEM-bytes functions |
 | `std/ws` | `net`, `rand` (both held) | a WebSocket client (RFC 6455) over `ws://` and `wss://`; importing it needs both delegated |
 | `std/time` | `time` | `now_unix`, `now_mono_ns`, `sleep_ms` |
+| `std/source` | - | `file`, `line` at the Kelp call site |
 | `std/tz` | `fs`, `env` | TZif time zones: the offset at an instant, the wall clock it names, the `One`/`Ambiguous`/`Gap` answers and a `strftime` subset; hosted only |
 | `std/rand` | `rand` | unseeded `u64`, `below`, `bytes` |
 | `std/env` | `env` | `has`, `get`, `set`, `unset` |

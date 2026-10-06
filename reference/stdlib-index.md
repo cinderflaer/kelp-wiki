@@ -584,6 +584,13 @@ Functions:
 - `fun now_mono_ns().R: i64`
 - `fun sleep_ms(ms: u64)`
 
+## `std/source`
+
+Functions:
+
+- `fun file().R: str`
+- `fun line().R: usize`
+
 ## `std/tz` (needs `fs` and `env`)
 
 Types:
@@ -967,6 +974,7 @@ layer under it. The whole surface is on [`std/ws`](/stdlib/ws).
 | `std/tls` | 6 | 1 | net |
 | `std/ws` | 32 | 18 | net, rand |
 | `std/time` | 3 | 0 | time |
+| `std/source` | 2 | 0 | - |
 | `std/tz` | 9 | 5 | fs, env |
 | `std/rand` | 3 | 0 | rand |
 | `std/env` | 4 | 0 | env |
