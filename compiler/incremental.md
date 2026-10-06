@@ -90,7 +90,7 @@ recompiles them. `KELPC_CACHE_MAX_MB` (default 1024) caps the directory, deletin
 oldest-modified entries first at the end of a build.
 
 `KELPC_CACHE_STATS=1` prints `kelpc cache: <H> hits, <M> misses, <S> stored`, and
-`--timings` adds one line per unit with `hit` or `miss`. Edit one module and
+`--timings` adds one line per unit with `hit` or `miss`, and one `front-end interfaces: H hit, M miss` line (see below). Edit one module and
 exactly the units whose IR changed miss, which on a `shapes` project (`main`,
 `geom`, `shapes/circle`) looks like the transcript on the
 [CLI page](/tooling/kelpc-cli#incremental-builds-and-the-object-cache): three
@@ -123,7 +123,16 @@ machine runs low, running no destructors on any worker.
 - **No cross-unit inlining.** A call between two units is a real call in the
   object. This is the documented cost of the mode and the cache cannot change it.
   Inside a unit the pipeline is unchanged.
-- **No interface files and no dependency tracking.** The cache key names a unit's
+- **Generated interface files are validated, not reused.** An incremental build
+  writes one `.kpi` artifact per module (its public-surface hash, dependency
+  hashes and a format version) beside the object entries, and `--timings` reports
+  how many were current. A corrupt, truncated or old-format artifact is a miss and
+  is rewritten atomically. The front end still parses, resolves and checks every
+  module on every build, so nothing is skipped because of them yet. A module that
+  declares a generic item, a `const`, a `static`, a `pd` or a destructor puts its
+  whole text into its interface hash, since a body edit there can change an
+  importer.
+- **No dependency tracking.** The cache key names a unit's
   exact IR instead. A consequence is that a signature change is broad: every unit
   declares every program item, so changing one callee's signature changes the
   declaring IR in more units than the caller's and they all miss. That is
