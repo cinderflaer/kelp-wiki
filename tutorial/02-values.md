@@ -1,6 +1,6 @@
 ---
 title: "Tutorial 2: Values, types and functions"
-description: "Chapter 2 of the Kelp tutorial: integer and float types, val and var, explicit conversions, functions with .R return types, named arguments, function values and tuples, with the real compiler errors."
+description: "Chapter 2 of the Kelp tutorial: integer and float types, val and var, explicit conversions, functions with .return return types, named arguments, function values and tuples, with the real compiler errors."
 isPublished: true
 tags: "tutorial, language"
 ---
@@ -14,17 +14,17 @@ impl "std/option"
 
 const LIMIT: i32 = 10
 
-fun add(a: i32, b: i32).R: i32 = a + b
+fun add(a: i32, b: i32).return: i32 = a + b
 
-fun abs_diff(a: i32, b: i32).R: i32 {
+fun abs_diff(a: i32, b: i32).return: i32 {
     if a > b {
         return a - b
     }
     return b - a
 }
 
-fun apply(f: fun(i32).R: i32, x: i32).R: i32 = f(x)
-fun double(x: i32).R: i32 = x * 2
+fun apply(f: fun(i32).return: i32, x: i32).return: i32 = f(x)
+fun double(x: i32).return: i32 = x * 2
 
 fun main() {
     val n = 7
@@ -130,12 +130,12 @@ path rule.
 ## Functions
 
 ```kelp
-fun add(a: i32, b: i32).R: i32 = a + b
+fun add(a: i32, b: i32).return: i32 = a + b
 ```
 
-The return type is written `.R: T` **after** the parameter list. There is no
-`->`. An expression body (`= expr`) needs `.R`; a block body ends with
-`return expr`; no `.R` means the function returns `Unit`, which holds nothing.
+The return type is written `.return: T` **after** the parameter list. There is no
+`->`. An expression body (`= expr`) needs `.return`; a block body ends with
+`return expr`; no `.return` means the function returns `Unit`, which holds nothing.
 `abs_diff` in the program is the block form.
 
 By default a parameter is a **shared borrow** of the argument; `mut T` means an
@@ -145,18 +145,18 @@ Calls may use **named arguments** with `name = value`, in any order, wherever th
 function has more than one parameter: `add(a = 2, b = 3)`. Positional calls are
 fine too, and the program mixed them. A user program cannot overload a name.
 
-A bare function name is a **value** whose type is `fun(i32).R: i32`, so
+A bare function name is a **value** whose type is `fun(i32).return: i32`, so
 `apply(double, 21)` passes a function as an argument. Closures that capture
 variables are chapter 10.
 
 ## Tuples
 
-`val (lo, hi) = (1, 9)` takes a tuple apart. A tuple is read by destructuring only:
-there is no `t.0`. They are covered in [Types](/language/types).
+`val (lo, hi) = (1, 9)` takes a tuple apart, and `pair.0` reads one position.
+They are covered in [Types](/language/types).
 
 ## Exercises
 
-1. Write `fahrenheit(c: f64).R: f64` and print it for 0 and 100 degrees, once
+1. Write `fahrenheit(c: f64).return: f64` and print it for 0 and 100 degrees, once
    with a positional argument and once with a named one.
 2. The following line fails to compile: `val half: f64 = 7 / 2`. Why, and what is
    the smallest change?
@@ -167,7 +167,7 @@ there is no `t.0`. They are covered in [Types](/language/types).
 1.
 
 ```kelp
-fun fahrenheit(c: f64).R: f64 = c * 9.0 / 5.0 + 32.0
+fun fahrenheit(c: f64).return: f64 = c * 9.0 / 5.0 + 32.0
 
 fun main() {
     print("0 C = ${fahrenheit(0.0)} F")

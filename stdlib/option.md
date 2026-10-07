@@ -30,14 +30,16 @@ writes `val x = f(...)?`. Nothing in the compiler knows this module exists: the
 | `unwrap<T>(o: move Option<T>)` | `T` | the option is consumed; panics on `None` |
 | `unwrap_or<T>(o: move Option<T>, fallback: move T)` | `T` | the option and the fallback are consumed |
 | `expect<T>(o: move Option<T>, message: &str)` | `T` | the option is consumed; panics with the message |
-| `map<T, U>(o, f: closure(&T).R: U)` | `Option<U>` | |
-| `and_then<T, U>(o, f: closure(&T).R: Option<U>)` | `Option<U>` | |
-| `or_else<T>(o, f: fun().R: Option<T>)` | `Option<T>` | **`T` must be `Copy`**: the receiver is a borrow |
+| `map<T, U>(o, f: closure(&T).return: U)` | `Option<U>` | |
+| `and_then<T, U>(o, f: closure(&T).return: Option<U>)` | `Option<U>` | |
+| `or_else<T>(o, f: fun().return: Option<T>)` | `Option<T>` | **`T` must be `Copy`**: the receiver is a borrow |
 | `each<T>(o, f: closure(&T))` | `Unit` | |
 
-There are no methods on `Option`: it is a generic `enum`, whose template declares
-none, so every combinator is a free function and takes the option as its first
-argument.
+Every combinator is a free function that takes the option as its first argument.
+Since 26.10.3 the ones that only borrow it are also **methods**: `o.is_some()`,
+`o.is_none()`, `o.map(f)`, `o.and_then(f)`, `o.or_else(f)` and `o.each(f)` mean
+exactly `option.is_some(o)` and so on. `unwrap_or`, `unwrap` and `expect` take the
+option with `move`, and a method always borrows, so they stay free functions.
 
 ## Where the payload goes
 
@@ -69,7 +71,7 @@ fun main() {
     print(option.is_some(o = some))          // true
     print(option.is_none(o = none))          // true
 
-    val doubled = option.map(o = some, f = fun(x: &i64).R: i64 = x * 2)
+    val doubled = option.map(o = some, f = fun(x: &i64).return: i64 = x * 2)
     print(option.unwrap(o = doubled))        // 14
 
     if let Some(v) = some {

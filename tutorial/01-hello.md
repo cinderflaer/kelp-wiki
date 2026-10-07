@@ -103,7 +103,7 @@ Three things to notice already:
   expression into the text (chapter 4 covers text properly).
 - `name: &str` is a parameter type. A parameter is a *borrow* of its argument by
   default; chapter 6 explains what that buys you.
-- A function that returns nothing writes no return type. A function that returns a value writes `.R: i32` after the parameters (chapter 2).
+- A function that returns nothing writes no return type. A function that returns a value writes `.return: i32` after the parameters (chapter 2).
 
 ## Reading an error
 

@@ -36,7 +36,7 @@ enum Msg {
     Inc
 }
 
-fun view(s: Counter).R: core.Node<Msg> {
+fun view(s: Counter).return: core.Node<Msg> {
     return polyp.column { k ->
         k.text("a counter")
         k.button("+1", Msg.Inc)
@@ -95,7 +95,7 @@ enum Msg {
 }
 
 // view: a pure function of the state. Button ids follow visit order: 0 is +1, 1 is -1, 2 is reset.
-fun view(s: Counter).R: core.Node<Msg> {
+fun view(s: Counter).return: core.Node<Msg> {
     return core.column { k ->
         k.text("a counter")
         val shown_count = fmt.int(s.count.to_i64())
@@ -200,7 +200,7 @@ enum Msg {
     Reset
 }
 
-fun view(s: Counter).R: core.Node<Msg> {
+fun view(s: Counter).return: core.Node<Msg> {
     return core.column { k ->
         k.text("a counter")
         val shown_count = fmt.int(s.count.to_i64())

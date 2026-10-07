@@ -53,7 +53,7 @@ datac Node(val value: i32, val next: Box<Node>)
 - **A tuple is a record too.** `(i32, String)` is a record with positional
   fields: it needs no declaration, it is a legal `datac` field and a legal
   `enum` payload, and it obeys every rule above. Its positions are read by
-  destructuring, because there is no `.0` ([Types](/language/types)).
+  destructuring or by index, `t.0` ([Types](/language/types)).
 
 ## `enum`
 
@@ -82,13 +82,13 @@ enum Shape {
 `when` with a scrutinee is the only pattern match, and it must be exhaustive:
 
 ```kelp
-fun area(s: &Shape).R: f64 = when s {
+fun area(s: &Shape).return: f64 = when s {
     Circle(r) -> 3.14159 * r * r
     Rect(w, h) -> w * h
     Empty -> 0.0
 }
 
-fun label(s: &Shape).R: &str = when s {
+fun label(s: &Shape).return: &str = when s {
     Circle(_) -> "circle"
     Rect(_, _) -> "rect"
     Empty -> "empty"

@@ -1,11 +1,11 @@
 ---
 title: "`std/math`"
-description: "Floating-point math, plus abs/min/max/clamp - the only overloaded names in the language. Ungated."
+description: "Floating-point math over f64 and f32, plus abs/min/max/clamp over the integers - the only overloaded names in the language. Ungated."
 isPublished: true
 tags: "stdlib, math"
 ---
-Floating-point math, plus `abs`/`min`/`max`/`clamp`: the only overloaded names
-in the language. Ungated.
+Floating-point math over `f64` and `f32`, plus `abs`/`min`/`max`/`clamp` over the
+integers: the only overloaded names in the language. Ungated.
 
 ```kelp
 impl "std/math"
@@ -35,8 +35,10 @@ impl "std/math"
 | `min(a, b)` / `max(a, b)` | same as arguments | overloaded over `i32`, `i64`, `f64` |
 | `clamp(x, lo, hi)` | same as arguments | overloaded over `i32`, `i64`, `f64` |
 
-`abs`, `min`, `max` and `clamp` are the **only** functions in the language that
-may be overloaded, and that overloading exists only inside the shipped standard
+Every function above except the integer-only parts of `abs`/`min`/`max`/`clamp` is
+overloaded for `f32` too (26.10.3): `math.sqrt(x)` with `x: f32` returns an `f32`,
+computed in `f64` and rounded once. The names in the table are the **only**
+functions in the language that may be overloaded, and that overloading exists only inside the shipped standard
 library (syntax.md §7.2). A user module cannot repeat the trick; that is why
 [`listx`](/libraries/listx) has `sum_i32`/`sum_i64`/`sum_f64` and
 [`mathx`](/libraries/mathx) spells checked arithmetic per width.

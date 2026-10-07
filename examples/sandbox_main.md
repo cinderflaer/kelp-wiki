@@ -30,7 +30,7 @@ impl "std/str"
 // The path is bound to a `val` first: `.as_str()` on a temporary is refused.
 // `pub` exports the name: `sandbox_main` is another module, so it reaches this
 // one only through the qualifier, and a private `read` would be refused there.
-pub fun read(name: &str).R: String {
+pub fun read(name: &str).return: String {
     val path = str.concat("/tmp/kelp-sandbox/vault/", name)
     return fs.read_text(path.as_str())
 }

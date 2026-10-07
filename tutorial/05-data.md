@@ -16,7 +16,7 @@ datac Point(val x: i32, var y: i32)
 
 datac Counter(val id: i32, var count: i32)
 
-fun Counter.total().R: i32 = id + count
+fun Counter.total().return: i32 = id + count
 
 fun mut Counter.bump() {
     count += 1
@@ -28,7 +28,7 @@ enum Shape {
     Empty
 }
 
-fun Shape.area().R: f64 = when self {
+fun Shape.area().return: f64 = when self {
     Circle(r) -> 3.14159 * r * r
     Rect(w, h) -> w * h
     Empty -> 0.0
@@ -124,7 +124,7 @@ enum Shape {
     Empty
 }
 
-fun area(s: &Shape).R: f64 = when s {
+fun area(s: &Shape).return: f64 = when s {
     Circle(r) -> 3.14159 * r * r
     Rect(w, h) -> w * h
 }
@@ -153,7 +153,7 @@ name and its bindings, nothing more.
 
 A method is a function whose first parameter is a receiver, written `Type.name`:
 
-- `fun Counter.total().R: i32 = id + count`: a **shared** receiver. Inside, fields
+- `fun Counter.total().return: i32 = id + count`: a **shared** receiver. Inside, fields
   are read by their bare names (`self` is the whole receiver, and the `Shape.area`
   method used it to `when` on itself).
 - `fun mut Counter.bump() { count += 1 }`: an **exclusive** receiver. It needs a
@@ -190,7 +190,7 @@ called on a value, not on a variant path: bind `val s = Shape.Empty` first.
 1. Replace `Rect` with `Triangle(val base: f64, val height: f64)` and give `Shape`
    an `area` method.
 2. Write an `Account` record with an owned `String` owner and a `balance`, and a
-   `mut` method `withdraw(amount: i64).R: bool` that refuses to overdraw.
+   `mut` method `withdraw(amount: i64).return: bool` that refuses to overdraw.
 
 <details>
 <summary>Solutions</summary>
@@ -204,7 +204,7 @@ enum Shape {
     Empty
 }
 
-fun Shape.area().R: f64 = when self {
+fun Shape.area().return: f64 = when self {
     Circle(r) -> 3.14159 * r * r
     Triangle(b, h) -> b * h / 2.0
     Empty -> 0.0
@@ -229,7 +229,7 @@ fun mut Account.deposit(amount: i64) {
     balance += amount
 }
 
-fun mut Account.withdraw(amount: i64).R: bool {
+fun mut Account.withdraw(amount: i64).return: bool {
     if amount > balance {
         return false
     }

@@ -19,7 +19,7 @@ impl "std/result"
 impl "std/option"
 impl "std/str"
 
-fun handle(req: &http.ServerRequest).R: http.ServerResponse {
+fun handle(req: &http.ServerRequest).return: http.ServerResponse {
     if str.eq(req.path.as_str(), "/hello") {
         var name = String.from_str("world")
         if let Some(n) = req.query_param("name") {
@@ -31,7 +31,7 @@ fun handle(req: &http.ServerRequest).R: http.ServerResponse {
     return http.not_found()
 }
 
-fun serve(fd: i32).R: u64 {
+fun serve(fd: i32).return: u64 {
     val server = http.Server(fd = fd)
     val limits = http.default_limits()
     val n = http.serve_on(&server, handle, &limits, 3)
@@ -78,7 +78,7 @@ The pieces:
   handle in the worker (a handle crosses `thread.spawn` as the plain `fd`). Binding
   before the client starts removes any race over who is ready first. `listen(0)` would
   ask the kernel for a free port, and `server.port()` reports which.
-- The handler is a plain function `fun(&ServerRequest).R: ServerResponse`. A
+- The handler is a plain function `fun(&ServerRequest).return: ServerResponse`. A
   `ServerRequest` has `method`, `path`, `query`, `headers` and `body`;
   `query_param(name)` returns an `Option<String>` that is form-decoded, and
   `path_segments()` splits the path. `http.ok_text`, `http.json`, `http.html`,
@@ -167,11 +167,11 @@ impl "std/tlsfile" caps(fs = ["/tmp/kelp-tut-certs/**"])
 impl "std/thread"
 impl "std/result"
 
-fun hello(req: &http.ServerRequest).R: http.ServerResponse {
+fun hello(req: &http.ServerRequest).return: http.ServerResponse {
     return http.ok_text("hello over tls")
 }
 
-fun serve(fd: i32).R: u64 {
+fun serve(fd: i32).return: u64 {
     val cert = tlsfile.read_pem("/tmp/kelp-tut-certs/server.pem", "certificate chain")
     val key = tlsfile.read_pem("/tmp/kelp-tut-certs/server.key", "private key")
     return when cert {
@@ -183,7 +183,7 @@ fun serve(fd: i32).R: u64 {
     }
 }
 
-fun serve_with(cert: move Bytes, key: move Bytes, fd: i32).R: u64 {
+fun serve_with(cert: move Bytes, key: move Bytes, fd: i32).return: u64 {
     return when tls.server_config_pem(cert, key) {
         Ok(cfg) -> {
             val server = http.Server(fd = fd)
@@ -238,11 +238,11 @@ impl "std/tlsfile" caps(fs = ["/tmp/kelp-tut-certs/**"])
 impl "std/thread"
 impl "std/result"
 
-fun hello(req: &http.ServerRequest).R: http.ServerResponse {
+fun hello(req: &http.ServerRequest).return: http.ServerResponse {
     return http.ok_text("hello over tls")
 }
 
-fun serve(fd: i32).R: u64 {
+fun serve(fd: i32).return: u64 {
     val cert = tlsfile.read_pem("/tmp/kelp-tut-certs/server.pem", "certificate chain")
     val key = tlsfile.read_pem("/tmp/kelp-tut-certs/server.key", "private key")
     return when cert {
@@ -254,7 +254,7 @@ fun serve(fd: i32).R: u64 {
     }
 }
 
-fun serve_with(cert: move Bytes, key: move Bytes, fd: i32).R: u64 {
+fun serve_with(cert: move Bytes, key: move Bytes, fd: i32).return: u64 {
     return when tls.server_config_pem(cert, key) {
         Ok(cfg) -> {
             val server = http.Server(fd = fd)
@@ -318,7 +318,7 @@ impl "std/option"
 impl "std/str"
 impl "std/fmt"
 
-fun number(req: &http.ServerRequest, name: &str).R: i64 {
+fun number(req: &http.ServerRequest, name: &str).return: i64 {
     if let Some(text) = req.query_param(name) {
         if let Ok(n) = str.parse_i64(text.as_str()) {
             return n
@@ -327,7 +327,7 @@ fun number(req: &http.ServerRequest, name: &str).R: i64 {
     return 0
 }
 
-fun handle(req: &http.ServerRequest).R: http.ServerResponse {
+fun handle(req: &http.ServerRequest).return: http.ServerResponse {
     if str.eq(req.path.as_str(), "/add") {
         val sum = number(req, "a") + number(req, "b")
         val text = fmt.int(sum)
@@ -336,7 +336,7 @@ fun handle(req: &http.ServerRequest).R: http.ServerResponse {
     return http.not_found()
 }
 
-fun serve(fd: i32).R: u64 {
+fun serve(fd: i32).return: u64 {
     val server = http.Server(fd = fd)
     val limits = http.default_limits()
     val n = http.serve_on(&server, handle, &limits, 1)

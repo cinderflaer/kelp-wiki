@@ -97,7 +97,7 @@ to `n & (width - 1)` instead of panicking. A shift whose amount is a literal in
 range carries no check.
 
 ```kelp
-fun shift(x: u32, n: u32).R: u32 = x << n
+fun shift(x: u32, n: u32).return: u32 = x << n
 
 fun main() {
     print(shift(1, 31))
@@ -161,12 +161,12 @@ length-aware, exactly like `view.eq`), and for a `View` against a `str` (the
 compare addresses; use `str.eq`.
 
 **A type gets `==`/`!=` by declaring `eq`.** A `datac` or `enum` `T` that
-declares `fun T.eq(other: &T).R: bool` gets the operators from that method:
+declares `fun T.eq(other: &T).return: bool` gets the operators from that method:
 
 ```kelp
 datac P(val x: i32, val tag: i32)
 
-fun P.eq(other: &P).R: bool = self.x == other.x && self.tag == other.tag
+fun P.eq(other: &P).return: bool = self.x == other.x && self.tag == other.tag
 
 fun main() {
     val a = P(x = 1, tag = 1)
@@ -191,7 +191,7 @@ fun main() {
   declared, with the spelling to write:
 
   ```
-  error: 'P.eq' takes exactly one parameter, a shared borrow of 'P', so write 'fun P.eq(other: &P).R: bool'
+  error: 'P.eq' takes exactly one parameter, a shared borrow of 'P', so write 'fun P.eq(other: &P).return: bool'
   ```
 
 - **Nothing is derived.** A `datac`/`enum` without a declared `eq` keeps the
@@ -223,7 +223,7 @@ of the enclosing function**. Otherwise the expression's value is the success
 payload.
 
 ```kelp
-fun quarter(n: i64).R: result.Result<i64, String> {
+fun quarter(n: i64).return: result.Result<i64, String> {
     val h = half(n = n)?          // half returns Result<i64, String>
     return result.Result.Ok(value = h / 2)
 }
@@ -248,7 +248,7 @@ Rules (§5.2):
 - It applies to the expression it is written on and to nothing else, so a tuple
   is never its operand. When a tuple is the *success* payload, `?` reaches the
   `Result` the element is and hands the tuple back: with
-  `fun mk(n: i32).R: Result<(i32, i32), String>`, the line
+  `fun mk(n: i32).return: Result<(i32, i32), String>`, the line
   `val (a, b) = mk(n)?` binds the tuple and takes it apart. A tuple is not an
   `enum`, so `?` written on the tuple itself is the ordinary "the operand must be
   an `enum`" refusal ([Types](/language/types)).
@@ -260,16 +260,17 @@ in order ([Types](/language/types)).
 
 ```kelp
 val pair = (1, 2)
-val (lo, hi) = min_max(xs)      // destructuring is the only way to read one
+val (lo, hi) = min_max(xs)      // destructuring reads every position
+val first = pair.0              // or one position by constant index
 ```
 
 - `(e)` is the parenthesized expression `e`, not a one-element tuple: `val x =
   (5)` binds an `i32`, and `()` is refused by name because the absent value is
   `unit`.
-- There is **no positional access** on a value: `pair.0` is not a field access.
-  Read a position with a destructuring binding
-  ([Bindings and assignment](/language/bindings)), or bind the whole tuple to a
-  `val` first.
+- A position is read by a **constant index**: `pair.0`, and `pair.1.0` for a
+  nested tuple. The index is a literal; reading an owned position of a local is a
+  partial move, as for a `datac` field. A destructuring binding
+  ([Bindings and assignment](/language/bindings)) reads several at once.
 - A tuple is a record, so it is not printable: `print` takes a scalar, a `str`
   or a `String`. Print each position instead.
 

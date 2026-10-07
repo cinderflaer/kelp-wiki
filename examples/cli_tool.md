@@ -41,9 +41,9 @@ impl "std/fmt"
 impl "std/process"
 impl "std/path"
 
-fun is_space(c: u8).R: bool = c == ' ' || c == '\t' || c == '\n' || c == '\r'
+fun is_space(c: u8).return: bool = c == ' ' || c == '\t' || c == '\n' || c == '\r'
 
-fun count_lines(s: &str).R: i64 {
+fun count_lines(s: &str).return: i64 {
     val bytes = str.len(s)
     var lines: i64 = 0
     var i: usize = 0
@@ -59,7 +59,7 @@ fun count_lines(s: &str).R: i64 {
     return lines
 }
 
-fun count_words(s: &str).R: i64 {
+fun count_words(s: &str).return: i64 {
     val bytes = str.len(s)
     var words: i64 = 0
     var in_word = false
@@ -140,7 +140,7 @@ fun run(parser: &argparse.Parser, pa: &argparse.ParsedArgs) {
 // A relative argument is resolved against the working directory, so the tool
 // takes `notes.txt` and the gated call still receives an absolute path: `fs`
 // patterns are absolute, and the capability check normalizes before it matches.
-fun absolute_or_here(name: &str, here: &str).R: String {
+fun absolute_or_here(name: &str, here: &str).return: String {
     if path.is_absolute(name) {
         return String.from_str(name)
     }
@@ -150,7 +150,7 @@ fun absolute_or_here(name: &str, here: &str).R: String {
 // `process.args()` includes `argv[0]`, the program's own path, exactly as a C
 // program sees it, so a tool that parses its arguments drops the first entry.
 // Without this, `./cli_tool file.txt` would treat `./cli_tool` as a file to read.
-fun without_program_name(argv: &List<String>).R: List<String> {
+fun without_program_name(argv: &List<String>).return: List<String> {
     var out: List<String> = List.empty()
     var i: usize = 1
     while i < argv.len() {

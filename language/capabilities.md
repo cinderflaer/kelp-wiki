@@ -374,7 +374,7 @@ compiler therefore refuses the value by name, for the wrapper spelling and the
 `extern fun` one alike, and whether or not the naming module holds the domain
 (`kelpc/src/infer.rs::function_value_at`, commit `fccb578`). A function *literal*
 over a gated call
-(`val f = fun(p: &str).R: Bytes = fs.read(p)`) is a different shape: its body is a
+(`val f = fun(p: &str).return: Bytes = fs.read(p)`) is a different shape: its body is a
 direct call in the module that wrote it, so it is checked at run time like any
 other. Nothing in the shipped stdlib or in the examples uses a gated item as a
 value.
@@ -392,7 +392,7 @@ below still works and is the simpler option for a quick test:
 impl "std/fs" caps(fs = ["/srv/data/**"])
 impl "std/str"
 
-fun read(name: &str).R: String = fs.read_text(str.concat("/srv/data/", name))
+fun read(name: &str).return: String = fs.read_text(str.concat("/srv/data/", name))
 ```
 
 Anything outside `/srv/data/**` is refused at the call, and the caller sees the

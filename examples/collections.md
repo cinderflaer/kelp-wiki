@@ -42,7 +42,7 @@ fun main() {
     print("listx      sum = ${listx.sum_i32(xs)}")
     print("listx      min = ${listx.min_i32(xs)}")
     print("listx      max = ${listx.max_i32(xs)}")
-    print("listx      fold(+, 0) = ${listx.fold(xs, 0, fun(acc: i32, x: &i32).R: i32 = acc + x)}")
+    print("listx      fold(+, 0) = ${listx.fold(xs, 0, fun(acc: i32, x: &i32).return: i32 = acc + x)}")
     print("listx      unique = ${listx.unique_i32(xs).len()} distinct values")
 
     val at = listx.position_i32(xs, 2)
@@ -62,7 +62,7 @@ fun main() {
     print("listx      chunks of 3 = ${groups.len()} groups, first has ${groups.get(0).items.len()}")
 
     // sort_by works for any element type, here descending.
-    listx.sort_by(xs, fun(a: &i32, b: &i32).R: bool = a > b)
+    listx.sort_by(xs, fun(a: &i32, b: &i32).return: bool = a > b)
     print("listx      sorted descending = ${xs.get(0)} ${xs.get(1)} ${xs.get(2)} ${xs.get(3)}")
 
     // Sets: insertion order is preserved, so these print in a stable order.
@@ -123,7 +123,7 @@ set        first member = alpha
 ## What to take from it
 
 - **A closure parameter is written `&T`, and a `Copy` element is used directly
-  inside the literal.** `fun(acc: i32, x: &i32).R: i32 = acc + x` needs no `*x`.
+  inside the literal.** `fun(acc: i32, x: &i32).return: i32 = acc + x` needs no `*x`.
   Writing `*x` is an error, not a style choice.
 - **`fold` threads an accumulator of any type, owned included,** while `zip` and
   `chunks` need `Copy` elements because they build new containers out of what

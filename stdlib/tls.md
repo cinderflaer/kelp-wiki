@@ -181,23 +181,23 @@ reaches `std/tls`, and hosted only. Verification stays on in both directions (se
 [below](#certificate-verification-is-not-optional)).
 
 ```
-tls.server_config_pem(cert_chain_pem: Bytes, key_pem: Bytes).R: Result<ServerConfig, TlsError>
-tls.server_config_pem_with(cert, key, opts: &ServerOptions).R: Result<ServerConfig, TlsError>
+tls.server_config_pem(cert_chain_pem: Bytes, key_pem: Bytes).return: Result<ServerConfig, TlsError>
+tls.server_config_pem_with(cert, key, opts: &ServerOptions).return: Result<ServerConfig, TlsError>
 
-tls.server_options().R: ServerOptions
+tls.server_options().return: ServerOptions
 ServerOptions.min_version(v: TlsVersion) -> ServerOptions       // Tls12 (default) | Tls13
 ServerOptions.alpn(protocols: &List<String>) -> ServerOptions   // the server's preference order
 ServerOptions.require_client_cert_pem(ca_pem: Bytes) -> ServerOptions
 ServerOptions.handshake_timeout_ms(ms: u64) -> ServerOptions    // default 10000, 0 waits forever
 ServerConfig.free()
 
-tls.accept(config: &ServerConfig, s: net.Socket).R: Result<TlsStream, TlsError>
-TlsStream.alpn().R: Option<String>                // negotiated protocol, server and client streams
-TlsStream.peer_cert_subject().R: Option<String>   // RFC 2253 subject of the peer's certificate
+tls.accept(config: &ServerConfig, s: net.Socket).return: Result<TlsStream, TlsError>
+TlsStream.alpn().return: Option<String>                // negotiated protocol, server and client streams
+TlsStream.peer_cert_subject().return: Option<String>   // RFC 2253 subject of the peer's certificate
 
 // std/tlsfile
-tlsfile.read_pem(path: &str, what: &str).R: Result<Bytes, TlsError>
-tlsfile.ca_pem(path: &str).R: Result<Bytes, TlsError>   // read_pem with the role "CA certificate"
+tlsfile.read_pem(path: &str, what: &str).return: Result<Bytes, TlsError>
+tlsfile.ca_pem(path: &str).return: Result<Bytes, TlsError>   // read_pem with the role "CA certificate"
 ```
 
 - **A configuration is built once from PEM bytes and never changes.** The
@@ -446,12 +446,12 @@ impl "std/result"
 impl "std/option"
 impl "std/str"
 
-fun show(o: move option.Option<String>).R: String = when o {
+fun show(o: move option.Option<String>).return: String = when o {
     Some(v) -> v
     None -> String.from_str("-")
 }
 
-fun make_config().R: result.Result<tls.ServerConfig, tls.TlsError> {
+fun make_config().return: result.Result<tls.ServerConfig, tls.TlsError> {
     val cert = tlsfile.read_pem("/etc/myapp/certs/server.pem", "certificate chain")?
     val key = tlsfile.read_pem("/etc/myapp/certs/server.key", "private key")?
     val ca = tlsfile.read_pem("/etc/myapp/certs/ca.pem", "client CA")?
@@ -462,7 +462,7 @@ fun make_config().R: result.Result<tls.ServerConfig, tls.TlsError> {
     return tls.server_config_pem_with(cert, key, &opts)
 }
 
-fun serve_one(fd: i32).R: String {
+fun serve_one(fd: i32).return: String {
     val l = net.Listener(fd = fd)
     return when make_config() {
         Err(_) -> String.from_str("server: config failed")
@@ -495,7 +495,7 @@ fun serve_one(fd: i32).R: String {
     }
 }
 
-fun client(port: u16, with_cert: bool).R: String {
+fun client(port: u16, with_cert: bool).return: String {
     var opts = tls.client_options().with_timeout_ms(10000)
     when tlsfile.ca_pem("/etc/myapp/certs/ca.pem") {
         Ok(pem) -> opts = opts.with_ca_pem(pem)

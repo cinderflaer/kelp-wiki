@@ -100,10 +100,11 @@ the case rule and the two style findings a formatter cannot make.
 ## Retiring a spelling
 
 When a spelling is replaced or deleted it goes through the register rather than
-straight out (`syntax.md` 23, `kelpc/src/deprecated.rs`). The register is **empty
-today**: its two entries, the `as name` clause on an `impl` line and the `with` in
-front of a capability grant, were removed in this cycle rather than deprecated
-again. The mechanism and `--deny-outdated` stay for the next entry:
+straight out (`syntax.md` 23, `kelpc/src/deprecated.rs`). The register holds
+**one entry today**, the return marker `.R:` (replaced by `.return:` in 26.10.3 and
+removed in the next development cycle). Its two earlier entries, the `as name`
+clause on an `impl` line and the `with` in front of a capability grant, were
+removed once their deadline passed. The steps for an entry:
 
 1. Migrate the compiler's own sources first. A deprecation in the shipped stdlib
    would warn every program that imports that module about a file its reader

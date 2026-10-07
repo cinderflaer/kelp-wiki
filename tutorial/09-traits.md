@@ -18,9 +18,9 @@ two kinds of dispatch, then operators, `Display` and generics. Reference pages:
 impl "std/str"
 
 trait Shape {
-    fun Self.area().R: f64
-    fun Self.name().R: str
-    fun Self.describe().R: String {
+    fun Self.area().return: f64
+    fun Self.name().return: str
+    fun Self.describe().return: String {
         return str.concat("a shape called ", self.name())
     }
     fun mut Self.scale(f: f64)
@@ -30,17 +30,17 @@ datac Circle(var r: f64)
 datac Rect(var w: f64, var h: f64)
 
 impl Shape for Circle {
-    fun Self.area().R: f64 = self.r * self.r * 3.14159
-    fun Self.name().R: str = "circle"
+    fun Self.area().return: f64 = self.r * self.r * 3.14159
+    fun Self.name().return: str = "circle"
     fun mut Self.scale(f: f64) {
         self.r = self.r * f
     }
 }
 
 impl Shape for Rect {
-    fun Self.area().R: f64 = self.w * self.h
-    fun Self.name().R: str = "rect"
-    fun Self.describe().R: String {
+    fun Self.area().return: f64 = self.w * self.h
+    fun Self.name().return: str = "rect"
+    fun Self.describe().return: String {
         return String.from_str("a rectangle that overrides describe")
     }
     fun mut Self.scale(f: f64) {
@@ -50,7 +50,7 @@ impl Shape for Rect {
 }
 
 // static dispatch: one copy of the function per concrete type
-fun area_of<T: Shape>(s: &T).R: f64 = s.area()
+fun area_of<T: Shape>(s: &T).return: f64 = s.area()
 
 // dynamic dispatch through a borrowed trait object
 fun report(s: &dyn Shape) {
@@ -107,14 +107,14 @@ Forgetting a method is an error that tells you what to add:
 
 ```kelp
 trait Shape {
-    fun Self.area().R: f64
-    fun Self.name().R: str
+    fun Self.area().return: f64
+    fun Self.name().return: str
 }
 
 datac Circle(var r: f64)
 
 impl Shape for Circle {
-    fun Self.area().R: f64 = self.r * self.r * 3.14159
+    fun Self.area().return: f64 = self.r * self.r * 3.14159
 }
 
 fun main() {
@@ -124,7 +124,7 @@ fun main() {
 
 ```text
 $ kelpc check c9bad2.kp
-error: trait 'Shape' declares 'fun Self.name().R: str', and 'impl Shape for Circle' does not implement it: add 'fun Self.name().R: str { ... }' to the block
+error: trait 'Shape' declares 'fun Self.name().return: str', and 'impl Shape for Circle' does not implement it: add 'fun Self.name().return: str { ... }' to the block
   --> c9bad2.kp:8:1
 ```
 
@@ -135,17 +135,17 @@ no impl is caught at the call:
 
 ```kelp
 trait Shape {
-    fun Self.area().R: f64
+    fun Self.area().return: f64
 }
 
 datac Circle(var r: f64)
 datac Point(var x: f64)
 
 impl Shape for Circle {
-    fun Self.area().R: f64 = self.r * self.r * 3.14159
+    fun Self.area().return: f64 = self.r * self.r * 3.14159
 }
 
-fun area_of<T: Shape>(s: &T).R: f64 = s.area()
+fun area_of<T: Shape>(s: &T).return: f64 = s.area()
 
 fun main() {
     print(area_of(Point(x = 1.0)))
@@ -182,11 +182,11 @@ impl "std/fmt"
 datac Money(val cents: i64)
 
 impl ops.Add for Money {
-    fun Self.add(rhs: &Money).R: Money = Money(cents = self.cents + rhs.cents)
+    fun Self.add(rhs: &Money).return: Money = Money(cents = self.cents + rhs.cents)
 }
 
 impl ops.Ord for Money {
-    fun Self.cmp(other: &Money).R: i32 {
+    fun Self.cmp(other: &Money).return: i32 {
         if self.cents < other.cents {
             return -1
         }
@@ -198,7 +198,7 @@ impl ops.Ord for Money {
 }
 
 impl fmt.Display for Money {
-    fun Self.to_text().R: String {
+    fun Self.to_text().return: String {
         var out = String.from_str("$")
         val dollars = fmt.int(self.cents / 100)
         val rest = fmt.int(self.cents % 100)
@@ -215,12 +215,12 @@ impl fmt.Display for Money {
 // a generic record and a bounded generic function
 datac Pair<A, B>(val first: A, val second: B)
 
-fun sum_three<T: ops.Add>(a: T, b: T, c: T).R: T = a + b + c
+fun sum_three<T: ops.Add>(a: T, b: T, c: T).return: T = a + b + c
 
 // a const generic: the capacity is part of the type
 datac Ring<const N: usize>(var items: [i32; N], var len: usize)
 
-fun mut Ring<const N: usize>.push(v: i32).R: bool {
+fun mut Ring<const N: usize>.push(v: i32).return: bool {
     if self.len >= N {
         return false
     }
@@ -229,7 +229,7 @@ fun mut Ring<const N: usize>.push(v: i32).R: bool {
     return true
 }
 
-fun Ring<const N: usize>.capacity().R: usize = N
+fun Ring<const N: usize>.capacity().return: usize = N
 
 fun main() {
     val a = Money(cents = 1250)
@@ -292,8 +292,8 @@ allowed const types are `usize`, `u8` to `u64`, `i32`, `i64` and `bool`.
 
 ```kelp
 trait Named {
-    fun Self.name().R: str
-    fun Self.greet().R: String {
+    fun Self.name().return: str
+    fun Self.greet().return: String {
         return String.from_str("hi")
     }
 }
@@ -302,12 +302,12 @@ datac Dog(val age: i32)
 datac Cat(val age: i32)
 
 impl Named for Dog {
-    fun Self.name().R: str = "dog"
+    fun Self.name().return: str = "dog"
 }
 
 impl Named for Cat {
-    fun Self.name().R: str = "cat"
-    fun Self.greet().R: String {
+    fun Self.name().return: str = "cat"
+    fun Self.greet().return: String {
         return String.from_str("meow")
     }
 }
@@ -335,7 +335,7 @@ impl "std/ops"
 datac Money(val cents: i64)
 
 impl ops.Sub for Money {
-    fun Self.sub(rhs: &Money).R: Money = Money(cents = self.cents - rhs.cents)
+    fun Self.sub(rhs: &Money).return: Money = Money(cents = self.cents - rhs.cents)
 }
 
 fun main() {

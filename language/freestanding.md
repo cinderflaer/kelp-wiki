@@ -316,15 +316,15 @@ All three are bare names of `fun`s in the entry module, `extern`-free, with
 fixed signatures:
 
 ```kelp
-fun alloc(size: usize, align: usize).R: Ptr<u8>                                  // the null pointer on failure
+fun alloc(size: usize, align: usize).return: Ptr<u8>                                  // the null pointer on failure
 fun dealloc(p: Ptr<u8>, size: usize, align: usize)
-fun realloc(p: Ptr<u8>, old: usize, new: usize, align: usize).R: Ptr<u8>         // optional
+fun realloc(p: Ptr<u8>, old: usize, new: usize, align: usize).return: Ptr<u8>         // optional
 ```
 
 A wrong signature is a compile error naming the expected one:
 
 ```text
-error: the allocator function 'alloc' named by coral.toml's '[target]' has the wrong signature: it must be 'fun alloc(usize, usize).R: Ptr<u8>'
+error: the allocator function 'alloc' named by coral.toml's '[target]' has the wrong signature: it must be 'fun alloc(usize, usize).return: Ptr<u8>'
 ```
 
 `alloc` and `dealloc` are required together; `realloc` needs the pair. With a

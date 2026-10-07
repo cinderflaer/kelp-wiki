@@ -39,8 +39,8 @@ error, and so is a `const` or `pd` after a `datac`, `enum` or `fun`
 | [Bindings and assignment](/language/bindings) | `val` and `var`, type inference, assignment, mutable paths |
 | [Operators and expressions](/language/expressions) | precedence, arithmetic, bitwise, `?`, borrows and dereference |
 | [Control flow](/language/control-flow) | `if`/`else`, `if let`, `for`, `while`, `when`, `return`, `break`, `continue` |
-| [Functions](/language/functions) | declaration, `.R: T`, named arguments, function values, closures |
-| [Return types and `return`](/language/returns) | the `.R: T` clause, bodies, the divergence rule, borrowed returns |
+| [Functions](/language/functions) | declaration, `.return: T`, named arguments, function values, closures |
+| [Return types and `return`](/language/returns) | the `.return: T` clause, bodies, the divergence rule, borrowed returns |
 | [Methods and receivers](/language/methods) | `Type.name`, `mut` receivers, generic receivers |
 | [datac and enum](/language/data-types) | records, tagged unions, generics, construction, matching |
 | [Generics and type parameters](/language/generics) | type parameters, instantiation, generic receivers and functions |
@@ -78,14 +78,14 @@ impl "std/str"
 
 datac Point(var x: i32, var y: i32)
 
-fun area(p: &Point).R: i32 = p.x * p.y
+fun area(p: &Point).return: i32 = p.x * p.y
 
 enum Shape {
     Circle(val r: f64)
     Empty
 }
 
-fun describe(s: &Shape).R: &str = when s {
+fun describe(s: &Shape).return: &str = when s {
     Circle(_) -> "circle"
     Empty -> "empty"
 }

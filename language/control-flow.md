@@ -8,10 +8,12 @@ Source section:
 [`syntax.md` §6](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
 
 Kelp has `if`/`else` (with `if let`), `for`, `while`, `when`, `return`, and
-`break` and `continue` inside a loop. There is no `loop`, no labelled loop, no
-`goto` and no exceptions. `break` leaves the innermost loop and `continue` goes
-on to its next pass ([Iterators, `for` and `break`](/language/iterators)); a
-condition that ends a loop can still go in the `while` header.
+`break` and `continue` inside a loop, `loop { ... }` for an endless loop, and a
+label on a loop for leaving or continuing an outer one, and `break value` out of
+a `loop` used as a value. There is no `goto` and no exceptions. `break` leaves the innermost loop and
+`continue` goes on to its next pass, `break 'outer` and `continue 'outer` act on
+the loop labelled `'outer`
+([Iterators, `for` and `break`](/language/iterators)).
 
 ## `if` / `else`
 
@@ -129,6 +131,11 @@ for x in xs {
   is walked as an index-and-`while` loop, where the index advances before the
   body runs so that `continue` reaches the next element. A type with an
   `Iterator` impl is walked by calling `next()` until `None`.
+- **A destructuring binding takes an element apart**: `for (k, v) in pairs` walks a
+  `List<(K, V)>` and binds both positions, `_` ignores one, and a nested pattern
+  takes a nested tuple. It reads as `for e in pairs { val (k, v) = e ... }`,
+  so the element is moved into the pattern exactly as a destructuring `val`
+  moves it. The pattern needs an element that is a tuple.
 - The element binding gives exactly what `List.get` gives: a copy of a `Copy`
   element, a shared borrow of an owned one. `for n in numbers` reads `n: i32`;
   `for name in names` reads `name: &String`, so a `str` call wants
@@ -164,7 +171,7 @@ for x in xs {
 `when` is a chain of conditions that reads as a value:
 
 ```kelp
-fun classify(n: i32).R: &str = when {
+fun classify(n: i32).return: &str = when {
     n > 0 -> "pos"
     n < 0 -> "neg"
     else -> "zero"
@@ -178,7 +185,7 @@ when a value is produced, and `when` desugars to nested `if`/`else if`/`else`.
 With a **scrutinee**, `when` becomes pattern matching over an `enum`:
 
 ```kelp
-fun area(s: &Shape).R: f64 = when s {
+fun area(s: &Shape).return: f64 = when s {
     Circle(r) -> 3.14159 * r * r
     Rect(w, h) -> w * h
     Empty -> 0.0
@@ -198,14 +205,54 @@ fun area(s: &Shape).R: f64 = when s {
   arm is present.
 - There are no guards, no literal patterns and no nested patterns in v1. An arm
   head is a variant name with one binding per payload field, and `_` ignores a
-  payload.
+  payload. The one exception is a **tuple pattern**, below.
 - A payload binds as a copy when `Copy`, **by value** when it is owned and the
   scrutinee is an owned place, and as a shared borrow otherwise.
+
+### A tuple pattern
+
+Several values can be matched together by writing them as a tuple and each arm as
+a tuple pattern:
+
+```kelp
+fun combine(a: &Option<i32>, b: &Option<i32>).return: i32 = when (a, b) {
+    (Some(x), Some(y)) -> x + y
+    (Some(x), None) -> x
+    (None, y) -> 0
+}
+```
+
+- A position is a variant pattern (`Some(x)`, `None`; a capitalized name), a
+  **literal** (`0`, `-1`, `'a'`, `true`), a **nested tuple pattern**
+  (`((a, b), c)`), a lowercase name that matches anything and binds it, or `_`. All arms have the
+  same number of positions, at least two. `else` may stand for the rest.
+- A scrutinee written as a tuple literal is **not built**: its elements are the
+  positions, so a parameter or a field is matched where it lives and a borrowed
+  element (`&Option<i32>`) is fine. Any other tuple value is bound once and its
+  positions are matched.
+- Arms are tried in order, the first position that an arm names a variant for is
+  matched first, and each level is an ordinary single-position `when`, so the
+  usual rules hold at every level: a variant with no arm (and no arm that matches
+  anything there) is the "not exhaustive" error naming the variant.
+- A position tested against literals is compared with `==`, so a number has no
+  list of values to be exhaustive over: some arm must match anything in that
+  position (a name, `_`, or `else`), or the pattern is refused. A string literal
+  is not a position pattern, and a guard is not supported. The value read by a
+  matching name moves out of an owned position exactly as a payload does.
+
+```kelp
+fun classify(a: i32, b: i32).return: i32 = when (a, b) {
+    (0, 0) -> 100
+    (0, y) -> y
+    (x, 0) -> x * 10
+    (x, y) -> x + y
+}
+```
 
 ## `return`
 
 ```kelp
-fun sum_to(n: i32).R: i32 {
+fun sum_to(n: i32).return: i32 {
     var acc = 0
     var i = 1
     while i <= n {
@@ -216,7 +263,7 @@ fun sum_to(n: i32).R: i32 {
 }
 ```
 
-`return` with no value is allowed in a function with no `.R: T`. An
+`return` with no value is allowed in a function with no `.return: T`. An
 expression-bodied function does not use `return` at all.
 
 A block whose **last statement is `panic(...)`** diverges, so it satisfies any
@@ -224,7 +271,7 @@ declared return type, including a borrowed one. That rule is what makes a
 "this cannot happen" accessor expressible:
 
 ```kelp
-fun unwrap<T>(o: &Option<T>).R: T {
+fun unwrap<T>(o: &Option<T>).return: T {
     if let Some(v) = o {
         return v
     }

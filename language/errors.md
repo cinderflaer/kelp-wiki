@@ -51,7 +51,7 @@ print(result.unwrap_or(r = parsed, fallback = 0))
 the enclosing function, otherwise the expression's value is the success payload.
 
 ```kelp
-fun quarter(n: i64).R: result.Result<i64, str.ParseErr> {
+fun quarter(n: i64).return: result.Result<i64, str.ParseErr> {
     val h = half(n = n)?
     return half(n = h)
 }
@@ -73,7 +73,7 @@ fun quarter(n: i64).R: result.Result<i64, str.ParseErr> {
 - It applies to the expression it is written on, so a tuple is never its operand.
   When a tuple is the *success* payload, `?` reaches the `Result` the element is
   and hands the tuple back: with
-  `fun mk(n: i32).R: Result<(i32, i32), String>`, the line
+  `fun mk(n: i32).return: Result<(i32, i32), String>`, the line
   `val (a, b) = mk(n)?` binds the tuple and takes it apart. A tuple is not an
   `enum`, so `?` written on the tuple itself is the ordinary "the operand must be
   an `enum`" refusal ([Types](/language/types)).
@@ -120,7 +120,7 @@ diverges, so it satisfies any declared return type, including a borrowed one.
 That is what makes a "this cannot happen" accessor expressible:
 
 ```kelp
-fun unwrap<T>(o: &Option<T>).R: T {
+fun unwrap<T>(o: &Option<T>).return: T {
     if let Some(v) = o {
         return v
     }

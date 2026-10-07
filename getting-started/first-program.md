@@ -80,7 +80,7 @@ print(out)
 ```kelp
 datac Point(val x: i32, val y: i32)
 
-fun area(p: &Point).R: i32 = p.x * p.y
+fun area(p: &Point).return: i32 = p.x * p.y
 
 fun main() {
     val p = Point(x = 3, y = 4)
@@ -92,7 +92,7 @@ fun main() {
 - A `datac` field is `val` (immutable) or `var` (mutable).
 - A parameter is a **borrow**, so `area(p)` does not move `p` and `p` is still
   usable afterwards.
-- The return type is written `.R: T`; no `.R` means the function returns `Unit`.
+- The return type is written `.return: T`; no `.return` means the function returns `Unit`.
 
 ## Enums and `when`
 
@@ -103,7 +103,7 @@ enum Shape {
     Empty
 }
 
-fun area(s: &Shape).R: f64 = when s {
+fun area(s: &Shape).return: f64 = when s {
     Circle(r) -> 3.14159 * r * r
     Rect(w, h) -> w * h
     Empty -> 0.0
@@ -154,14 +154,14 @@ function. `if let` handles one on the spot:
 impl "std/str"
 impl "std/result"
 
-fun half(n: i64).R: result.Result<i64, str.ParseErr> {
+fun half(n: i64).return: result.Result<i64, str.ParseErr> {
     if n < 0 {
         return result.Result.Err(error = str.ParseErr.Invalid)
     }
     return result.Result.Ok(value = n / 2)
 }
 
-fun quarter(n: i64).R: result.Result<i64, str.ParseErr> {
+fun quarter(n: i64).return: result.Result<i64, str.ParseErr> {
     val h = half(n = n)?          // a failure returns immediately
     return half(n = h)
 }

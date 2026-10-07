@@ -138,7 +138,7 @@ to be updated when it moves.
 | | |
 | --- | --- |
 | Types | `i32` `i64` `u8` `u16` `u32` `u64` `usize` `isize` `f32` `f64` `bool` `char`, plus borrowed text as `str` and `View` |
-| Data | `datac` records with `val`/`var` fields, tuple types read by a destructuring binding, `enum` tagged unions, exhaustive `when`, `if let`, type parameters (including `const N: usize`), `const`, `pd` passdowns |
+| Data | `datac` records with `val`/`var` fields, tuple types read by a destructuring binding or `t.0`, `enum` tagged unions, exhaustive `when`, `if let`, type parameters (including `const N: usize`), `const`, `pd` passdowns |
 | Ownership | owned builtins `String`, `Bytes`, `List<T>`, `Map<K, V>`, `Box<T>` and the fixed-size array `[T; N]`; moves, shared and `mut` borrows, drops at end of scope, no garbage collector |
 | Memory | `static`/`static mut`, `defer`, `Atomic<T>`, and `unsafe` with `Ptr<T>`, volatile access and `repr(...)` layout control, gated per module by `coral.toml`'s `[unsafe]` list |
 | Errors | `Option`, `Result`, the `?` operator (converting a failure through `From`), `panic`/`assert` |
@@ -165,7 +165,7 @@ enum Shape {
     Empty
 }
 
-fun area(s: &Shape).R: f64 = when s {
+fun area(s: &Shape).return: f64 = when s {
     Circle(r) -> 3.14159 * r * r
     Rect(w, h) -> w * h
     Empty -> 0.0

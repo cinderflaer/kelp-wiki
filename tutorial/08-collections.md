@@ -31,7 +31,7 @@ fun main() {
     val last = xs.pop()
     print("popped ${last}, left ${xs.len()}")
 
-    val doubled = list.map(xs, fun(x: &i32).R: i32 = x * 2)
+    val doubled = list.map(xs, fun(x: &i32).return: i32 = x * 2)
     print("doubled first ${doubled.get(0)}")
 
     // a Map keeps insertion order
@@ -110,7 +110,7 @@ neither, and the compiler says so.
 
 `list.map`, `list.filter`, `list.find_index`, `list.any`, `list.all` and `list.each`
 are free functions in `std/list` that take a closure (chapter 10), written
-`fun(x: &i32).R: i32 = x * 2`; inside, a `Copy` element is used directly. `filter`
+`fun(x: &i32).return: i32 = x * 2`; inside, a `Copy` element is used directly. `filter`
 needs a `Copy` element.
 
 A list of lists needs no wrapper: `List<List<i32>>`.
@@ -213,7 +213,7 @@ fun main() {
     for i in [1, 2, 3, 4, 5, 6] {
         xs.push(i.to_i64())
     }
-    val evens = list.filter(xs, fun(x: &i64).R: bool = x % 2 == 0)
+    val evens = list.filter(xs, fun(x: &i64).return: bool = x % 2 == 0)
     var total: i64 = 0
     for e in evens {
         total += e

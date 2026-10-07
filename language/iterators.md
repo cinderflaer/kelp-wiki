@@ -25,7 +25,7 @@ control in both forms and in a written `while`.
 ```kelp
 pub trait Iterator {
     type Item
-    fun mut Self.next().R: option.Option<Self::Item>
+    fun mut Self.next().return: option.Option<Self::Item>
 }
 ```
 
@@ -46,7 +46,7 @@ datac Fib(var a: i64, var b: i64)
 
 impl iter.Iterator for Fib {
     type Item = i64
-    fun mut Self.next().R: option.Option<i64> {
+    fun mut Self.next().return: option.Option<i64> {
         val v = self.a
         self.a = self.b
         self.b = v + self.b
@@ -139,10 +139,18 @@ Reading it line by line:
 - **Anything else** is refused, and the message names the trait:
 
   ```
-  error: 'for' walks a 'List<T>' or a type that implements 'Iterator', and 'i32' is neither: implement 'std.iter.Iterator' for it ('type Item' and 'fun mut Self.next().R: option.Option<Self::Item>'), or walk a 'List' by index
+  error: 'for' walks a 'List<T>' or a type that implements 'Iterator', and 'i32' is neither: implement 'std.iter.Iterator' for it ('type Item' and 'fun mut Self.next().return: option.Option<Self::Item>'), or walk a 'List' by index
   ```
 
-  That includes a `Map`: iterate `keys()` and look up, as before.
+  A `Map` is walked with a pattern instead: see below.
+
+- **`for (key, value) in map`** walks a `Map<K, V>` (26.10.3). The pattern is two
+  names, or `_` for one you do not need, and the map must be a named place. It is
+  the same as `for key in map.keys() { val value = map.get(key) ... }`, so the keys
+  are a snapshot in insertion order: the body may change the map, and a key it
+  removes makes the later lookup panic like any `get` of an absent key. `key` is a
+  copy for a `Copy` key and a shared borrow otherwise, and `value` is what `get`
+  gives (a copy, or a borrow).
 
 The iterable is evaluated once, so `for x in make()` calls `make` a single time.
 
@@ -210,7 +218,57 @@ done 7
   error: a deferred action cannot contain 'break' or 'continue': the action runs while the block is being left, so it cannot leave the loop again
   ```
 
-- There is no `loop` expression, no labelled loop and no `break` with a value.
+- **`loop` can be a value** (26.10.3): `break value` leaves the loop and is what the
+  `loop` evaluates to.
+
+  ```kelp
+  var n = 0
+  val doubled = loop {
+      n += 1
+      if n == 4 {
+          break n * 2
+      }
+  }                          // 8
+  ```
+
+  Every `break` out of such a loop carries a value and at least one does (the
+  compiler refuses a plain `break`, and a value loop with none); the values have
+  one type, decided by the first, and an integer literal there takes the default
+  `i32` as it would anywhere without a written type, so bind a `val v: i64 = 5`
+  first when the loop should produce a different width. A label works:
+  `val x = 'outer: loop { ... break 'outer value ... }`. The value starts with a
+  name, a literal (a leading `-` included), a template or a `[`; wrap anything else
+  in a `val` first. Only a `loop` can produce a value: `while` and `for` cannot
+  `break` with one. `return` and `?` inside the loop still leave the function.
+
+### `loop` and labels
+
+`loop { ... }` is an endless loop, the same as `while true { ... }`; the body ends
+with `break` or `return`. A label is written before a loop, as `'name:`, and
+`break 'name` or `continue 'name` acts on that loop from inside a loop nested in it:
+
+```kelp
+'rows: for y in [1, 2, 3] {
+    for x in [1, 2, 3] {
+        if x == y {
+            continue 'rows      // the next y
+        }
+        if y == 3 {
+            break 'rows         // leave both loops
+        }
+    }
+}
+```
+
+- A label is a `'` and a name (`'outer`); the closing `'` of a character literal
+  is what tells the two apart. It may label a `while`, a `for` or a `loop`.
+- A label that names no enclosing loop is an error. A label does not cross a
+  function, a `fun` literal or a block passed to a call.
+- `loop` is read as the keyword only at the start of a statement and only when a
+  `{` follows, so a function called `loop` is still a name everywhere else.
+- Every owned local of every loop an exit leaves is freed, as for a plain `break`.
+  The compiler writes a labelled exit as a hidden flag and ordinary `break`s, so
+  nothing else about loops changed.
 
 ## `std/iter`
 

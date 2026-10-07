@@ -19,7 +19,7 @@ fun show(s: String) {
     print("show: ${s}")
 }
 
-fun consume(s: move String).R: usize = s.len()
+fun consume(s: move String).return: usize = s.len()
 
 fun main() {
     // a parameter borrows: `name` is still ours afterwards
@@ -88,7 +88,7 @@ error: use of moved value 'a'
 ```
 
 ```kelp
-fun consume(s: move String).R: usize = s.len()
+fun consume(s: move String).return: usize = s.len()
 
 fun main() {
     val a = String.from_str("bob")
@@ -169,7 +169,7 @@ would create two owners of one buffer:
 ```kelp
 datac Bag(val xs: List<i32>, val name: String)
 
-fun steal(b: &Bag).R: List<i32> = b.xs
+fun steal(b: &Bag).return: List<i32> = b.xs
 
 fun main() {
     val b = Bag(xs = List.empty(), name = "bag")
@@ -198,7 +198,7 @@ or clone it.
 
 1. Write `exclaim(s: mut String)` that appends `!`, and call it twice on a
    `var`. What happens when the argument is a `val`?
-2. Write `name_of(b: move Bag).R: String` over `datac Bag(val xs: List<i32>, val name: String)`
+2. Write `name_of(b: move Bag).return: String` over `datac Bag(val xs: List<i32>, val name: String)`
    that takes the name out and returns it.
 
 <details>
@@ -248,7 +248,7 @@ error: cannot assign to 'greeting': not declared 'var'
 ```kelp
 datac Bag(val xs: List<i32>, val name: String)
 
-fun name_of(b: move Bag).R: String {
+fun name_of(b: move Bag).return: String {
     val n = b.name
     return n
 }

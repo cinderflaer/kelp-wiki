@@ -41,7 +41,7 @@ impl "std/option"
 impl "std/str"
 
 // A separate function, so the arithmetic stays out of `main`.
-fun power_of_two(exponent: u32).R: bigint.BigInt {
+fun power_of_two(exponent: u32).return: bigint.BigInt {
     val two = bigint.from_i64(2)
     var result = bigint.from_i64(1)
     var i: u32 = 0

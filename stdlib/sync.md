@@ -25,15 +25,15 @@ program declares the module's surface it is using. It is ungated, like
 ## Surface
 
 ```
-fun Mutex.new(value: move T).R: Mutex<T>
-fun Mutex<T>.lock(block: scoped fun(mut T).R: R).R: R
-fun Mutex<T>.into_inner().R: T
+fun Mutex.new(value: move T).return: Mutex<T>
+fun Mutex<T>.lock(block: scoped fun(mut T).return: R).return: R
+fun Mutex<T>.into_inner().return: T
 ```
 
 | Call | Returns | Notes |
 | --- | --- | --- |
 | `Mutex.new(value: move T)` | `Mutex<T>` | takes the guarded value by move |
-| `Mutex<T>.lock(block: scoped fun(mut T).R: R)` | `R` | runs the block while the lock is held; the block's tail is the call's value |
+| `Mutex<T>.lock(block: scoped fun(mut T).return: R)` | `R` | runs the block while the lock is held; the block's tail is the call's value |
 | `Mutex<T>.into_inner()` | `T` | consumes the mutex and hands the value out |
 
 `Mutex<T>` also has `wait_while` and `wait_while_timeout`, which pair it with a
@@ -71,14 +71,14 @@ The second call's `return` ends the block, the lock is released, and the later
 
 ## The scoped lock block
 
-- `m.lock { v -> ... }` passes `v: mut T` to a `scoped fun(mut T).R: R`, so the
+- `m.lock { v -> ... }` passes `v: mut T` to a `scoped fun(mut T).return: R`, so the
   mutable borrow is the existing non-escaping one: it cannot be stored in a
   `datac`, returned, put in a container, or captured by an ordinary closure,
   because those are all ordinary type mismatches. The block's tail is the call's
   value.
 - The block's return type is inferred from the block. `R` is not known before
   the block is checked (`m.lock { v -> *v }` writes no type), so the literal is
-  checked with its parameter types from the expected `scoped fun(mut T).R: R`
+  checked with its parameter types from the expected `scoped fun(mut T).return: R`
   and its return from the body's tail. When the call site names a type
   (`return m.lock { v -> ... }` in a function returning `Result<_, _>`), that
   type is used instead, which is what lets a `?` inside the block propagate the
@@ -117,7 +117,7 @@ impl "std/result"
 
 pd val counter: Mutex<i64> = Mutex.new(0)
 
-fun bump(c: &Mutex<i64>).R: i64 {
+fun bump(c: &Mutex<i64>).return: i64 {
     c.lock { v -> *v = *v + 1 }
     0
 }
@@ -136,12 +136,12 @@ A reader/writer lock in the same shape as `Mutex<T>`: a compiler builtin, not
 is reached only through a scoped block.
 
 ```
-fun RwLock.new(value: move T).R: RwLock<T>
-fun RwLock<T>.read(block: scoped fun(&T).R: R).R: R
-fun RwLock<T>.write(block: scoped fun(mut T).R: R).R: R
-fun RwLock<T>.try_read(block: scoped fun(&T).R: R).R: Option<R>
-fun RwLock<T>.try_write(block: scoped fun(mut T).R: R).R: Option<R>
-fun RwLock<T>.into_inner().R: T
+fun RwLock.new(value: move T).return: RwLock<T>
+fun RwLock<T>.read(block: scoped fun(&T).return: R).return: R
+fun RwLock<T>.write(block: scoped fun(mut T).return: R).return: R
+fun RwLock<T>.try_read(block: scoped fun(&T).return: R).return: Option<R>
+fun RwLock<T>.try_write(block: scoped fun(mut T).return: R).return: Option<R>
+fun RwLock<T>.into_inner().return: T
 ```
 
 | Call | Returns | Notes |
@@ -162,7 +162,7 @@ impl "std/option"
 
 pd val config: RwLock<i64> = RwLock.new(10)
 
-fun bump(c: &RwLock<i64>).R: i64 {
+fun bump(c: &RwLock<i64>).return: i64 {
     c.write { v -> *v += 5 }
     c.read { v -> *v }
 }
@@ -227,7 +227,7 @@ impl "std/result"
 
 pd val rw: RwLock<i64> = RwLock.new(0)
 
-fun boom(r: &RwLock<i64>).R: i64 {
+fun boom(r: &RwLock<i64>).return: i64 {
     r.write { v ->
         *v = 99
         panic("writer exploded")
@@ -262,11 +262,11 @@ sleep, which a scoped guard cannot express, so the wait is a method **on the
 mutex** that takes the `Condvar`:
 
 ```
-fun Condvar.new().R: Condvar
+fun Condvar.new().return: Condvar
 fun Condvar.notify_one()
 fun Condvar.notify_all()
-fun Mutex<T>.wait_while(cv: &Condvar, pred: fun(&T).R: bool, block: scoped fun(mut T).R: R).R: R
-fun Mutex<T>.wait_while_timeout(cv: &Condvar, pred: fun(&T).R: bool, millis: i64, block: scoped fun(mut T).R: R).R: Option<R>
+fun Mutex<T>.wait_while(cv: &Condvar, pred: fun(&T).return: bool, block: scoped fun(mut T).return: R).return: R
+fun Mutex<T>.wait_while_timeout(cv: &Condvar, pred: fun(&T).return: bool, millis: i64, block: scoped fun(mut T).return: R).return: Option<R>
 ```
 
 `m.wait_while(&cv, pred) { v -> ... }` sleeps while `pred(&v)` is true, re-tests
@@ -286,9 +286,9 @@ pd val shared: Shared = Shared(
 datac Mailbox(var ready: bool, var value: i64)
 datac Shared(val box: Mutex<Mailbox>, val cv: Condvar)
 
-fun not_ready(m: &Mailbox).R: bool = !m.ready
+fun not_ready(m: &Mailbox).return: bool = !m.ready
 
-fun consumer(s: &Shared).R: i64 {
+fun consumer(s: &Shared).return: i64 {
     s.box.wait_while(&s.cv, not_ready) { m -> m.value }
 }
 
@@ -324,7 +324,7 @@ block did not run.
 ```kelp
 impl "std/option"
 
-fun not_ready(v: &i64).R: bool = v == 0
+fun not_ready(v: &i64).return: bool = v == 0
 
 fun main() {
     val m: Mutex<i64> = Mutex.new(0)
@@ -350,9 +350,9 @@ value changes the predicate is already false and the second returns `Some(7)`.
 Two small builtin operations carry everything a channel or a pool needs.
 
 ```
-fun Mutex<T>.share().R: Mutex<T>
-fun Condvar.share().R: Condvar
-fun Mutex<T>.swap(value: move T).R: T
+fun Mutex<T>.share().return: Mutex<T>
+fun Condvar.share().return: Condvar
+fun Mutex<T>.swap(value: move T).return: T
 ```
 
 - `share()` returns **another owned handle to the same runtime record**. The
@@ -399,13 +399,13 @@ Both ends are ordinary Kelp values written in `std/sync` over `Mutex`, `Condvar`
 `share` and `swap`; there is no new runtime record.
 
 ```
-fun sync.bounded<T>(cap: usize).R: (Sender<T>, Receiver<T>)
-fun sync.unbounded<T>().R: (Sender<T>, Receiver<T>)
-fun Sender<T>.send(value: move T).R: option.Option<T>
-fun Sender<T>.clone().R: Sender<T>
-fun Receiver<T>.recv().R: result.Result<T, RecvErr>
-fun Receiver<T>.try_recv().R: option.Option<T>
-fun Receiver<T>.recv_timeout(millis: i64).R: result.Result<T, RecvTimeout>
+fun sync.bounded<T>(cap: usize).return: (Sender<T>, Receiver<T>)
+fun sync.unbounded<T>().return: (Sender<T>, Receiver<T>)
+fun Sender<T>.send(value: move T).return: option.Option<T>
+fun Sender<T>.clone().return: Sender<T>
+fun Receiver<T>.recv().return: result.Result<T, RecvErr>
+fun Receiver<T>.try_recv().return: option.Option<T>
+fun Receiver<T>.recv_timeout(millis: i64).return: result.Result<T, RecvTimeout>
 for v in rx { ... }
 ```
 
@@ -485,7 +485,7 @@ impl "std/result"
 impl "std/option"
 impl "std/sync"
 
-fun show(o: move option.Option<i64>).R: i64 = when o {
+fun show(o: move option.Option<i64>).return: i64 = when o {
     Some(v) -> v
     None -> -1
 }
@@ -606,7 +606,7 @@ back
 - **`for v in rx` needs a mutable place**, so bind the pair with `var`. A trait
   impl cannot name a generic instantiation, so `Receiver<T>` is not an
   `Iterator` implementor: the compiler's `for` accepts a generic `datac` whose
-  template declares `fun mut Receiver<T>.next().R: option.Option<T>`, which is
+  template declares `fun mut Receiver<T>.next().return: option.Option<T>`, which is
   an ordinary `next()` call underneath.
 - **Hosted only.** `std/sync` is a hosted module, so a freestanding build names
   the module:

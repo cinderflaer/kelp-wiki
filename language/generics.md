@@ -21,7 +21,7 @@ enum Option<T> {
     None
 }
 
-fun identity<T>(x: T).R: T = x
+fun identity<T>(x: T).return: T = x
 ```
 
 - The parameter list is `<` name (`,` name)* `>` between the declared name and the
@@ -90,7 +90,7 @@ a non-generic function, or a method, whose parameters come from its receiver.
 A receiver method on a generic type writes the type's own parameters, in order:
 
 ```kelp
-fun Pair<A, B>.first_of().R: A = first
+fun Pair<A, B>.first_of().return: A = first
 fun mut Pair<A, B>.replace_second(v: B) { second = v }
 ```
 
@@ -99,19 +99,17 @@ fun mut Pair<A, B>.replace_second(v: B) { second = v }
 - The type arguments are the receiver's own instantiation, so `p.first_of()` on a
   `Pair<i32, String>` is instantiated once for `A = i32, B = String`. There is no
   inference to do, and no way to call a method on the template itself.
-- A method cannot add type parameters of its own beyond the type's.
-- A method on a generic `enum`'s template is refused (`'Option' is a generic enum:
-  a method cannot be declared on the enum template`); a concrete `enum` may declare
-  one, and a value of it calls it ([Methods and receivers](/language/methods)). For
-  a generic `enum`, write a free function over the instantiation instead, as
-  `std/option` does:
-
-  ```kelp
-  fun is_some<T>(o: &Option<T>).R: bool = when o {
-      Some(_) -> true
-      None -> false
-  }
-  ```
+- **A method may add type parameters of its own** (26.10.3), written after its
+  name: `fun Pair<A, B>.map_first<C>(f: fun(A).return: C).return: Pair<C, B>`. They
+  are inferred at the call from the arguments (and the expected type), may carry
+  bounds (`<T: Named>`), and work on a plain type too (`fun Box2.map<U>(...)`). A
+  name that repeats one of the receiver type's parameters is refused, and a
+  `const` parameter of a method's own is not supported yet.
+- **A method on a generic `enum` is allowed** (26.10.3): `fun Opt<T>.is_has()` and
+  `fun Opt<T>.map<U>(...)` are written like a method on a generic `datac`, and a
+  value of the instantiation calls them (`o.map(f)`). A method always borrows its
+  receiver, so one that must take the value apart by `move` (`unwrap_or`) stays a
+  free function, as `std/option` does.
 
 ## Generic functions
 
@@ -119,8 +117,8 @@ A `fun` may take type parameters after its name, and each call site instantiates
 them:
 
 ```kelp
-fun identity<T>(x: T).R: T = x
-fun empty_of<T>().R: List<T> = List.empty()
+fun identity<T>(x: T).return: T = x
+fun empty_of<T>().return: List<T> = List.empty()
 ```
 
 - A parameter or a return type that names `T` is resolved for each instantiation.
@@ -131,7 +129,7 @@ fun empty_of<T>().R: List<T> = List.empty()
   inside it. A generic function that is never called is never checked.
 - `main` may not take type parameters.
 - A parameter of a non-`Copy` type is a shared borrow, exactly as it is in a
-  non-generic function, so `fun first<T>(xs: List<T>).R: T` cannot return an owned
+  non-generic function, so `fun first<T>(xs: List<T>).return: T` cannot return an owned
   element: `get` borrows it, and only a `Copy` value can come back out of a borrow
   ([Ownership and borrowing](/language/ownership)).
 
@@ -141,8 +139,8 @@ A type parameter may carry one or more **bounds** after a `:`, separated by
 `+`. The bound names a `trait` ([Traits and static dispatch](/language/traits)):
 
 ```kelp
-fun area_of<T: Shape>(s: &T).R: f64 = s.area()
-fun describe<T: Shape + Named>(s: &T).R: f64 = s.area() + s.name_length()
+fun area_of<T: Shape>(s: &T).return: f64 = s.area()
+fun describe<T: Shape + Named>(s: &T).return: f64 = s.area() + s.name_length()
 ```
 
 - At every call, the type argument must implement every bound, and a call that
@@ -173,7 +171,7 @@ fun describe<T: Shape + Named>(s: &T).R: f64 = s.area() + s.name_length()
 
 ## What is not generic
 
-- No method type parameters beyond the receiver's own.
+- No `const` parameter of a method's own.
 - No `enum` methods, generic or not.
 - No higher-rank or higher-kinded form: a type argument is always a concrete type.
 - No generic `main`.

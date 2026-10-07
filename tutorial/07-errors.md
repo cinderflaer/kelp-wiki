@@ -25,10 +25,10 @@ enum AppErr {
 }
 
 impl convert.From<str.ParseErr> for AppErr {
-    fun from(value: str.ParseErr).R: AppErr = AppErr.BadNumber
+    fun from(value: str.ParseErr).return: AppErr = AppErr.BadNumber
 }
 
-fun find_user(users: &List<User>, id: i32).R: option.Option<String> {
+fun find_user(users: &List<User>, id: i32).return: option.Option<String> {
     for u in users {
         if u.id == id {
             return option.Option.Some(value = u.name.clone())
@@ -37,7 +37,7 @@ fun find_user(users: &List<User>, id: i32).R: option.Option<String> {
     return option.Option.None
 }
 
-fun parse_age(text: &str).R: result.Result<i64, AppErr> {
+fun parse_age(text: &str).return: result.Result<i64, AppErr> {
     val n = str.parse_i64(text)?
     if n < 0 || n > 150 {
         return result.Result.Err(error = AppErr.OutOfRange(value = n))
@@ -92,10 +92,10 @@ Both backends agreed.
 
 They are plain enums (`Some`/`None` and `Ok`/`Err`), so everything from chapter 5
 applies: construct them by variant (`option.Option.Some(value = ...)`), take them
-apart with `when` or `if let`. Their combinators (`is_none`, `unwrap_or`, `map`, ...)
-are **free functions** in `std/option` and `std/result`, not methods, because a
-generic enum carries none. Import the module with `impl "std/option"` and call
-`option.is_none(missing)`.
+apart with `when` or `if let`. Their combinators are free
+functions in `std/option` and `std/result` (`option.unwrap_or(missing, 0)`), and
+the ones that only borrow are also methods: `missing.is_none()`, `found.map(f)`.
+Import the module with `impl "std/option"`.
 
 Two details the program shows. `find_user` returns `option.Option<String>`: the name
 is cloned out, because the `Option` must own its payload and `users` is only
@@ -132,7 +132,7 @@ exists because the program wrote
 
 ```kelp
 impl convert.From<str.ParseErr> for AppErr {
-    fun from(value: str.ParseErr).R: AppErr = AppErr.BadNumber
+    fun from(value: str.ParseErr).return: AppErr = AppErr.BadNumber
 }
 ```
 
@@ -148,7 +148,7 @@ enum AppErr {
     BadNumber
 }
 
-fun parse(text: &str).R: result.Result<i64, AppErr> {
+fun parse(text: &str).return: result.Result<i64, AppErr> {
     val n = str.parse_i64(text)?
     return result.Result.Ok(value = n)
 }
@@ -160,7 +160,7 @@ fun main() {
 
 ```text
 $ kelpc check c7bad1.kp
-error: '?' cannot convert a failure: 'std.result.Result<i64, std.str.ParseErr>' carries 'std.str.ParseErr' and the enclosing function returns 'std.result.Result<i64, AppErr>', whose failure carries 'AppErr' — write 'impl From<std.str.ParseErr> for AppErr { fun from(value: std.str.ParseErr).R: AppErr { ... } }' so the operator has a conversion to call
+error: '?' cannot convert a failure: 'std.result.Result<i64, std.str.ParseErr>' carries 'std.str.ParseErr' and the enclosing function returns 'std.result.Result<i64, AppErr>', whose failure carries 'AppErr' — write 'impl From<std.str.ParseErr> for AppErr { fun from(value: std.str.ParseErr).return: AppErr { ... } }' so the operator has a conversion to call
   --> c7bad1.kp:9:13
 ```
 
@@ -202,7 +202,7 @@ you would see them in order. The exit status is 1 on both backends.
 
 ## Exercises
 
-1. Write `half(n: i64).R: Option<i64>` returning `None` for an odd number, and
+1. Write `half(n: i64).return: Option<i64>` returning `None` for an odd number, and
    `quarter` that uses `?` on `half` and then calls it again.
 2. In the first program, what does `report("-5")` print, and which variant of
    `AppErr` is involved? (Decide from the code, then compare with the output.)
@@ -215,14 +215,14 @@ you would see them in order. The exit status is 1 on both backends.
 ```kelp
 impl "std/option"
 
-fun half(n: i64).R: option.Option<i64> {
+fun half(n: i64).return: option.Option<i64> {
     if n % 2 != 0 {
         return option.Option.None
     }
     return option.Option.Some(value = n / 2)
 }
 
-fun quarter(n: i64).R: option.Option<i64> {
+fun quarter(n: i64).return: option.Option<i64> {
     val h = half(n)?
     return half(h)
 }

@@ -15,8 +15,10 @@ them.
 ## Control flow
 
 - **`break` and `continue` exist** and act on the innermost loop, in a `while`
-  and in either `for`. There is **no `loop` expression, no labelled loop and no
-  `break` with a value**, and a deferred action cannot contain either
+  and in either `for`. `loop`, labelled
+  `break`/`continue` and `break value` out of a `loop` used as a value exist
+  (26.10.3); `while` and `for` cannot break with a value, and a deferred action
+  cannot contain any of them
   ([Iterators, `for` and `break`](/language/iterators)).
 
 ## Errors
@@ -77,26 +79,29 @@ literal) are built on both backends by `kelpc/tests/scaling.rs`, and a step over
 
 ## Data and generics
 
-- **A tuple is read by destructuring and nothing else.** There is no positional
-  access on a value (`t.0`), no tuple pattern in `when`, no destructuring `for`
-  binding, and no tuple value in a `const` initializer. A tuple has two or more
+- **A tuple has no `const` value.** A position is read by `t.0`, by a
+  destructuring binding, by `for (a, b) in pairs` and by a tuple pattern in
+  `when (a, b)` (which may hold literals and nested tuples), but there is no
+  tuple value in a `const` initializer.
+  A tuple has two or more
   elements, so there is no one-element tuple: `(T)` is the type `T`, and `()` is
   refused by name. Bind the whole tuple to a `val` when its positions need to be
   visible separately. See [Types](/language/types).
-- **No extra type parameters on a method.** A `datac`, an `enum` and a `fun` may
-  each declare type parameters, but a receiver on a generic type must write the
-  type's own parameters, in order: `fun Pair<A, B>.first()`. A method cannot add
-  parameters of its own. See [Generics and type parameters](/language/generics).
-- **A generic `enum`'s template carries no method.** A concrete `enum` may declare
-  a receiver method and a value of the type calls it (`val e = E.A`, then
-  `e.tag()`); a receiver that builds the variant names a type, so `E.A.tag()` is
-  refused. The `Map` key pair below is such a method, and the combinators over
-  `Option` and `Result` are free functions because those two are generic.
+- **A receiver on a generic type writes the type's own parameters, in order**
+  (`fun Pair<A, B>.first()`); a method may add type parameters of its own after
+  its name (`fun Pair<A, B>.map_first<C>(...)`, 26.10.3) but not a `const` one.
+  See [Generics and type parameters](/language/generics).
+- **An `enum` may declare a receiver method, generic or not** (a generic one since
+  26.10.3), and a value of the type calls it (`val e = E.A`, then `e.tag()`); a
+  receiver that builds the variant names a type, so `E.A.tag()` is refused. The
+  `Map` key pair below is such a method. A method borrows its receiver, so the
+  `Option`/`Result` combinators that take the value by `move` (`unwrap_or`, `map`
+  on a `Result`) stay free functions.
 - **A `Map` key must be keyable.** The compiler derives the key's hash and
   equality from the fields, so the derived set is `String`, an integer, `bool`,
   `char`, or a `datac`/`enum`/tuple whose every field, variant payload or
   position is itself keyable. A `datac` or `enum` outside that set becomes a key
-  by declaring both `fun T.hash().R: u64` and `fun T.eq(other: &T).R: bool`,
+  by declaring both `fun T.hash().return: u64` and `fun T.eq(other: &T).return: bool`,
   which the map calls instead of a derived pair; the key is still cloned into the
   entry, so the type has to be deep-copyable. A float is refused (`nan`), and a
   `Bytes`, container, view, borrow or `datac`/`enum` with a field outside the set
@@ -133,13 +138,15 @@ limits of that rule:
 - **One owner, one exclusive capture per call.** A second capture of the same
   owner in the same call, a call whose other arguments or receiver mention the
   owner, and a borrow of the owner still used after the call are all refused.
-- **Borrow roots are whole variables**, so a block writing `s.count` while the
-  callee borrows `s.items` conflicts: there is no disjoint-field capture.
+- **A block captures the fields its body uses**, not the whole variable: a block
+  that writes `s.count` can run in a call that borrows `s.items`
+  ([Ownership](/language/ownership)). A block that passes the capture on whole, or
+  reaches a field through an `enum`, a `Box` or an index, captures all of it.
 - A block that writes through an exclusive capture **cannot return a borrow**
   (`str`, `View`, `&T`); return an owned value.
-- A general hole older than this rule is still open: two reborrows of one `mut`
-  *parameter* in one ordinary call (`g(s, s)` with two `mut` parameters) are not
-  checked. The block case is closed; the plain call is not.
+- One call cannot pass the same `mut` parameter twice unless every use is a
+  shared reborrow: `g(s, s)` with two `mut` parameters, or with one `mut` and one
+  `&` parameter in either order, is refused ("already borrowed exclusively").
 - `kelpc fmt` has no rule for re-wrapping a trailing block yet (open item 75).
 
 ## Feature interactions
@@ -198,8 +205,8 @@ output pinned or is refused with a message that says what to do next:
 - **The iterator protocol shipped, the adapters did not.** `for` walks a `List`,
   an array, or any type that implements `std/iter`'s `Iterator`. There is no
   `map`, `filter`, `take`, `skip`, `enumerate`, `zip` or `chain`, no
-  `List.iter()` or `List.into_iter()`, and a `Map` still has no iterator
-  (iterate `keys()` and look up). **(open)** The adapters need a generic trait
+  `List.iter()` or `List.into_iter()`. A `Map` is walked with `for (key, value) in
+  map` (26.10.3; a snapshot of the keys, in insertion order). **(open)** The adapters need a generic trait
   impl (`impl<I: Iterator> Iterator for Take<I>`), which the parser does not
   accept yet ([Iterators, `for` and `break`](/language/iterators)).
 

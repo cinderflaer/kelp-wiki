@@ -38,6 +38,7 @@ this page is the index to it.
 
 | Version | Date | Headline |
 | --- | --- | --- |
+| [26.10.3](#26103-2026-10-08) | 2026-10-08 | `.return:` replaces `.R:`; tuple positions and patterns, `for (k, v)` over a `Map`; `loop`, labels and `break value`; disjoint field borrows; methods with type parameters, methods on generic enums; float literals, `f32` math, line continuation |
 | [26.10.2](#26102-2026-10-07) | 2026-10-07 | `must_use fun`, TLS encrypted keys and live certificate reload, `net.listen_on`, multipart/form-data bodies, pool idle timeout, large array literals compile fast |
 | [26.10.1](#26101-2026-10-07) | 2026-10-07 | fallible `std/fs` mutators, `std/http`/`std/net`/`std/tls` that return errors, `wss://`, `process.run_inherit`, enum-payload double move refused |
 | [26.10.0](#26100-2026-10-04) | 2026-10-04 | traits and unsafe/freestanding Kelp; server TLS and capability hardening; the Polyp v4 UI path; incremental builds, benchmarks, sanitizers and docs |
@@ -53,6 +54,72 @@ this page is the index to it.
 | [0.1.2](#012-2026-09-19) | 2026-09-19 | `View`, `char` literals, bitwise operators, `str` to `String` coercion |
 | [0.1.1](#011-2026-09-19) | 2026-09-19 | the `for` loop, `spawn_in`/`run_in`, fallible `try_run`, `fs.symlink` |
 | [0.1.0](#010-no-release) | 2026-09-19 | first tag: the core language, modules, containers, capabilities, stdlib |
+
+## 26.10.3 (2026-10-08)
+
+[Release](https://homelabone.xenoo.dev/gittea/Juniper/kelp/releases/tag/v26.10.3)
+
+15 commits since 26.10.2, the language-ergonomics release. The suite passes
+(1602 tests, 16 ignored by default) except the debug-info test that needs
+`gdb`, which the build host does not have; the differential sweep agrees on the
+conformance corpus and on the generated programs, and the long front-end fuzz
+finds nothing.
+
+**`.return:` is the return marker.** `fun f(a: i32).return: i32` replaces
+`.R:` on a declaration, a `fun` literal and a function type. `.R:` still
+compiles, `kelpc build` and `kelpc run` print an `outdated:` finding for each one
+naming `.return:`, `--deny-outdated` makes them errors, and it is removed in the
+next development cycle. The standard library, the examples and these docs are
+migrated. See [Functions](/language/functions) and
+[the outdated-syntax register](/tooling/kelpc-cli#outdated-syntax).
+
+**Tuples.** `t.0` (and `t.1.0`) reads a position; `for (a, b) in pairs` takes each
+element apart; `when (a, b) { (Some(x), _) -> ... }` matches several values at once
+with variant, literal (`0`, `'a'`, `true`), name, `_` and nested-tuple positions.
+A tuple written as the `when` scrutinee is not built, so a borrowed element is fine.
+See [Control flow](/language/control-flow#a-tuple-pattern).
+
+**`for (key, value) in map`** walks a `Map`: a snapshot of its keys in insertion
+order, with `value` read by `get`. See [Iterators](/language/iterators).
+
+**`loop`, labels and `break value`.** `loop { ... }` is an endless loop,
+`'outer: for ...` labels a loop, and `break 'outer` / `continue 'outer` leave or
+continue an outer one with every owned local freed. `val x = loop { ... break
+value ... }` is a loop that produces a value. All of it is a parser rewrite, so
+neither backend changed. See [Iterators, `for` and `break`](/language/iterators).
+
+**Borrow check.** `f(s, s)` with a `mut` and a `&` parameter was accepted in either
+order and is now refused (two `mut` already were). Borrow roots are field paths:
+`bump(s.count, s.items)` takes both exclusively, a live `&mut s.count` leaves
+`s.items` usable, and a scoped block that writes `s.count` runs in a call whose
+receiver or argument is `s.items`. Overlapping borrows are still refused. See
+[Ownership](/language/ownership).
+
+**Methods.** A method may declare type parameters of its own
+(`fun Pair<A, B>.map_first<C>(...)`, also on a plain type), and a generic `enum`
+can carry methods: `Option` has `is_some`, `is_none`, `map`, `and_then`, `or_else`,
+`each` and `Result` has `is_ok`, `is_err`, `and_then`, `or_else`, `each`.
+See [Generics](/language/generics).
+
+**Numbers.** An integer literal where a float is expected is that float (`x * 2`,
+`val w: f64 = 3`) when the float holds it exactly. `f32.to_f64()` and
+`f64.to_f32()` convert widths, and every `std/math` float function has an `f32`
+overload.
+
+**Line continuation.** A line that ends in a binary or assignment operator, `,`,
+`.` or `->` goes on to the next line. See [Lexical structure](/language/lexical).
+
+**Fixed.** `f -= 1` on a function name was an internal compiler error and is a
+diagnostic.
+
+**Design notes.** `plan/generic-trait-impls.md` (generic impls, `where`, blanket
+impls) and `plan/capability-narrowing.md` (forwarding a narrowed grant, runtime
+capability values) are written ahead of their implementation.
+
+**Still open from this release's scope.** A tuple as a `const` value; a block
+inside a block capturing the outer block's exclusive capture; a `kelpc fmt` rule
+for re-wrapping a trailing block; `List.iter()` and the iterator adapters, which
+wait for generic trait impls.
 
 ## 26.10.2 (2026-10-07)
 

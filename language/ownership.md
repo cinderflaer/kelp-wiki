@@ -35,7 +35,7 @@ print(name)               // still owned here
 `move T` is the parameter form that *does* take the value:
 
 ```kelp
-fun consume(s: move String).R: usize = s.len()
+fun consume(s: move String).return: usize = s.len()
 
 val a = String.from_str("bob")
 print(consume(a))
@@ -43,7 +43,7 @@ print(a)                  // error: use of moved value 'a'
 ```
 
 A temporary is already an owner, so `consume(String.from_str("bob"))` needs no
-binding. A **borrow cannot be moved out of**: `fun forward(s: String).R: usize =
+binding. A **borrow cannot be moved out of**: `fun forward(s: String).return: usize =
 consume(s)` is an error, because `s` belongs to the caller.
 
 A tuple is an owned value like any other, so a parameter of the type borrows the
@@ -83,13 +83,22 @@ Rules the checker enforces:
 - While a value is borrowed shared, it cannot be borrowed exclusively, and it
   cannot be assigned or moved, but a `Copy` value can always be *read*, because
   reading one is a copy rather than a move.
+- **Two fields of one owner are different places** (26.10.3). A borrow of
+  `s.items` and a borrow of `s.count` do not overlap, so one call may take both
+  exclusively (`bump(s.count, s.items)`), a live `&mut s.count` leaves
+  `s.items` usable, and a scoped block that writes `s.count` can run in a call
+  that borrows `s.items`. A borrow of the whole `s` overlaps every field, two
+  borrows of the same field overlap, and a field of a field is a part of the
+  field (`s.a.b` is a part of `s.a`). Only a field read straight off a local
+  struct (or off a `mut`/`&` parameter) is a path: a field reached through an
+  `enum` payload, a `Box`, a trait object or an index is still the whole owner.
 - Dereferencing a `&mut` gives write access; dereferencing a `&` does not.
-- A function whose `.R: T` is a borrow must return something derived from its
+- A function whose `.return: T` is a borrow must return something derived from its
   **first reference parameter**, and a payload bound by a pattern counts as
   derived from the scrutinee it came out of:
 
   ```kelp
-  fun as_str(v: &Json).R: &str {
+  fun as_str(v: &Json).return: &str {
       if let Str(s) = v {
           return s.as_str()
       }
@@ -212,7 +221,7 @@ also a path into that local, so it may move its final owned field while its
 siblings remain usable:
 
 ```kelp
-fun steal(b: &Bag).R: List<i32> = b.xs
+fun steal(b: &Bag).return: List<i32> = b.xs
 // error: cannot move the field 'xs' out of 'b': the value is borrowed
 ```
 
@@ -267,12 +276,12 @@ enum Held {
     Blank
 }
 
-fun take_word(h: move Held).R: String = when h {
+fun take_word(h: move Held).return: String = when h {
     Word(text) -> text        // the payload moves out of the owned `h`
     Blank -> String.from_str(s = "")
 }
 
-fun peek_word(h: &Held).R: usize = when h {
+fun peek_word(h: &Held).return: usize = when h {
     Word(text) -> text.len()  // `text` is a `&String` here; nothing moved
     Blank -> 0
 }

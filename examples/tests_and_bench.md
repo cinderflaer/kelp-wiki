@@ -36,7 +36,7 @@ impl "deps/testkit/lib"
 impl "deps/benchkit/lib" caps(time = [])
 impl "std/str"
 
-fun sum_to(n: i64).R: i64 {
+fun sum_to(n: i64).return: i64 {
     var acc: i64 = 0
     var i: i64 = 1
     while i <= n {

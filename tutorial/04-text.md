@@ -21,7 +21,7 @@ impl "std/str"
 impl "std/fmt"
 impl "std/result"
 
-fun shout(s: &str).R: String = str.to_upper(s)
+fun shout(s: &str).return: String = str.to_upper(s)
 
 fun main() {
     // str: a borrowed literal. String: owned and growable.

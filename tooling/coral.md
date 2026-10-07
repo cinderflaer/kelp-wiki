@@ -158,7 +158,7 @@ works on one file that is not part of a project yet:
 $ coral docs get std/str.kp
 /// How many characters a `&str` has: bytes that do not continue a UTF-8
 /// sequence.
-fun char_count(s: &str).R: usize
+fun char_count(s: &str).return: usize
 ```
 
 The point is shape rather than content: a reader (or an agent) facing a
@@ -426,7 +426,7 @@ symbols = ["getpid"]
 
 ```kelp
 // src/sys.kp
-pub extern fun getpid().R: i32
+pub extern fun getpid().return: i32
 ```
 
 ```kelp

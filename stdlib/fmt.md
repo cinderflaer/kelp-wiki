@@ -77,7 +77,7 @@ The module also declares one trait:
 
 ```kelp
 pub trait Display {
-    fun Self.to_text().R: String
+    fun Self.to_text().return: String
 }
 ```
 

@@ -21,7 +21,7 @@ const PI2: f64 = math.PI * 2.0
 const PAGE_SIZE: usize = 4096
 const ENTRY_SIZE: usize = 8
 
-fun entries_for(pages: usize).R: usize {
+fun entries_for(pages: usize).return: usize {
     var total: usize = 0
     var i: usize = 0
     while i < pages {

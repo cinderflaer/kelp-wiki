@@ -32,7 +32,7 @@ symbols = ["getpid"]
 
 ```kelp
 // src/sys.kp
-pub extern fun getpid().R: i32
+pub extern fun getpid().return: i32
 
 // src/main.kp
 impl "sys" caps(process = ["/**"])
@@ -75,7 +75,7 @@ only in an extern module and is exported and named across modules like a
 ```kelp
 // src/mem.kp
 pub extern type Buffer
-pub extern fun malloc(size: usize).R: Buffer
+pub extern fun malloc(size: usize).return: Buffer
 pub extern fun free(buf: Buffer)
 ```
 
@@ -109,10 +109,10 @@ convert back down implicitly.
 pub extern type Block
 pub extern type Buffer: Block
 
-pub extern fun malloc(size: usize).R: Buffer
+pub extern fun malloc(size: usize).return: Buffer
 pub extern fun free(block: Block)
 
-pub fun view(block: Block).R: Buffer = Buffer.cast(block)
+pub fun view(block: Block).return: Buffer = Buffer.cast(block)
 ```
 
 ```kelp
@@ -150,10 +150,10 @@ constants of the handle type:
 // src/file.kp
 pub extern type File
 
-pub extern fun fopen(path: str, mode: str).R: File
+pub extern fun fopen(path: str, mode: str).return: File
 
-pub fun missing().R: File = File.null()
-pub fun is_null_file(f: File).R: bool = f.is_null()
+pub fun missing().return: File = File.null()
+pub fun is_null_file(f: File).return: bool = f.is_null()
 ```
 
 ```kelp
@@ -221,8 +221,8 @@ static inline int kelp_va_mix(int count, ...) {
 
 ```kelp
 // src/helper.kp
-pub extern fun kelp_va_sum(count: i32, ...).R: i32
-pub extern fun kelp_va_mix(count: i32, ...).R: i32
+pub extern fun kelp_va_sum(count: i32, ...).return: i32
+pub extern fun kelp_va_mix(count: i32, ...).return: i32
 ```
 
 ```kelp
@@ -250,7 +250,7 @@ signature per instantiation.
 
 ## Callbacks: `move closure(...)`
 
-A user `extern fun` parameter written `move closure(P0, P1, ...).R: T` expands in
+A user `extern fun` parameter written `move closure(P0, P1, ...).return: T` expands in
 place to three C arguments `(thunk, env, destroy)`, the shape GLib's
 `(func, user_data, destroy_notify)` uses. `thunk` is a generated C function that
 reorders the native `(args..., user_data)` into the closure's own
@@ -283,7 +283,7 @@ static inline int kelp_call_twice(void (*fn)(int, void*), void* data, void (*des
 
 ```kelp
 // src/helper.kp
-pub extern fun kelp_call_twice(f: move closure(i32), x: i32).R: i32
+pub extern fun kelp_call_twice(f: move closure(i32), x: i32).return: i32
 ```
 
 ```kelp
@@ -321,9 +321,9 @@ destructor still frees the box.
 
 ## Plain function pointers: `fun(...)`
 
-A `fun(P0, P1, ...).R: T` parameter or return in a user `extern fun` is a typed
+A `fun(P0, P1, ...).return: T` parameter or return in a user `extern fun` is a typed
 plain C function pointer. Use it when the native function borrows the callback
-for the call. For example, `fun(i32).R: i32` maps to `int (*)(int)`: the
+for the call. For example, `fun(i32).return: i32` maps to `int (*)(int)`: the
 `ffi_fn_pointer` regression passes one to a C helper and receives one back on
 both backends.
 

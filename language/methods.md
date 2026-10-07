@@ -13,7 +13,7 @@ A method is a function whose first parameter is a receiver, written
 ```kelp
 datac Counter(val id: i32, var count: i32)
 
-fun Counter.total().R: i32 = id + count          // shared receiver
+fun Counter.total().return: i32 = id + count          // shared receiver
 fun mut Counter.bump() {                          // exclusive receiver
     count += 1
 }
@@ -67,13 +67,13 @@ print(c.total())
 
 ## Return types that borrow
 
-A function whose `.R: T` is a borrow must return something derived from its
+A function whose `.return: T` is a borrow must return something derived from its
 **first reference parameter**. For a method that means the receiver, which is why
 accessors like these are written as methods:
 
 ```kelp
-fun Row.get(i: usize).R: &str = fields.get(i).as_str()
-fun Json.as_str().R: &str {
+fun Row.get(i: usize).return: &str = fields.get(i).as_str()
+fun Json.as_str().return: &str {
     if let Str(s) = self {
         return s.as_str()
     }
@@ -118,7 +118,7 @@ A receiver method on a generic type writes the type's own parameters, in order:
 ```kelp
 datac Pair<A, B>(val first: A, var second: B)
 
-fun Pair<A, B>.first_of().R: A = first
+fun Pair<A, B>.first_of().return: A = first
 fun mut Pair<A, B>.replace_second(v: B) { second = v }
 ```
 
@@ -126,18 +126,10 @@ fun mut Pair<A, B>.replace_second(v: B) { second = v }
   body's `T` mean something the declaration does not say.
 - The type arguments are the receiver's own instantiation, so `p.first_of()` on a
   `Pair<i32, String>` is instantiated once for `A = i32, B = String`.
-- A method cannot add type parameters of its own beyond the type's.
-- A method on a **generic `enum`'s template** is refused (`'Option' is a generic
-  enum: a method cannot be declared on the enum template`). A concrete `enum` may
-  declare one ([datac and enum](/language/data-types)); for a generic `enum` write
-  a free function over the instantiation instead, as `std/option` does:
-
-  ```kelp
-  fun is_some<T>(o: &Option<T>).R: bool = when o {
-      Some(_) -> true
-      None -> false
-  }
-  ```
+- A method may add type parameters of its own, after its name
+  (`fun Pair<A, B>.map_first<C>(...)`), and a method may be declared on a generic
+  `enum` (`fun Opt<T>.is_has()`); both are inferred at the call
+  ([Generics](/language/generics)).
 
 ## Free functions versus methods
 

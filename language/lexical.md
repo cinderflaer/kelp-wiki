@@ -42,7 +42,7 @@ does:
 datac Buffer(val bytes: Bytes)
 
 /// How many characters a `&str` has, continuation bytes counted once.
-fun char_count(s: &str).R: usize
+fun char_count(s: &str).return: usize
 ```
 
 `//!` is read as the header of a block, so it has to start a line: consecutive
@@ -116,8 +116,19 @@ print(math.pow(base = 2.0,
                exp = 8.0))           // wrapping inside ( ) is fine
 ```
 
-A trailing operator does **not** continue a line, and two statements on one line
-with no separator is an error.
+A line that **ends in a binary or assignment operator** (`+ - * / && || = == != <= >=`
+and the compound assignments), in `,`, in `.` or in a `when` arrow `->` goes on to
+the next line (26.10.3). The leading form does not: a line that *starts* with an
+operator is a new statement, so put the operator last. `<`, `>`, `%`, `&` and `|` are
+left out because they also close and open type arguments, end an alias pattern or end a pattern. Two
+statements on one line with no separator is an error.
+
+```kelp
+val total = base +
+    tax                    // one statement
+val n = text.
+    len()                  // a trailing `.` continues too
+```
 
 ## Identifiers and keywords
 
