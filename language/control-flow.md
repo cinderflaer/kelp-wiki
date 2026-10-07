@@ -9,8 +9,8 @@ Source section:
 
 Kelp has `if`/`else` (with `if let`), `for`, `while`, `when`, `return`, and
 `break` and `continue` inside a loop, `loop { ... }` for an endless loop, and a
-label on a loop for leaving or continuing an outer one. There is no `goto`, no
-`break` with a value and no exceptions. `break` leaves the innermost loop and
+label on a loop for leaving or continuing an outer one, and `break value` out of
+a `loop` used as a value. There is no `goto` and no exceptions. `break` leaves the innermost loop and
 `continue` goes on to its next pass, `break 'outer` and `continue 'outer` act on
 the loop labelled `'outer`
 ([Iterators, `for` and `break`](/language/iterators)).

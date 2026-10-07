@@ -218,7 +218,28 @@ done 7
   error: a deferred action cannot contain 'break' or 'continue': the action runs while the block is being left, so it cannot leave the loop again
   ```
 
-- There is no `break` with a value: `loop` is a statement, not an expression.
+- **`loop` can be a value** (26.10.3): `break value` leaves the loop and is what the
+  `loop` evaluates to.
+
+  ```kelp
+  var n = 0
+  val doubled = loop {
+      n += 1
+      if n == 4 {
+          break n * 2
+      }
+  }                          // 8
+  ```
+
+  Every `break` out of such a loop carries a value and at least one does (the
+  compiler refuses a plain `break`, and a value loop with none); the values have
+  one type, decided by the first, and an integer literal there takes the default
+  `i32` as it would anywhere without a written type, so bind a `val v: i64 = 5`
+  first when the loop should produce a different width. A label works:
+  `val x = 'outer: loop { ... break 'outer value ... }`. The value starts with a
+  name, a literal (a leading `-` included), a template or a `[`; wrap anything else
+  in a `val` first. Only a `loop` can produce a value: `while` and `for` cannot
+  `break` with one. `return` and `?` inside the loop still leave the function.
 
 ### `loop` and labels
 

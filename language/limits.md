@@ -15,9 +15,10 @@ them.
 ## Control flow
 
 - **`break` and `continue` exist** and act on the innermost loop, in a `while`
-  and in either `for`. `loop` and labelled
-  `break`/`continue` exist (26.10.3); there is **no `break` with a value**, and a
-  deferred action cannot contain any of them
+  and in either `for`. `loop`, labelled
+  `break`/`continue` and `break value` out of a `loop` used as a value exist
+  (26.10.3); `while` and `for` cannot break with a value, and a deferred action
+  cannot contain any of them
   ([Iterators, `for` and `break`](/language/iterators)).
 
 ## Errors
