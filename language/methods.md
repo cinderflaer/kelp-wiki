@@ -126,18 +126,10 @@ fun mut Pair<A, B>.replace_second(v: B) { second = v }
   body's `T` mean something the declaration does not say.
 - The type arguments are the receiver's own instantiation, so `p.first_of()` on a
   `Pair<i32, String>` is instantiated once for `A = i32, B = String`.
-- A method cannot add type parameters of its own beyond the type's.
-- A method on a **generic `enum`'s template** is refused (`'Option' is a generic
-  enum: a method cannot be declared on the enum template`). A concrete `enum` may
-  declare one ([datac and enum](/language/data-types)); for a generic `enum` write
-  a free function over the instantiation instead, as `std/option` does:
-
-  ```kelp
-  fun is_some<T>(o: &Option<T>).return: bool = when o {
-      Some(_) -> true
-      None -> false
-  }
-  ```
+- A method may add type parameters of its own, after its name
+  (`fun Pair<A, B>.map_first<C>(...)`), and a method may be declared on a generic
+  `enum` (`fun Opt<T>.is_has()`); both are inferred at the call
+  ([Generics](/language/generics)).
 
 ## Free functions versus methods
 

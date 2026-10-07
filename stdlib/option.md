@@ -35,9 +35,11 @@ writes `val x = f(...)?`. Nothing in the compiler knows this module exists: the
 | `or_else<T>(o, f: fun().return: Option<T>)` | `Option<T>` | **`T` must be `Copy`**: the receiver is a borrow |
 | `each<T>(o, f: closure(&T))` | `Unit` | |
 
-There are no methods on `Option`: it is a generic `enum`, whose template declares
-none, so every combinator is a free function and takes the option as its first
-argument.
+Every combinator is a free function that takes the option as its first argument.
+Since 26.10.3 the ones that only borrow it are also **methods**: `o.is_some()`,
+`o.is_none()`, `o.map(f)`, `o.and_then(f)`, `o.or_else(f)` and `o.each(f)` mean
+exactly `option.is_some(o)` and so on. `unwrap_or`, `unwrap` and `expect` take the
+option with `move`, and a method always borrows, so they stay free functions.
 
 ## Where the payload goes
 

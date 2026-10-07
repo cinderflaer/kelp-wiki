@@ -105,18 +105,11 @@ fun mut Pair<A, B>.replace_second(v: B) { second = v }
   bounds (`<T: Named>`), and work on a plain type too (`fun Box2.map<U>(...)`). A
   name that repeats one of the receiver type's parameters is refused, and a
   `const` parameter of a method's own is not supported yet.
-- A method on a generic `enum`'s template is refused (`'Option' is a generic enum:
-  a method cannot be declared on the enum template`); a concrete `enum` may declare
-  one, and a value of it calls it ([Methods and receivers](/language/methods)). For
-  a generic `enum`, write a free function over the instantiation instead, as
-  `std/option` does:
-
-  ```kelp
-  fun is_some<T>(o: &Option<T>).return: bool = when o {
-      Some(_) -> true
-      None -> false
-  }
-  ```
+- **A method on a generic `enum` is allowed** (26.10.3): `fun Opt<T>.is_has()` and
+  `fun Opt<T>.map<U>(...)` are written like a method on a generic `datac`, and a
+  value of the instantiation calls them (`o.map(f)`). A method always borrows its
+  receiver, so one that must take the value apart by `move` (`unwrap_or`) stays a
+  free function, as `std/option` does.
 
 ## Generic functions
 

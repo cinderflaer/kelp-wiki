@@ -90,11 +90,12 @@ literal) are built on both backends by `kelpc/tests/scaling.rs`, and a step over
   (`fun Pair<A, B>.first()`); a method may add type parameters of its own after
   its name (`fun Pair<A, B>.map_first<C>(...)`, 26.10.3) but not a `const` one.
   See [Generics and type parameters](/language/generics).
-- **A generic `enum`'s template carries no method.** A concrete `enum` may declare
-  a receiver method and a value of the type calls it (`val e = E.A`, then
-  `e.tag()`); a receiver that builds the variant names a type, so `E.A.tag()` is
-  refused. The `Map` key pair below is such a method, and the combinators over
-  `Option` and `Result` are free functions because those two are generic.
+- **An `enum` may declare a receiver method, generic or not** (a generic one since
+  26.10.3), and a value of the type calls it (`val e = E.A`, then `e.tag()`); a
+  receiver that builds the variant names a type, so `E.A.tag()` is refused. The
+  `Map` key pair below is such a method. A method borrows its receiver, so the
+  `Option`/`Result` combinators that take the value by `move` (`unwrap_or`, `map`
+  on a `Result`) stay free functions.
 - **A `Map` key must be keyable.** The compiler derives the key's hash and
   equality from the fields, so the derived set is `String`, an integer, `bool`,
   `char`, or a `datac`/`enum`/tuple whose every field, variant payload or

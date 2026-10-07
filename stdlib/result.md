@@ -36,8 +36,10 @@ can fail returns `Result<T, E>` and its caller writes `val v = f(...)?`.
 | `or_else<T, E, F>(r, f: closure(&E).return: Result<T, F>)` | `Result<T, F>` | **`T` must be `Copy`**: the receiver is a borrow |
 | `each<T, E>(r, f: closure(&T))` | `Unit` | |
 
-As with `Option`, these are free functions: a generic `enum`'s template declares
-no methods.
+These are free functions. Since 26.10.3 the ones that only borrow the result are
+also **methods**: `r.is_ok()`, `r.is_err()`, `r.and_then(f)`, `r.or_else(f)` and
+`r.each(f)`. `map` and `map_err` take the result with `move`, so they stay free
+functions.
 
 ## Example
 

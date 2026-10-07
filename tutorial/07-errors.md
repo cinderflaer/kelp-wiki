@@ -92,10 +92,10 @@ Both backends agreed.
 
 They are plain enums (`Some`/`None` and `Ok`/`Err`), so everything from chapter 5
 applies: construct them by variant (`option.Option.Some(value = ...)`), take them
-apart with `when` or `if let`. Their combinators (`is_none`, `unwrap_or`, `map`, ...)
-are **free functions** in `std/option` and `std/result`, not methods, because a
-generic enum carries none. Import the module with `impl "std/option"` and call
-`option.is_none(missing)`.
+apart with `when` or `if let`. Their combinators are free
+functions in `std/option` and `std/result` (`option.unwrap_or(missing, 0)`), and
+the ones that only borrow are also methods: `missing.is_none()`, `found.map(f)`.
+Import the module with `impl "std/option"`.
 
 Two details the program shows. `find_user` returns `option.Option<String>`: the name
 is cloned out, because the `Option` must own its payload and `users` is only
