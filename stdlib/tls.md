@@ -202,13 +202,14 @@ tlsfile.ca_pem(path: &str).R: Result<Bytes, TlsError>   // read_pem with the rol
 
 - **A configuration is built once from PEM bytes and never changes.** The
   options are a value (`ServerOptions`) given at build time, not mutators on a
-  built config, so a new certificate means a new `ServerConfig`. It wraps one
+  built config, but `ServerConfig.reload_pem` swaps its certificate (see
+  [Reloading a certificate](#reloading-a-certificate)). It wraps one
   `SSL_CTX`, which OpenSSL lets every thread make sessions from, so one config is
   shared by reference between workers. `ServerConfig.free()` ends it; like every
   handle in this module, nothing is freed on drop, and sessions already made from
   it keep working until they end.
-- **The certificate chain goes leaf first**, as PEM text. The key is a plain
-  (unencrypted) PEM private key.
+- **The certificate chain goes leaf first**, as PEM text. The key is a PEM
+  private key, plain or encrypted (see [Encrypted keys](#encrypted-keys)).
 - **`TlsOptions` stays two fields.** ALPN and a client certificate live in
   `TlsClientOptions` (`tls.client_options()`, then `.alpn(...)`,
   `.client_cert_pem(cert, key)`, `.with_ca_pem(bytes)`, `.with_timeout_ms(...)`),
@@ -274,6 +275,57 @@ caps(fs = ["<pattern>"])`)`. To migrate, replace
 `.with_ca_file(path)` with `.with_ca_pem(tlsfile.ca_pem(path)?)` and
 `TlsOptions(ca_file = ..., ca_dir = ..., timeout_ms = ...)` with
 `TlsOptions(ca_pem = ..., timeout_ms = ...)`.
+
+`tlsfile.read_key(path)` is `read_pem` for a private key with a permission check
+in front: a file that group or others can read or write (any `mode & 0077` bit)
+is a `TlsError.Io` naming the file and its mode (`... has mode 0644: group and
+others must have no access (chmod 600)`), and the file is not read. A missing
+file is the same `Io` as `read_pem`'s. Use `read_pem` when the key legitimately
+lives in a shared location.
+
+```kelp
+val key = tlsfile.read_key(key_path)?
+```
+
+### Encrypted keys
+
+`ServerOptions.key_password(phrase)` gives the pass phrase of an encrypted PEM
+private key, so `tls.server_config_pem_with(cert, key, &opts)` can load it:
+
+```kelp
+val opts = tls.server_options().key_password("correct horse")
+val cfg = tls.server_config_pem_with(cert, key, &opts)?
+```
+
+Without a phrase an encrypted key is `HandshakeFailed("the private key is
+malformed or encrypted (an encrypted key needs ServerOptions.key_password)")`;
+with a wrong one the sentence says the key is malformed or the phrase wrong. A
+phrase given for a key that is not encrypted is ignored. Neither the phrase nor
+the key ever reaches an error text. The phrase lives in the `ServerOptions` value
+and is not zeroed: drop the options once the configuration is built.
+
+### Reloading a certificate
+
+A certificate renewal does not need a new `ServerConfig`, a stopped accept loop
+or a restart:
+
+```kelp
+val fresh_cert = tlsfile.read_pem(cert_path, "certificate chain")?
+val fresh_key = tlsfile.read_key(key_path)?
+val failed = cfg.reload_pem(fresh_cert, fresh_key, &opts)
+```
+
+`reload_pem(cert, key, &opts)` builds the new context first and swaps it in for
+**new** handshakes (the floor, ALPN, client CA and pass phrase come from `opts`,
+so a reload may change them). Connections already established keep the
+certificate they began with, and a handshake that has started finishes on the
+old one. It returns `None` on success. If the new material is malformed, does
+not match, or the phrase is wrong, it returns `Some(TlsError)` and **the old
+certificate stays in force**, so a bad renewal never takes the server down. The
+result is `must_use`: branch on it. The `handshake_timeout_ms` of the config is
+not changed. Share one `ServerConfig` between the accept loop and a renewal
+thread by copying its handle (`tls.ServerConfig(ctx = cfg.ctx,
+handshake_timeout_ms = cfg.handshake_timeout_ms)`); `free` it once.
 
 ### Making a test certificate
 
@@ -355,15 +407,15 @@ PEM file`), on the LLVM backend and under `KELPC_ORACLE=c`. Both print:
 ```text
 config ok
 the private key does not match the certificate
-the private key is malformed (or encrypted: encrypted keys are not supported)
+the private key is malformed or encrypted (an encrypted key needs ServerOptions.key_password)
 the certificate chain is not a valid PEM certificate
 tls: cannot read the private key file <dir>/missing.key: No such file or directory
 ```
 
-(`<dir>` stands for the scratch directory in the last line.) An **encrypted key is
-therefore refused**: decrypt it first, and keep the plain key readable by the
-serving user only. The library does not check the key file's permissions, and the
-PEM bytes are read into ordinary memory that is not zeroed.
+(`<dir>` stands for the scratch directory in the last line.) An encrypted key
+without its phrase gets the third sentence above; `read_key` checks the file's
+permissions and `read_pem` does not. The PEM bytes are read into ordinary memory
+that is not zeroed.
 
 ### ALPN, client certificates and `peer_cert_subject`
 

@@ -26,6 +26,12 @@ decides the interface: a grant that includes `*` or any pattern matching
 (`127.0.0.1:*`, `localhost:*`) binds `127.0.0.1`. See the
 [threat model](/reference/capability-threat-model).
 
+`listen_on(host, port)` names the host to bind: `"127.0.0.1"` for loopback only,
+`"0.0.0.0"` or `"*"` for every interface, or a name that resolves to an IPv4
+address. It is checked on `host:port` exactly as `connect` is, so a grant of
+`127.0.0.1:8080` lets a module listen on loopback and refuses `0.0.0.0`, another
+host and another port. `http.listen_on(host, port)` is the same for a `Server`.
+
 ## Types
 
 ```kelp

@@ -185,6 +185,9 @@ its pool was small.
 | `Pool.checkout(use_tls: bool)` | `Lease` (`mut`) |
 | `Pool.release(lease, reusable: bool)` | `Unit` (`mut`) |
 | `Pool.size()` / `Pool.len()` | `usize`: the keep count, and how many are idle |
+| `Pool.set_idle_timeout(ms)` | `Unit` (`mut`): `checkout` closes a connection idle for `ms` or longer instead of reusing it; 0 is off (the default) |
+| `Pool.close_idle(after_ms)` | `usize` (`mut`): closes every connection idle for `after_ms` or longer, returns how many; `close_idle(0)` closes them all |
+| `Pool.close_all()` | `Unit` (`mut`) |
 | `Lease.conn()` | `Conn` |
 
 `warm`/`checkout` take `use_tls` because a pool is keyed on `host:port` alone,
@@ -194,10 +197,41 @@ connection of the scheme asked for: a kept connection of the other scheme is
 closed and replaced by a fresh one, so an `https` request is never sent over a
 plain connection or the reverse.
 
+Idle time is measured on `net.mono_ms`, so `std/http` needs no `time` grant. Set
+the idle timeout below the server's own keep-alive timeout and a connection the
+peer has already closed is not the one a request gets; `close_idle` is for a
+program that talks to many hosts and wants to cap the descriptors it holds
+(`size` are kept per host).
+
 A `Lease` is a **ticket, not an owner**: the pool holds every descriptor, a lease
 is permission to use one for one exchange, and `release` consumes it. Since a
 `datac` is never `Copy`, releasing twice or using a lease after release is a
 compile error: the ownership check is free.
+
+## Multipart bodies
+
+An attachment upload is a `multipart/form-data` body. `http.multipart(boundary)`
+starts one; the boundary is yours (1 to 70 bytes from the RFC 2046 set, and long
+enough that it never occurs in a part), because the module has no randomness and
+a test wants a stable body. It panics on a bad boundary.
+
+```kelp
+var form = http.multipart("kelp-7f3a91c2d4e5")
+form.add_field("content", "build finished")
+form.add_file("file", "report.txt", "text/plain", Bytes.from_str("ok"))
+val req = http.multipart_request("https://api.example.com/upload", &mut form)
+```
+
+| Function | What it does |
+|---|---|
+| `add_field(name, value)` | a text part |
+| `add_file(name, filename, content_type, data)` | a file part |
+| `content_type()` | `multipart/form-data; boundary=...`, the header to send |
+| `finish()` | closes the body and returns the bytes; call it once, last |
+| `multipart_request(url, form)` | a `POST` `Request` with the header and the finished body |
+
+A `"` in a name or file name is written `%22`, CR `%0D`, LF `%0A` and `%` `%25`, as
+browsers do, so a name cannot end its parameter or add a header line.
 
 ## Example
 
@@ -457,7 +491,8 @@ shared and never changed, and the limits, status table and per-connection rules
 are the plain server's. A client whose handshake fails (no certificate where one
 is required, no common protocol, a reset) costs that socket and nothing else: it
 is closed and the loop goes on. `serve_tls_n` returns the number of requests
-answered. Like `net.listen`, `serve_tls` binds every interface.
+answered. Like `net.listen`, `serve_tls` binds every interface; to bind one host,
+listen with `http.listen_on("127.0.0.1", port)` and serve with `serve_tls_on`.
 
 On the client side, `http.try_get_tls(url, &opts)`, `http.get_tls` and
 `Client.try_send_tls(req, &opts)` take a `tls.TlsClientOptions` (private CA as

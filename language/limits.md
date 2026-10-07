@@ -63,19 +63,14 @@ literal) are built on both backends by `kelpc/tests/scaling.rs`, and a step over
   ([Front-end fuzzing and parser limits](/tooling/fuzzing)), so a 400-link chain, 90
   nested calls and 60 nested `if` blocks are about the largest shapes a program
   can reach. Both limits were kept.
-- **A very large array literal is slow at `-O2`.** (open) Every other generated
-  shape finishes each step in about a second or less. A literal of 5,000
-  elements takes 4.0-4.6 s to build on the LLVM backend at `-O2` in the plan's
-  debug-build measurement, 2,500 elements 1.0 s and 1,250 elements 0.5 s: the time
-  grows with the square of the length and sits inside LLVM's optimizer, which is
-  handed the literal as one `[N x i32]` aggregate value (`-O0` takes 0.85 s for
-  5,000). The all-constant literal is now emitted as one constant array, which
-  halved `-O0` and left `-O2` unchanged. Emitting it as a private global plus a
-  copy would remove the rest, and was left alone because it changes the IR of
-  every array literal. Re-measured for this page with the release-built prebuilt
-  compiler: a 5,000-element `[i32; 5000]` literal took about 2.9 s at `-O2` and
-  about 0.5 s at `-O0`. Split a table that big into smaller literals or build it
-  with a loop.
+- **A very large array literal used to be slow at `-O2`; it no longer is.** An
+  all-constant literal of 256 or more elements bound to a local is emitted as a
+  private constant global plus one copy into the local (a 5,000-element
+  `[i32; 5000]` went from about 3.8 s to 0.16 s at `-O2` on the LLVM backend).
+  Shorter literals, literals with a non-constant element and literals that are
+  not bound directly (passed to a call, returned) keep the aggregate form, so a
+  very large literal in one of those positions can still be slow: bind it to a
+  `val` first.
 - Smaller costs the plan lists, all linear: 150 chained closures take about 1 s on
   LLVM and 1.6-2.2 s on the C oracle, and 50 nested generic enum constructions
   take 1.1-1.5 s.
@@ -229,7 +224,8 @@ output pinned or is refused with a message that says what to do next:
   **A listener binds the interface its grant allows:** `net.listen(port)` has no
   host argument, so a loopback-only grant (`127.0.0.1:8080`) binds `127.0.0.1`
   and a grant that includes `*` binds every interface
-  ([threat model](/reference/capability-threat-model)). `net.mono_ms`, `net.try_accept`,
+  ([threat model](/reference/capability-threat-model)); `net.listen_on(host,
+  port)` names the host and is checked on `host:port` like `connect`. `net.mono_ms`, `net.try_accept`,
   `Listener.set_timeout` and `net.try_shutdown_write` exist for it.
 - **(decided 2026-09-26, roadmap item 37; done, MK5-S4b-M1)** TLS shipped:
   [`std/tls`](/stdlib/tls) links the system OpenSSL, and `http.parse_url` now
@@ -241,10 +237,11 @@ output pinned or is refused with a message that says what to do next:
   `tls.accept`, negotiates ALPN, and can require client certificates (mutual
   TLS); [`std/http`](/stdlib/http#serving-https) serves HTTPS with
   `http.serve_tls`. Its limits: verification cannot be turned off on either
-  side; a key file's permissions are not checked (keep it `0600`); an
-  **encrypted private key is refused**; a built `ServerConfig` is immutable, so a
-  new certificate means building a new config; `net.listen` binds every
-  interface, so `serve_tls` does too; and the HTTP server speaks HTTP/1.1 only,
+  side; `tlsfile.read_key` checks a key file's permissions and `read_pem` does
+  not; an encrypted private key takes `ServerOptions.key_password`;
+  `ServerConfig.reload_pem` swaps the certificate for new handshakes;
+  `serve_tls` binds every interface (bind a host with `http.listen_on` and
+  `serve_tls_on`); and the HTTP server speaks HTTP/1.1 only,
   so ALPN names a protocol but does not make the server speak `h2`.
 - **`std/ws` is a client, not a server.** Not scheduled anywhere on the
   roadmap: a WebSocket server, extensions (`Sec-WebSocket-Extensions`, so
@@ -299,7 +296,7 @@ and `std/ws` is §16.18 of the same document.
   copy instead, the way
   `examples/download_pool.kp` gives each thread its own `http.Pool`. Two leaks
   are admitted: a panicking worker's frame is abandoned, and a handle nobody
-  joins is detached with its worker record leaked, because v1 has no `must_use`.
+  joins is detached with its worker record leaked (a bare `thread.spawn(...)` statement is refused, but a handle bound to a `val` and never joined still leaks). `must_use fun` exists ([Functions](/language/functions#must_use)); `Sender.send` carries it.
   A user `Drop` now exists ([User `Drop`](/language/drop)), but it does not run
   on the panic path: there is still no unwinding. A worker that returns `unit`
   joins to `Result<unit, ThreadErr>` with nothing in its `Ok`, the same shape
