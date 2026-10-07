@@ -137,9 +137,9 @@ limits of that rule:
   callee borrows `s.items` conflicts: there is no disjoint-field capture.
 - A block that writes through an exclusive capture **cannot return a borrow**
   (`str`, `View`, `&T`); return an owned value.
-- A general hole older than this rule is still open: two reborrows of one `mut`
-  *parameter* in one ordinary call (`g(s, s)` with two `mut` parameters) are not
-  checked. The block case is closed; the plain call is not.
+- One call cannot pass the same `mut` parameter twice unless every use is a
+  shared reborrow: `g(s, s)` with two `mut` parameters, or with one `mut` and one
+  `&` parameter in either order, is refused ("already borrowed exclusively").
 - `kelpc fmt` has no rule for re-wrapping a trailing block yet (open item 75).
 
 ## Feature interactions
