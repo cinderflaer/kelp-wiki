@@ -229,7 +229,8 @@ output pinned or is refused with a message that says what to do next:
   **A listener binds the interface its grant allows:** `net.listen(port)` has no
   host argument, so a loopback-only grant (`127.0.0.1:8080`) binds `127.0.0.1`
   and a grant that includes `*` binds every interface
-  ([threat model](/reference/capability-threat-model)). `net.mono_ms`, `net.try_accept`,
+  ([threat model](/reference/capability-threat-model)); `net.listen_on(host,
+  port)` names the host and is checked on `host:port` like `connect`. `net.mono_ms`, `net.try_accept`,
   `Listener.set_timeout` and `net.try_shutdown_write` exist for it.
 - **(decided 2026-09-26, roadmap item 37; done, MK5-S4b-M1)** TLS shipped:
   [`std/tls`](/stdlib/tls) links the system OpenSSL, and `http.parse_url` now
@@ -241,10 +242,11 @@ output pinned or is refused with a message that says what to do next:
   `tls.accept`, negotiates ALPN, and can require client certificates (mutual
   TLS); [`std/http`](/stdlib/http#serving-https) serves HTTPS with
   `http.serve_tls`. Its limits: verification cannot be turned off on either
-  side; a key file's permissions are not checked (keep it `0600`); an
-  **encrypted private key is refused**; a built `ServerConfig` is immutable, so a
-  new certificate means building a new config; `net.listen` binds every
-  interface, so `serve_tls` does too; and the HTTP server speaks HTTP/1.1 only,
+  side; `tlsfile.read_key` checks a key file's permissions and `read_pem` does
+  not; an encrypted private key takes `ServerOptions.key_password`;
+  `ServerConfig.reload_pem` swaps the certificate for new handshakes;
+  `serve_tls` binds every interface (bind a host with `http.listen_on` and
+  `serve_tls_on`); and the HTTP server speaks HTTP/1.1 only,
   so ALPN names a protocol but does not make the server speak `h2`.
 - **`std/ws` is a client, not a server.** Not scheduled anywhere on the
   roadmap: a WebSocket server, extensions (`Sec-WebSocket-Extensions`, so

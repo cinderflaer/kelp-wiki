@@ -482,7 +482,8 @@ shared and never changed, and the limits, status table and per-connection rules
 are the plain server's. A client whose handshake fails (no certificate where one
 is required, no common protocol, a reset) costs that socket and nothing else: it
 is closed and the loop goes on. `serve_tls_n` returns the number of requests
-answered. Like `net.listen`, `serve_tls` binds every interface.
+answered. Like `net.listen`, `serve_tls` binds every interface; to bind one host,
+listen with `http.listen_on("127.0.0.1", port)` and serve with `serve_tls_on`.
 
 On the client side, `http.try_get_tls(url, &opts)`, `http.get_tls` and
 `Client.try_send_tls(req, &opts)` take a `tls.TlsClientOptions` (private CA as
