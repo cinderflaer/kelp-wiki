@@ -251,9 +251,10 @@ print(grid.get(i = 2).get(i = 1))
 ## Iterating
 
 `for x in xs` walks a `List<T>` or a `[T; N]`
-([Control flow](/language/control-flow)). `Map` has no
-iterator: iterate `keys()` and look up, or iterate `values()` when the key is not
-needed.
+([Control flow](/language/control-flow)). `for (key, value) in map` walks a `Map`
+(a snapshot of its keys, in insertion order,
+[Iterators](/language/iterators)); `for v in map.values()` walks the values
+alone.
 
 ## See also
 

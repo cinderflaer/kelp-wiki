@@ -142,7 +142,15 @@ Reading it line by line:
   error: 'for' walks a 'List<T>' or a type that implements 'Iterator', and 'i32' is neither: implement 'std.iter.Iterator' for it ('type Item' and 'fun mut Self.next().return: option.Option<Self::Item>'), or walk a 'List' by index
   ```
 
-  That includes a `Map`: iterate `keys()` and look up, as before.
+  A `Map` is walked with a pattern instead: see below.
+
+- **`for (key, value) in map`** walks a `Map<K, V>` (26.10.3). The pattern is two
+  names, or `_` for one you do not need, and the map must be a named place. It is
+  the same as `for key in map.keys() { val value = map.get(key) ... }`, so the keys
+  are a snapshot in insertion order: the body may change the map, and a key it
+  removes makes the later lookup panic like any `get` of an absent key. `key` is a
+  copy for a `Copy` key and a shared borrow otherwise, and `value` is what `get`
+  gives (a copy, or a borrow).
 
 The iterable is evaluated once, so `for x in make()` calls `make` a single time.
 

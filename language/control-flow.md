@@ -223,7 +223,8 @@ fun combine(a: &Option<i32>, b: &Option<i32>).return: i32 = when (a, b) {
 ```
 
 - A position is a variant pattern (`Some(x)`, `None`; a capitalized name), a
-  lowercase name that matches anything and binds it, or `_`. All arms have the
+  **literal** (`0`, `-1`, `'a'`, `true`), a **nested tuple pattern**
+  (`((a, b), c)`), a lowercase name that matches anything and binds it, or `_`. All arms have the
   same number of positions, at least two. `else` may stand for the rest.
 - A scrutinee written as a tuple literal is **not built**: its elements are the
   positions, so a parameter or a field is matched where it lives and a borrowed
@@ -233,9 +234,20 @@ fun combine(a: &Option<i32>, b: &Option<i32>).return: i32 = when (a, b) {
   matched first, and each level is an ordinary single-position `when`, so the
   usual rules hold at every level: a variant with no arm (and no arm that matches
   anything there) is the "not exhaustive" error naming the variant.
-- A literal position (`(1, v)`), a guard, and a tuple pattern nested inside a
-  tuple pattern are not supported. The value read by a matching name moves out
-  of an owned position exactly as a payload does.
+- A position tested against literals is compared with `==`, so a number has no
+  list of values to be exhaustive over: some arm must match anything in that
+  position (a name, `_`, or `else`), or the pattern is refused. A string literal
+  is not a position pattern, and a guard is not supported. The value read by a
+  matching name moves out of an owned position exactly as a payload does.
+
+```kelp
+fun classify(a: i32, b: i32).return: i32 = when (a, b) {
+    (0, 0) -> 100
+    (0, y) -> y
+    (x, 0) -> x * 10
+    (x, y) -> x + y
+}
+```
 
 ## `return`
 

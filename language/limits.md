@@ -78,10 +78,10 @@ literal) are built on both backends by `kelpc/tests/scaling.rs`, and a step over
 
 ## Data and generics
 
-- **A tuple has no literal pattern and no `const` value.** A position is read by
-  `t.0`, by a destructuring binding, by `for (a, b) in pairs` and by a tuple
-  pattern in `when (a, b)`, but a tuple pattern cannot hold a literal (`(1, v)`) or
-  another tuple pattern, and there is no tuple value in a `const` initializer.
+- **A tuple has no `const` value.** A position is read by `t.0`, by a
+  destructuring binding, by `for (a, b) in pairs` and by a tuple pattern in
+  `when (a, b)` (which may hold literals and nested tuples), but there is no
+  tuple value in a `const` initializer.
   A tuple has two or more
   elements, so there is no one-element tuple: `(T)` is the type `T`, and `()` is
   refused by name. Bind the whole tuple to a `val` when its positions need to be
@@ -202,8 +202,8 @@ output pinned or is refused with a message that says what to do next:
 - **The iterator protocol shipped, the adapters did not.** `for` walks a `List`,
   an array, or any type that implements `std/iter`'s `Iterator`. There is no
   `map`, `filter`, `take`, `skip`, `enumerate`, `zip` or `chain`, no
-  `List.iter()` or `List.into_iter()`, and a `Map` still has no iterator
-  (iterate `keys()` and look up). **(open)** The adapters need a generic trait
+  `List.iter()` or `List.into_iter()`. A `Map` is walked with `for (key, value) in
+  map` (26.10.3; a snapshot of the keys, in insertion order). **(open)** The adapters need a generic trait
   impl (`impl<I: Iterator> Iterator for Take<I>`), which the parser does not
   accept yet ([Iterators, `for` and `break`](/language/iterators)).
 
