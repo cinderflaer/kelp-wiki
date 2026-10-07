@@ -319,6 +319,27 @@ The same rule is the reason [`Mutex.lock`](/stdlib/sync) and the other block API
 can update a local accumulator. Its remaining limits are listed under
 [Scoped blocks](/language/limits#scoped-blocks) in Limits in v1.
 
+## `must_use`
+
+`must_use fun` marks a function whose result a caller has to look at. A call to
+one used as a statement, with the result thrown away, is a compile error:
+
+```kelp
+must_use fun check(n: i32).R: bool = n > 0
+
+fun main() {
+    check(1)             // error: the result of 'check' must be used
+    val _r = check(1)    // the explicit discard
+    if check(2) { print("ok") }
+}
+```
+
+It goes where `unsafe` and `naked` go (`pub must_use fun`). The standard library
+marks `Sender.send` (a refused send hands the value back) and the `fs.try_*`
+mutators (`None` is success, `Some(IoErr)` is the failure). It is not a type
+attribute: only a call written as a statement is checked, so passing the result
+on, branching on it or binding it counts as using it.
+
 ## `pd` passdowns as hidden parameters
 
 A function that mentions a `pd` binding gets it wired in as a hidden parameter;

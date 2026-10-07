@@ -299,7 +299,7 @@ and `std/ws` is §16.18 of the same document.
   copy instead, the way
   `examples/download_pool.kp` gives each thread its own `http.Pool`. Two leaks
   are admitted: a panicking worker's frame is abandoned, and a handle nobody
-  joins is detached with its worker record leaked, because v1 has no `must_use`.
+  joins is detached with its worker record leaked (a bare `thread.spawn(...)` statement is refused, but a handle bound to a `val` and never joined still leaks). `must_use fun` exists ([Functions](/language/functions#must_use)); `Sender.send` carries it.
   A user `Drop` now exists ([User `Drop`](/language/drop)), but it does not run
   on the panic path: there is still no unwinding. A worker that returns `unit`
   joins to `Result<unit, ThreadErr>` with nothing in its `Ok`, the same shape
