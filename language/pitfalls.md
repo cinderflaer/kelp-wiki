@@ -54,9 +54,9 @@ and [Cursors and provenance](/language/ownership#cursors-and-provenance).
 
 | Message | What happened | Fix |
 | --- | --- | --- |
-| `cannot compare 'P' values with '=='` | a `datac`/`enum` gets `==`/`!=` only from a declared `eq`, and nothing is derived | declare `fun P.eq(other: &P).R: bool`, which `a == b` lowers to (`a.eq(&b)`); or compare the fields directly, or match with `when` |
+| `cannot compare 'P' values with '=='` | a `datac`/`enum` gets `==`/`!=` only from a declared `eq`, and nothing is derived | declare `fun P.eq(other: &P).return: bool`, which `a == b` lowers to (`a.eq(&b)`); or compare the fields directly, or match with `when` |
 | `cannot compare 'P' values with '<'` | `<`/`<=`/`>`/`>=` are refused on every owned `datac`/`enum`, declared `eq` or not | compare the fields you mean, or write the ordering method you want |
-| `'P.eq' takes exactly one parameter, a shared borrow of 'P'` | the `eq` method has the wrong signature | write `fun P.eq(other: &P).R: bool`: one parameter, a shared borrow of the type, returning `bool` |
+| `'P.eq' takes exactly one parameter, a shared borrow of 'P'` | the `eq` method has the wrong signature | write `fun P.eq(other: &P).return: bool`: one parameter, a shared borrow of the type, returning `bool` |
 | `cannot compare 'A' with 'B'` | the two operands are different types | make both sides the same type |
 
 ## Characters and integers

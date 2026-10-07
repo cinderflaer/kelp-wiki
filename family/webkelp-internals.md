@@ -44,7 +44,7 @@ webkelp/
 
 ```kelp
 // page.kp
-pub fun compile(src: &str, css_href: &str, inline_css: bool).R: Page
+pub fun compile(src: &str, css_href: &str, inline_css: bool).return: Page
 ```
 
 `compile` takes the document as a `str` and returns a `Page(html, css)`. It cannot read a

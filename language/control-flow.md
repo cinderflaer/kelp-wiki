@@ -169,7 +169,7 @@ for x in xs {
 `when` is a chain of conditions that reads as a value:
 
 ```kelp
-fun classify(n: i32).R: &str = when {
+fun classify(n: i32).return: &str = when {
     n > 0 -> "pos"
     n < 0 -> "neg"
     else -> "zero"
@@ -183,7 +183,7 @@ when a value is produced, and `when` desugars to nested `if`/`else if`/`else`.
 With a **scrutinee**, `when` becomes pattern matching over an `enum`:
 
 ```kelp
-fun area(s: &Shape).R: f64 = when s {
+fun area(s: &Shape).return: f64 = when s {
     Circle(r) -> 3.14159 * r * r
     Rect(w, h) -> w * h
     Empty -> 0.0
@@ -213,7 +213,7 @@ Several values can be matched together by writing them as a tuple and each arm a
 a tuple pattern:
 
 ```kelp
-fun combine(a: &Option<i32>, b: &Option<i32>).R: i32 = when (a, b) {
+fun combine(a: &Option<i32>, b: &Option<i32>).return: i32 = when (a, b) {
     (Some(x), Some(y)) -> x + y
     (Some(x), None) -> x
     (None, y) -> 0
@@ -238,7 +238,7 @@ fun combine(a: &Option<i32>, b: &Option<i32>).R: i32 = when (a, b) {
 ## `return`
 
 ```kelp
-fun sum_to(n: i32).R: i32 {
+fun sum_to(n: i32).return: i32 {
     var acc = 0
     var i = 1
     while i <= n {
@@ -249,7 +249,7 @@ fun sum_to(n: i32).R: i32 {
 }
 ```
 
-`return` with no value is allowed in a function with no `.R: T`. An
+`return` with no value is allowed in a function with no `.return: T`. An
 expression-bodied function does not use `return` at all.
 
 A block whose **last statement is `panic(...)`** diverges, so it satisfies any
@@ -257,7 +257,7 @@ declared return type, including a borrowed one. That rule is what makes a
 "this cannot happen" accessor expressible:
 
 ```kelp
-fun unwrap<T>(o: &Option<T>).R: T {
+fun unwrap<T>(o: &Option<T>).return: T {
     if let Some(v) = o {
         return v
     }

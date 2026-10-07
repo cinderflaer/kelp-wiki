@@ -11,13 +11,13 @@ impl "std/ops"
 ```
 
 ```kelp
-pub trait Add { fun Self.add(rhs: &Self).R: Self }
-pub trait Sub { fun Self.sub(rhs: &Self).R: Self }
-pub trait Mul { fun Self.mul(rhs: &Self).R: Self }
-pub trait Div { fun Self.div(rhs: &Self).R: Self }
-pub trait Rem { fun Self.rem(rhs: &Self).R: Self }
-pub trait Neg { fun Self.neg().R: Self }
-pub trait Ord { fun Self.cmp(other: &Self).R: i32 }
+pub trait Add { fun Self.add(rhs: &Self).return: Self }
+pub trait Sub { fun Self.sub(rhs: &Self).return: Self }
+pub trait Mul { fun Self.mul(rhs: &Self).return: Self }
+pub trait Div { fun Self.div(rhs: &Self).return: Self }
+pub trait Rem { fun Self.rem(rhs: &Self).return: Self }
+pub trait Neg { fun Self.neg().return: Self }
+pub trait Ord { fun Self.cmp(other: &Self).return: i32 }
 ```
 
 With `impl ops.Add for T`, `a + b` means `a.add(&b)` and `a += b` means

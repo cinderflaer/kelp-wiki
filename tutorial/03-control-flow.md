@@ -15,7 +15,7 @@ reference is [Control flow](/language/control-flow) and
 impl "std/iter"
 impl "std/option"
 
-fun classify(n: i32).R: &str = when {
+fun classify(n: i32).return: &str = when {
     n > 0 -> "positive"
     n < 0 -> "negative"
     else -> "zero"
@@ -25,7 +25,7 @@ datac Countdown(var n: i64)
 
 impl iter.Iterator for Countdown {
     type Item = i64
-    fun mut Self.next().R: option.Option<i64> {
+    fun mut Self.next().return: option.Option<i64> {
         if self.n <= 0 {
             return option.Option.None
         }
@@ -214,7 +214,7 @@ datac ByTwos(var n: i64)
 
 impl iter.Iterator for ByTwos {
     type Item = i64
-    fun mut Self.next().R: option.Option<i64> {
+    fun mut Self.next().return: option.Option<i64> {
         if self.n <= 0 {
             return option.Option.None
         }

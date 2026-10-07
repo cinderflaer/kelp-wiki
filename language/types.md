@@ -36,10 +36,10 @@ valid inside the scope that lent it.
 | `datac` name | owned | record with per-field `val`/`var`, optionally with type parameters |
 | `enum` name | owned | tagged union: exactly one variant is live |
 | `(A, B)` | owned | a tuple: two or more element values held in **position order**. Not `Copy`, and it takes the derived deep copy and the derived order a `datac` takes, position by position. Read by destructuring or by position `t.0` ([Bindings and assignment](/language/bindings)) |
-| `fun(T, U).R: V` | Copy | a function value: a function pointer, with the parameters it takes and what it returns |
-| `closure(T, U).R: V` | owned | a function value **plus** the environment its captures were moved into |
+| `fun(T, U).return: V` | Copy | a function value: a function pointer, with the parameters it takes and what it returns |
+| `closure(T, U).return: V` | owned | a function value **plus** the environment its captures were moved into |
 
-There is no `void`: a function with no `.R: T` returns `Unit`, which has no
+There is no `void`: a function with no `.return: T` returns `Unit`, which has no
 representation, so a binding of one holds nothing ([Returns](/language/returns)).
 
 ## Tuples
@@ -48,7 +48,7 @@ A tuple is two or more values held in **position order**, and it is a type:
 `(i32, i32)` is a pair of `i32`s, written wherever a type is written.
 
 ```kelp
-fun min_max(xs: &List<i32>).R: (i32, i32) {
+fun min_max(xs: &List<i32>).return: (i32, i32) {
     // ...
     return (lo, hi)
 }
@@ -152,7 +152,7 @@ val p: Pair<i32, String> = Pair(first = 1, second = "one")
   A tuple is concrete, so it is a legal type argument: `List<(i32, i32)>`,
   `Box<(String, u64)>`.
 - A generic type may refer to itself **through a `Box` or a `List`**.
-- A `fun` may declare type parameters too (`fun identity<T>(x: T).R: T`), and a
+- A `fun` may declare type parameters too (`fun identity<T>(x: T).return: T`), and a
   call site instantiates them, by inference or by writing them
   (`identity<i32>(x = 5)`).
 

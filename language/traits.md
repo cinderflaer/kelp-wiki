@@ -22,22 +22,22 @@ vtable, which is a section below, and the owned `Box<dyn Name>`
 
 ```kelp
 trait Shape {
-    fun Self.area().R: f64
-    fun Self.describe().R: String { return "a shape" }
+    fun Self.area().return: f64
+    fun Self.describe().return: String { return "a shape" }
     fun mut Self.scale(f: f64)
 }
 
 trait Named: Shape {
-    fun Self.name().R: str
+    fun Self.name().return: str
 }
 ```
 
 A trait is a top-level declaration. Its body is one or more methods in the
 receiver form of [Methods and receivers](/language/methods), with `Self` where
 the method's type would be. A method with **no body** is a **signature**:
-`fun [mut] Self.name([param, ...])[.R: T]`, no `=` and no `{ ... }`.
+`fun [mut] Self.name([param, ...])[.return: T]`, no `=` and no `{ ... }`.
 
-- **A method with a body is a default method**: `fun Self.describe().R: String
+- **A method with a body is a default method**: `fun Self.describe().return: String
   { ... }`, written exactly like an ordinary method, with `Self` standing for
   the implementing type. A default body may call the trait's other methods
   through `self` (`self.area()`), and it is checked once per implementing type,
@@ -48,7 +48,7 @@ the method's type would be. A method with **no body** is a **signature**:
   must be acyclic.
 - `Self` names the implementing type. It is also legal in the other types a
   method names, where it means the same thing:
-  `fun Self.smaller_than(other: &Self).R: bool`.
+  `fun Self.smaller_than(other: &Self).return: bool`.
 - `mut` on the receiver is part of the signature, and the impl has to match it.
 - The trait name is an ordinary top-level name. `pub trait Shape` exports it the
   way a `pub datac` is exported, and a trait declared in another module is
@@ -73,13 +73,13 @@ the method's type would be. A method with **no body** is a **signature**:
 datac Circle(var r: f64)
 
 impl Shape for Circle {
-    fun Self.area().R: f64 = r * r * 3.14159
+    fun Self.area().return: f64 = r * r * 3.14159
     fun mut Self.scale(f: f64) { r = r * f }
     // `describe` is omitted: the trait's default is used.
 }
 
 trait Counts {
-    fun Self.count().R: i32 { return 0 }
+    fun Self.count().return: i32 { return 0 }
 }
 
 // A trait whose methods are all defaulted is implemented by an empty block.
@@ -134,9 +134,9 @@ the trait's module or the type's.
   method.
 
   ```
-  error: trait 'Shape' declares 'fun Self.name().R: str', and 'impl Shape for Circle' does not implement it: add 'fun Self.name().R: str { ... }' to the block
+  error: trait 'Shape' declares 'fun Self.name().return: str', and 'impl Shape for Circle' does not implement it: add 'fun Self.name().return: str { ... }' to the block
   error: 'shrink' is not declared by trait 'Shape': an 'impl' implements exactly the trait's methods, so remove it or add the signature to the trait
-  error: method 'area' does not match trait 'Shape': the trait declares 'fun Self.area().R: f64', the impl writes 'fun Circle.area().R: i32'
+  error: method 'area' does not match trait 'Shape': the trait declares 'fun Self.area().return: f64', the impl writes 'fun Circle.area().return: i32'
   error: method 'grow' takes its receiver differently than trait 'Grow' declares it: the trait writes 'fun mut Self.grow(by: f64)', the impl writes 'fun Circle.grow(by: f64)'
   ```
 
@@ -161,8 +161,8 @@ generated `kelp_drop_<T>`.
 A type parameter carries bounds after a `:`, separated by `+`:
 
 ```kelp
-fun area_of<T: Shape>(s: &T).R: f64 = s.area()
-fun describe<T: Shape + Named>(s: &T).R: f64 = s.area() + s.name_length()
+fun area_of<T: Shape>(s: &T).return: f64 = s.area()
+fun describe<T: Shape + Named>(s: &T).return: f64 = s.area() + s.name_length()
 ```
 
 - **Inside the body, a method call on a `T` resolves exactly as it would on the
@@ -204,18 +204,18 @@ the `KELPC_ORACLE=c` C oracle:
 
 ```kelp
 trait Shape {
-    fun Self.area().R: f64
+    fun Self.area().return: f64
     fun mut Self.scale(f: f64)
 }
 
 datac Circle(var r: f64)
 
 impl Shape for Circle {
-    fun Self.area().R: f64 = r * r * 3.14159
+    fun Self.area().return: f64 = r * r * 3.14159
     fun mut Self.scale(f: f64) { r = r * f }
 }
 
-fun area_of<T: Shape>(s: &T).R: f64 = s.area()
+fun area_of<T: Shape>(s: &T).return: f64 = s.area()
 
 fun main() {
     var c = Circle(r = 2.0)
@@ -248,28 +248,28 @@ supertrait bound, in one program:
 
 ```kelp
 trait Shape {
-    fun Self.area().R: i32
-    fun Self.describe().R: i32 { return 7 }
-    fun Self.summary().R: i32 { return self.area() + self.describe() }
+    fun Self.area().return: i32
+    fun Self.describe().return: i32 { return 7 }
+    fun Self.summary().return: i32 { return self.area() + self.describe() }
 }
 
 trait Named: Shape {
-    fun Self.name().R: i32 { return 3 }
+    fun Self.name().return: i32 { return 3 }
 }
 
 datac Circle(val r: i32)
 
 impl Shape for Circle {
-    fun Self.area().R: i32 = r * r
-    fun Self.describe().R: i32 = 9
+    fun Self.area().return: i32 = r * r
+    fun Self.describe().return: i32 = 9
 }
 
 // Every `Named` method is defaulted, so the block is empty; the `Shape` impl
 // beside it is what the supertrait requires.
 impl Named for Circle {}
 
-fun area_of<T: Shape>(x: &T).R: i32 = x.area()
-fun describe<T: Named>(x: &T).R: i32 = x.area() + x.name()
+fun area_of<T: Shape>(x: &T).return: i32 = x.area()
+fun describe<T: Named>(x: &T).return: i32 = x.area() + x.name()
 
 fun main() {
     val c = Circle(r = 3)
@@ -297,7 +297,7 @@ to match the declared signature, and a default that calls a method the type does
 not have is refused at the impl that uses it:
 
 ```
-error: method 'describe' does not match trait 'Shape': the trait declares 'fun Self.describe().R: i32', the impl writes 'fun C.describe().R: i64'
+error: method 'describe' does not match trait 'Shape': the trait declares 'fun Self.describe().return: i32', the impl writes 'fun C.describe().return: i64'
 error: datac 'C' has no method 'nope'
 ```
 
@@ -322,24 +322,24 @@ which is exactly the set the compiler's method table names: the integer scalars
 
 ```kelp
 trait Doubler {
-    fun Self.double().R: i32
-    fun Self.triple().R: i32 { return self.double() + self.double() + self.double() }
+    fun Self.double().return: i32
+    fun Self.triple().return: i32 { return self.double() + self.double() + self.double() }
 }
 
 trait Named {
-    fun Self.label().R: String
+    fun Self.label().return: String
 }
 
 impl Doubler for i32 {
-    fun Self.double().R: i32 = self + self
+    fun Self.double().return: i32 = self + self
 }
 
 impl Named for String {
-    fun Self.label().R: String = String.from_str("a string")
+    fun Self.label().return: String = String.from_str("a string")
 }
 
-fun twice<T: Doubler>(x: T).R: i32 = x.double() + x.double()
-fun label_of<T: Named>(s: &T).R: String = s.label()
+fun twice<T: Doubler>(x: T).return: i32 = x.double() + x.double()
+fun label_of<T: Named>(s: &T).return: String = s.label()
 
 fun main() {
     val n = 6
@@ -387,27 +387,27 @@ compiler never owns a trait object.
 
 ```kelp
 trait Shape {
-    fun Self.area().R: f64
-    fun Self.describe().R: String { return "a shape" }
+    fun Self.area().return: f64
+    fun Self.describe().return: String { return "a shape" }
     fun mut Self.scale(f: f64)
 }
 
 trait Named: Shape {
-    fun Self.name().R: str
+    fun Self.name().return: str
 }
 
 datac Circle(var r: f64)
 
 impl Shape for Circle {
-    fun Self.area().R: f64 = r * r * 3.14159
+    fun Self.area().return: f64 = r * r * 3.14159
     fun mut Self.scale(f: f64) { r = r * f }
 }
 
 impl Named for Circle {
-    fun Self.name().R: str = "circle"
+    fun Self.name().return: str = "circle"
 }
 
-fun report(s: &dyn Shape).R: f64 {
+fun report(s: &dyn Shape).return: f64 {
     print(s.describe())
     return s.area()
 }
@@ -416,7 +416,7 @@ fun grow(s: &mut dyn Shape) {
     s.scale(2.0)
 }
 
-fun through_named(s: &dyn Named).R: f64 = s.area()
+fun through_named(s: &dyn Named).return: f64 = s.area()
 
 fun main() {
     var c = Circle(r = 2.0)
@@ -459,7 +459,7 @@ supertrait's `area` through a `&dyn Named`, which has `Shape`'s methods first.
 - A trait object is legal **as a parameter type and as a local binding type**
   (`val`/`var`). A parameter includes a `fun` literal's parameter and the
   parameter of a function *type*. It is refused everywhere else by name: as a
-  `.R:` return type, as a `datac`/`enum` field or payload, as a
+  `.return:` return type, as a `datac`/`enum` field or payload, as a
   `List`/`Box`/`Map`/`Atomic`/array element or argument, as a tuple element, and
   as a `static`'s type.
 - `Name` must be a declared trait:

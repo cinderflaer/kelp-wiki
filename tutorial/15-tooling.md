@@ -20,9 +20,9 @@ that. What follows uses only the language.
 ```kelp
 impl "std/process"
 
-fun double(n: i64).R: i64 = n * 2
+fun double(n: i64).return: i64 = n * 2
 
-fun is_even(n: i64).R: bool = n % 2 == 0
+fun is_even(n: i64).return: bool = n % 2 == 0
 
 fun check_eq(got: i64, want: i64, name: &str, failures: mut i32) {
     if got == want {
@@ -100,7 +100,7 @@ without writing when a file is not formatted. It changes whitespace and indentat
 never a token. Here is a deliberately messy file:
 
 ```kelp
-fun   area(w:i32,h:i32).R:i32 {
+fun   area(w:i32,h:i32).return:i32 {
   return w*h
 }
 fun main(){
@@ -118,7 +118,7 @@ $ kelpc fmt --check messy.kp
 error: 'messy.kp' is not formatted
 exit 1
 $ kelpc fmt messy.kp
-fun area(w: i32, h: i32).R: i32 {
+fun area(w: i32, h: i32).return: i32 {
     return w * h
 }
 fun main() {
@@ -171,9 +171,9 @@ and `//!` at the top of a file documents the module. Only `pub` items are listed
 pub datac Rect(val w: i32, val h: i32)
 
 /// The area of `r`, in square units.
-pub fun area(r: &Rect).R: i32 = r.w * r.h
+pub fun area(r: &Rect).return: i32 = r.w * r.h
 
-pub fun perimeter(r: &Rect).R: i32 = 2 * (r.w + r.h)
+pub fun perimeter(r: &Rect).return: i32 = 2 * (r.w + r.h)
 
 fun main() {
     val r = Rect(w = 3, h = 4)
@@ -216,7 +216,7 @@ A rectangle with a width and a height.
 ### `area`
 
 ```kelp
-pub fun area(r: &Rect).R: i32
+pub fun area(r: &Rect).return: i32
 ```
 
 The area of `r`, in square units.
@@ -224,7 +224,7 @@ The area of `r`, in square units.
 ### `perimeter`
 
 ```kelp
-pub fun perimeter(r: &Rect).R: i32
+pub fun perimeter(r: &Rect).return: i32
 ```
 ```
 
@@ -382,10 +382,10 @@ The cache lives in `<out dir>/.kelpc-cache`, which is why `cache stats` was give
 pub datac Rect(val w: i32, val h: i32)
 
 /// The area of `r`, in square units.
-pub fun area(r: &Rect).R: i32 = r.w * r.h
+pub fun area(r: &Rect).return: i32 = r.w * r.h
 
 /// The perimeter of `r`, in units.
-pub fun perimeter(r: &Rect).R: i32 = 2 * (r.w + r.h)
+pub fun perimeter(r: &Rect).return: i32 = 2 * (r.w + r.h)
 
 fun main() {
     val r = Rect(w = 3, h = 4)

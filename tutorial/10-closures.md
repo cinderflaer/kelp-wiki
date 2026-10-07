@@ -15,11 +15,11 @@ The reference is [Functions](/language/functions#closures).
 impl "std/list"
 
 // returns a closure that owns its captured `step`
-fun make_adder(step: i32).R: closure(i32).R: i32 {
-    return fun(x: i32).R: i32 = x + step
+fun make_adder(step: i32).return: closure(i32).return: i32 {
+    return fun(x: i32).return: i32 = x + step
 }
 
-fun apply_twice(f: closure(i32).R: i32, x: i32).R: i32 = f(f(x))
+fun apply_twice(f: closure(i32).return: i32, x: i32).return: i32 = f(f(x))
 
 // a scoped parameter: only a literal or trailing block can be passed
 fun each_to(n: i32, f: scoped fun(i32)) {
@@ -36,7 +36,7 @@ fun main() {
     print("twice = ${apply_twice(add5, 1)}")
 
     val xs: List<i32> = List.of(3)
-    val tripled = list.map(xs, fun(x: &i32).R: i32 = x * 3)
+    val tripled = list.map(xs, fun(x: &i32).return: i32 = x * 3)
     print("tripled ${tripled.get(0)}")
 
     // a trailing block borrows what it captures, and may write it
@@ -66,9 +66,9 @@ Both backends agreed on every line.
 
 ## Closures
 
-A `fun` literal is `fun(x: i32).R: i32 = x + step`. When it names a binding from
+A `fun` literal is `fun(x: i32).return: i32 = x + step`. When it names a binding from
 the enclosing scope, that is a **capture**, and the literal's type is written
-`closure(i32).R: i32` (compare the plain function type `fun(i32).R: i32` from
+`closure(i32).return: i32` (compare the plain function type `fun(i32).return: i32` from
 chapter 2).
 
 Captures are **move-only**: a `Copy` binding (the `i32` `step`) is copied into the
@@ -82,8 +82,8 @@ borrow points into, and Kelp has no lifetime syntax to say otherwise:
 ```kelp
 impl "std/str"
 
-fun make(name: &str).R: closure().R: usize {
-    return fun().R: usize = str.len(name)
+fun make(name: &str).return: closure().return: usize {
+    return fun().return: usize = str.len(name)
 }
 
 fun main() {
@@ -99,7 +99,7 @@ error: a 'fun' literal cannot capture 'name': it is a borrow ('str'), and the en
 ```
 
 Pass the value as a parameter of the literal, or capture an owned copy. Library
-callbacks are typically `closure(&T).R: U`, as in `list.map(xs, fun(x: &i32).R: i32 = x * 3)`
+callbacks are typically `closure(&T).return: U`, as in `list.map(xs, fun(x: &i32).return: i32 = x * 3)`
 above, where the `Copy` element is used directly.
 
 ## Scoped parameters and trailing blocks
@@ -202,8 +202,8 @@ ababab
 2.
 
 ```kelp
-fun make_counter_step(step: i32).R: closure(i32).R: i32 {
-    return fun(x: i32).R: i32 = x + step
+fun make_counter_step(step: i32).return: closure(i32).return: i32 {
+    return fun(x: i32).return: i32 = x + step
 }
 
 fun main() {

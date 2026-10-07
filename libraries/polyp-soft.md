@@ -131,10 +131,10 @@ version.
 ```kelp
 pub trait Platform {
     fun mut Self.present(fb: fb.Fb, dirty: &damage.Damage)
-    fun Self.now_ms().R: u64
-    fun mut Self.now_us().R: u64
-    fun mut Self.poll_event().R: option.Option<event.Event>
-    fun Self.framebuffer().R: fb.Fb
+    fun Self.now_ms().return: u64
+    fun mut Self.now_us().return: u64
+    fun mut Self.poll_event().return: option.Option<event.Event>
+    fun Self.framebuffer().return: fb.Fb
 }
 ```
 
@@ -184,9 +184,9 @@ pub fun frame<P: platform.Platform, S, M>(
     platform: mut P,
     tree: move core.Node<M>,
     state: mut S,
-    view: fun (S).R: core.Node<M>,
+    view: fun (S).return: core.Node<M>,
     update: fun (mut S, M),
-).R: core.Tick<M>
+).return: core.Tick<M>
 ```
 
 It takes the platform's framebuffer, resizes the backend's layout to it, lays out,

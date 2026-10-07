@@ -25,7 +25,7 @@ control in both forms and in a written `while`.
 ```kelp
 pub trait Iterator {
     type Item
-    fun mut Self.next().R: option.Option<Self::Item>
+    fun mut Self.next().return: option.Option<Self::Item>
 }
 ```
 
@@ -46,7 +46,7 @@ datac Fib(var a: i64, var b: i64)
 
 impl iter.Iterator for Fib {
     type Item = i64
-    fun mut Self.next().R: option.Option<i64> {
+    fun mut Self.next().return: option.Option<i64> {
         val v = self.a
         self.a = self.b
         self.b = v + self.b
@@ -139,7 +139,7 @@ Reading it line by line:
 - **Anything else** is refused, and the message names the trait:
 
   ```
-  error: 'for' walks a 'List<T>' or a type that implements 'Iterator', and 'i32' is neither: implement 'std.iter.Iterator' for it ('type Item' and 'fun mut Self.next().R: option.Option<Self::Item>'), or walk a 'List' by index
+  error: 'for' walks a 'List<T>' or a type that implements 'Iterator', and 'i32' is neither: implement 'std.iter.Iterator' for it ('type Item' and 'fun mut Self.next().return: option.Option<Self::Item>'), or walk a 'List' by index
   ```
 
   That includes a `Map`: iterate `keys()` and look up, as before.

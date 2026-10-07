@@ -37,7 +37,7 @@ impl "std/str"
 impl "std/process"
 impl "deps/lineproto/lib" caps(net = ["127.0.0.1:*"])
 
-fun port_from(argv: &List<String>).R: u16 {
+fun port_from(argv: &List<String>).return: u16 {
     if argv.len() >= 2 {
         val parsed = str.parse_i64(argv.get(1).as_str())
         if let Ok(v) = parsed {
@@ -90,7 +90,7 @@ impl "std/str"
 impl "std/process"
 impl "deps/lineproto/lib" caps(net = ["127.0.0.1:*"])
 
-fun port_from(argv: &List<String>).R: u16 {
+fun port_from(argv: &List<String>).return: u16 {
     if argv.len() >= 2 {
         val parsed = str.parse_i64(argv.get(1).as_str())
         if let Ok(v) = parsed {

@@ -17,7 +17,7 @@ neither backend learned a new lowering.
 
 ```kelp
 trait Scale<T> {
-    fun Self.scaled(by: T).R: Self
+    fun Self.scaled(by: T).return: Self
 }
 ```
 
@@ -38,25 +38,25 @@ implementing type:
 
 ```kelp
 trait Scale<T> {
-    fun Self.scaled(by: T).R: Self
+    fun Self.scaled(by: T).return: Self
 }
 
 datac Meters(val v: i64)
 
 impl Scale<i64> for Meters {
-    fun Self.scaled(by: i64).R: Meters = Meters(v = self.v * by)
+    fun Self.scaled(by: i64).return: Meters = Meters(v = self.v * by)
 }
 
 trait Make<T> {
-    fun make(seed: T).R: Self
+    fun make(seed: T).return: Self
 }
 
 impl Make<i64> for Meters {
-    fun make(seed: i64).R: Meters = Meters(v = seed)
+    fun make(seed: i64).return: Meters = Meters(v = seed)
 }
 
 impl Make<bool> for Meters {
-    fun make(seed: bool).R: Meters {
+    fun make(seed: bool).return: Meters {
         if seed {
             return Meters(v = 1)
         }
@@ -64,11 +64,11 @@ impl Make<bool> for Meters {
     }
 }
 
-fun build<X: Make<i64>>(n: i64).R: X {
+fun build<X: Make<i64>>(n: i64).return: X {
     return X.make(seed = n)
 }
 
-fun grow<S: Scale<i64>>(s: S).R: S {
+fun grow<S: Scale<i64>>(s: S).return: S {
     return s.scaled(by = 3)
 }
 
@@ -139,11 +139,11 @@ else:
 
 ```kelp
 pub trait From<T> {
-    fun from(value: T).R: Self
+    fun from(value: T).return: Self
 }
 
 pub trait Into<T> {
-    fun Self.into().R: T
+    fun Self.into().return: T
 }
 ```
 
@@ -168,20 +168,20 @@ enum AppErr {
 }
 
 impl convert.From<str.ParseErr> for AppErr {
-    fun from(value: str.ParseErr).R: AppErr {
+    fun from(value: str.ParseErr).return: AppErr {
         return AppErr.Parse(text = "not a number")
     }
 }
 
 impl convert.From<i64> for AppErr {
-    fun from(value: i64).R: AppErr = AppErr.Range(value = value)
+    fun from(value: i64).return: AppErr = AppErr.Range(value = value)
 }
 
-fun parse(s: &str).R: result.Result<i64, str.ParseErr> {
+fun parse(s: &str).return: result.Result<i64, str.ParseErr> {
     return str.parse_i64(s = s)
 }
 
-fun small(s: &str).R: result.Result<i64, AppErr> {
+fun small(s: &str).return: result.Result<i64, AppErr> {
     val n = parse(s = s)?
     if n > 100 {
         return result.Result.Err(error = AppErr.from(value = n))
@@ -221,7 +221,7 @@ by the argument's type.
   write:
 
   ```
-  error: '?' cannot convert a failure: 'std.result.Result<i32, IoErr>' carries 'IoErr' and the enclosing function returns 'std.result.Result<i32, AppErr>', whose failure carries 'AppErr' — write 'impl From<IoErr> for AppErr { fun from(value: IoErr).R: AppErr { ... } }' so the operator has a conversion to call
+  error: '?' cannot convert a failure: 'std.result.Result<i32, IoErr>' carries 'IoErr' and the enclosing function returns 'std.result.Result<i32, AppErr>', whose failure carries 'AppErr' — write 'impl From<IoErr> for AppErr { fun from(value: IoErr).return: AppErr { ... } }' so the operator has a conversion to call
   ```
 
 - The two enums may be different declarations; only the failure payload may now

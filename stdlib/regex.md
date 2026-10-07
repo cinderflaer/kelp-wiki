@@ -101,22 +101,22 @@ datac Captures(val text: String, val slots: List<i32>)
 ```
 
 ```kelp
-regex.compile(pattern: &str).R: result.Result<Regex, RegexErr>
-regex.is_match(pattern: &str, text: &str).R: bool          // panics on a bad pattern
-Regex.is_match(&str).R: bool
-Regex.find(&str).R: option.Option<Match>
-Regex.find_at(&str, start: usize).R: option.Option<Match>
-Regex.captures(&str).R: option.Option<Captures>
-Regex.find_all(&str).R: List<Match>
-Regex.replace(&str, replacement: &str).R: String
-Regex.replace_all(&str, replacement: &str).R: String
-Regex.split(&str).R: List<String>
-Regex.steps().R: i64
+regex.compile(pattern: &str).return: result.Result<Regex, RegexErr>
+regex.is_match(pattern: &str, text: &str).return: bool          // panics on a bad pattern
+Regex.is_match(&str).return: bool
+Regex.find(&str).return: option.Option<Match>
+Regex.find_at(&str, start: usize).return: option.Option<Match>
+Regex.captures(&str).return: option.Option<Captures>
+Regex.find_all(&str).return: List<Match>
+Regex.replace(&str, replacement: &str).return: String
+Regex.replace_all(&str, replacement: &str).return: String
+Regex.split(&str).return: List<String>
+Regex.steps().return: i64
 Regex.reset_steps()
-Regex.group_count().R: usize
-Captures.get(i: usize).R: option.Option<String>
-Captures.span(i: usize).R: option.Option<Match>
-Captures.len().R: usize                                    // groups including group 0
+Regex.group_count().return: usize
+Captures.get(i: usize).return: option.Option<String>
+Captures.span(i: usize).return: option.Option<Match>
+Captures.len().return: usize                                    // groups including group 0
 ```
 
 The matching methods take the `Regex` **exclusively** (`fun mut`): the scratch
@@ -185,7 +185,7 @@ impl "std/option"
 impl "std/result"
 impl "std/str"
 
-fun compile_or_die(pat: &str).R: regex.Regex {
+fun compile_or_die(pat: &str).return: regex.Regex {
     val r = regex.compile(pat)
     if let Ok(re) = r {
         return re
@@ -193,7 +193,7 @@ fun compile_or_die(pat: &str).R: regex.Regex {
     panic("bad pattern in the example")
 }
 
-fun repeated(unit: &str, times: usize, tail: &str).R: String {
+fun repeated(unit: &str, times: usize, tail: &str).return: String {
     var s = String.with_capacity(str.len(unit) * times + str.len(tail))
     var i: usize = 0
     while i < times {

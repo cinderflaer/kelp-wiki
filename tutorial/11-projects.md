@@ -47,7 +47,7 @@ documented shape; the dependency's *contents* are mine and tiny, not the real
 The dependency, `src/deps/mathx/lib.kp`:
 
 ```kelp
-pub fun square(x: f64).R: f64 = x * x
+pub fun square(x: f64).return: f64 = x * x
 ```
 
 The module, `src/shapes/circle.kp`:
@@ -57,11 +57,11 @@ impl "deps/mathx/lib"
 
 pub datac Circle(val r: f64)
 
-fun Circle.area().R: f64 = mathx.square(self.r) * 3.14159
+fun Circle.area().return: f64 = mathx.square(self.r) * 3.14159
 
-fun secret().R: i32 = 42
+fun secret().return: i32 = 42
 
-pub fun unit_circle().R: Circle = Circle(r = 1.0)
+pub fun unit_circle().return: Circle = Circle(r = 1.0)
 ```
 
 The entry, `src/main.kp`:
@@ -138,7 +138,7 @@ error: 'pub' cannot be written on a method: a method's reachability follows its 
 ```kelp
 datac Hidden(val r: f64)
 
-pub fun make().R: Hidden = Hidden(r = 1.0)
+pub fun make().return: Hidden = Hidden(r = 1.0)
 ```
 
 ```text
@@ -157,7 +157,7 @@ another module's `module.item` spelling.
 ## Exercises
 
 1. In a new project, add `src/shapes/rect.kp` with a `pub datac Rect`, an area
-   method, and a `pub fun square(side: f64).R: Rect`, and call both from `main`.
+   method, and a `pub fun square(side: f64).return: Rect`, and call both from `main`.
 2. In `bad_private`, what is the smallest change that makes the program compile?
 
 <details>
@@ -168,9 +168,9 @@ another module's `module.item` spelling.
 ```kelp
 pub datac Rect(val w: f64, val h: f64)
 
-fun Rect.area().R: f64 = self.w * self.h
+fun Rect.area().return: f64 = self.w * self.h
 
-pub fun square(side: f64).R: Rect = Rect(w = side, h = side)
+pub fun square(side: f64).return: Rect = Rect(w = side, h = side)
 ```
 
 ```kelp

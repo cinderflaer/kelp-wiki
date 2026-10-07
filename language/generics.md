@@ -21,7 +21,7 @@ enum Option<T> {
     None
 }
 
-fun identity<T>(x: T).R: T = x
+fun identity<T>(x: T).return: T = x
 ```
 
 - The parameter list is `<` name (`,` name)* `>` between the declared name and the
@@ -90,7 +90,7 @@ a non-generic function, or a method, whose parameters come from its receiver.
 A receiver method on a generic type writes the type's own parameters, in order:
 
 ```kelp
-fun Pair<A, B>.first_of().R: A = first
+fun Pair<A, B>.first_of().return: A = first
 fun mut Pair<A, B>.replace_second(v: B) { second = v }
 ```
 
@@ -107,7 +107,7 @@ fun mut Pair<A, B>.replace_second(v: B) { second = v }
   `std/option` does:
 
   ```kelp
-  fun is_some<T>(o: &Option<T>).R: bool = when o {
+  fun is_some<T>(o: &Option<T>).return: bool = when o {
       Some(_) -> true
       None -> false
   }
@@ -119,8 +119,8 @@ A `fun` may take type parameters after its name, and each call site instantiates
 them:
 
 ```kelp
-fun identity<T>(x: T).R: T = x
-fun empty_of<T>().R: List<T> = List.empty()
+fun identity<T>(x: T).return: T = x
+fun empty_of<T>().return: List<T> = List.empty()
 ```
 
 - A parameter or a return type that names `T` is resolved for each instantiation.
@@ -131,7 +131,7 @@ fun empty_of<T>().R: List<T> = List.empty()
   inside it. A generic function that is never called is never checked.
 - `main` may not take type parameters.
 - A parameter of a non-`Copy` type is a shared borrow, exactly as it is in a
-  non-generic function, so `fun first<T>(xs: List<T>).R: T` cannot return an owned
+  non-generic function, so `fun first<T>(xs: List<T>).return: T` cannot return an owned
   element: `get` borrows it, and only a `Copy` value can come back out of a borrow
   ([Ownership and borrowing](/language/ownership)).
 
@@ -141,8 +141,8 @@ A type parameter may carry one or more **bounds** after a `:`, separated by
 `+`. The bound names a `trait` ([Traits and static dispatch](/language/traits)):
 
 ```kelp
-fun area_of<T: Shape>(s: &T).R: f64 = s.area()
-fun describe<T: Shape + Named>(s: &T).R: f64 = s.area() + s.name_length()
+fun area_of<T: Shape>(s: &T).return: f64 = s.area()
+fun describe<T: Shape + Named>(s: &T).return: f64 = s.area() + s.name_length()
 ```
 
 - At every call, the type argument must implement every bound, and a call that

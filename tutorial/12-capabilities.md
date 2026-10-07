@@ -92,7 +92,7 @@ grants `env = ["KELP_TUT_*"]`:
 ```kelp
 impl "std/env"
 
-pub fun read(name: &str).R: String {
+pub fun read(name: &str).return: String {
     if env.has(name) {
         return env.get(name)
     }

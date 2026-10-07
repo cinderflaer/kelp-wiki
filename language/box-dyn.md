@@ -17,8 +17,8 @@ or a return value.
 
 ```kelp
 trait Shape {
-    fun Self.area().R: i64
-    fun Self.name().R: str
+    fun Self.area().return: i64
+    fun Self.name().return: str
     fun mut Self.grow(by: i64)
 }
 
@@ -26,16 +26,16 @@ datac Square(var side: i64)
 datac Rect(var w: i64, var h: i64)
 
 impl Shape for Square {
-    fun Self.area().R: i64 = self.side * self.side
-    fun Self.name().R: str = "square"
+    fun Self.area().return: i64 = self.side * self.side
+    fun Self.name().return: str = "square"
     fun mut Self.grow(by: i64) {
         self.side += by
     }
 }
 
 impl Shape for Rect {
-    fun Self.area().R: i64 = self.w * self.h
-    fun Self.name().R: str = "rect"
+    fun Self.area().return: i64 = self.w * self.h
+    fun Self.name().return: str = "rect"
     fun mut Self.grow(by: i64) {
         self.w += by
         self.h += by
@@ -46,7 +46,7 @@ fun mut Rect.drop() {
     print("drop rect")
 }
 
-fun make(square: bool).R: Box<dyn Shape> {
+fun make(square: bool).return: Box<dyn Shape> {
     if square {
         return Box.of(Square(side = 3))
     }

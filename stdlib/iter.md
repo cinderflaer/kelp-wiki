@@ -22,16 +22,16 @@ costs no libc: `Range.next` is an ordinary method and the loop is an ordinary
 ```kelp
 pub trait Iterator {
     type Item
-    fun mut Self.next().R: option.Option<Self::Item>
+    fun mut Self.next().return: option.Option<Self::Item>
 }
 
 pub datac Range(var lo: i64, val hi: i64, val step: i64)
-pub fun range(a: i64, b: i64).R: Range
-pub fun range_step(a: i64, b: i64, step: i64).R: Range
+pub fun range(a: i64, b: i64).return: Range
+pub fun range_step(a: i64, b: i64, step: i64).return: Range
 
-pub fun count<I: Iterator>(it: move I).R: usize
-pub fun sum_i64<I: Iterator>(it: move I).R: i64
-pub fun collect_list<I: Iterator>(it: move I).R: List<I::Item>
+pub fun count<I: Iterator>(it: move I).return: usize
+pub fun sum_i64<I: Iterator>(it: move I).return: i64
+pub fun collect_list<I: Iterator>(it: move I).return: List<I::Item>
 ```
 
 | Item | Notes |

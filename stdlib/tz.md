@@ -140,9 +140,9 @@ impl "std/str"
 impl "std/option"
 impl "std/result"
 
-fun digits(n: i64).R: String = str.from_i64(n)
+fun digits(n: i64).return: String = str.from_i64(n)
 
-fun label(r: &tz.Resolved).R: String {
+fun label(r: &tz.Resolved).return: String {
     var out = String.empty()
     if let One(u) = r {
         out.push_str("one ")

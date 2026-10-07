@@ -34,10 +34,10 @@ functions ship.
 
 | Function | Returns | Notes |
 | --- | --- | --- |
-| `fold<T, A>(xs: &List<T>, init: move A, f: closure(move A, &T).R: A)` | `A` | left to right: `fold([1,2,3], 0, add)` = `add(add(add(0,1),2),3)`. Works for any element and accumulator type, owned included |
+| `fold<T, A>(xs: &List<T>, init: move A, f: closure(move A, &T).return: A)` | `A` | left to right: `fold([1,2,3], 0, add)` = `add(add(add(0,1),2),3)`. Works for any element and accumulator type, owned included |
 | `zip<A, B>(xs: &List<A>, ys: &List<B>)` | `List<Pair<A, B>>` | stops at the shorter list; `A`/`B` must be `Copy` |
 | `chunks<T>(xs: &List<T>, size: usize)` | `List<Chunk<T>>` | runs of `size`, last one short; `T` must be `Copy` |
-| `sort_by<T>(xs: mut List<T>, cmp: closure(&T, &T).R: bool)` | `Unit` | in place; `cmp(a, b)` true means `a` belongs before `b`. Any element type, owned included |
+| `sort_by<T>(xs: mut List<T>, cmp: closure(&T, &T).return: bool)` | `Unit` | in place; `cmp(a, b)` true means `a` belongs before `b`. Any element type, owned included |
 | `position_i32(xs, want)` / `position_i64(xs, want)` | `option.Option<usize>` | first index equal to `want` |
 | `unique_i32(xs)` / `unique_i64(xs)` | `List<i32>` / `List<i64>` | distinct, first occurrence kept, order preserved |
 | `unique_string(xs: &List<String>)` | `List<String>` | the same, cloning each kept element |
@@ -76,7 +76,7 @@ fun main() {
     print(listx.sum_i32(xs))
     print(listx.min_i32(xs))
     print(listx.max_i32(xs))
-    print(listx.fold(xs, 0, fun(acc: i32, x: &i32).R: i32 = acc + x))
+    print(listx.fold(xs, 0, fun(acc: i32, x: &i32).return: i32 = acc + x))
     val at = listx.position_i32(xs, 2)
     print(option.is_some(o = at))
     print(listx.unique_i32(xs).len())
@@ -93,7 +93,7 @@ fun main() {
     print(groups.len())
     print(groups.get(1).items.len())
 
-    listx.sort_by(xs, fun(a: &i32, b: &i32).R: bool = a > b)
+    listx.sort_by(xs, fun(a: &i32, b: &i32).return: bool = a > b)
     print(xs.get(0))
 }
 ```

@@ -98,7 +98,7 @@ literal) are built on both backends by `kelpc/tests/scaling.rs`, and a step over
   equality from the fields, so the derived set is `String`, an integer, `bool`,
   `char`, or a `datac`/`enum`/tuple whose every field, variant payload or
   position is itself keyable. A `datac` or `enum` outside that set becomes a key
-  by declaring both `fun T.hash().R: u64` and `fun T.eq(other: &T).R: bool`,
+  by declaring both `fun T.hash().return: u64` and `fun T.eq(other: &T).return: bool`,
   which the map calls instead of a derived pair; the key is still cloned into the
   entry, so the type has to be deep-copyable. A float is refused (`nan`), and a
   `Bytes`, container, view, borrow or `datac`/`enum` with a field outside the set

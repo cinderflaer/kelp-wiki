@@ -13,7 +13,7 @@ A method is a function whose first parameter is a receiver, written
 ```kelp
 datac Counter(val id: i32, var count: i32)
 
-fun Counter.total().R: i32 = id + count          // shared receiver
+fun Counter.total().return: i32 = id + count          // shared receiver
 fun mut Counter.bump() {                          // exclusive receiver
     count += 1
 }
@@ -67,13 +67,13 @@ print(c.total())
 
 ## Return types that borrow
 
-A function whose `.R: T` is a borrow must return something derived from its
+A function whose `.return: T` is a borrow must return something derived from its
 **first reference parameter**. For a method that means the receiver, which is why
 accessors like these are written as methods:
 
 ```kelp
-fun Row.get(i: usize).R: &str = fields.get(i).as_str()
-fun Json.as_str().R: &str {
+fun Row.get(i: usize).return: &str = fields.get(i).as_str()
+fun Json.as_str().return: &str {
     if let Str(s) = self {
         return s.as_str()
     }
@@ -118,7 +118,7 @@ A receiver method on a generic type writes the type's own parameters, in order:
 ```kelp
 datac Pair<A, B>(val first: A, var second: B)
 
-fun Pair<A, B>.first_of().R: A = first
+fun Pair<A, B>.first_of().return: A = first
 fun mut Pair<A, B>.replace_second(v: B) { second = v }
 ```
 
@@ -133,7 +133,7 @@ fun mut Pair<A, B>.replace_second(v: B) { second = v }
   a free function over the instantiation instead, as `std/option` does:
 
   ```kelp
-  fun is_some<T>(o: &Option<T>).R: bool = when o {
+  fun is_some<T>(o: &Option<T>).return: bool = when o {
       Some(_) -> true
       None -> false
   }

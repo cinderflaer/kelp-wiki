@@ -20,7 +20,7 @@ impl "std/sync"
 pd val hits: Mutex<i64> = Mutex.new(0)
 
 // a worker takes ONE argument (moved in) and returns a value
-fun sum_to(n: i64).R: i64 {
+fun sum_to(n: i64).return: i64 {
     var total: i64 = 0
     var i: i64 = 1
     while i <= n {
@@ -31,7 +31,7 @@ fun sum_to(n: i64).R: i64 {
 }
 
 // a shared borrow of a `pd` Mutex may cross to a worker
-fun bump(m: &Mutex<i64>).R: i64 {
+fun bump(m: &Mutex<i64>).return: i64 {
     var i = 0
     while i < 100 {
         m.lock { v -> *v += 1 }
@@ -92,7 +92,7 @@ What does not cross is a borrow of a local:
 impl "std/thread"
 impl "std/result"
 
-fun show(n: &i64).R: i64 = n
+fun show(n: &i64).return: i64 = n
 
 fun main() {
     var local: i64 = 5
@@ -218,7 +218,7 @@ ordering Kelp has.
 impl "std/thread"
 impl "std/result"
 
-fun square(n: i64).R: i64 = n * n
+fun square(n: i64).return: i64 = n * n
 
 fun main() {
     val a = thread.spawn(square, 7)

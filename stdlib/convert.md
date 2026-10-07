@@ -13,11 +13,11 @@ impl "std/convert"
 
 ```kelp
 pub trait From<T> {
-    fun from(value: T).R: Self
+    fun from(value: T).return: Self
 }
 
 pub trait Into<T> {
-    fun Self.into().R: T
+    fun Self.into().return: T
 }
 ```
 
