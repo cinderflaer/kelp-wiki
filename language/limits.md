@@ -86,10 +86,10 @@ literal) are built on both backends by `kelpc/tests/scaling.rs`, and a step over
   elements, so there is no one-element tuple: `(T)` is the type `T`, and `()` is
   refused by name. Bind the whole tuple to a `val` when its positions need to be
   visible separately. See [Types](/language/types).
-- **No extra type parameters on a method.** A `datac`, an `enum` and a `fun` may
-  each declare type parameters, but a receiver on a generic type must write the
-  type's own parameters, in order: `fun Pair<A, B>.first()`. A method cannot add
-  parameters of its own. See [Generics and type parameters](/language/generics).
+- **A receiver on a generic type writes the type's own parameters, in order**
+  (`fun Pair<A, B>.first()`); a method may add type parameters of its own after
+  its name (`fun Pair<A, B>.map_first<C>(...)`, 26.10.3) but not a `const` one.
+  See [Generics and type parameters](/language/generics).
 - **A generic `enum`'s template carries no method.** A concrete `enum` may declare
   a receiver method and a value of the type calls it (`val e = E.A`, then
   `e.tag()`); a receiver that builds the variant names a type, so `E.A.tag()` is

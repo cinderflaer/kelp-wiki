@@ -99,7 +99,12 @@ fun mut Pair<A, B>.replace_second(v: B) { second = v }
 - The type arguments are the receiver's own instantiation, so `p.first_of()` on a
   `Pair<i32, String>` is instantiated once for `A = i32, B = String`. There is no
   inference to do, and no way to call a method on the template itself.
-- A method cannot add type parameters of its own beyond the type's.
+- **A method may add type parameters of its own** (26.10.3), written after its
+  name: `fun Pair<A, B>.map_first<C>(f: fun(A).return: C).return: Pair<C, B>`. They
+  are inferred at the call from the arguments (and the expected type), may carry
+  bounds (`<T: Named>`), and work on a plain type too (`fun Box2.map<U>(...)`). A
+  name that repeats one of the receiver type's parameters is refused, and a
+  `const` parameter of a method's own is not supported yet.
 - A method on a generic `enum`'s template is refused (`'Option' is a generic enum:
   a method cannot be declared on the enum template`); a concrete `enum` may declare
   one, and a value of it calls it ([Methods and receivers](/language/methods)). For
@@ -173,7 +178,7 @@ fun describe<T: Shape + Named>(s: &T).return: f64 = s.area() + s.name_length()
 
 ## What is not generic
 
-- No method type parameters beyond the receiver's own.
+- No `const` parameter of a method's own.
 - No `enum` methods, generic or not.
 - No higher-rank or higher-kinded form: a type argument is always a concrete type.
 - No generic `main`.
