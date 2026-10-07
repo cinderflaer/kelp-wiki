@@ -137,8 +137,10 @@ limits of that rule:
 - **One owner, one exclusive capture per call.** A second capture of the same
   owner in the same call, a call whose other arguments or receiver mention the
   owner, and a borrow of the owner still used after the call are all refused.
-- **Borrow roots are whole variables**, so a block writing `s.count` while the
-  callee borrows `s.items` conflicts: there is no disjoint-field capture.
+- **A block captures the fields its body uses**, not the whole variable: a block
+  that writes `s.count` can run in a call that borrows `s.items`
+  ([Ownership](/language/ownership)). A block that passes the capture on whole, or
+  reaches a field through an `enum`, a `Box` or an index, captures all of it.
 - A block that writes through an exclusive capture **cannot return a borrow**
   (`str`, `View`, `&T`); return an owned value.
 - One call cannot pass the same `mut` parameter twice unless every use is a

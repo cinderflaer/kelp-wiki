@@ -83,6 +83,15 @@ Rules the checker enforces:
 - While a value is borrowed shared, it cannot be borrowed exclusively, and it
   cannot be assigned or moved, but a `Copy` value can always be *read*, because
   reading one is a copy rather than a move.
+- **Two fields of one owner are different places** (26.10.3). A borrow of
+  `s.items` and a borrow of `s.count` do not overlap, so one call may take both
+  exclusively (`bump(s.count, s.items)`), a live `&mut s.count` leaves
+  `s.items` usable, and a scoped block that writes `s.count` can run in a call
+  that borrows `s.items`. A borrow of the whole `s` overlaps every field, two
+  borrows of the same field overlap, and a field of a field is a part of the
+  field (`s.a.b` is a part of `s.a`). Only a field read straight off a local
+  struct (or off a `mut`/`&` parameter) is a path: a field reached through an
+  `enum` payload, a `Box`, a trait object or an index is still the whole owner.
 - Dereferencing a `&mut` gives write access; dereferencing a `&` does not.
 - A function whose `.return: T` is a borrow must return something derived from its
   **first reference parameter**, and a payload bound by a pattern counts as
