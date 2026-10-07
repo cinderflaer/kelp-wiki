@@ -185,6 +185,9 @@ its pool was small.
 | `Pool.checkout(use_tls: bool)` | `Lease` (`mut`) |
 | `Pool.release(lease, reusable: bool)` | `Unit` (`mut`) |
 | `Pool.size()` / `Pool.len()` | `usize`: the keep count, and how many are idle |
+| `Pool.set_idle_timeout(ms)` | `Unit` (`mut`): `checkout` closes a connection idle for `ms` or longer instead of reusing it; 0 is off (the default) |
+| `Pool.close_idle(after_ms)` | `usize` (`mut`): closes every connection idle for `after_ms` or longer, returns how many; `close_idle(0)` closes them all |
+| `Pool.close_all()` | `Unit` (`mut`) |
 | `Lease.conn()` | `Conn` |
 
 `warm`/`checkout` take `use_tls` because a pool is keyed on `host:port` alone,
@@ -193,6 +196,12 @@ already knows the URL's scheme) says which. `checkout` only reuses an idle
 connection of the scheme asked for: a kept connection of the other scheme is
 closed and replaced by a fresh one, so an `https` request is never sent over a
 plain connection or the reverse.
+
+Idle time is measured on `net.mono_ms`, so `std/http` needs no `time` grant. Set
+the idle timeout below the server's own keep-alive timeout and a connection the
+peer has already closed is not the one a request gets; `close_idle` is for a
+program that talks to many hosts and wants to cap the descriptors it holds
+(`size` are kept per host).
 
 A `Lease` is a **ticket, not an owner**: the pool holds every descriptor, a lease
 is permission to use one for one exchange, and `release` consumes it. Since a
