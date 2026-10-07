@@ -151,8 +151,8 @@ variables are chapter 10.
 
 ## Tuples
 
-`val (lo, hi) = (1, 9)` takes a tuple apart. A tuple is read by destructuring only:
-there is no `t.0`. They are covered in [Types](/language/types).
+`val (lo, hi) = (1, 9)` takes a tuple apart, and `pair.0` reads one position.
+They are covered in [Types](/language/types).
 
 ## Exercises
 

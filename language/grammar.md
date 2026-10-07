@@ -149,7 +149,8 @@ chain        := [ "elif" expr block chain
 - `(T)` is the parenthesized type `T`, and `(e)` is the parenthesized expression
   `e`, so a tuple has two or more positions and there is no one-element tuple;
   `()` is neither a type nor a value, because the absent value's type is `unit`.
-  A tuple value is read by a destructuring `val`/`var` and by nothing else
+  A tuple value is read by a destructuring `val`/`var`, by a constant index
+  (`t.0`), by `for (a, b) in ...` and by a tuple pattern in `when`
   ([Bindings and assignment](/language/bindings)).
 - `chain` is what follows the first block of an `if` or an `if let`: nothing, an
   `else` block, or another link. A link is written `elif` (the preferred

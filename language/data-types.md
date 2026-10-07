@@ -53,7 +53,7 @@ datac Node(val value: i32, val next: Box<Node>)
 - **A tuple is a record too.** `(i32, String)` is a record with positional
   fields: it needs no declaration, it is a legal `datac` field and a legal
   `enum` payload, and it obeys every rule above. Its positions are read by
-  destructuring, because there is no `.0` ([Types](/language/types)).
+  destructuring or by index, `t.0` ([Types](/language/types)).
 
 ## `enum`
 

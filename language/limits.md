@@ -77,9 +77,11 @@ literal) are built on both backends by `kelpc/tests/scaling.rs`, and a step over
 
 ## Data and generics
 
-- **A tuple is read by destructuring and nothing else.** There is no positional
-  access on a value (`t.0`), no tuple pattern in `when`, no destructuring `for`
-  binding, and no tuple value in a `const` initializer. A tuple has two or more
+- **A tuple has no literal pattern and no `const` value.** A position is read by
+  `t.0`, by a destructuring binding, by `for (a, b) in pairs` and by a tuple
+  pattern in `when (a, b)`, but a tuple pattern cannot hold a literal (`(1, v)`) or
+  another tuple pattern, and there is no tuple value in a `const` initializer.
+  A tuple has two or more
   elements, so there is no one-element tuple: `(T)` is the type `T`, and `()` is
   refused by name. Bind the whole tuple to a `val` when its positions need to be
   visible separately. See [Types](/language/types).

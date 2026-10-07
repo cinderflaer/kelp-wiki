@@ -35,7 +35,7 @@ valid inside the scope that lent it.
 | `[T; N]` | Copy / owned | fixed-size array: `N` elements held **inline**, with the length part of the type and nothing allocated. `Copy` when `T` is, otherwise an owner that drops each element |
 | `datac` name | owned | record with per-field `val`/`var`, optionally with type parameters |
 | `enum` name | owned | tagged union: exactly one variant is live |
-| `(A, B)` | owned | a tuple: two or more element values held in **position order**. Not `Copy`, and it takes the derived deep copy and the derived order a `datac` takes, position by position. Read by destructuring only ([Bindings and assignment](/language/bindings)) |
+| `(A, B)` | owned | a tuple: two or more element values held in **position order**. Not `Copy`, and it takes the derived deep copy and the derived order a `datac` takes, position by position. Read by destructuring or by position `t.0` ([Bindings and assignment](/language/bindings)) |
 | `fun(T, U).R: V` | Copy | a function value: a function pointer, with the parameters it takes and what it returns |
 | `closure(T, U).R: V` | owned | a function value **plus** the environment its captures were moved into |
 
@@ -73,9 +73,14 @@ val (lo, hi) = min_max(xs)      // a tuple value is read by destructuring
   `List.clone`/`List.slice`/`Map.get_or` copy a tuple whose elements can each be
   deep-copied ([Collections](/language/collections)). There is no `==` between
   two tuples, exactly as there is none between two `datac`s.
-- **A position is read by destructuring, never by index.** There is no `t.0`.
-  `val (lo, hi) = p` binds both positions, `_` ignores one, and a nested tuple
-  takes a nested pattern ([Bindings and assignment](/language/bindings)).
+- **A position is read by destructuring or by a constant index.** `t.0` is the
+  first position and `t.1.0` the first of the second (a literal only; there is no
+  `t.n` with a variable). `val (lo, hi) = p` binds both positions, `_` ignores
+  one, and a nested tuple takes a nested pattern
+  ([Bindings and assignment](/language/bindings)). A tuple also takes part in a
+  `for (a, b) in pairs` and in a `when (a, b)` ([Control flow](/language/control-flow)).
+  Reading an owned position of a local (`t.0`) is a partial move, as for a
+  `datac` field.
 - **Where a tuple may appear:** wherever its elements may. A local, a parameter,
   a return type, a `datac` field, an `enum` payload, a `List`/`Map`/`Box`/array
   element, and a type argument.

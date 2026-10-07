@@ -260,16 +260,17 @@ in order ([Types](/language/types)).
 
 ```kelp
 val pair = (1, 2)
-val (lo, hi) = min_max(xs)      // destructuring is the only way to read one
+val (lo, hi) = min_max(xs)      // destructuring reads every position
+val first = pair.0              // or one position by constant index
 ```
 
 - `(e)` is the parenthesized expression `e`, not a one-element tuple: `val x =
   (5)` binds an `i32`, and `()` is refused by name because the absent value is
   `unit`.
-- There is **no positional access** on a value: `pair.0` is not a field access.
-  Read a position with a destructuring binding
-  ([Bindings and assignment](/language/bindings)), or bind the whole tuple to a
-  `val` first.
+- A position is read by a **constant index**: `pair.0`, and `pair.1.0` for a
+  nested tuple. The index is a literal; reading an owned position of a local is a
+  partial move, as for a `datac` field. A destructuring binding
+  ([Bindings and assignment](/language/bindings)) reads several at once.
 - A tuple is a record, so it is not printable: `print` takes a scalar, a `str`
   or a `String`. Print each position instead.
 

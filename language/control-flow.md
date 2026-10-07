@@ -129,6 +129,11 @@ for x in xs {
   is walked as an index-and-`while` loop, where the index advances before the
   body runs so that `continue` reaches the next element. A type with an
   `Iterator` impl is walked by calling `next()` until `None`.
+- **A destructuring binding takes an element apart**: `for (k, v) in pairs` walks a
+  `List<(K, V)>` and binds both positions, `_` ignores one, and a nested pattern
+  takes a nested tuple. It reads as `for e in pairs { val (k, v) = e ... }`,
+  so the element is moved into the pattern exactly as a destructuring `val`
+  moves it. The pattern needs an element that is a tuple.
 - The element binding gives exactly what `List.get` gives: a copy of a `Copy`
   element, a shared borrow of an owned one. `for n in numbers` reads `n: i32`;
   `for name in names` reads `name: &String`, so a `str` call wants
@@ -198,9 +203,37 @@ fun area(s: &Shape).R: f64 = when s {
   arm is present.
 - There are no guards, no literal patterns and no nested patterns in v1. An arm
   head is a variant name with one binding per payload field, and `_` ignores a
-  payload.
+  payload. The one exception is a **tuple pattern**, below.
 - A payload binds as a copy when `Copy`, **by value** when it is owned and the
   scrutinee is an owned place, and as a shared borrow otherwise.
+
+### A tuple pattern
+
+Several values can be matched together by writing them as a tuple and each arm as
+a tuple pattern:
+
+```kelp
+fun combine(a: &Option<i32>, b: &Option<i32>).R: i32 = when (a, b) {
+    (Some(x), Some(y)) -> x + y
+    (Some(x), None) -> x
+    (None, y) -> 0
+}
+```
+
+- A position is a variant pattern (`Some(x)`, `None`; a capitalized name), a
+  lowercase name that matches anything and binds it, or `_`. All arms have the
+  same number of positions, at least two. `else` may stand for the rest.
+- A scrutinee written as a tuple literal is **not built**: its elements are the
+  positions, so a parameter or a field is matched where it lives and a borrowed
+  element (`&Option<i32>`) is fine. Any other tuple value is bound once and its
+  positions are matched.
+- Arms are tried in order, the first position that an arm names a variant for is
+  matched first, and each level is an ordinary single-position `when`, so the
+  usual rules hold at every level: a variant with no arm (and no arm that matches
+  anything there) is the "not exhaustive" error naming the variant.
+- A literal position (`(1, v)`), a guard, and a tuple pattern nested inside a
+  tuple pattern are not supported. The value read by a matching name moves out
+  of an owned position exactly as a payload does.
 
 ## `return`
 
