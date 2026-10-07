@@ -131,7 +131,14 @@ type written anywhere. That module has to be somewhere in the program's import
 graph; a program that imports `std/str` has it already, since `std/str` imports
 it, and one that imports nothing at all is told to add the `impl` line.
 
-`n * 1.0` is a **type error**, not a conversion (syntax.md §5.0).
+A float converts to the other float width with `f32.to_f64()` (exact) and
+`f64.to_f32()` (rounds to the nearest `f32`; an infinity when too large).
+
+`n * 1.0` with `n` an integer is a **type error**, not a conversion (syntax.md
+§5.0). What does adapt is a *literal*: an integer literal where a float is
+expected is that float, so `x * 2`, `val w: f64 = 3` and `half(5)` for an `f32`
+parameter all work, as long as the float holds the number exactly (up to 2^24 for
+`f32`, 2^53 for `f64`). A value never converts.
 
 ## Generic types
 
