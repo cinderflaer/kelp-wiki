@@ -210,7 +210,36 @@ done 7
   error: a deferred action cannot contain 'break' or 'continue': the action runs while the block is being left, so it cannot leave the loop again
   ```
 
-- There is no `loop` expression, no labelled loop and no `break` with a value.
+- There is no `break` with a value: `loop` is a statement, not an expression.
+
+### `loop` and labels
+
+`loop { ... }` is an endless loop, the same as `while true { ... }`; the body ends
+with `break` or `return`. A label is written before a loop, as `'name:`, and
+`break 'name` or `continue 'name` acts on that loop from inside a loop nested in it:
+
+```kelp
+'rows: for y in [1, 2, 3] {
+    for x in [1, 2, 3] {
+        if x == y {
+            continue 'rows      // the next y
+        }
+        if y == 3 {
+            break 'rows         // leave both loops
+        }
+    }
+}
+```
+
+- A label is a `'` and a name (`'outer`); the closing `'` of a character literal
+  is what tells the two apart. It may label a `while`, a `for` or a `loop`.
+- A label that names no enclosing loop is an error. A label does not cross a
+  function, a `fun` literal or a block passed to a call.
+- `loop` is read as the keyword only at the start of a statement and only when a
+  `{` follows, so a function called `loop` is still a name everywhere else.
+- Every owned local of every loop an exit leaves is freed, as for a plain `break`.
+  The compiler writes a labelled exit as a hidden flag and ordinary `break`s, so
+  nothing else about loops changed.
 
 ## `std/iter`
 

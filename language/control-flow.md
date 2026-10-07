@@ -8,10 +8,12 @@ Source section:
 [`syntax.md` §6](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
 
 Kelp has `if`/`else` (with `if let`), `for`, `while`, `when`, `return`, and
-`break` and `continue` inside a loop. There is no `loop`, no labelled loop, no
-`goto` and no exceptions. `break` leaves the innermost loop and `continue` goes
-on to its next pass ([Iterators, `for` and `break`](/language/iterators)); a
-condition that ends a loop can still go in the `while` header.
+`break` and `continue` inside a loop, `loop { ... }` for an endless loop, and a
+label on a loop for leaving or continuing an outer one. There is no `goto`, no
+`break` with a value and no exceptions. `break` leaves the innermost loop and
+`continue` goes on to its next pass, `break 'outer` and `continue 'outer` act on
+the loop labelled `'outer`
+([Iterators, `for` and `break`](/language/iterators)).
 
 ## `if` / `else`
 
