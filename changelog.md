@@ -38,6 +38,7 @@ this page is the index to it.
 
 | Version | Date | Headline |
 | --- | --- | --- |
+| [26.10.2](#26102-2026-10-07) | 2026-10-07 | `must_use fun`, TLS encrypted keys and live certificate reload, `net.listen_on`, multipart/form-data bodies, pool idle timeout, large array literals compile fast |
 | [26.10.1](#26101-2026-10-07) | 2026-10-07 | fallible `std/fs` mutators, `std/http`/`std/net`/`std/tls` that return errors, `wss://`, `process.run_inherit`, enum-payload double move refused |
 | [26.10.0](#26100-2026-10-04) | 2026-10-04 | traits and unsafe/freestanding Kelp; server TLS and capability hardening; the Polyp v4 UI path; incremental builds, benchmarks, sanitizers and docs |
 | [26.09.5](#26095-2026-09-28) | 2026-09-28 | `std/tls` and `https`; `coral.toml`'s `[caps]` and `[extern]`; rate-limit headers on `Response`; two assignment leaks fixed; every program now needs OpenSSL to build |
@@ -52,6 +53,43 @@ this page is the index to it.
 | [0.1.2](#012-2026-09-19) | 2026-09-19 | `View`, `char` literals, bitwise operators, `str` to `String` coercion |
 | [0.1.1](#011-2026-09-19) | 2026-09-19 | the `for` loop, `spawn_in`/`run_in`, fallible `try_run`, `fs.symlink` |
 | [0.1.0](#010-no-release) | 2026-09-19 | first tag: the core language, modules, containers, capabilities, stdlib |
+
+## 26.10.2 (2026-10-07)
+
+[Release](https://homelabone.xenoo.dev/gittea/Juniper/kelp/releases/tag/v26.10.2)
+
+14 commits since 26.10.1. The suite passes (1593 tests, 16 ignored by default)
+except the debug-info test that needs `gdb`, which the build host does not have;
+the differential sweep agrees on the conformance corpus and on the generated
+programs.
+
+**`must_use`.** A function written `must_use fun` cannot be called as a statement
+with its result thrown away: `tx.send(1)` on its own line is now a compile error,
+and `val _r = tx.send(1)` is the explicit discard. `Sender.send` and the `fs.try_*`
+mutators carry it. See [Functions](/language/functions#must_use).
+
+**TLS serving.** `ServerOptions.key_password(phrase)` loads an encrypted private
+key. `ServerConfig.reload_pem(cert, key, &opts)` swaps the certificate for new
+handshakes without restarting, and leaves the old one in force when the new
+material is bad. `tlsfile.read_key(path)` refuses a key file that group or others
+can read. See [`std/tls`](/stdlib/tls#encrypted-keys).
+
+**Listening on one host.** `net.listen_on(host, port)` and `http.listen_on(host,
+port)` bind a named host and are checked on `host:port` against the `net` grant,
+where `net.listen(port)` only compares the port (open item 55).
+
+**HTTP.** `http.multipart(boundary)` builds a `multipart/form-data` body
+(`add_field`, `add_file`, `finish`) and `http.multipart_request(url, form)` makes
+the POST. `Pool.set_idle_timeout(ms)` makes `checkout` close a connection that
+idled too long, and `Pool.close_idle(after_ms)` closes them on demand.
+
+**Compile time.** An all-constant array literal of 256 or more elements bound to a
+local is a private global plus a copy: a 5,000-element literal compiles in 0.16 s
+at `-O2` instead of about 3.8 s.
+
+**Moved.** The `Map` iterator and `List.iter()` wait for 26.11.0, where they ship
+with tuple destructuring in `for`: a library iterator needs generic trait impls,
+which do not exist yet.
 
 ## 26.10.1 (2026-10-07)
 
