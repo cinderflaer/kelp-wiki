@@ -63,19 +63,14 @@ literal) are built on both backends by `kelpc/tests/scaling.rs`, and a step over
   ([Front-end fuzzing and parser limits](/tooling/fuzzing)), so a 400-link chain, 90
   nested calls and 60 nested `if` blocks are about the largest shapes a program
   can reach. Both limits were kept.
-- **A very large array literal is slow at `-O2`.** (open) Every other generated
-  shape finishes each step in about a second or less. A literal of 5,000
-  elements takes 4.0-4.6 s to build on the LLVM backend at `-O2` in the plan's
-  debug-build measurement, 2,500 elements 1.0 s and 1,250 elements 0.5 s: the time
-  grows with the square of the length and sits inside LLVM's optimizer, which is
-  handed the literal as one `[N x i32]` aggregate value (`-O0` takes 0.85 s for
-  5,000). The all-constant literal is now emitted as one constant array, which
-  halved `-O0` and left `-O2` unchanged. Emitting it as a private global plus a
-  copy would remove the rest, and was left alone because it changes the IR of
-  every array literal. Re-measured for this page with the release-built prebuilt
-  compiler: a 5,000-element `[i32; 5000]` literal took about 2.9 s at `-O2` and
-  about 0.5 s at `-O0`. Split a table that big into smaller literals or build it
-  with a loop.
+- **A very large array literal used to be slow at `-O2`; it no longer is.** An
+  all-constant literal of 256 or more elements bound to a local is emitted as a
+  private constant global plus one copy into the local (a 5,000-element
+  `[i32; 5000]` went from about 3.8 s to 0.16 s at `-O2` on the LLVM backend).
+  Shorter literals, literals with a non-constant element and literals that are
+  not bound directly (passed to a call, returned) keep the aggregate form, so a
+  very large literal in one of those positions can still be slow: bind it to a
+  `val` first.
 - Smaller costs the plan lists, all linear: 150 chained closures take about 1 s on
   LLVM and 1.6-2.2 s on the C oracle, and 50 nested generic enum constructions
   take 1.1-1.5 s.
