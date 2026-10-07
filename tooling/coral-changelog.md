@@ -74,7 +74,7 @@ spellings have to be the same one.
   `run`, `check`, `clean`, `task`, `fmt`, `lint`, `sync`, `docs get`/`list`/
   `search` and `test` all work against the ordinary path, verified end to end
   with the released `kelpc`. No language or stdlib change was needed for any
-  of it. `PORT_REPORT.md` in the repository carries the lane board.
+  of it. `PORT_REPORT.md` on the `kelp-rewrite` branch of the repository carries the lane board.
 - Nine small gaps were found and filed while porting, none of which block
   using either implementation today: no fallible form of the `std/fs`
   mutators, no way to set a file's executable bit, no compile-time target

@@ -205,17 +205,20 @@ the field is gone for good; on a `var` local a fresh value assigned into the
 field owns it again. A move on one branch of an `if` takes the field only on
 that path, and after the merge only the fields that stayed are read by name.
 
-The field has to be a **direct field of a local this frame owns**: a `val` local,
-a `var` local, or a `move T` parameter. A borrow, a temporary and a field chain
-are all refused, because the frame has nothing of its own to give away there:
+The field path has to start at a local this frame owns: a `val` local, a `var`
+local, or a `move T` parameter. A borrow and a temporary are refused, because
+the frame has nothing of its own to give away there. An owned field chain is
+also a path into that local, so it may move its final owned field while its
+siblings remain usable:
 
 ```kelp
 fun steal(b: &Bag).R: List<i32> = b.xs
 // error: cannot move the field 'xs' out of 'b': the value is borrowed
 ```
 
-To take a field out of a chain, move each hop into a local first: `val inner =
-outer.inner` then `val xs = inner.xs`.
+After `val text = person.name.text`, `person.name.id` and `person.city` remain
+readable, but `person.name` and `person` cannot be used as whole values. A
+fresh assignment to the moved nested field on a `var` local restores that path.
 
 Once a field is gone, reading it again and handing the binding on as a whole are
 both refused, because the empty slot would go with it:
@@ -295,16 +298,13 @@ destructor, `fun mut T.drop()`; see [User `Drop`](/language/drop).
 1. **An owned value is moved once.** If the compiler says "use of moved value",
    either borrow instead of moving, make a second owned copy (`xs.clone()`,
    `s.clone()`), or reorder so the last use really is last.
-2. **A borrow outlives its use.** If the compiler says a temporary would be freed
-   before the borrow could be used, bind the value to a `val` first. A call's
-   result and a **field of a call's result** are the same case: `mkName().name`
-   has no storage of its own, so it can be borrowed for the length of one call
-   (`print(mkName().name.len())`, `take(mkName().name)`) and the compiler stages
-   the temporary until that call returns. Binding the borrow is refused instead
-   (`val r = &mkName().name` is `cannot borrow a temporary value`), and so is
-   handing it back (`mkName().name.as_str()` names the returned borrow). A chain
-   that steps through a borrow (`headers.get(i).name`) is not a temporary case at
-   all: the storage belongs to whatever `get` pointed at.
+2. **A borrow needs an owner.** A call's result and a **field of a call's
+   result** have no source-level storage of their own. Kelp promotes the owner
+   for a direct `as_str()` or `view()` binding, so `val r =
+   mkName().name.as_str()` is valid until `r` leaves scope. An explicit borrow
+   still needs a place: `val r = &mkName().name` is `cannot borrow a temporary
+   value`. A chain that steps through a borrow (`headers.get(i).name`) is not a
+   temporary case at all: the storage belongs to whatever `get` pointed at.
 
 [Pitfalls](/language/pitfalls) lists the exact error messages and their fixes.
 

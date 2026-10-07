@@ -9,6 +9,10 @@ text functions are reviewable Kelp rather than a C blob. It is imported with
 `impl "std/<module>"`; a module that touches the outside world needs the domain
 **delegated on the `impl` line**.
 
+`std/internal/...` is reserved for compiler implementation modules. It is not
+part of the public library: a project cannot import it or place its own source
+under that path.
+
 ```kelp
 impl "std/fs"                                          // needs fs
 impl "std/net" caps(net = ["api.example.com:443"]) // names the host it may dial
@@ -23,6 +27,7 @@ The domain each module needs comes from the compiler's own table
 | `std/mem` | - | `alloc` |
 | `std/str` | - | text: search, slice, split, parse, format |
 | `std/path` | - | lexical path handling |
+| `std/sys` | - | `os()` and `arch()`: the build target's names |
 | `std/math` | - | `sqrt`, `pow`, trig, `abs`/`min`/`max`/`clamp` |
 | `std/fmt` | - | number, grouping, byte-size and padding formatting into `String`, and the `Display` trait |
 | `std/encoding` | - | base64, base32, base58, hex and percent encoding |
@@ -36,6 +41,8 @@ The domain each module needs comes from the compiler's own table
 | `std/tlsfile` | `fs` | `read_pem(path, what)`: the one gated file read behind `std/tls`'s PEM-bytes functions |
 | `std/ws` | `net`, `rand` (both held) | a WebSocket client (RFC 6455) over `ws://` and `wss://`; importing it needs both delegated |
 | `std/time` | `time` | `now_unix`, `now_mono_ns`, `sleep_ms` |
+| `std/source` | - | `file`, `line` at the Kelp call site |
+| `std/trace` | `time` | opt-in stderr events and timed spans, with explicit source locations |
 | `std/tz` | `fs`, `env` | TZif time zones: the offset at an instant, the wall clock it names, the `One`/`Ambiguous`/`Gap` answers and a `strftime` subset; hosted only |
 | `std/rand` | `rand` | unseeded `u64`, `below`, `bytes` |
 | `std/env` | `env` | `has`, `get`, `set`, `unset` |
@@ -83,6 +90,7 @@ The builtins are described in [Text](/language/text) and
 | `mem` | [`std/mem`](/stdlib/mem) |
 | `str` | [`std/str`](/stdlib/str) |
 | `path` | [`std/path`](/stdlib/path) |
+| `sys` | [`std/sys`](/stdlib/sys) |
 | `math` | [`std/math`](/stdlib/math) |
 | `fmt` | [`std/fmt`](/stdlib/fmt) |
 | `encoding` | [`std/encoding`](/stdlib/encoding) |
@@ -96,6 +104,8 @@ The builtins are described in [Text](/language/text) and
 | `tlsfile` | [`std/tls`](/stdlib/tls#reading-the-files-stdtlsfile) |
 | `ws` | [`std/ws`](/stdlib/ws) |
 | `time` | [`std/time`](/stdlib/time) |
+| `source` | [`std/source`](/stdlib/source) |
+| `trace` | [`std/trace`](/stdlib/trace) |
 | `tz` | [`std/tz`](/stdlib/tz) |
 | `rand` | [`std/rand`](/stdlib/rand) |
 | `env` | [`std/env`](/stdlib/env) |

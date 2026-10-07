@@ -462,10 +462,13 @@ fun main() {
 - **A module gets at most one `[extern.*]` entry**, and it must appear before
   any other section that isn't `[caps]` (the same manifest-ordering rule
   `[caps]` follows).
-- **What's not here yet**: `extern "C"` block syntax, function-pointer types for
-  user externs, and a `repr(C)` struct crossing by value. `extern type` handles
-  (with parents, `null()` and `cast()`), `...` variadics and
-  `move closure(...)` callbacks all ship; see [User FFI](/language/externs).
+- **What's not here yet**: `extern "C"` block syntax, import/export linkage
+  attributes, and a `repr(C)` struct crossing by value. A typed plain
+  `fun(...)` parameter or return is a C function pointer for a callback the
+  native side borrows for one call. `extern type` handles (with parents,
+  `null()` and `cast()`), `...` variadics and `move closure(...)` callbacks all
+  ship; use the closure form when the native side retains the callback. See
+  [User FFI](/language/externs).
 
 ### `[unsafe]`: modules that may leave the checked language
 

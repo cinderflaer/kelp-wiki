@@ -188,7 +188,8 @@ val i = b'x'            // byte literal
   belongs in a character literal (`b'é'` is refused, and `b'\xe9'` is the byte
   233).
 - **String, character and byte literals** use this escape set (grammar §20):
-  `\n`, `\t`, `\r`, `\0`, `\'`, `\"`, `\\`, `\xNN` and `\u{...}`. What each
+  `\n`, `\t`, `\r`, `\0`, `\'`, `\"`, `\\`, `\xNN` and `\u{...}`, plus `\$` in
+  a string literal. What each
   form refuses is the shape it cannot hold: a string literal is NUL-terminated
   UTF-8, so it has no `\0` and no `\u{...}` and a byte above `0x7f` is not text
   (`"\xff"` is refused), and a byte literal is one byte, so it has no
@@ -217,7 +218,10 @@ print("r = $c.r")            // $name names an identifier, nothing more
 ```
 
 `$name` interpolates one identifier; `${...}` interpolates any expression, and
-the expression may contain a nested template or span several lines.
+the expression may contain a nested template or span several lines. `\$` is a
+literal dollar sign: `"\$HOME"` is the five characters `$HOME`, an ordinary
+string value rather than a template. A `$` followed by anything that is not a
+name or `{` is already literal.
 
 > **A template is not a value**
 >

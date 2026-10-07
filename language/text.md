@@ -138,8 +138,9 @@ much of the string as they need to (all of it, and `i + 1` bytes). Indexing a
 long `str` in a loop is quadratic; take `s.view()` once and scan the view, whose
 `len` and `get` are constant time.
 
-A `View` is `Copy`, but it cannot be stored: a field, `List` element, `Map` value
-or `Box` content may not be a borrow. Text you must keep is a `String`.
+A `View` is `Copy`. A `List`, `Map` or `Box` cannot store a borrow. A `datac`
+may store a `View` only when construction moves its String/Bytes owner into an
+earlier field of the same value. Text you must keep independently is a `String`.
 
 ## Conversions and parsing
 
@@ -169,11 +170,11 @@ val x: f64 = big.to_f64()            // 3.0 — the only integer->float widening
 
 ## Two traps
 
-- **`.as_str()` or `.view()` on a temporary is refused**
-  (`String.from_str("x").as_str()`): bind the `String` to a `val` first. A
-  chained call is the same temporary one step out (`fmt.int(n).as_str()`), and a
-  field of a call's result is the same case one projection deeper
-  (`mkName().name.as_str()`): bind the call, then borrow from the binding.
+- **A direct text-view binding promotes its temporary owner.**
+  `val text = String.from_str("x").as_str()` and `val name =
+  mkName().name.as_str()` remain valid for the binding's scope. A borrow that
+  escapes its frame, including a returned borrow, still needs an owner supplied
+  by the caller.
 - **A `String` argument where a `str` parameter is expected** needs
   `.as_str()`: the error message names the argument.
 

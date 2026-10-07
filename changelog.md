@@ -38,6 +38,7 @@ this page is the index to it.
 
 | Version | Date | Headline |
 | --- | --- | --- |
+| [26.10.1](#26101-2026-10-07) | 2026-10-07 | fallible `std/fs` mutators, `std/http`/`std/net`/`std/tls` that return errors, `wss://`, `process.run_inherit`, enum-payload double move refused |
 | [26.10.0](#26100-2026-10-04) | 2026-10-04 | traits and unsafe/freestanding Kelp; server TLS and capability hardening; the Polyp v4 UI path; incremental builds, benchmarks, sanitizers and docs |
 | [26.09.5](#26095-2026-09-28) | 2026-09-28 | `std/tls` and `https`; `coral.toml`'s `[caps]` and `[extern]`; rate-limit headers on `Response`; two assignment leaks fixed; every program now needs OpenSSL to build |
 | [26.09.4](#26094-2026-09-26) | 2026-09-26 | the LLVM backend inlines builtin bodies; `Map`'s index halved, `Map.with_capacity`; unrolled loops, `noalias`, `llvm.sqrt.f64`; the benchmark suite published |
@@ -51,6 +52,46 @@ this page is the index to it.
 | [0.1.2](#012-2026-09-19) | 2026-09-19 | `View`, `char` literals, bitwise operators, `str` to `String` coercion |
 | [0.1.1](#011-2026-09-19) | 2026-09-19 | the `for` loop, `spawn_in`/`run_in`, fallible `try_run`, `fs.symlink` |
 | [0.1.0](#010-no-release) | 2026-09-19 | first tag: the core language, modules, containers, capabilities, stdlib |
+
+## 26.10.1 (2026-10-07)
+
+[Release](https://homelabone.xenoo.dev/gittea/Juniper/kelp/releases/tag/v26.10.1)
+
+41 commits since 26.10.0. The suite passes (1584 tests, 16 ignored by default)
+except the debug-info test that needs `gdb`, which the build host does not have.
+
+**Failure as a value.** `std/fs` has fallible twins of its mutators: `try_write`,
+`try_write_text`, `try_append`, `try_remove`, `try_remove_all`, `try_rename`,
+`try_mkdir_all` and `try_symlink` return `Option<io.IoErr>` (`None` is success),
+and `try_list` returns `Result<List<String>, io.IoErr>`. `std/http` has
+`Client.try_send`, `Pool.try_send`, `Pool.try_checkout` and `try_get` returning
+`Result<Response, HttpErr>`, where `HttpErr` says whether the server could have
+seen the request (`Dial`, `Exchange`, `Redirects`). `std/net` and `std/tls` have
+fallible socket and TLS I/O calls returning `NetErr` and `TlsErr`.
+
+**Network.** `wss://` works: `ws.connect_secure`, `ws.try_connect_secure` and
+`ws.url_is_secure`. A peer that drops a TLS connection without `close_notify` is
+end of stream rather than a panic, and `Pool.checkout` only reuses a connection of
+the scheme asked for.
+
+**Process, system and tracing.** `process.run_inherit` and `run_inherit_in` run a
+child on this process's terminal, and `RunResult` and `Child` carry the `signal`
+that killed the child (a hand-built `RunResult` must add the field). `sys.os()`
+and `sys.arch()`, `fs.set_mode`, `source.file()` and `source.line()`, and the
+opt-in `std/trace` events and spans.
+
+**Checker.** Moving the same enum payload out of an owned value twice is refused
+(`use of moved value 'h.text'`); it was accepted and freed the string twice.
+Direct `as_str()` and `view()` bindings keep their temporary owner, nested partial
+moves keep sibling fields usable, a mutable method called through an existing
+`&mut` reuses the borrow, and user `extern fun` accepts typed plain `fun(...)`
+callbacks on both backends.
+
+**Smaller.** `List.with_capacity(n)`, `\$` in a string literal, and
+`kelpc build --incremental --timings` reports front-end interface hits and misses.
+A program that does not reach `std/tls` no longer links OpenSSL, so `hello`
+builds without its development files. `std/env` no longer leaks a table per
+`set`, and `str.byte(s, i)` scans only `i + 1` bytes.
 
 ## 26.10.0 (2026-10-04)
 

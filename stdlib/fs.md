@@ -34,8 +34,11 @@ datac Metadata(val size: u64, val mtime: i64, val mode: u32, val is_dir: bool, v
 | `try_read(path)` | `Result<Bytes, io.IoErr>` | the fallible `read` |
 | `try_read_text(path)` | `Result<String, io.IoErr>` | the fallible `read_text` |
 | `write(path, data)` | `Unit` | truncates and writes |
+| `try_write(path, data)` | `Option<io.IoErr>` | the fallible `write`; `None` is success |
 | `write_text(path, text)` | `Unit` | takes the `String` by value |
+| `try_write_text(path, text)` | `Option<io.IoErr>` | the fallible `write_text`; `None` is success |
 | `append(path, data)` | `Unit` | |
+| `try_append(path, data)` | `Option<io.IoErr>` | the fallible `append`; `None` is success |
 | `exists(path)` | `bool` | |
 | `is_file(path)` / `is_dir(path)` | `bool` | follows a symlink |
 | `is_symlink(path)` | `bool` | `lstat`: true for the link itself, broken ones included |
@@ -44,15 +47,22 @@ datac Metadata(val size: u64, val mtime: i64, val mode: u32, val is_dir: bool, v
 | `size(path)` | `u64` | |
 | `metadata(path)` | `Metadata` | size, mtime, mode, kind |
 | `remove(path)` | `Unit` | |
+| `try_remove(path)` | `Option<io.IoErr>` | the fallible `remove`; `None` is success |
 | `remove_all(path)` | `Unit` | recursive; unlinks a symlink rather than descending it |
+| `try_remove_all(path)` | `Option<io.IoErr>` | the fallible `remove_all`; stops at the first failure |
 | `rename(from, to)` | `Unit` | atomic within one filesystem |
+| `try_rename(from, to)` | `Option<io.IoErr>` | the fallible `rename`; `None` is success |
 | `mkdir(path)` | `Unit` | |
 | `mkdir_all(path)` | `Unit` | creates parents |
+| `try_mkdir_all(path)` | `Option<io.IoErr>` | the fallible `mkdir_all`; `None` is success |
 | `list(path)` | `List<String>` | entry names in one directory |
+| `try_list(path)` | `Result<List<String>, io.IoErr>` | the fallible `list` |
 | `walk(dir)` | `List<String>` | every path below, recursively; reports a symlink but does not descend it |
 | `copy(from, to)` | `Unit` | one file |
 | `symlink(target, link)` | `Unit` | |
+| `try_symlink(target, link)` | `Option<io.IoErr>` | the fallible `symlink`; `None` is success |
 | `touch(path)` | `Unit` | |
+| `set_mode(path, mode)` | `Unit` | sets the low 12 permission bits, the ones `Metadata.mode` reads; `493` is octal 755 |
 | `sync(path)` | `Unit` | flush to disk |
 | `open(path, mode)` | `io.File` | panics on failure |
 | `try_open(path, mode)` | `Result<io.File, io.IoErr>` | the fallible `open` |
@@ -83,10 +93,19 @@ if let Err(e) = text {
 }
 ```
 
-The three `try_` functions return `Result<_, io.IoErr>`, where `io.IoErr`
+The `try_` readers (`try_read`, `try_read_text`, `try_open`, `try_list`) return `Result<_, io.IoErr>`, where `io.IoErr`
 carries the POSIX `errno` (for a branch on the cause) and its text (for a
-message). Everything else here still panics; the fallible twins are the ones a
-tool needs when it is walking a tree the author did not write.
+message). The `try_` mutators (`try_write`, `try_write_text`,
+`try_append`, `try_remove`, `try_remove_all`, `try_rename`, `try_mkdir_all`, `try_symlink`)
+return `Option<io.IoErr>` instead: `None` is success, because `Result<unit, E>`
+has no success value to write. Everything else here still panics; the fallible twins are the ones a tool needs when it is walking a tree
+the author did not write.
+
+```kelp
+if let Some(e) = fs.try_mkdir_all(dir) {
+    print(e.message)
+}
+```
 
 ```kelp
 impl "std/fs"

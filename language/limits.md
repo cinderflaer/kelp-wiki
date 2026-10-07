@@ -172,8 +172,8 @@ output pinned or is refused with a message that says what to do next:
   out of an owned place is the same partial move, which is what a `when`/`if let`
   over an owned place does with the payload it binds. A position of a tuple read
   out of an owned binding is the same partial move, and read out of a borrow it
-  is refused. A projection read out of a
-  borrowed structure or out of a nested place is still refused.
+  is refused. A nested owned field path is supported: it moves only its final
+  field, leaving sibling fields readable; a borrowed structure is still refused.
 - **The helpers whose receiver stays a borrow are `Copy`-only.** `option.unwrap`
   on an `Option<String>` and `result.map` over a `Result<T, MyErr>` take their
   receiver with `move` now, so both work. `option.or_else`, `result.unwrap`,
@@ -372,10 +372,11 @@ active roadmap item or a named future milestone, not a closed decision:
   than at the end of its scope, and a reference binding remembers the owner its
   value came from, so a pointer local can walk a structure as a cursor
   ([Ownership and borrowing](/language/ownership#cursors-and-provenance)).
-  What stays out is explicit lifetime syntax (`'a`), which is why a `str`/`View`
-  cannot be a `datac` field or an `enum` payload today, and why a closure cannot
-  capture a borrow: both need a way to say what a stored borrow is tied to,
-  which v1 does not have yet.
+  A direct text-view binding may promote its temporary owner, and a `datac` may
+  store `str`/`View` when construction moves its String/Bytes owner into an
+  earlier field of the same value. What stays out is explicit lifetime syntax
+  (`'a`), enum-payload and container borrows, raw reference fields, and closures
+  that capture a borrow.
 - No undefined-behaviour escape hatch: `unsafe` marks the operations the
   compiler cannot check, it does not make undefined behaviour allowed, the same
   way Rust's `unsafe` does not.

@@ -1,0 +1,28 @@
+---
+title: "`std/sys`"
+description: "The platform a program was built for: the target's operating system and architecture names. Ungated."
+isPublished: true
+tags: "stdlib"
+---
+The platform a program was built for. Ungated: both functions return a
+constant fixed at build time, so they describe the **target**, not the machine
+the binary later runs on.
+
+```kelp
+impl "std/sys"
+impl "std/str"
+
+fun main() {
+    if str.eq(sys.os(), "linux") {
+        print("built for linux on ${sys.arch()}")
+    }
+}
+```
+
+| Function | Returns | Notes |
+| --- | --- | --- |
+| `os()` | `str` | `"linux"`, `"macos"`, `"windows"`, `"freebsd"` or `"unknown"` |
+| `arch()` | `str` | `"x86_64"`, `"aarch64"`, `"riscv64"`, `"arm"`, `"x86"` or `"unknown"` |
+
+Compare with `str.eq`; `==` on a `str` is refused because it would compare
+addresses.

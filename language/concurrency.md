@@ -38,10 +38,10 @@ library type:
 - **Everything else crosses by being moved**, the same rule that already
   governs a `move T` parameter: a value moved to a thread is owned by that
   thread for as long as it holds it.
-- **A moved value may not contain a borrow.** This is not a new rule:
-  `types::is_borrowed_field_ty` already refuses a `&T`, `str` or `View` in a
-  `datac` field, an enum payload, a `List` element or a `Map` value, so no such
-  value could be constructed in the first place.
+- **A moved value may not contain an unrelated borrow.** A `datac` may contain a
+  `str` or `View` only when construction moves its String/Bytes owner into an
+  earlier field of that same value. References, borrowed trait objects, enum
+  payloads, Lists and Maps still cannot store a borrow.
 
 Three alternatives were considered and rejected, each for a reason worth
 keeping on record:

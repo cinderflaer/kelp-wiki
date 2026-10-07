@@ -308,7 +308,9 @@ Functions:
 - `fun read(path: &str).R: Bytes`
 - `fun read_text(path: &str).R: String`
 - `fun write(path: &str, data: Bytes)`
+- `fun try_write(path: &str, data: Bytes).R: option.Option<io.IoErr>`
 - `fun write_text(path: &str, text: String)`
+- `fun try_write_text(path: &str, text: String).R: option.Option<io.IoErr>`
 - `fun exists(path: &str).R: bool`
 - `fun is_file(path: &str).R: bool`
 - `fun is_dir(path: &str).R: bool`
@@ -319,16 +321,23 @@ Functions:
 - `fun try_read_text(path: &str).R: result.Result<String, io.IoErr>`
 - `fun size(path: &str).R: u64`
 - `fun remove(path: &str)`
+- `fun try_remove(path: &str).R: option.Option<io.IoErr>`
 - `fun rename(from: &str, to: &str)`
+- `fun try_rename(from: &str, to: &str).R: option.Option<io.IoErr>`
 - `fun mkdir(path: &str)`
 - `fun append(path: &str, data: Bytes)`
+- `fun try_append(path: &str, data: Bytes).R: option.Option<io.IoErr>`
 - `fun sync(path: &str)`
 - `fun list(path: &str).R: List<String>`
+- `fun try_list(path: &str).R: result.Result<List<String>, io.IoErr>`
 - `fun mkdir_all(path: &str)`
+- `fun try_mkdir_all(path: &str).R: option.Option<io.IoErr>`
 - `fun remove_all(target: &str)`
+- `fun try_remove_all(target: &str).R: option.Option<io.IoErr>`
 - `fun walk(dir: &str).R: List<String>`
 - `fun copy(from: &str, to: &str)`
 - `fun symlink(target: &str, link: &str)`
+- `fun try_symlink(target: &str, link: &str).R: option.Option<io.IoErr>`
 - `fun touch(path: &str)`
 - `fun open(path: &str, mode: &str).R: io.File`
 - `fun try_open(path: &str, mode: &str).R: result.Result<io.File, io.IoErr>`
@@ -340,8 +349,8 @@ Functions:
 
 Types:
 
-- `datac Child(val pid: i32, val stdin: io.File, val stdout: io.File, val stderr: io.File, var exited: bool, var code: i32)`
-- `datac RunResult(val code: i32, val out: Bytes, val err: Bytes)`
+- `datac Child(val pid: i32, val stdin: io.File, val stdout: io.File, val stderr: io.File, var exited: bool, var code: i32, var signal: i32)`
+- `datac RunResult(val code: i32, val signal: i32, val out: Bytes, val err: Bytes)`
 - `enum ProcErr { NotFound, NotExecutable, DirNotFound }`
 
 Functions:
@@ -352,6 +361,8 @@ Functions:
 - `fun spawn(program: &str, args: List<String>).R: Child`
 - `fun run_in(dir: &str, program: &str, args: List<String>).R: RunResult`
 - `fun run(program: &str, args: List<String>).R: RunResult`
+- `fun run_inherit_in(dir: &str, program: &str, args: List<String>).R: RunResult`
+- `fun run_inherit(program: &str, args: List<String>).R: RunResult`
 - `fun executable(program: &str).R: bool`
 - `fun try_run_in(dir: &str, program: &str, args: List<String>).R: result.Result<RunResult, ProcErr>`
 - `fun try_run(program: &str, args: List<String>).R: result.Result<RunResult, ProcErr>`
@@ -583,6 +594,25 @@ Functions:
 - `fun now_unix().R: i64`
 - `fun now_mono_ns().R: i64`
 - `fun sleep_ms(ms: u64)`
+
+## `std/source`
+
+Functions:
+
+- `fun file().R: str`
+- `fun line().R: usize`
+
+## `std/trace` (needs `time`)
+
+Types:
+
+- `datac Span(val name: String, val start_ns: i64)`
+
+Functions:
+
+- `fun event(file: &str, line: usize, name: &str)`
+- `fun begin(file: &str, line: usize, name: &str).R: Span`
+- `fun end(file: &str, line: usize, span: Span)`
 
 ## `std/tz` (needs `fs` and `env`)
 
@@ -967,6 +997,8 @@ layer under it. The whole surface is on [`std/ws`](/stdlib/ws).
 | `std/tls` | 6 | 1 | net |
 | `std/ws` | 32 | 18 | net, rand |
 | `std/time` | 3 | 0 | time |
+| `std/source` | 2 | 0 | - |
+| `std/trace` | 3 | 1 | time |
 | `std/tz` | 9 | 5 | fs, env |
 | `std/rand` | 3 | 0 | rand |
 | `std/env` | 4 | 0 | env |
