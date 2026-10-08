@@ -248,7 +248,7 @@ Each of these is refused where it is written:
 - **A supertrait that itself has arguments** (`trait Sorted<T>: Compare<T>`). A
   supertrait without arguments works.
 - **Generic methods** (`fun Self.map<U>(...)`) and generic static methods.
-- **An equality constraint or a `where` clause** on a parameter.
+- **An equality constraint** on a parameter (`I: Iterator<Item = i64>`).
 
 The compiler trusts a `From` body like any other method body: nothing requires
 the returned value to be built from `value`.

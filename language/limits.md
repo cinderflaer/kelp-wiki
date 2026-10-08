@@ -206,8 +206,8 @@ output pinned or is refused with a message that says what to do next:
   that implements `std/iter`'s `Iterator`** or is an iterator by shape. `std/iter` has
   `map`, `filter`, `take`, `skip`, `enumerate`, `zip` and `chain`, and the owned list
   iterator `into_iter` (26.10.3). **(open)** A borrowing `List.iter()` yielding `&T`
-  does not exist, and a generic trait impl (`impl<I: Iterator> Iterator for Take<I>`)
-  is still not accepted: the adapters get by with the by-shape rule
+  does not exist. A generic impl (`impl<I: Iterator> Iterator for Take<I>`) is
+  accepted, and `std/iter`'s own adapters use the by-shape rule instead
   ([Iterators, `for` and `break`](/language/iterators)).
 
 ## Compile-time evaluation
@@ -358,8 +358,8 @@ active roadmap item or a named future milestone, not a closed decision:
   `Display`](/language/operator-traits), and
   [`impl Trait` in argument position](/language/const-generics); see
   [Traits and static dispatch](/language/traits). What is still absent: an upcast
-  between trait objects, `where` clauses, blanket impls, generic impls
-  (`impl<T: A> B for Pair<T>`; the iterator adapters use the by-shape rule instead),
+  between trait objects, blanket impls and an impl for one instantiation
+  (`impl<T: A> B for Pair<T>` is supported since 26.10.3, see [Traits](/language/traits)),
   a bound or equality constraint on an associated type in a bound
   (`I: Iterator<Item = i64>`), default or generic associated types and
   associated consts, generic trait methods, `impl Trait` in a return position,

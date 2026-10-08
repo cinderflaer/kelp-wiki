@@ -600,18 +600,49 @@ refuses, each where it is written with a message that names the follow-up:
   own type, and the same holds for `Box<dyn>`.
 - **Object-unsafe traits** (returning `Self` or taking another `Self`), a generic
   trait and a trait with an associated type behind `dyn`, refused as above.
-- **`where` clauses.** Write the bound on the parameter:
+- **Blanket impls** (`impl<T: A> B for T`) and an impl for **one instantiation**
+  (`impl Name for Pair<i32, String>`):
 
   ```
-  error: a 'where' clause is not in this slice: write the bound on the type parameter itself ('fun f<T: Name>(...)'), and write several of them separated by '+' ('fun f<T: A + B>')
+  error: an impl for a generic type writes the type's parameters, in order, as its own: 'impl<T: Bound> Trait for Type<T>'; an impl for one instantiation ('Type<i32>') is not supported - implement the trait for a non-generic wrapper, or give the type an inherent method
   ```
 
-- **Blanket impls and generic impls**: an impl for a generic *instantiation*
-  (`impl Name for Pair<i32, String>`) and `impl<T: A> B for Pair<T>`:
+## Generic impls and `where` (26.10.3)
 
-  ```
-  error: implementing a trait for a generic instantiation is not in this slice: a trait is implemented for a declared 'datac' or 'enum' name, or for a builtin type that already carries methods
-  ```
+An impl may declare type parameters, which are the generic type's own, in order,
+with their bounds:
+
+```kelp
+trait Describe { fun Self.describe().return: i32 }
+impl Describe for i32 { fun Self.describe().return: i32 = self }
+
+datac Pair<A, B>(val a: A, val b: B)
+
+impl<A: Describe, B: Describe> Describe for Pair<A, B> {
+    fun Self.describe().return: i32 { return self.a.describe() * 10 + self.b.describe() }
+}
+
+fun show<T: Describe>(x: &T).return: i32 { return x.describe() }
+```
+
+- `Pair<i32, i32>` and `Pair<Pair<i32, i32>, i32>` implement `Describe`;
+  `Pair<i32, bool>` does not, and the error names the argument whose bound fails.
+- The impl's methods are template methods of the type, so dispatch stays static
+  and an instance is made when it is used. The impl is checked against the trait
+  where it is used, not where it is written; it must write every method the trait
+  has no body for (it cannot use a default).
+- An associated type may name the parameters (`type Item = I::Item`), so
+  `impl<I: Iterator> Iterator for Twice<I>` works and `for x in twice(it)` walks
+  it ([Iterators](/language/iterators)).
+- The parameters are written as the type declares them (the same rule as a
+  receiver on a generic type).
+- **`where`** is a second spelling of a bound on a function or an impl:
+  `fun f<T, U>(a: &T, b: &U) where T: A, U: A + B`. It bounds a parameter from the
+  `<...>` list; a bound on a projection (`where I::Item: Display`) and an equality
+  constraint (`I: Iterator<Item = i64>`) are not supported.
+- Not supported: a blanket impl, an impl for one instantiation, a const
+  parameter on an impl, `dyn` of a generic impl, and operators through a
+  generic impl.
 
 - **A bound on a method's own type parameters** (a generic trait method,
   `fun Self.map<U>(...)`), and a second impl of a trait for a type.

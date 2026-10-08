@@ -292,12 +292,11 @@ for v in iter.map(evens, fun(x: &i64).return: i64 = x * 10) {
 - **A borrowing `List.iter()`** that yields `&T`: a borrow into a list cannot outlive the
   iterator that hands it out without a way to say how long it lives. `iter.into_iter`
   moves the list in and yields owned items, and `iter.cloned(&xs)` walks a copy.
-- **A generic `impl Trait for Type<T>`.** The adapters do not need one: a generic
-  `datac` whose template declares `fun mut Name<P, ...>.next().return:
-  option.Option<Item>` is an `Iterator` by shape, so it satisfies `I: Iterator` and
-  names `I::Item`. A program's own adapter can be written the same way. The general
-  generic impl, a blanket impl and a `where` clause are designed in
-  `plan/generic-trait-impls.md` and not built.
+- Not a gap, but worth knowing: a generic impl works too,
+  `impl<I: iter.Iterator> iter.Iterator for Twice<I> { type Item = I::Item ... }`
+  ([Traits](/language/traits)); `std/iter`'s adapters use the simpler by-shape
+  rule, under which a generic `datac` whose template declares `fun mut
+  Name<P, ...>.next().return: option.Option<Item>` is an `Iterator`.
 
 ## See also
 
