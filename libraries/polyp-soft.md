@@ -40,7 +40,7 @@ is on [Polyp on bare metal](/libraries/polyp-freestanding).
 
 ## The software rasterizer
 
-`examples/polyp/soft/` is a self-contained, integer-only rasterizer. Its hard
+`backends/soft/soft/` is a self-contained, integer-only rasterizer. Its hard
 constraints are fixed before its API:
 
 - **Integer only.** No `f32` and no `f64` anywhere, so a riscv64 target with no
@@ -53,18 +53,18 @@ constraints are fixed before its API:
 
 | Module | What it holds | `unsafe` |
 | --- | --- | --- |
-| `soft/fb.kp` | `Fb(pixels, width, height, stride_px)`, `Rect`, the pixel store/load, `checksum`, `checksum_rgb` | yes |
-| `soft/draw.kp` | `ClipStack` (fixed depth 8) and every primitive: `fill_rect`, `stroke_rect`, `fill_round_rect`/`stroke_round_rect`, `hline`/`vline`, `line`, `blend_pixel`/`blend_over`, `blit_mask8` | yes |
-| `soft/font.kp` | a hand-drawn 5x7 face for printable ASCII 32..126, `text_width`/`text_height`, `draw_text` at scale 1..4 | no |
-| `soft/damage.kp` | `Damage`, at most 16 dirty rectangles, with `add`/`clear`/`count`/`at`/`bounds` | no |
-| `soft/debug.kp` | `dump_ppm`, hosted only | yes |
+| `backends/soft/soft/fb.kp` | `Fb(pixels, width, height, stride_px)`, `Rect`, the pixel store/load, `checksum`, `checksum_rgb` | yes |
+| `backends/soft/soft/draw.kp` | `ClipStack` (fixed depth 8) and every primitive: `fill_rect`, `stroke_rect`, `fill_round_rect`/`stroke_round_rect`, `hline`/`vline`, `line`, `blend_pixel`/`blend_over`, `blit_mask8` | yes |
+| `backends/soft/soft/font.kp` | a hand-drawn 5x7 face for printable ASCII 32..126, `text_width`/`text_height`, `draw_text` at scale 1..4 | no |
+| `backends/soft/soft/damage.kp` | `Damage`, at most 16 dirty rectangles, with `add`/`clear`/`count`/`at`/`bounds` | no |
+| `backends/soft/soft/debug.kp` | `dump_ppm`, hosted only | yes |
 
 A consumer lists only the three modules that dereference a pixel in its `[unsafe]
 modules`:
 
 ```toml
 [unsafe]
-modules = ["deps/polyp/soft/fb", "deps/polyp/soft/draw", "deps/polyp/soft/debug"]
+modules = ["deps/polyp/backends/soft/soft/fb", "deps/polyp/backends/soft/soft/draw", "deps/polyp/backends/soft/soft/debug"]
 ```
 
 `font` and `damage` do all their geometry in integers over `Rect`/`Fb` values and
@@ -91,7 +91,7 @@ box. The embedded font has one weight: a `bold` flag is carried and ignored.
 
 ## The soft backend
 
-`examples/polyp/soft_backend.kp` is the `core.Backend` implementation over the
+`backends/soft/soft_backend.kp` is the `core.Backend` implementation over the
 rasterizer. It keeps the same retained widget tree the headless backend keeps, so
 interactive ids, counters, focus and entry text cannot drift between them, and it
 adds layout, painting and input:
@@ -124,8 +124,8 @@ A `SoftBackend` also exposes the counters stage 5 pins: `frame_alloc_count`,
 ## The `Platform` contract
 
 The whole interface between the backend and an operating system is `trait
-Platform` in `examples/polyp/soft/platform.kp`: **five functions** and the
-framebuffer the platform owns. `examples/polyp/PLATFORM.md` is the plain-terms
+Platform` in `backends/soft/soft/platform.kp`: **five functions** and the
+framebuffer the platform owns. `PLATFORM.md` is the plain-terms
 version.
 
 ```kelp
@@ -146,7 +146,7 @@ pub trait Platform {
 | `now_us() -> u64` | A monotonic clock in microseconds, added for the frame deadline. A platform with only a millisecond clock returns `now_ms() * 1000` and gets millisecond-granular deadlines. The method is `mut` because a test platform's clock may advance as paint work is done. |
 | `poll_event() -> Option<Event>` | The next pending input event, oldest first, or `None` when the queue is empty. The backend drains it until `None`, so returning one event per call is the whole contract. **It must not block.** |
 
-`Event` is the six-variant enum in `examples/polyp/soft/event.kp`:
+`Event` is the six-variant enum in `backends/soft/soft/event.kp`:
 
 ```kelp
 enum Event {
@@ -159,11 +159,11 @@ enum Event {
 }
 ```
 
-`HeadlessPlatform` (`soft/headless_platform.kp`) is a complete implementation in
+`HeadlessPlatform` (`backends/soft/soft/headless_platform.kp`) is a complete implementation in
 about a hundred lines: it allocates its buffer with `Ptr.alloc<u32>`, records the
 presented rectangles and a checksum after each `present`, and plays a scripted
 `(time_ms, Event)` list as `now_ms` advances. `PpmPlatform`
-(`soft/ppm_platform.kp`) is the same plus a PPM dump to
+(`backends/soft/soft/ppm_platform.kp`) is the same plus a PPM dump to
 `<POLYP_DUMP_DIR>/frame_<n>.ppm` on every present; with the variable unset it is a
 headless platform. A bare-metal project writes one `FbPlatform` on top of a
 static or memory-mapped surface; see
@@ -354,7 +354,7 @@ the same counts per frame; the table above is a full run.
 - **No text selection, clipboard, IME or multi-line entry.** The caret is a byte
   offset kept on UTF-8 unit boundaries.
 - **No GPU and no display server.** The renderer is the integer software raster
-  in `examples/polyp/soft/`; the only hardware fact is the platform's pixel
+  in `backends/soft/soft/`; the only hardware fact is the platform's pixel
   pointer.
 - **Theming is a `Theme` `datac` and a class table.** Colours and metrics are one
   value a platform can replace, and class overrides are `class_style`

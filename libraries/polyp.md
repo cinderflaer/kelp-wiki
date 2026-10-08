@@ -16,11 +16,10 @@ Gated on `ui` (the display domain, [Capabilities](/language/capabilities)). Only
 the GTK backend needs the grant; the core, the headless backend and the software
 backend name no display symbol and need no capability.
 
-Polyp is **not** an `fpl` folder. It ships in the compiler's own repository at
-`examples/polyp/`, with `examples/polyp-v0/` as a frozen copy of the earlier
-plain-constructor API and `examples/polyp-counter-v0/` its counter, because a
-consumer declares its native surface in its own `coral.toml` rather than
-depending on a folder (see [Using the library](#using-the-library)).
+Since v5, Polyp is its own repository: [`juniper/polyp`](https://homelabone.xenoo.dev/gittea/Juniper/polyp).
+The Kelp repository keeps consumer copies in `examples/polyp*/`. `examples/polyp-v0/` is a frozen copy of the
+earlier plain-constructor API and `examples/polyp-counter-v0/` its counter. A consumer declares Polyp in its own
+`coral.toml` (see [Using the library](#using-the-library) and [Polyp v5](#polyp-v5)).
 
 There is no published version number. **v2** added the keyed patch, `scrolled`,
 `checkbox`, `progress`, `separator`, the layout options and `polyp.css`.
@@ -104,7 +103,7 @@ id rule, live in one place and cannot drift between backends. `run<B: Backend,
 S, M>(backend, init, view, update) -> S` owns the state, the path-to-id table,
 the focus check and the counters, and it names no backend.
 
-The **headless** backend (`examples/polyp/headless_backend.kp`) applies the same
+The **headless** backend (`backends/headless/headless_backend.kp`) applies the same
 patches to an in-memory tree and prints a text dump; it needs no display, so a
 whole program can run in a test. `examples/polyp-core-test/` asserts the pure
 diff (identical trees produce nothing, a text change one `Update`, a keyed
@@ -160,62 +159,36 @@ That makes the two declarative claims hold literally:
 
 ## Using the library
 
-A Kelp library has no manifest, and a project's modules resolve only under its own
-`src/`, so a Polyp consumer does three things by hand:
+Coral fetches Polyp. A consumer names it in `coral.toml`:
 
-1. **Put the sources where `impl` can reach them.** The convention Coral fetches
-   a dependency into is `src/deps/<name>/`, and a path ending in `/lib` under
-   `deps/` is named after its directory, so `impl "deps/polyp/lib"` is reached as
-   `polyp.*`. Copy `examples/polyp/` to `src/deps/polyp/`, or link it, which is
-   what `examples/polyp-counter/` and `examples/polyp-todo/` do:
+```toml
+[dependencies]
+polyp = "fpl/polyp"
+```
 
-   ```sh
-   mkdir -p src/deps
-   ln -s ../../../polyp src/deps/polyp
-   ```
+`fpl/polyp` is coral's first-party catalog entry; it resolves to the Polyp repository and lands in
+`src/deps/polyp/`. Coral's manifest rules are on the [Coral page](/tooling/coral).
 
-   The library's own `impl "deps/polyp/core"`, `"deps/polyp/gtk_backend"` and
-   `"deps/polyp/queue"` lines already spell that location, so the copy has to
-   land exactly there.
+The consumer then does two things by hand.
 
-2. **Paste the `[extern.*]` sections into your `coral.toml`.** The native
-   symbols, the headers and the `pkg-config` package live in the consumer's
-   manifest, because a library has none of its own. The section ids are the
-   `impl` paths the library uses. This is the list
-   `examples/polyp-todo/coral.toml` carries, and it is the list the library needs
-   as of v3:
-
-   ```toml
-   [extern."deps/polyp/gtk"]
-   domain = "ui"
-   library = "gtk-4"
-   header = "gtk/gtk.h"
-   pkg_config = "gtk4"
-   symbols = ["gtk_init", "gtk_window_new", "gtk_window_set_title", "gtk_window_set_default_size", "gtk_window_set_child", "gtk_window_present", "gtk_window_get_focus", "gtk_window_set_focus", "gtk_box_new", "gtk_box_append", "gtk_box_remove", "gtk_box_insert_child_after", "gtk_box_reorder_child_after", "gtk_box_set_spacing", "gtk_label_new", "gtk_label_set_markup", "gtk_widget_set_size_request", "gtk_entry_new", "gtk_editable_set_text", "gtk_editable_get_text", "gtk_button_new_with_label", "gtk_button_set_label", "gtk_check_button_new_with_label", "gtk_check_button_set_label", "gtk_check_button_set_active", "gtk_progress_bar_new", "gtk_progress_bar_set_fraction", "gtk_separator_new", "gtk_scrolled_window_new", "gtk_scrolled_window_set_child", "gtk_widget_set_margin_start", "gtk_widget_set_margin_end", "gtk_widget_set_margin_top", "gtk_widget_set_margin_bottom", "gtk_widget_set_hexpand", "gtk_widget_set_vexpand", "gtk_widget_set_halign", "gtk_widget_set_valign", "gtk_widget_add_css_class", "gtk_widget_remove_css_class", "gtk_css_provider_new", "gtk_css_provider_load_from_string", "gdk_display_get_default", "gtk_style_context_add_provider_for_display", "gtk_widget_is_ancestor", "g_object_unref", "g_main_context_iteration", "g_timeout_add_full", "connect=g_signal_connect_data", "connect_ret=g_signal_connect_data", "g_signal_handler_block", "g_signal_handler_unblock"]
-
-   [extern."deps/polyp/queue"]
-   domain = "ui"
-   library = "c"
-   header = "polyp_queue.h"
-   include_dirs = ["src/deps/polyp/include"]
-   symbols = ["polyp_post", "polyp_poll", "polyp_post_edit", "polyp_poll_edit", "polyp_poll_edit_text", "polyp_post_focus", "polyp_poll_focus"]
-   ```
-
-   `header` is one key per section, which is why the queue is its own module:
-   `polyp_queue.h` is a header of the library and `gtk/gtk.h` is GTK's, and a
-   section names one. See
-   [Coral: the manifest](/tooling/coral#extern-user-modules-that-bind-a-native-symbol).
-
-3. **Grant the domain.** Every GTK and queue call is in the `ui` domain
-   (`plan/ffi-display-domain.md`; the only accepted grant is the wildcard), so
-   the consumer's import of the library delegates it:
+1. **Import the facade and grant the domain.** Every GTK and queue call is in the `ui` domain, so the
+   consumer's import of the facade delegates it. The program's namespace is `polyp`:
 
    ```kelp
-   impl "deps/polyp/lib" caps(ui = ["*"])
+   impl "deps/polyp/backends/gtk/polyp/lib" caps(ui = ["*"])
    ```
 
-   The library holds `ui` and the application does not need to: `main` never names
-   a GTK call.
+   The facade holds `ui`, and `main` never names a GTK call.
+
+2. **Paste the `[extern.*]` sections into `coral.toml`.** The native symbols, headers and `pkg-config`
+   package live in the consumer's manifest. The section ids are the `impl` paths the library uses:
+   `deps/polyp/backends/gtk/gtk` (GTK, `pkg_config = "gtk4"`) and `deps/polyp/backends/gtk/queue`
+   (the message ring, `include_dirs = ["src/deps/polyp/backends/gtk/include"]`). The complete block is
+   in the Polyp README under "Add Polyp to a project", and is kept there so it has one source.
+
+   `header` is one key per section, which is why the queue is its own module: `polyp_queue.h` is a header
+   of the library and `gtk/gtk.h` is GTK's, and a section names one. See
+   [Coral: the manifest](/tooling/coral#extern-user-modules-that-bind-a-native-symbol).
 
 ## API
 
@@ -377,12 +350,12 @@ nothing keeps it after the widgets exist.
 
 ## The counter
 
-`examples/polyp-counter/` is the minimal program, complete and buildable, and
-its `src/deps/polyp` link points at `examples/polyp/`:
+`examples/polyp-counter/` is the minimal program, complete and buildable. Its `coral.toml` fetches Polyp
+with `polyp = "fpl/polyp"`, and its imports are:
 
 ```kelp
-impl "deps/polyp/core"
-impl "deps/polyp/lib" caps(ui = ["*"])
+impl "deps/polyp/core/core"
+impl "deps/polyp/backends/gtk/polyp/lib" caps(ui = ["*"])
 impl "std/env"
 impl "std/fmt"
 impl "std/str"
@@ -660,6 +633,29 @@ keyed reorders preserve hits. The dependency list is the contract: omitting a
 value read by `build` can leave stale pixels. `MemoStore` reports hits, misses and
 view calls, but is a small linear cache with no eviction beyond removing a memo.
 
+## Polyp v5
+
+v5 is a layout and packaging release. The library's behaviour is the v4 behaviour, with these changes.
+
+- **Repository.** Polyp lives in its own repository. Coral fetches it as `polyp = "fpl/polyp"`.
+- **Layout.** `core/` holds the backend-neutral loop, tree, diff, diagnostics and animation maths.
+  `backends/gtk/` holds the desktop backend and its facade `polyp/lib.kp`. `backends/headless/` holds the
+  in-memory backend. `backends/soft/` holds the framebuffer backend and its integer rasterizer in
+  `soft/`. `tools/`, `docs/plan/` and `tests/` hold the rest. The file names in the layering diagram
+  above are the v3 names. Use the paths in this section.
+- **Namespace.** Programs still write `polyp.column { ... }`. The facade's directory is `polyp`, and a
+  module's namespace is its directory name, so the facade is reached through
+  `deps/polyp/backends/gtk/polyp/lib`. The old `gtk.` form is not a Polyp namespace.
+- **WebKelp.** The WebKelp compiler is in the repository under `web/`. Its own repository is archived, and
+  its demo and playground sites were removed. See [WebKelp](/family/webkelp).
+- **HTML output.** `kelpc` writes a Polyp app's first frame as static HTML when `coral.toml` sets
+  `[build] emit = "html"` and `emit_entry`. The entry file calls `polyp.emit_html(init, view)`, and the
+  normal program needs no extra grant. The emitter writes column, row, text, button and spacer as their
+  HTML elements, and every other node as a `div` with a `data-kind` attribute. The page has no event
+  wiring and shows the first frame only. This is in Kelp `main` and ships in 26.10.4.
+- **Plan.** The design and open decisions are in the Polyp repository at `docs/plan/polyp-v5.md`. See
+  [Polyp v5 plan](/libraries/polyp-v5-plan).
+
 ## Known limits
 
 - **No lazy or virtualized lists.** Every child in the model is a live widget on
@@ -670,10 +666,8 @@ view calls, but is a small linear cache with no eviction beyond removing a memo.
   ([Exclusive captures](/language/functions#exclusive-captures)), but only during
   the call that runs it. A widget's `on_click` outlives the call that built it, so
   it stays a `Msg` value, and a mutation still goes through the update function.
-- **No library manifest.** See [Using the library](#using-the-library): the
-  consumer pastes the `[extern.*]` sections and places the sources under
-  `src/deps/polyp/`. This is the one thing that makes Polyp awkward to consume,
-  and it is the same for every Kelp library.
+- **The `[extern.*]` sections are pasted by hand.** Coral fetches the sources (`polyp = "fpl/polyp"`),
+  but the native symbol list stays in the consumer's manifest, as it does for any Kelp library with native code.
 - **An id still leans on creation order.** An interactive widget's id comes from
   counting interactive `make` calls, so an application that posts a raw id
   (rather than carrying a `Msg`) relies on the order widgets are created in; the
@@ -693,6 +687,8 @@ view calls, but is a small linear cache with no eviction beyond removing a memo.
 
 ## See also
 
+- [Polyp repository](https://homelabone.xenoo.dev/gittea/Juniper/polyp): the library source and its README
+- [Polyp v5 plan](/libraries/polyp-v5-plan): where the v5 plan lives
 - [Polyp on a framebuffer](/libraries/polyp-soft): the software rasterizer, the
   soft backend, the five-function `Platform` contract, the work budgets and the
   benchmark
