@@ -1,6 +1,6 @@
 ---
 title: "`std/iter`"
-description: "The Iterator trait that `for` walks, the half-open Range with range and range_step, and the count, sum_i64 and collect_list drains. Pure Kelp, ungated; the closure and composing adapters are not there yet."
+description: "The Iterator trait that `for` walks, the half-open Range, the owned list iterator, the count, sum_i64 and collect_list drains, and the map, filter, take, skip, enumerate, zip and chain adapters. Pure Kelp, ungated."
 isPublished: true
 tags: "stdlib"
 ---
@@ -77,13 +77,33 @@ Output, on both backends:
 5
 ```
 
+## The list iterator and the adapters
+
+```kelp
+iter.into_iter(xs: move List<T>) -> ListIter<T>      // owned items, front to back
+iter.cloned(xs: &List<T>) -> ListIter<T>             // a copy of a borrowed list
+iter.map(it, f)        -> MapIter<..>     // f: closure(&Item) -> U
+iter.filter(it, pred)  -> FilterIter<..>  // pred: closure(&Item) -> bool
+iter.take(it, n)       -> TakeIter<..>    // at most the first n
+iter.skip(it, n)       -> SkipIter<..>    // the items after the first n
+iter.enumerate(it)     -> EnumerateIter<..>   // (usize, Item), from 0
+iter.zip(a, b)         -> ZipIter<..>     // (A::Item, B::Item), stops at the shorter
+iter.chain(a, b)       -> ChainIter<..>   // all of a, then all of b (same item type)
+```
+
+Each takes its iterator by `move` and is itself an `Iterator`, so they nest
+(`iter.take(iter.filter(iter.into_iter(xs), keep), 3)`). A `for` over an adapter
+needs it in a `var` (or a temporary), as for any iterator that advances. The
+adapters are generic `datac`s with a `next` method; a generic type with such a
+`next` is an iterator by shape, which is why none of them needs a generic trait
+impl ([Iterators](/language/iterators#what-is-not-there-yet)).
+
 ## Not in the module
 
-- **`map`, `filter`, `take`, `skip`, `enumerate`, `zip`, `chain`.** They need a
-  generic impl of `Iterator` over another iterator, which the parser does not
-  accept yet ([Iterators](/language/iterators#what-is-not-there-yet)).
-- **`List.iter()` and `List.into_iter()`.** Walk a list with `for x in xs`.
-- A `Map` has no iterator; iterate `keys()` and look up.
+- **A borrowing `List.iter()`** yielding `&T`: `into_iter` moves the list in, and
+  `cloned` walks a copy.
+- `fold`, `any`, `all`, `find` and the other consumers beyond `count`, `sum_i64`
+  and `collect_list`.
 
 ## See also
 

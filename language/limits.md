@@ -202,13 +202,13 @@ output pinned or is refused with a message that says what to do next:
   is the one array shape a `datac` element cannot take: write the elements out,
   or start from a literal and `set` each one. An array cannot be a `List` or
   `Map` element, and an array element cannot be a `List`, `Map` or `Box`.
-- **The iterator protocol shipped, the adapters did not.** `for` walks a `List`,
-  an array, or any type that implements `std/iter`'s `Iterator`. There is no
-  `map`, `filter`, `take`, `skip`, `enumerate`, `zip` or `chain`, no
-  `List.iter()` or `List.into_iter()`. A `Map` is walked with `for (key, value) in
-  map` (26.10.3; a snapshot of the keys, in insertion order). **(open)** The adapters need a generic trait
-  impl (`impl<I: Iterator> Iterator for Take<I>`), which the parser does not
-  accept yet ([Iterators, `for` and `break`](/language/iterators)).
+- **`for` walks a `List`, an array, a `Map` (`for (key, value) in map`), or any type
+  that implements `std/iter`'s `Iterator`** or is an iterator by shape. `std/iter` has
+  `map`, `filter`, `take`, `skip`, `enumerate`, `zip` and `chain`, and the owned list
+  iterator `into_iter` (26.10.3). **(open)** A borrowing `List.iter()` yielding `&T`
+  does not exist, and a generic trait impl (`impl<I: Iterator> Iterator for Take<I>`)
+  is still not accepted: the adapters get by with the by-shape rule
+  ([Iterators, `for` and `break`](/language/iterators)).
 
 ## Compile-time evaluation
 
@@ -359,7 +359,7 @@ active roadmap item or a named future milestone, not a closed decision:
   [`impl Trait` in argument position](/language/const-generics); see
   [Traits and static dispatch](/language/traits). What is still absent: an upcast
   between trait objects, `where` clauses, blanket impls, generic impls
-  (`impl<T: A> B for Pair<T>`, which is also what blocks the iterator adapters),
+  (`impl<T: A> B for Pair<T>`; the iterator adapters use the by-shape rule instead),
   a bound or equality constraint on an associated type in a bound
   (`I: Iterator<Item = i64>`), default or generic associated types and
   associated consts, generic trait methods, `impl Trait` in a return position,
