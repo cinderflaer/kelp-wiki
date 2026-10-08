@@ -98,12 +98,24 @@ adapters are generic `datac`s with a `next` method; a generic type with such a
 `next` is an iterator by shape, which is why none of them needs a generic trait
 impl ([Iterators](/language/iterators#what-is-not-there-yet)).
 
+## The consumers
+
+```kelp
+iter.any(it, pred) -> bool                 // some item satisfies pred
+iter.all(it, pred) -> bool                 // every item does
+iter.find(it, pred) -> Option<Item>        // the first that does
+iter.last(it) -> Option<Item>
+iter.fold(it, init, f) -> A                // f(&acc, &item) is the next accumulator
+```
+
+Each takes its iterator by `move` and stops as soon as the answer is known
+(`any`, `all`, `find`). With `count`, `sum_i64` and `collect_list` these are the
+whole set of consumers.
+
 ## Not in the module
 
 - **A borrowing `List.iter()`** yielding `&T`: `into_iter` moves the list in, and
   `cloned` walks a copy.
-- `fold`, `any`, `all`, `find` and the other consumers beyond `count`, `sum_i64`
-  and `collect_list`.
 
 ## See also
 
