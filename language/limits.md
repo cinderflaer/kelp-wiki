@@ -79,10 +79,10 @@ literal) are built on both backends by `kelpc/tests/scaling.rs`, and a step over
 
 ## Data and generics
 
-- **A tuple has no `const` value.** A position is read by `t.0`, by a
-  destructuring binding, by `for (a, b) in pairs` and by a tuple pattern in
-  `when (a, b)` (which may hold literals and nested tuples), but there is no
-  tuple value in a `const` initializer.
+- **A tuple is a value like any other, `const` included.** A position is read by
+  `t.0`, by a destructuring binding, by `for (a, b) in pairs` and by a tuple
+  pattern in `when (a, b)` (which may hold literals and nested tuples), and a
+  `const` may be a tuple of constants (`const ORIGIN: (i32, i32) = (1, 2)`).
   A tuple has two or more
   elements, so there is no one-element tuple: `(T)` is the type `T`, and `()` is
   refused by name. Bind the whole tuple to a `val` when its positions need to be
@@ -132,9 +132,9 @@ limits of that rule:
 - **A block cannot be stored**, returned or put in a container: a scoped value is
   a type of its own and lives exactly as long as the call it was written in. A
   retained callback (a button's `on_click`) is still a message value, not a block.
-- **A block inside a block cannot capture the outer block's exclusive capture**,
-  even to read it. The message names the two ways out: pass the name to the inner
-  call as an argument, or capture it in the outer function.
+- **A block inside a block may capture the outer block's exclusive capture**
+  (26.10.3). The inner call's other arguments are checked against it exactly as
+  they are for a local.
 - **One owner, one exclusive capture per call.** A second capture of the same
   owner in the same call, a call whose other arguments or receiver mention the
   owner, and a borrow of the owner still used after the call are all refused.
@@ -202,13 +202,13 @@ output pinned or is refused with a message that says what to do next:
   is the one array shape a `datac` element cannot take: write the elements out,
   or start from a literal and `set` each one. An array cannot be a `List` or
   `Map` element, and an array element cannot be a `List`, `Map` or `Box`.
-- **The iterator protocol shipped, the adapters did not.** `for` walks a `List`,
-  an array, or any type that implements `std/iter`'s `Iterator`. There is no
-  `map`, `filter`, `take`, `skip`, `enumerate`, `zip` or `chain`, no
-  `List.iter()` or `List.into_iter()`. A `Map` is walked with `for (key, value) in
-  map` (26.10.3; a snapshot of the keys, in insertion order). **(open)** The adapters need a generic trait
-  impl (`impl<I: Iterator> Iterator for Take<I>`), which the parser does not
-  accept yet ([Iterators, `for` and `break`](/language/iterators)).
+- **`for` walks a `List`, an array, a `Map` (`for (key, value) in map`), or any type
+  that implements `std/iter`'s `Iterator`** or is an iterator by shape. `std/iter` has
+  `map`, `filter`, `take`, `skip`, `enumerate`, `zip` and `chain`, and the owned list
+  iterator `into_iter` (26.10.3). **(open)** A borrowing `List.iter()` yielding `&T`
+  does not exist. A generic impl (`impl<I: Iterator> Iterator for Take<I>`) is
+  accepted, and `std/iter`'s own adapters use the by-shape rule instead
+  ([Iterators, `for` and `break`](/language/iterators)).
 
 ## Compile-time evaluation
 
@@ -358,8 +358,8 @@ active roadmap item or a named future milestone, not a closed decision:
   `Display`](/language/operator-traits), and
   [`impl Trait` in argument position](/language/const-generics); see
   [Traits and static dispatch](/language/traits). What is still absent: an upcast
-  between trait objects, `where` clauses, blanket impls, generic impls
-  (`impl<T: A> B for Pair<T>`, which is also what blocks the iterator adapters),
+  between trait objects, blanket impls and an impl for one instantiation
+  (`impl<T: A> B for Pair<T>` is supported since 26.10.3, see [Traits](/language/traits)),
   a bound or equality constraint on an associated type in a bound
   (`I: Iterator<Item = i64>`), default or generic associated types and
   associated consts, generic trait methods, `impl Trait` in a return position,

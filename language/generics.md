@@ -155,7 +155,7 @@ fun describe<T: Shape + Named>(s: &T).return: f64 = s.area() + s.name_length()
 - Bounds are checked transitively. A bounded generic may call another bounded
   generic with its own parameter, and the inner call is checked when the outer
   function is instantiated.
-- The bound goes on the parameter; a `where` clause is refused by name.
+- The bound goes on the parameter, or in a `where` clause after the signature (`fun f<T>(x: &T) where T: Name`); a `where` bound names a parameter from the `<...>` list.
 - A bound may name a trait with arguments (`<X: From<i32>>`), and a bounded
   parameter reaches a trait's associated type as `I::Item`
   ([Generic traits](/language/generic-traits),

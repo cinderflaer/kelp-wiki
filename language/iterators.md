@@ -273,20 +273,30 @@ with `break` or `return`. A label is written before a loop, as `'name:`, and
 ## `std/iter`
 
 [`std/iter`](/stdlib/iter) is pure Kelp and ships the trait, `Range` with
-`range` and `range_step`, and `count`, `sum_i64` and `collect_list`.
+`range` and `range_step`, `count`, `sum_i64` and `collect_list`, the owned list
+iterator (`into_iter`, `cloned`) and the adapters `map`, `filter`, `take`, `skip`,
+`enumerate`, `zip` and `chain`. They chain, because an adapter is itself an
+iterator:
+
+```kelp
+impl "std/iter"
+
+var evens = iter.filter(iter.into_iter(xs), fun(x: &i64).return: bool = x % 2 == 0)
+for v in iter.map(evens, fun(x: &i64).return: i64 = x * 10) {
+    print(v)
+}
+```
 
 ## What is not there yet
 
-- **The adapters.** `map`, `filter`, `take`, `skip`, `enumerate`, `zip` and
-  `chain` do not exist. Each would be a generic `datac` implementing `Iterator`
-  over another iterator, which needs a generic trait impl
-  (`impl<I: Iterator> Iterator for Take<I>`). The parser refuses that spelling
-  (`expected identifier, found Lt` at the `<` after `impl`), and a bound on a
-  type declaration's parameter (`datac Take<I: Iterator>`) is refused too. Write
-  the loop, or an iterator type of your own.
-- **`List.iter()` and `List.into_iter()`.** A borrowing iterator would need a way
-  to say how long the borrow lives, and a `List` method cannot be added by a
-  shipped module. Walk a list with `for x in xs`.
+- **A borrowing `List.iter()`** that yields `&T`: a borrow into a list cannot outlive the
+  iterator that hands it out without a way to say how long it lives. `iter.into_iter`
+  moves the list in and yields owned items, and `iter.cloned(&xs)` walks a copy.
+- Not a gap, but worth knowing: a generic impl works too,
+  `impl<I: iter.Iterator> iter.Iterator for Twice<I> { type Item = I::Item ... }`
+  ([Traits](/language/traits)); `std/iter`'s adapters use the simpler by-shape
+  rule, under which a generic `datac` whose template declares `fun mut
+  Name<P, ...>.next().return: option.Option<Item>` is an `Iterator`.
 
 ## See also
 
