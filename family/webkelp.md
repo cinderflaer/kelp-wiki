@@ -25,16 +25,13 @@ It has two goals that pull in opposite directions, and the design is the answer 
 
 ## Live demo
 
-[**homelabone.xenoo.dev/webkelpdemo**](https://homelabone.xenoo.dev/webkelpdemo/) is a page written
-entirely in WebKelp. A button in the corner toggles between the rendered page and the `.wk` source it was
-compiled from, so you can see each construct next to its output. No login is needed. The source is
-`demo/index.wk` in the repository, and `demo/build.sh` builds it.
+The live demo has been removed from the server. Its source is still in the repository:
+`demo/index.wk` is a page written entirely in WebKelp, and `demo/build.sh` builds it.
 
 ## Playground
 
-[**homelabone.xenoo.dev/webkelpplay**](https://homelabone.xenoo.dev/webkelpplay/) is an in-browser editor:
-write WebKelp on the left and see the compiled page on the right, live. Links carry your source in the URL, so
-you can share a page without saving anything. See [WebKelp playground](/family/webkelp-playground).
+The playground has been removed from the server. It was an in-browser editor: write WebKelp on the left and
+see the compiled page on the right. See [WebKelp playground](/family/webkelp-playground) for the reference.
 
 ## A first page
 

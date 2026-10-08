@@ -14,7 +14,7 @@ where its rough edges get found first.
 
 | Project | What it is | Written in | Repository |
 | --- | --- | --- | --- |
-| [WebKelp](/family/webkelp) | a markdown-style language (`.wk`) that compiles to plain HTML and CSS, with an escape hatch for everything HTML and CSS can do. [Live demo](https://homelabone.xenoo.dev/webkelpdemo/), [Playground](https://homelabone.xenoo.dev/webkelpplay/) | Kelp | `Juniper/webkelp` |
+| [WebKelp](/family/webkelp) | a markdown-style language (`.wk`) that compiles to plain HTML and CSS, with an escape hatch for everything HTML and CSS can do. The live demo and playground have been removed. | Kelp | [`Juniper/polyp` (folder `web/`)](https://homelabone.xenoo.dev/gittea/Juniper/polyp/src/branch/main/web) |
 
 The core repositories, for comparison, are listed on the [home page](/home).
 
