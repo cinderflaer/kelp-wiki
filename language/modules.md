@@ -145,7 +145,9 @@ initializer is evaluated while the compiler runs, and every use is substituted a
 a literal, so a `const` costs no storage and no startup work. A `const` may only
 name constants declared before it; it may also call a plain `fun` whose own body
 stays inside what a constant can evaluate, and that function may be declared
-after it. [Constants and passdowns](/language/passdowns) has the rules.
+after it. A `const` may be a tuple of constants (`const ORIGIN: (i32, i32) = (1, 2)`,
+read as `ORIGIN.0` or by destructuring). [Constants and passdowns](/language/passdowns)
+has the rules.
 
 ## `pd` passdowns
 

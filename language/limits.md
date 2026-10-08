@@ -79,10 +79,10 @@ literal) are built on both backends by `kelpc/tests/scaling.rs`, and a step over
 
 ## Data and generics
 
-- **A tuple has no `const` value.** A position is read by `t.0`, by a
-  destructuring binding, by `for (a, b) in pairs` and by a tuple pattern in
-  `when (a, b)` (which may hold literals and nested tuples), but there is no
-  tuple value in a `const` initializer.
+- **A tuple is a value like any other, `const` included.** A position is read by
+  `t.0`, by a destructuring binding, by `for (a, b) in pairs` and by a tuple
+  pattern in `when (a, b)` (which may hold literals and nested tuples), and a
+  `const` may be a tuple of constants (`const ORIGIN: (i32, i32) = (1, 2)`).
   A tuple has two or more
   elements, so there is no one-element tuple: `(T)` is the type `T`, and `()` is
   refused by name. Bind the whole tuple to a `val` when its positions need to be
