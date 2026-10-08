@@ -132,9 +132,9 @@ limits of that rule:
 - **A block cannot be stored**, returned or put in a container: a scoped value is
   a type of its own and lives exactly as long as the call it was written in. A
   retained callback (a button's `on_click`) is still a message value, not a block.
-- **A block inside a block cannot capture the outer block's exclusive capture**,
-  even to read it. The message names the two ways out: pass the name to the inner
-  call as an argument, or capture it in the outer function.
+- **A block inside a block may capture the outer block's exclusive capture**
+  (26.10.3). The inner call's other arguments are checked against it exactly as
+  they are for a local.
 - **One owner, one exclusive capture per call.** A second capture of the same
   owner in the same call, a call whose other arguments or receiver mention the
   owner, and a borrow of the owner still used after the call are all refused.

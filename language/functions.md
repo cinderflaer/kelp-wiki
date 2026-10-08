@@ -304,10 +304,12 @@ runs when the block returns, once per call of it.
   error: cannot borrow 's' as exclusive: this call also uses it, and a block that writes through a captured exclusive borrow needs the call's other arguments to leave it alone
   ```
 
-- A block inside a block that uses a name the outer block captures exclusively:
+- A block inside a block is allowed (26.10.3) to use a name the outer block captures
+  exclusively; what the inner call also uses is checked the same way, and a clash
+  names the captured value:
 
   ```
-  error: cannot capture 's' into this nested block: it is an exclusive capture of the enclosing block, and a block inside a block cannot hold it; pass 's' to the inner call as an ordinary argument, or capture it in the outer function
+  error: cannot borrow 'a captured value.count' as exclusive: this call also uses it, and a block that writes through a captured exclusive borrow needs the call's other arguments to leave it alone
   ```
 
 - Returning a borrow from a block that holds an exclusive capture:
