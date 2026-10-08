@@ -4,6 +4,14 @@ description: "WebKelp is a markdown-style language that compiles to plain HTML a
 isPublished: true
 tags: "family, cli"
 ---
+
+> # ARCHIVED PROJECT: WEBKELP MOVED TO POLYP
+>
+> WebKelp now lives in the Polyp repository, in the `web/` folder:
+> https://homelabone.xenoo.dev/gittea/Juniper/polyp
+>
+> The WebKelp repository is archived, and its demo and playground sites have been removed.
+> This page is kept for reference only and may be out of date.
 WebKelp is a markdown-style language, in `.wk` files, that compiles to plain **HTML and
 CSS**. The compiler is a single native binary written in Kelp, and the output is static
 files with no JavaScript unless you write some.
