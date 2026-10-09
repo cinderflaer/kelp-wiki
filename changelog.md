@@ -90,8 +90,8 @@ project's `coral.toml`, one `name = "path"` per line. The project-root
 module path with no leading `/` and no `..` component.
 
 **The doc generator never writes a dash.** Generated pages carry no em or en dash
-characters and no entities for them: member and index lines use a colon or a
-hyphen instead, and copied doc comments have any dash replaced. A regression test
+characters and no entities for them: every dash in a generated page is written as a
+plain hyphen, in member and index lines and in copied doc comments. A regression test
 checks the markdown and HTML output.
 
 ## 26.10.4 (2026-10-09)
