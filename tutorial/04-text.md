@@ -1,224 +1,123 @@
 ---
-title: "Tutorial 4: Text"
-description: "Chapter 4 of the Kelp tutorial: str, View and String, templates, building and splitting text, parsing numbers, and the two refusals every newcomer meets: templates are not values, and String is not str."
+title: "Text"
+description: "str and String, templates, building and splitting text, and parsing numbers, with the two refusals every newcomer meets: a template is not a value, and a String is not a str."
 isPublished: true
 tags: "tutorial, language, text"
 ---
-Text is where Kelp's ownership model first shows up in everyday code. Four types
-carry text (`str`, `View`, `String`, `Bytes`); this chapter uses the first three.
-The reference is [Text](/language/text) and [`std/str`](/stdlib/str).
+**You will learn:** the two text types Kelp uses, how to build and join text, and
+how to read a number out of text.
 
-| Type | What it is |
-| --- | --- |
-| `str` | a borrowed pointer to NUL-terminated UTF-8. A literal like `"hello"` is a `str`. It has no stored length |
-| `View` | a borrowed pointer **and** a length: slices and scans cost nothing extra |
-| `String` | owned, growable UTF-8, freed at the end of its scope |
-
-## One program
+## The program
 
 ```kelp
-impl "std/str"
 impl "std/fmt"
-impl "std/result"
+impl "std/str"
 
-fun shout(s: &str).return: String = str.to_upper(s)
+fun shout(s: &str).return: String {
+    var out = String.empty()
+    out.push_str(s)
+    out.push_str("!")
+    return out
+}
 
 fun main() {
-    // str: a borrowed literal. String: owned and growable.
-    val lit = "kelp language"
-    var out = String.empty()
-    out.push_str("wrote ")
-    out.push_str(lit)
-    print(out)
+    val name = "Kelp"
+    print("hello, ${name}")
 
-    // a template interpolates numbers, str and String alike
-    val n: i32 = 42
-    val owned: String = "owned text"
-    print("n=${n} lit=${lit} owned=${owned} sum=${n + 1}")
+    val owned = String.from_str(s = "owned text")
+    print(owned)
+    print("length ${str.len(owned.as_str())}")
 
-    // String -> str is a borrow
-    print(shout(owned.as_str()))
+    val loud = shout("hey")
+    print(loud)
 
-    // a View knows its length and slices without allocating
-    val v = lit.view()
-    print("len ${v.len()} first byte ${v.get(0)}")
-    print(v.slice(0, 4))
+    val digits = fmt.int(42)
+    print(str.concat("total: ", digits.as_str()))
 
-    // split, join, parse
-    val parts = str.split("a,b,,c", ",")
-    print("${parts.len()} pieces")
-    print(str.join(parts, "-"))
-    val parsed = str.parse_i64("41")
-    if let Ok(x) = parsed {
-        print("parsed ${x + 1}")
+    val parts = str.split("a,b,c", ",")
+    print("parts ${parts.len()}")
+    print(parts.get(1))
+
+    val n = str.parse_i64(s = "41")
+    if let Ok(v) = n {
+        print(v + 1)
     }
-    val bad = str.parse_i64("4x1")
+    val bad = str.parse_i64(s = "x1")
     if let Err(e) = bad {
         print("not a number")
     }
-    val seven = fmt.int(7)
-    print(fmt.pad_left(seven.as_str(), 4, '.'))
-    print(fmt.float(3.14159, 2))
-    print("chars ${str.char_count("héllo")} bytes ${str.len("héllo")}")
+    print("tab\tand\nnewline")
 }
 ```
 
 ```text
-wrote kelp language
-n=42 lit=kelp language owned=owned text sum=43
-OWNED TEXT
-len 13 first byte 107
-kelp
-4 pieces
-a-b--c
-parsed 42
+hello, Kelp
+owned text
+length 10
+hey!
+total: 42
+parts 3
+b
+42
 not a number
-...7
-3.14
-chars 5 bytes 6
+tab	and
+newline
 ```
 
-Same output on the LLVM backend and with `KELPC_ORACLE=c`.
+## Two kinds of text
 
-## What to take from it
+Kelp has two text types you will use every day:
 
-**Templates.** `"n=${n}"` interpolates any scalar or text value, owned or borrowed,
-and an expression is fine inside the braces (`${n + 1}`). Printing a float shows six
-decimals. The `print` builtin takes exactly one argument; to print a mixture, use a
-template.
+- **`str`** is text that someone else owns. A string literal such as `"Kelp"` is
+  a `str`, and so is a parameter declared `&str`. You can read it, but it must be
+  built somewhere else.
+- **`String`** is text that your variable owns. It is freed when the variable
+  goes out of scope. `String.from_str(s = "...")` makes one from a literal.
 
-**A template is not a value.** It can only be handed to `print` or `print!`.
-This is the first surprise for people from Python:
+A `String` becomes a `str` with `.as_str()`, a borrow, so the `String` keeps
+ownership. The `shout` function builds a `String` with `String.empty()` and
+`push_str`, then returns it. The function's return type is `String`, so the
+caller owns the result.
+
+A string literal is assigned to a `String` without `from_str` in some places,
+such as a struct field or a list element. The [text reference](/language/text)
+lists those cases. This chapter uses the explicit forms so that you can see which
+type you have.
+
+## Templates
+
+`"hello, ${name}"` is a template. It works only inside `print`. A template is not
+a value you can store, return or pass on:
 
 ```kelp
-fun main() {
-    val n = 3
-    val label: String = "n is ${n}"
-    print(label)
+fun label(n: i32).return: String {
+    return "n is ${n}"
 }
 ```
 
 ```text
-$ kelpc check c4bad.kp
+$ kelpc check bad1.kp
 error: a string template can only be printed: pass it to 'print(...)' or 'print!(...)'; a template is not a value, so build the text with 'str.concat', 'fmt.*' or a 'String'
-  --> c4bad.kp:3:25
+  --> bad1.kp:2:12
 ```
 
-To build text, use `String.empty()` and `push_str`, or `str.concat`, or the `fmt`
-functions. The program did the first: `out.push_str(lit)`.
+To build text that you keep, use `str.concat`, the `fmt` functions, or a `String`.
+`fmt.int(42)` turns a number into a `String`. Pass a borrow of it on with
+`.as_str()`, and bind it to a variable first, as the program does. A call that
+returns a borrow of a temporary value is refused, because the temporary would be
+freed before the borrow is used.
 
-**`str` to `String` converts by itself, but only that way, and only where a
-`String` is expected.** `val owned: String = "owned text"` copies the literal. The
-other direction is a borrow you write out, `.as_str()`:
+## Parsing a number
 
-```kelp
-impl "std/str"
+`str.parse_i64` reads an integer from text. It does not panic on bad input. It
+returns a `Result`, which [Errors](/tutorial/07-errors) covers in full. You can
+read the success case with `if let Ok(v) = n`, and the failure case with
+`if let Err(e) = bad`.
 
-fun main() {
-    val s: String = "owned"
-    print(str.len(s))
-}
-```
+## Try it
 
-```text
-$ kelpc check c4bad2.kp
-error: argument 's' has type 'String', expected 'str' — there is no implicit conversion this direction (5.1 only goes the other way, 'str'/'View' to an owned 'String'); call `.as_str()` to borrow it
-  --> c4bad2.kp:5:19
-```
+1. Write a function `fun twice(s: &str).return: String` that returns `s` joined
+   with itself, using `String.empty()`, `push_str` twice, and `return`.
+2. Split `"red,green,blue"` with `str.split` and print the second item.
 
-The message names the fix. Most `std/str` functions take `&str`, which is why
-`shout(owned.as_str())` appears in the program.
-
-**`View`.** `lit.view()` pays one `strlen` and then `len()`, `get(i)` and
-`slice(from, to)` are constant time, and a slice allocates nothing. A `View` is
-`Copy` but cannot be stored in a field or a list. Text you must keep is a `String`.
-
-**Bytes versus characters.** `str.len` counts bytes. `"héllo"` is five characters and six
-bytes, and the program printed both counts with `str.char_count` and `str.len`.
-`to_upper` is ASCII only.
-
-**Splitting, joining, parsing.** `str.split` keeps empty pieces: `"a,b,,c"`
-is four pieces, and joining them with `-` gives `a-b--c`. `str.parse_i64`
-returns a `Result` (chapter 7), tested here with `if let Ok(x) = ...`. `fmt.int`,
-`fmt.float`, `fmt.pad_left` format numbers and pad them.
-
-One trap the program had to dodge: `fmt.int(7)` is a temporary `String`, and
-`fmt.pad_left` wants a `str`:
-
-```kelp
-impl "std/fmt"
-
-fun main() {
-    print(fmt.pad_left(fmt.int(7), 4, '.'))
-}
-```
-
-```text
-$ kelpc check c4bad3.kp
-error: argument 's' has type 'String', expected 'str' — there is no implicit conversion this direction (5.1 only goes the other way, 'str'/'View' to an owned 'String'); call `.as_str()` to borrow it
-  --> c4bad3.kp:4:24
-```
-
-Writing `.as_str()` on that temporary is refused as well, so bind the `String`
-to a `val` first (`seven` in the program). The language page lists it under
-[Two traps](/language/text#two-traps).
-
-## Exercises
-
-1. Split `"the quick brown fox"` on spaces and print the number of words and then
-   each word with its length.
-2. Build the text `1, 2, 3, 4` in a `String` in a loop. Mind the separator: it
-   goes before every number but the first.
-
-<details>
-<summary>Solutions</summary>
-
-1.
-
-```kelp
-impl "std/str"
-
-fun main() {
-    val line = "the quick brown fox"
-    val words = str.split(line, " ")
-    print("${words.len()} words")
-    for w in words {
-        print("${w} (${w.len()})")
-    }
-}
-```
-
-```text
-4 words
-the (3)
-quick (5)
-brown (5)
-fox (3)
-```
-
-2.
-
-```kelp
-impl "std/str"
-impl "std/iter"
-
-fun main() {
-    var out = String.empty()
-    for i in iter.range(1, 5) {
-        if i > 1 {
-            out.push_str(", ")
-        }
-        val piece = str.from_i64(i)
-        out.push_str(piece.as_str())
-    }
-    print(out)
-}
-```
-
-```text
-1, 2, 3, 4
-```
-
-</details>
-
-Next: [Records, enums and methods](/tutorial/05-data).
+Next: [Records, enums and ownership](/tutorial/05-data).

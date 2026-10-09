@@ -1,26 +1,18 @@
 ---
-title: "Tutorial 5: Records, enums and methods"
-description: "Chapter 5 of the Kelp tutorial: datac records, enums with payloads, when and if let/elif let matching, receiver methods and the val/var path rule, with the real compiler errors for each mistake."
+title: "Records, enums and ownership"
+description: "datac records, enum types with payloads, methods, when for matching, and the ownership rules that decide who may use a value, with the real compiler errors."
 isPublished: true
-tags: "tutorial, language, data"
+tags: "tutorial, language, data, ownership"
 ---
-Kelp has two ways to declare your own types: a **record** (`datac`), where every
-field exists in every value, and a **tagged union** (`enum`), where exactly one
-variant is live. The reference is [datac and enum](/language/data-types) and
-[Methods and receivers](/language/methods).
+**You will learn:** how to group values into records and enums, how to match on an
+enum, and how Kelp keeps track of who owns each value.
 
-## The program
+## Records and enums
 
 ```kelp
-datac Point(val x: i32, var y: i32)
+datac Point(val x: i32, val y: i32)
 
-datac Counter(val id: i32, var count: i32)
-
-fun Counter.total().return: i32 = id + count
-
-fun mut Counter.bump() {
-    count += 1
-}
+datac Counter(val name: String, var count: i32)
 
 enum Shape {
     Circle(val r: f64)
@@ -28,232 +20,127 @@ enum Shape {
     Empty
 }
 
-fun Shape.area().return: f64 = when self {
-    Circle(r) -> 3.14159 * r * r
+fun Point.shifted(dx: i32).return: Point = Point(x = self.x + dx, y = self.y)
+
+fun area(s: &Shape).return: f64 = when s {
+    Circle(r) -> 3.0 * r * r
     Rect(w, h) -> w * h
     Empty -> 0.0
 }
 
-fun describe(s: &Shape) {
-    if let Rect(w, h) = s {
-        print("rect ${w} by ${h}")
-    } elif let Circle(r) = s {
-        print("circle of radius ${r}")
-    } else {
-        print("nothing")
-    }
+fun bump(c: mut Counter) {
+    c.count += 1
 }
 
 fun main() {
-    var p = Point(x = 3, y = 4)
-    p.y = 10
-    print("point ${p.x},${p.y}")
+    val p = Point(x = 3, y = 4)
+    print(p.x)
+    val q = p.shifted(10)
+    print("${q.x}, ${q.y}")
 
-    var c = Counter(id = 100, count = 0)
-    c.bump()
-    c.bump()
-    print("total ${c.total()}")
+    var c = Counter(name = String.from_str(s = "clicks"), count = 0)
+    bump(c)
+    bump(c)
+    print("${c.name}: ${c.count}")
 
-    val shapes = [Shape.Circle(r = 2.0), Shape.Rect(w = 3.0, h = 4.0), Shape.Empty]
+    val shapes = [Shape.Circle(r = 1.0), Shape.Rect(w = 2.0, h = 3.5), Shape.Empty]
     for s in shapes {
-        describe(s)
-        print("area ${s.area()}")
+        print(area(s))
     }
 }
 ```
 
 ```text
-point 3,10
-total 102
-circle of radius 2.000000
-area 12.566360
-rect 3.000000 by 4.000000
-area 12.000000
-nothing
-area 0.000000
+3
+13, 4
+clicks: 2
+3.000000
+7.000000
+0.000000
 ```
 
-The same text came out of the LLVM backend and the C oracle.
+- `datac` declares a record. Each field is `val` (fixed) or `var` (can change).
+  You build one by naming the fields: `Point(x = 3, y = 4)`.
+- `enum` declares a value that is one of several variants. Each variant may carry
+  data. `Shape.Circle(r = 1.0)` builds a circle.
+- `fun Point.shifted(...)` is a method. Inside it, `self` is the value the method
+  was called on, and its fields are read with `self.x`.
+- `when s { ... }` picks the variant. It must cover every variant, or have an
+  `else ->` arm. Each arm binds the data of its variant, here `r`, `w` and `h`.
 
-## Records
+To change a field, the record must be in a `var` and the field must be `var`.
+`bump` takes `c` as `mut Counter`, which lets it change `count`. The next section
+explains what `mut` means.
 
-`datac Point(val x: i32, var y: i32)` declares a record. Each field is `val` (set
-once) or `var` (assignable). You construct one with the type's name and **named
-arguments**, and read a field with a dot. A `datac` holds owned data only, so a text
-field is a `String`, never a `str`, and a record that contains itself has to go through
-a `Box` or a `List`.
+## Who owns a value
 
-Writing a field needs two things: the field is `var`, **and** the path to it is
-mutable (a `var` binding, a `mut` parameter, or a field of one). Each failure has
-its own message:
+Every value in Kelp has exactly one owner at a time. When the owner goes out of
+scope, the value is freed. That rule is what lets Kelp free memory without a
+garbage collector, and it has two effects you will see in every program.
+
+**Passing a value to a function borrows it.** A parameter declared as a plain
+type, such as `name: String`, is a borrow: the function can read the value, but
+the caller still owns it afterwards. A `String` passed to such a parameter can
+still be printed after the call.
+
+**Assigning an owned value moves it.** Once moved, the old name cannot be used:
 
 ```kelp
-datac Counter(val id: i32, var count: i32)
-
 fun main() {
-    var c = Counter(id = 1, count = 0)
-    c.id = 5
-    print(c.id)
+    val a = String.from_str(s = "x")
+    val b = a
+    print(a)
+    print(b)
 }
 ```
 
 ```text
-$ kelpc check c5bad2.kp
-error: cannot write to 'id': declared 'val'
-  --> c5bad2.kp:5:5
+$ kelpc check moved.kp
+error: use of moved value 'a'
+  --> moved.kp:4:11
 ```
 
-(The other half, assigning a field of a `val` binding, reports `cannot assign to
-'c': not declared 'var'`, the same text as chapter 2's.)
-
-## Enums and `when`
-
-`enum Shape { ... }` lists variants, each with an optional payload in parentheses.
-You build one with `Shape.Circle(r = 2.0)` or `Shape.Empty`. An enum value is owned
-and not `Copy`; passing one moves it, unless the parameter is a borrow (`&Shape`).
-
-`when s { ... }` with a scrutinee is how you take one apart. An arm names a
-variant and one binding per payload field (`_` ignores one), then `->` and a
-value. A `when` over an enum must be **exhaustive**, either with an arm for every
-variant or with an `else ->` arm:
+`val b = a` gave the `String` to `b`, so `a` is empty. If a function should keep
+the value, give it the value with a `move` parameter. A `move` parameter takes
+ownership at the call:
 
 ```kelp
-enum Shape {
-    Circle(val r: f64)
-    Rect(val w: f64, val h: f64)
-    Empty
-}
-
-fun area(s: &Shape).return: f64 = when s {
-    Circle(r) -> 3.14159 * r * r
-    Rect(w, h) -> w * h
-}
-
-fun main() {
-    print(area(Shape.Empty))
-}
+fun keep(name: move String).return: i32 = 1
 ```
 
-```text
-$ kelpc check c5bad3.kp
-error: this 'when' is not exhaustive: 'Empty' of enum 'Shape' has no arm — add an arm, or an 'else' arm
-  --> c5bad3.kp:7:30
-```
+Use a plain parameter when the function only reads the value, and `move` when it
+needs to keep it. `mut` is the middle choice: the function may change the value,
+and the caller gets it back afterwards.
 
-When you care about one or two variants, use `if let`, with `elif let` for a second
-pattern and an `else` as the catch-all. `describe` in the program does exactly
-that. A payload binds as a copy when it is `Copy` (here the `f64`s), by value out
-of an owned place, and as a shared borrow otherwise; `describe` took `&Shape`
-and the floats are `Copy`, so nothing was moved.
+## Mutability
 
-There are no guards, no literal patterns and no nested patterns: an arm is a variant
-name and its bindings, nothing more.
-
-## Methods and receivers
-
-A method is a function whose first parameter is a receiver, written `Type.name`:
-
-- `fun Counter.total().return: i32 = id + count`: a **shared** receiver. Inside, fields
-  are read by their bare names (`self` is the whole receiver, and the `Shape.area`
-  method used it to `when` on itself).
-- `fun mut Counter.bump() { count += 1 }`: an **exclusive** receiver. It needs a
-  mutable path to call it.
-
-A call is plain postfix, `c.bump()`. The receiver is always borrowed, never moved:
-there is no `fun move Type.name()`. The `val` path rule applies to calls too:
+A `val` binding can never change, not even its fields. Changing a field of a
+`val` is refused:
 
 ```kelp
-datac Counter(val id: i32, var count: i32)
-
-fun mut Counter.bump() {
-    count += 1
-}
+datac Counter(val name: String, var count: i32)
 
 fun main() {
-    val c = Counter(id = 1, count = 0)
-    c.bump()
+    val c = Counter(name = String.from_str(s = "clicks"), count = 0)
+    c.count = 5
     print(c.count)
 }
 ```
 
 ```text
-$ kelpc check c5bad4.kp
+$ kelpc check immut.kp
 error: cannot assign to 'c': not declared 'var'
-  --> c5bad4.kp:9:5
+  --> immut.kp:5:5
 ```
 
-A method on an `enum` is
-called on a value, not on a variant path: bind `val s = Shape.Empty` first.
+Declare the binding `var`, or change the field through a `mut` parameter, as
+`bump` does.
 
-## Exercises
+## Try it
 
-1. Replace `Rect` with `Triangle(val base: f64, val height: f64)` and give `Shape`
-   an `area` method.
-2. Write an `Account` record with an owned `String` owner and a `balance`, and a
-   `mut` method `withdraw(amount: i64).return: bool` that refuses to overdraw.
+1. Add a variant `Triangle(val base: f64, val height: f64)` to `Shape`. The
+   `when` in `area` stops compiling. What does the error say?
+2. Write `fun Counter.reset()` that sets `count` back to zero. Which parameter
+   form does the method need, and does `Counter` need a `var` field?
 
-<details>
-<summary>Solutions</summary>
-
-1.
-
-```kelp
-enum Shape {
-    Circle(val r: f64)
-    Triangle(val base: f64, val height: f64)
-    Empty
-}
-
-fun Shape.area().return: f64 = when self {
-    Circle(r) -> 3.14159 * r * r
-    Triangle(b, h) -> b * h / 2.0
-    Empty -> 0.0
-}
-
-fun main() {
-    val t = Shape.Triangle(base = 6.0, height = 5.0)
-    print("area ${t.area()}")
-}
-```
-
-```text
-area 15.000000
-```
-
-2.
-
-```kelp
-datac Account(val owner: String, var balance: i64)
-
-fun mut Account.deposit(amount: i64) {
-    balance += amount
-}
-
-fun mut Account.withdraw(amount: i64).return: bool {
-    if amount > balance {
-        return false
-    }
-    balance -= amount
-    return true
-}
-
-fun main() {
-    var a = Account(owner = "ada", balance = 100)
-    a.deposit(50)
-    print("${a.owner}: ${a.balance}")
-    print("withdraw 500 ok? ${a.withdraw(500)}")
-    print("withdraw 20 ok? ${a.withdraw(20)}")
-    print("${a.owner}: ${a.balance}")
-}
-```
-
-```text
-ada: 150
-withdraw 500 ok? false
-withdraw 20 ok? true
-ada: 130
-```
-
-</details>
-
-Next: [Ownership, borrowing and moves](/tutorial/06-ownership).
+Next: [Errors](/tutorial/07-errors).

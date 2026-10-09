@@ -5,7 +5,9 @@ isPublished: true
 tags: "getting-started"
 ---
 Kelp is small enough to learn by writing it, so this chapter is a path rather
-than a reference: eight pages, each one a step you can run.
+than a reference: eight pages, each one a step you can run. If you have not
+written any Kelp yet, read the [Tutorial](/tutorial) first: it builds from a
+hello-world program to a small command-line tool, one idea at a time.
 
 1. **[Install and build](/getting-started/install)**: build `kelpc`, run a file, pick an
    optimization level, and what the toolchain needs from the machine.
@@ -47,6 +49,7 @@ and the toolchain pin are Coral's business alone.
 
 | If you want to… | Read |
 | --- | --- |
+| learn the language step by step | [Tutorial](/tutorial) |
 | know the language's shape in one page | [Language overview](/language) |
 | look up a specific construct | [Language](/language) chapter pages |
 | see eighteen programs that were built and run | [Examples](/examples) |

@@ -1,13 +1,13 @@
 ---
-title: "Tutorial 2: Values, types and functions"
-description: "Chapter 2 of the Kelp tutorial: integer and float types, val and var, explicit conversions, functions with .return return types, named arguments, function values and tuples, with the real compiler errors."
+title: "Values, types and functions"
+description: "Integer and float types, val and var, explicit conversions, functions with a .return type, named arguments and function values, with real compiler errors."
 isPublished: true
 tags: "tutorial, language"
 ---
-[Chapter 1](/tutorial/01-hello) got you a running program. This chapter is the
-small stuff every later chapter leans on: types, bindings and functions.
+**You will learn:** how values get types, why Kelp never converts numbers for you,
+and how to write functions.
 
-## One program, the whole chapter
+## A first program
 
 ```kelp
 impl "std/option"
@@ -23,8 +23,9 @@ fun abs_diff(a: i32, b: i32).return: i32 {
     return b - a
 }
 
-fun apply(f: fun(i32).return: i32, x: i32).return: i32 = f(x)
 fun double(x: i32).return: i32 = x * 2
+
+fun apply(f: fun(i32).return: i32, x: i32).return: i32 = f(x)
 
 fun main() {
     val n = 7
@@ -34,44 +35,42 @@ fun main() {
     print("total = ${total}")
     val ratio: f64 = n.to_f64() / 2.0
     print("ratio = ${ratio}")
-    val big: u8 = 200
-    print("idx = ${big.to_usize()}")
     val wide: i32 = 300
     if let Some(v) = wide.try_to_u8() {
         print("fits ${v}")
     } else {
         print("300 does not fit in a u8")
     }
-    print("limit ${LIMIT} add ${add(a = 2, b = 3)} diff ${abs_diff(3, 10)}")
+    print("limit ${LIMIT}, add ${add(a = 2, b = 3)}, diff ${abs_diff(3, 10)}")
     print("apply ${apply(double, 21)}")
     val (lo, hi) = (1, 9)
     print("pair ${lo} ${hi}")
     val c = 'k'
-    print("flag ${n > 3} char ${c}")
+    print("big ${n > 3} char ${c}")
 }
 ```
 
 ```text
 total = 21
 ratio = 3.500000
-idx = 200
 300 does not fit in a u8
-limit 10 add 5 diff 7
+limit 10, add 5, diff 7
 apply 42
 pair 1 9
-flag true char k
+big true char k
 ```
 
-Run on the default LLVM backend and with `KELPC_ORACLE=c`, it prints exactly that on both.
+Some of this is new. `impl "std/option"` brings in the `Option` type that the
+`if let` uses; [Errors](/tutorial/07-errors) explains it fully.
 
 ## Types
 
-The scalar types are `i32 i64 u8 u16 u32 u64 usize isize f32 f64 bool char`. The
-[Types](/language/types) page has the full table, including which types are `Copy`
-and which are owned or borrowed. Two points matter right away.
+The scalar types are `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `usize`, `isize`,
+`f32`, `f64`, `bool` and `char`. A whole-number literal is an `i32` unless the
+context asks for another type. A decimal literal is an `f64`. The
+[types reference](/language/types) has the full table.
 
-**There is no implicit numeric conversion.** `n * 1.0` is not a conversion, it is
-an error:
+**Kelp never converts numbers implicitly.** Mixing types is an error:
 
 ```kelp
 fun main() {
@@ -82,50 +81,42 @@ fun main() {
 ```
 
 ```text
-$ kelpc check c2bad2.kp
+$ kelpc check bad1.kp
 error: operator requires matching numeric operands, found 'i32' and 'f64'
-  --> c2bad2.kp:3:18
+  --> bad1.kp:3:18
 ```
 
-Convert explicitly: `n.to_f64()`. `to_<T>()` exists on every integer type for
-every integer type, widening is exact and **narrowing panics** when the value does
-not fit. Where a conversion can lose a value there is a fallible twin,
-`try_to_<T>()`, returning an `Option`. The program above uses it: 300 does not fit
-in a `u8`, so the `else` branch ran. (`Option` and `if let` are chapters 5 and 7;
-the `impl "std/option"` line at the top of the file is what makes the type
-available.) A float has no `to_<int>` at all, because it would silently drop the
-fraction.
+You convert on purpose with a method. `n.to_f64()` turns an integer into a float,
+and `n.to_i64()` turns it into an `i64`. A conversion that might not fit, such as
+`300` into a `u8`, has a second form, `try_to_u8()`, that returns an `Option`.
+This is why the program above printed the `else` branch. A conversion that does
+not fit and is not written with `try_` panics, which ends the program.
 
-A `char` is a Unicode scalar value, **not** an integer. `if` and `while` take a
-`bool` and nothing else converts to one.
+A `char` is a Unicode character, not a number. It is not an integer, and a
+condition must be a `bool`.
 
 ## `val`, `var` and `const`
 
-`val` binds once. `var` can be reassigned. Both need an initializer, and the type
-is either inferred from it or written after a colon. An integer literal is `i32`
-when nothing says otherwise, which is why the program wrote `var total: i64 = 0`.
+`val` names a value that cannot change. `var` names one that can. Both need a
+starting value, and the type is either inferred from it or written after a colon:
 
 ```kelp
 fun main() {
     val n = 5
     n = 6
-    val x: i64 = n * 1.0
     print(n)
 }
 ```
 
 ```text
-$ kelpc check c2bad.kp
+$ kelpc check bad2.kp
 error: cannot assign to 'n': not declared 'var'
-  --> c2bad.kp:3:5
+  --> bad2.kp:3:5
 ```
 
-`total += 7` and the other compound forms (`-=`, `*=`, `/=`, `%=`) exist for
-arithmetic. Top-level names are not `val`/`var`: they are `const` (a compile-time
-constant, like `LIMIT` above) or `pd` passdowns, covered on
-[Constants and passdowns](/language/passdowns). See
-[Bindings and assignment](/language/bindings) for destructuring and the mutable
-path rule.
+Use `var` when the value changes, and `val` otherwise. `total += 7` is a shorthand
+for `total = total + 7`. `const` names a value fixed at compile time, like
+`LIMIT` above. Those are the only ways to name a value at the top of a file.
 
 ## Functions
 
@@ -133,78 +124,31 @@ path rule.
 fun add(a: i32, b: i32).return: i32 = a + b
 ```
 
-The return type is written `.return: T` **after** the parameter list. There is no
-`->`. An expression body (`= expr`) needs `.return`; a block body ends with
-`return expr`; no `.return` means the function returns `Unit`, which holds nothing.
-`abs_diff` in the program is the block form.
+- The parameters are `name: type`.
+- The return type comes after the parameter list, written `.return: type`. Kelp has
+  no `->`.
+- A function with an `=` body returns that expression. A function with a block
+  body uses `return`.
+- A function with no `.return` returns nothing.
 
-By default a parameter is a **shared borrow** of the argument; `mut T` means an
-exclusive borrow and `move T` takes ownership. You will use all three from chapter 6.
+A call may name its arguments: `add(a = 2, b = 3)`. Naming them is useful when
+the meaning of a number is not obvious. Positional calls work too.
 
-Calls may use **named arguments** with `name = value`, in any order, wherever the
-function has more than one parameter: `add(a = 2, b = 3)`. Positional calls are
-fine too, and the program mixed them. A user program cannot overload a name.
+A function name is a value. The parameter `f` in `apply` has the type
+`fun(i32).return: i32`, which means "a function that takes an `i32` and returns an
+`i32`", so `apply(double, 21)` passes `double` itself. Kelp does not allow two
+functions with the same name, so one name means one function.
 
-A bare function name is a **value** whose type is `fun(i32).return: i32`, so
-`apply(double, 21)` passes a function as an argument. Closures that capture
-variables are chapter 10.
+Parameters borrow their values by default. The
+[next chapters](/tutorial/05-data) explain what that means and how to take
+ownership or change a value through a parameter.
 
-## Tuples
+## Try it
 
-`val (lo, hi) = (1, 9)` takes a tuple apart, and `pair.0` reads one position.
-They are covered in [Types](/language/types).
+1. Write `fun fahrenheit(c: f64).return: f64 = c * 9.0 / 5.0 + 32.0`, then print
+   it for `0.0` and for `100.0`, once with a positional argument and once with a
+   named one.
+2. The line `val half: f64 = 7 / 2` does not compile. Why? Fix it in two ways:
+   with float literals, and with `.to_f64()`.
 
-## Exercises
-
-1. Write `fahrenheit(c: f64).return: f64` and print it for 0 and 100 degrees, once
-   with a positional argument and once with a named one.
-2. The following line fails to compile: `val half: f64 = 7 / 2`. Why, and what is
-   the smallest change?
-
-<details>
-<summary>Solutions</summary>
-
-1.
-
-```kelp
-fun fahrenheit(c: f64).return: f64 = c * 9.0 / 5.0 + 32.0
-
-fun main() {
-    print("0 C = ${fahrenheit(0.0)} F")
-    print("100 C = ${fahrenheit(c = 100.0)} F")
-}
-```
-
-```text
-0 C = 32.000000 F
-100 C = 212.000000 F
-```
-
-2. The compiler says:
-
-```text
-$ kelpc check c2x2bad.kp
-error: cannot assign value of type 'i32' to 'half' declared as 'f64'
-  --> c2x2bad.kp:2:5
-```
-
-   The right side is two `i32` literals, so it is an `i32` (an integer division);
-   the left side is declared `f64`, and nothing converts. Make the literals
-   floats, or convert one operand with `.to_f64()`:
-
-```kelp
-fun main() {
-    val a: f64 = 7.0 / 2.0
-    val n: i32 = 7
-    val b: f64 = n.to_f64() / 2.0
-    print("${a} ${b}")
-}
-```
-
-```text
-3.500000 3.500000
-```
-
-</details>
-
-Next: [Control flow and iterators](/tutorial/03-control-flow).
+Next: [Control flow](/tutorial/03-control-flow).

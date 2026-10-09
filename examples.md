@@ -9,6 +9,9 @@ compiler. They are not snippets: each is a file in this repository, and each pag
 shows the whole source, the command that produced the output below it, and that
 output verbatim.
 
+New to Kelp? The [Tutorial](/tutorial) teaches the language one idea at a time, and
+its last chapter builds a small tool the same way these programs are built.
+
 That last part is the point. An example that has not been run is a claim, so the
 programs are compiled and executed by
 [`tools/check-examples.sh`](https://homelabone.xenoo.dev/gittea/Juniper/kelp-wiki/src/branch/main/tools/check-examples.sh),
@@ -23,14 +26,14 @@ bash tools/check-examples.sh /path/to/KelpLANG
 
 | Program | Needs | Shows |
 | --- | --- | --- |
-| [wordcount](/examples/wordcount) | — | the `fs` capability, a byte loop over `str`, building output with `fmt`/`str` |
-| [fib](/examples/fib) | — | recursion, `while`, `print` against `print!` |
+| [wordcount](/examples/wordcount) | none | the `fs` capability, a byte loop over `str`, building output with `fmt`/`str` |
+| [fib](/examples/fib) | none | recursion, `while`, `print` against `print!` |
 | [json_filter](/examples/json_filter) | `fpl/json` | parsing into an owned tree, walking an array, rebuilding one bottom-up |
 | [csv_report](/examples/csv_report) | `fpl/csv`, `fpl/table` | rows of fields, a `Map` accumulator, rendering a table |
 | [glob_tree](/examples/glob_tree) | `fpl/glob` | `fs.walk` over a tree, `*` globs, a running total |
 | [cli_tool](/examples/cli_tool) | `fpl/argparse` | flags, options with defaults, positionals, `--help`, exit codes |
 | [tests_and_bench](/examples/tests_and_bench) | `fpl/testkit`, `fpl/benchkit` | a self-test report and a timing line in one program |
-| [sandbox_main](/examples/sandbox_main) + [sandbox_vault](/examples/sandbox_main) | — | a grant the consumer narrows, and what a refusal looks like |
+| [sandbox_main](/examples/sandbox_main) + [sandbox_vault](/examples/sandbox_main) | none | a grant the consumer narrows, and what a refusal looks like |
 | [lines_server](/examples/lines_server) + [lines_client](/examples/lines_server) | `fpl/lineproto` | a TCP line protocol, two processes, `net` on both sides |
 | [http_fetch](/examples/http_fetch) | `fpl/fsx` | an HTTP GET over a granted host, written to disk atomically |
 | [numbers](/examples/numbers) | `fpl/bigint`, `fpl/decimal`, `fpl/complex`, `fpl/mathx`, `fpl/stats`, `fpl/prng` | exact arithmetic where a float is wrong, statistics, a reproducible sequence |

@@ -6,7 +6,7 @@ tags: "getting-started"
 ---
 The Kelp repository ships four examples: `examples/hello.kp`, `examples/fib.kp`,
 `examples/download.kp` and `examples/download_pool.kp` (the last one fetches
-several URLs concurrently with one worker thread per connection pool — see
+several URLs concurrently with one worker thread per connection pool: see
 [Concurrency in v1](/language/concurrency)). This page walks the first two,
 then adds the pieces a real program needs.
 

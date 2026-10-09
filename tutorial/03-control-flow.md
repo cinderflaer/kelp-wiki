@@ -1,242 +1,111 @@
 ---
-title: "Tutorial 3: Control flow and iterators"
-description: "Chapter 3 of the Kelp tutorial: if, elif, when, while, for over lists and ranges, writing your own Iterator, break and continue, and the refusal to mutate a list you are walking."
+title: "Control flow"
+description: "if, elif and if as a value, while, for over arrays and ranges, break and continue, and return, with the real output of each program."
 isPublished: true
 tags: "tutorial, language"
 ---
-This chapter covers choosing and repeating. Kelp has `if`/`elif`/`else`, `when`,
-`while` and `for`; there is no `loop`, no labelled break and no `goto`. The
-reference is [Control flow](/language/control-flow) and
-[Iterators, `for` and `break`](/language/iterators).
+**You will learn:** how to choose between paths with `if`, repeat with `while` and
+`for`, and leave early with `break`, `continue` and `return`.
 
 ## The program
 
 ```kelp
 impl "std/iter"
-impl "std/option"
 
-fun classify(n: i32).return: &str = when {
-    n > 0 -> "positive"
-    n < 0 -> "negative"
-    else -> "zero"
-}
-
-datac Countdown(var n: i64)
-
-impl iter.Iterator for Countdown {
-    type Item = i64
-    fun mut Self.next().return: option.Option<i64> {
-        if self.n <= 0 {
-            return option.Option.None
-        }
-        val v = self.n
-        self.n = self.n - 1
-        return option.Option.Some(value = v)
+fun sign(n: i32).return: &str {
+    if n > 0 {
+        return "positive"
+    } elif n < 0 {
+        return "negative"
     }
+    return "zero"
 }
 
 fun main() {
-    for n in [5, -2, 0] {
-        val kind = classify(n)
-        if n > 2 {
-            print("${n}: ${kind} and big")
-        } elif n < 0 {
-            print("${n}: ${kind}")
-        } else {
-            print("${n}: ${kind} and small")
-        }
+    for n in [3, -2, 0] {
+        print(sign(n))
     }
 
-    var i = 0
-    while i < 3 {
-        print!("w${i} ")
+    var i: i32 = 1
+    while i <= 3 {
+        print("tick ${i}")
         i += 1
     }
-    print("")
 
-    for i in iter.range(0, 10) {
-        if i % 2 == 0 {
+    val xs = [10, 20, 30]
+    for x in xs {
+        if x == 20 {
             continue
         }
-        if i > 7 {
+        print("x = ${x}")
+    }
+
+    for k in iter.range(0, 10) {
+        if k == 2 {
             break
         }
-        print!("${i} ")
+        print("k = ${k}")
     }
-    print("")
 
-    for v in Countdown(n = 4) {
-        print!("${v}... ")
-    }
-    print("liftoff")
-
-    val words: List<String> = List.empty()
-    var names: List<String> = List.empty()
-    names.push("ada")
-    names.push("grace")
-    for name in names {
-        print("name ${name} has ${name.len()} letters")
-    }
-    print("${words.len()} words")
+    val label: String = if i > 3 { "done" } else { "not yet" }
+    print(label)
 }
 ```
 
 ```text
-5: positive and big
--2: negative
-0: zero and small
-w0 w1 w2 
-1 3 5 7 
-4... 3... 2... 1... liftoff
-name ada has 3 letters
-name grace has 5 letters
-0 words
+positive
+negative
+zero
+tick 1
+tick 2
+tick 3
+x = 10
+x = 30
+k = 0
+k = 1
+done
 ```
 
-Identical output on the LLVM backend and on the C oracle.
+## Branches
 
-## Choosing
-
-`if` takes a `bool`, and `elif` is the preferred spelling of the chain (`else if`
-is accepted but `kelpc lint` points you to `elif`). An `if` can also be an
-expression when both arms give the same type and an `else` is present.
-
-`when` without a scrutinee is a chain of `condition -> value` arms, evaluated in
-order, and with a value it needs an `else`. `classify` above uses it. `->` appears
-nowhere else in the language. With a scrutinee, `when` matches an `enum` (chapter 5).
-
-## Repeating
-
-- `while cond { ... }` re-evaluates the condition before each pass.
-- `for x in xs { ... }` walks a `List<T>` or an array `[T; N]` front to back. The
-  loop variable is a `val`. For an owned element type, such as `String`, it is a
-  borrow: `name.len()` worked on a `&String` above.
-- `for i in iter.range(0, 10)` walks a half-open range. The `std/iter` module is
-  imported with `impl "std/iter"`, and its items are reached as `iter.range`,
-  `iter.range_step`, `iter.count`, `iter.sum_i64` and `iter.collect_list`. See
-  [`std/iter`](/stdlib/iter).
-- `break` leaves the innermost loop and `continue` goes to its next pass.
-
-## Your own iterator
-
-`for x in it` works for any type that implements the `Iterator` trait: one
-associated type `Item` and one method, `next`, which returns an `Option` — `Some`
-to continue, `None` to stop. `Countdown` above shows all of it:
-
-- `datac Countdown(var n: i64)` is a record, chapter 5.
-- `impl iter.Iterator for Countdown { ... }` says the type is an iterator.
-- `fun mut Self.next()` is a method whose receiver is `mut`, because advancing
-  changes the iterator. Inside, `self` is the receiver.
-- The loop calls `next()` until it returns `None`.
-
-Traits come properly in chapter 9, so treat this as a recipe for now. The point to
-take away is that `for` is not magic: it is an ordinary `while` over `next()`.
-
-## The one `for` rule to remember
-
-The body of a `for` may **read** the list it walks but may not change it:
-
-```kelp
-fun main() {
-    var xs: List<i32> = List.empty()
-    xs.push(1)
-    for x in xs {
-        xs.push(x + 1)
-    }
-    print(xs.len())
-}
-```
+`if` works as it does in most languages, with `elif` for another condition. The
+condition must be a `bool`. Writing `if n` for an integer is an error:
 
 ```text
-$ kelpc check c3bad.kp
-error: cannot mutate 'xs' while iterating over it
-  --> c3bad.kp:4:14
+$ kelpc check ifn.kp
+error: if condition must be 'bool', found 'i32'
+  --> ifn.kp:3:5
 ```
 
-When a loop has to change what it walks, walk by index with `while` instead.
+so a test is always a comparison.
 
-## Exercises
+`if` can also produce a value, as the `label` line does. A value-producing `if`
+needs an `else`, and both branches must produce the same type.
 
-1. Print FizzBuzz for 1 to 15.
-2. Write an iterator `ByTwos` that counts down by twos from a starting value and stops before zero.
+`return` leaves the function immediately. The `sign` function uses it in each
+branch, which is the usual style for a function with several exits.
 
-<details>
-<summary>Solutions</summary>
+## Loops
 
-1.
+- `while` repeats while its condition is true. The condition is checked before
+  each pass.
+- `for x in xs` walks a list or an array one element at a time. `x` is a copy
+  for a number, and a borrow of the element otherwise.
+- `iter.range(0, 10)` produces the numbers from 0 up to 10, but not including 10.
+  It needs `impl "std/iter"`. Ranges and other iterators are covered again in the
+  [closures and iterators](/tutorial/10-closures) chapter.
+- `break` leaves the loop. `continue` skips to the next pass.
 
-```kelp
-impl "std/iter"
+A `for` loop does not let its body change the list it is walking: a `push` or
+`remove` on that same list is a compile error. When the loop has to change its
+list, walk it by index with `while` instead. The [control flow reference](/language/control-flow#for)
+has the rule.
 
-fun main() {
-    for i in iter.range(1, 16) {
-        if i % 15 == 0 {
-            print("FizzBuzz")
-        } elif i % 3 == 0 {
-            print("Fizz")
-        } elif i % 5 == 0 {
-            print("Buzz")
-        } else {
-            print("${i}")
-        }
-    }
-}
-```
+## Try it
 
-```text
-1
-2
-Fizz
-4
-Buzz
-Fizz
-7
-8
-Fizz
-Buzz
-11
-Fizz
-13
-14
-FizzBuzz
-```
-
-(A `when` that yields a template does not compile: a template can only be printed,
-which chapter 4 explains. That is why every branch calls `print`.)
-
-2. Copy `Countdown`, step by two:
-
-```kelp
-impl "std/iter"
-impl "std/option"
-
-datac ByTwos(var n: i64)
-
-impl iter.Iterator for ByTwos {
-    type Item = i64
-    fun mut Self.next().return: option.Option<i64> {
-        if self.n <= 0 {
-            return option.Option.None
-        }
-        val v = self.n
-        self.n = self.n - 2
-        return option.Option.Some(value = v)
-    }
-}
-
-fun main() {
-    for v in ByTwos(n = 6) {
-        print("${v}")
-    }
-}
-```
-
-```text
-6
-4
-2
-```
-
-</details>
+1. Add a `while` loop that prints the numbers from 10 down to 1 by subtracting 3
+   each time. Which numbers print?
+2. Add a case to `sign` that returns `"huge"` when `n` is over 1000. Where must
+   that check go so that it runs before the `"positive"` case?
 
 Next: [Text](/tutorial/04-text).
