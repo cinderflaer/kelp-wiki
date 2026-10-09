@@ -6,7 +6,7 @@ tags: "tooling"
 ---
 Lighthouse is the editor support for Kelp: a language server, plus the IntelliJ
 plugin that talks to it. This page follows
-[Lighthouse's README](https://homelabone.xenoo.dev/gittea/Juniper/lighthouse/src/branch/main/README.md),
+[Lighthouse's README](https://homelabone.xenoo.dev/gittea/Lilly/lighthouse/src/branch/main/README.md),
 which is the authority, and it says where a claim comes from a run instead.
 
 | Piece | What it is |
@@ -35,8 +35,8 @@ through `$KELPC` first (`server/src/diagnostics.rs`), which is what makes a
 development build of the compiler usable with a release build of the server.
 
 On open and on save the server also runs `kelpc lint` on the file and publishes
-its findings — `elif` preferred over `else if`, a run of `//` lines preferred as
-one `/* ... */` block — as `Hint`-severity diagnostics, one step milder than
+its findings (`elif` preferred over `else if`, and a run of `//` lines preferred as
+one `/* ... */` block) as `Hint`-severity diagnostics, one step milder than
 `outdated`. Two of them are quick fixes too: the `else if` finding rewrites to
 `elif`, and the comment-run finding merges the run into one block comment.
 `kelpc lint` has no `--text` mode, so these tips see the last saved text, the
@@ -137,7 +137,7 @@ Install one of two ways:
    ▸ Manage Plugin Repositories**:
 
    ```text
-   https://homelabone.xenoo.dev/gittea/Juniper/lighthouse/raw/branch/main/intellij/updatePlugins.xml
+   https://homelabone.xenoo.dev/gittea/Lilly/lighthouse/raw/branch/main/intellij/updatePlugins.xml
    ```
 
    A published version then shows up as an ordinary update. To publish one, bump
@@ -199,10 +199,9 @@ not end the session.
 - **The plugin is not published to the Marketplace.** It installs from the
   self-hosted update site above.
 
-The README lists formatting as missing too: `kelpc fmt` has existed since
-`kelpc 0.2.3`, with `-w` and `--check` (see [`kelpc` CLI](/tooling/kelpc-cli#fmt)),
-but the plugin registers no document-formatting provider, so an editor still has
-nothing to invoke for format-on-save.
+The README lists formatting as missing too. `kelpc fmt` exists, with `-w` and
+`--check` (see [`kelpc` CLI](/tooling/kelpc-cli#fmt)), but the plugin registers no
+document-formatting provider, so an editor has nothing to invoke for format-on-save.
 
 ## See also
 

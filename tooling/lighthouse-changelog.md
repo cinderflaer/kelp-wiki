@@ -95,7 +95,7 @@ The server reports `26.09.3` in `serverInfo`.
 
 ## IntelliJ plugin 26.09.2 (2026-09-24)
 
-[Release](https://homelabone.xenoo.dev/gittea/Juniper/lighthouse/releases/tag/intellij-v26.09.2)
+[Release](https://homelabone.xenoo.dev/gittea/Lilly/lighthouse/releases/tag/intellij-v26.09.2)
 
 - The asset is `lighthouse-intellij-26.09.2.zip`, and `updatePlugins.xml` points
   at it, so the self-hosted update feed offers it.
@@ -158,7 +158,7 @@ The server reports `26.09.1` in `serverInfo`.
 
 ## IntelliJ plugin 26.09.0 (2026-09-20)
 
-[Release](https://homelabone.xenoo.dev/gittea/Juniper/lighthouse/releases/tag/intellij-v26.09.0)
+[Release](https://homelabone.xenoo.dev/gittea/Lilly/lighthouse/releases/tag/intellij-v26.09.0)
 · the language server is unchanged since 0.2.0 apart from its version fields, so
 nothing here needs a newer `lighthouse` than that: `PATH` or `~/.local/bin`.
 
@@ -182,7 +182,7 @@ README now says.
 
 ## IntelliJ plugin 0.2.1 (2026-09-19)
 
-[Release](https://homelabone.xenoo.dev/gittea/Juniper/lighthouse/releases/tag/intellij-v0.2.1)
+[Release](https://homelabone.xenoo.dev/gittea/Lilly/lighthouse/releases/tag/intellij-v0.2.1)
 · requires `lighthouse` 0.2.0 or newer, on `PATH` or at
 `~/.local/bin/lighthouse`.
 
@@ -209,7 +209,7 @@ substitution.
 
 ## IntelliJ plugin 0.2.0 (2026-09-19)
 
-[Release](https://homelabone.xenoo.dev/gittea/Juniper/lighthouse/releases/tag/intellij-v0.2.0)
+[Release](https://homelabone.xenoo.dev/gittea/Lilly/lighthouse/releases/tag/intellij-v0.2.0)
 · requires a `coral` that knows `toolchain kelp pin` and `installed`, which is
 coral v0.3.0.
 
@@ -227,7 +227,7 @@ committing it is what makes every machine build with the same compiler.
 
 ## IntelliJ plugin 0.1.1 (2026-09-19)
 
-[Release](https://homelabone.xenoo.dev/gittea/Juniper/lighthouse/releases/tag/intellij-v0.1.1)
+[Release](https://homelabone.xenoo.dev/gittea/Lilly/lighthouse/releases/tag/intellij-v0.1.1)
 
 The release notes are one line, "Auto-update feed release", and that is the
 headline: the plugin moved to a **self-hosted update site**, so an update

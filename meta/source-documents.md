@@ -11,25 +11,26 @@ page here and its source disagree, the source is right and the page is a bug.
 
 | File | Authority for |
 | --- | --- |
-| [`plan/syntax.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md) | the language and the style: every section of the Language chapter cites it by number |
-| [`plan/architecture.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/architecture.md) | the design: compiler layout, the capability model, the v1 surface, the standard library's decisions |
-| [`plan/roadmap.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/roadmap.md) | the plan: the marks, the open items, the backlog |
-| [`plan/done.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/done.md) | the milestone record of what has shipped, including the MK7 LLVM backend and the retired hand-written track it replaced |
-| [`plan/mk9-memory-model.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk9-memory-model.md) | the memory model and threads: the plan of record for MK9-S3-M1 (atomics, ordering, the Send/Sync-shaped discipline) and MK6-S1-M1 (threads, the per-thread panic policy). The decisions are settled, stage A1 (`Atomic<T>` and `Ordering`, in [`std/atomic`](/stdlib/atomic)), stage A2 (`thread.fence`), stage B1 (the crossing rules the checker enforces) and stage C1 (`thread.spawn` and `thread.join`) have shipped, and the stages after them have not |
-| [`README.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/README.md) | the front door: what the language has, how to build, the repository layout |
+| [`plan/syntax.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md) | the language and the style: every section of the Language chapter cites it by number |
+| [`plan/architecture.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/architecture.md) | the design: compiler layout, the capability model, the v1 surface, the standard library's decisions |
+| [`plan/roadmap.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/roadmap.md) | the plan: the marks, the open items, the backlog |
+| [`plan/done.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/done.md) | the milestone record of what has shipped, including the MK7 LLVM backend and the retired hand-written track it replaced |
+| [`plan/mk9-memory-model.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/mk9-memory-model.md) | the memory model and threads: the plan of record for MK9-S3-M1 (atomics, ordering, the Send/Sync-shaped discipline) and MK6-S1-M1 (threads, the per-thread panic policy). The decisions are settled, stage A1 (`Atomic<T>` and `Ordering`, in [`std/atomic`](/stdlib/atomic)), stage A2 (`thread.fence`), stage B1 (the crossing rules the checker enforces) and stage C1 (`thread.spawn` and `thread.join`) have shipped, and the stages after them have not |
+| [`README.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/README.md) | the front door: what the language has, how to build, the repository layout |
 | `kelpc/std/*.kp` | the standard library, which is the authority for its own signatures: the [index](/reference/stdlib-index) is kept in step with it |
 | `kelpc/src/*.rs` | the compiler; each file's `//!` header describes its job |
 | `kelpc/tests/` | the fixture suite and the gates |
-| `bench/speed/` | the four-workload benchmark |
+| `bench/` | the thirteen-program benchmark suite and its harness `bench/run.sh`; `bench/RESULTS.md` holds the results and `bench/notes.md` the analysis |
+| `bench/speed/`, `bench/write_20gb/` | two small workloads with their own recorded results |
 
 ## The other repositories
 
 | Repository | Role | Authority |
 | --- | --- | --- |
-| [`coral`](https://homelabone.xenoo.dev/gittea/Juniper/coral) | the build tool and package manager: manifest, tasks, build cache, dependencies | its `README.md` is the source for [Coral](/tooling/coral) |
-| [`lighthouse`](https://homelabone.xenoo.dev/gittea/Juniper/lighthouse) | IDE support: the LSP server, the IntelliJ plugin | its `README.md` is the source for [Lighthouse](/tooling/lighthouse) |
-| [`fpl`](https://homelabone.xenoo.dev/gittea/Juniper/fpl) | the first-party library catalogue, one folder per library | each library's `lib.kp`, and its page in the [Libraries chapter](/libraries) |
-| [`kelp-wiki`](https://homelabone.xenoo.dev/gittea/Juniper/kelp-wiki) | this wiki's sources | this repository: one file per page, and the file path is the page path |
+| [`coral`](https://homelabone.xenoo.dev/gittea/Lilly/coral) | the build tool and package manager: manifest, tasks, build cache, dependencies | its `README.md` is the source for [Coral](/tooling/coral) |
+| [`lighthouse`](https://homelabone.xenoo.dev/gittea/Lilly/lighthouse) | IDE support: the LSP server, the IntelliJ plugin | its `README.md` is the source for [Lighthouse](/tooling/lighthouse) |
+| [`fpl`](https://homelabone.xenoo.dev/gittea/Lilly/fpl) | the first-party library catalogue, one folder per library | each library's `lib.kp`, and its page in the [Libraries chapter](/libraries) |
+| [`kelp-wiki`](https://homelabone.xenoo.dev/gittea/Lilly/kelp-wiki) | this wiki's sources | this repository: one file per page, and the file path is the page path |
 
 ## How this wiki is built
 
@@ -50,8 +51,8 @@ tags: "language, ownership"
 ```
 
 `tags` must be a comma-space separated **string**, not a YAML list. The module
-does `tags.split(', ')`, so a list throws and the page is skipped entirely — which
-is how sixty pages went missing once already.
+does `tags.split(', ')`, so a list throws and the page is skipped entirely. That
+has happened once already, and sixty pages went missing.
 
 Two parts of the navigation are separate:
 

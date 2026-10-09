@@ -9,7 +9,7 @@ A compiler should answer junk with a diagnostic, never with a crash. The front e
 type inference, borrow check and the diagnostic renderers) is fuzzed for exactly
 that, and what the fuzzer found turned into two parser limits that a program can
 meet. The plan is
-[`plan/fuzzing.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/fuzzing.md).
+[`plan/fuzzing.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/fuzzing.md).
 
 ## The two fuzzers
 

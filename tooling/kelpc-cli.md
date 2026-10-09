@@ -4,13 +4,10 @@ description: "The compiler's command line, quoted from runs against release buil
 isPublished: true
 tags: "tooling, cli"
 ---
-The compiler's command line. Everything on this page was run against a release
-build on the machine that wrote it, and the outputs are quoted from those runs.
-The bulk of it is the build tagged `v0.1.4`, whose binary was not rebuilt during
-the rename, so `kelpc version` reported `kelpc 0.2.2` from that one. What shipped
-after it (`kelpc lint` below, the comment-run and naming-case findings, the
-`--deny-outdated` flag and the outdated-syntax section further down) comes from
-`kelpc 26.09.0`.
+The compiler's command line. The flags, defaults and messages on this page match
+the source on Kelp's `main` branch, which is `kelpc 26.10.4` (tag `v26.10.4`).
+The output blocks are quoted from earlier runs on a release build, so the
+wording of a message may differ slightly from the current binary.
 
 ```text
 usage: kelpc build <file.kp> [-o <out>] [-O0|-O1|-O2|-O3|-Os] [--deny-outdated] [--incremental] [--timings] [--sanitize=address|undefined|thread]
@@ -49,7 +46,7 @@ above, and `kelpc version` is the version query.
 | `kelpc doc --std` | the same for the shipped standard library | as above |
 | `kelpc cache stats` | prints the per-unit object cache's entry count and total size | 0 |
 | `kelpc cache clear` | deletes every cached unit object | 0, or 1 when the directory cannot be removed |
-| `kelpc version [--verbose]` | with `--verbose` it also prints the commit, build date, rustc and LLVM versions ([Release tooling](/tooling/release-tooling)). Plain form: prints the release name the binary was built from: `kelpc 0.2.2` for the release tagged `v0.1.4`, and `kelpc 26.09.0` for the first release under the `YY.MM.N` scheme (`26.09.0`; the crate carries the semver-legal `26.9.0` and this command pads the month back) | 0 |
+| `kelpc version [--verbose]` | prints the release name the binary was built from, for example `kelpc 26.10.4`. With `--verbose` it also prints the commit, build date, rustc and LLVM versions ([Release tooling](/tooling/release-tooling)). The name is the same text as the release tag. For months before October the tag keeps a leading zero (`v26.09.5`) that `Cargo.toml` cannot carry, and this command adds it back | 0 |
 
 Two behaviours worth knowing:
 
@@ -295,41 +292,37 @@ with `as` and `ld`, was retired on 2026-09-20 and removed on 2026-09-21. Its pla
 its counts and its refusal ranking are history rather than a live measurement, and
 the [Backends](/compiler/backends) page carries the current shape.
 
-A *gated* item named as a function
-value is refused by the compiler,
-whether or not the naming module holds the domain, because the pattern check is
-emitted from the call's own callee and an indirect call has none.
+A *gated* item named as a function value is refused by the compiler, whether or
+not the naming module holds the domain. The pattern check is emitted from the
+call's own callee, and an indirect call has none.
 
 The **`llvm`** backend lowers the whole language the [Language](/language) pages
-describe to LLVM IR and an object: the scalar types, `datac` records, `enum` and
-`when`, `Bytes`/`String` and the drop plan, `List`/`Map`/`Box`/`[T; N]`,
+describe to LLVM IR and an object. That covers the scalar types, `datac` records,
+`enum` and `when`, `Bytes`/`String` and the drop plan, `List`/`Map`/`Box`/`[T; N]`,
 references, closures and function values, the `extern fun` bodies, the `pd`
-globals and the capability check. On the corpus it builds every target the C
-backend builds and prints the same stdout with the same exit status, byte for
-byte: `LLVM_BUILT_BASELINE` is 223 of the 223 targets and the refusal ranking is
-empty. The gates that carry the slices are `kelpc/tests/run-llvm-scalar-subset.sh`,
-`run-llvm-datac-subset.sh`, `run-llvm-strings-drops.sh`, `run-llvm-enum-subset.sh`,
-`run-llvm-containers.sh`, `run-llvm-references.sh`, `run-llvm-closures.sh` (120
-tests), `run-llvm-externs.sh` (138 tests) and `run-llvm-pd-caps.sh` (38 tests,
-the `pd` globals, the capability check and the last three refusals, with the deny
-text pinned against the C backend's own). One guard remains in the lowering, for
-an owned temporary at a place it did not stage, and nothing in the corpus reaches
-it. The `c` backend is the oracle this build is measured against. The object
-carries DWARF
-line locations, so a fault in an `llvm`-built binary names the `.kp` file and
-line, where the C backend's `#line` was the only source of that before; it is a
-line table, so no variables and no types. One optimization level is one level for
+globals and the capability check. The corpus sweep requires the LLVM backend to
+build every target the C oracle builds, with the same stdout and exit status. The
+number of targets it builds is recorded by the ratchet constant
+`LLVM_BUILT_BASELINE` in `kelpc/tests/backend_coverage.rs`, which may only rise.
+
+The gates that carry the slices are the `kelpc/tests/run-llvm-*.sh` scripts, one
+per area: scalars, `datac`, strings and drops, enums, containers, references,
+closures, externs, `pd` globals and capabilities, and ABI aggregates. One guard
+remains in the lowering, for an owned temporary at a place it did not stage, and
+nothing in the corpus reaches it. The object carries DWARF line locations, so a
+fault in an `llvm`-built binary names the `.kp` file and line. It is a line table,
+so there are no variables and no types. One optimization level is one level for
 the whole build: it selects the LLVM pass pipeline and the target machine's
 codegen level, and it is the `-O` flag the per-program C object and the final link
-are given, so no performance parity with the C backend is claimed. See the MK7
+are given. No performance parity with the C backend is claimed. See the MK7
 record in
-[`plan/done.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/done.md).
+[`plan/done.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/done.md).
 
 ## `fmt`
 
 `kelpc fmt` owns whitespace and nothing else. The rules it applies are the style
 section of the plan
-([syntax.md §19](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md)),
+([syntax.md §19](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md)),
 and the code that applies them is `kelpc/src/fmt.rs`.
 
 What it enforces: indentation, spacing, trailing whitespace, the newline rules and
@@ -567,11 +560,18 @@ file changes three things:
 3. **The compiler reads the flat keys and a few of its own sections.** It wants
    `name`, `version` and `entry` (plus `http_pool` and `naming_case`), and it
    reads `[build]`, `[target]`, `[caps]`, `[unsafe]` and `[extern."..."]`
-   itself, because those change what it compiles: `[build] incremental = true`
-   turns on the per-unit split, and `[build] sanitize = "address"` asks for a
-   [sanitizer build](/tooling/sanitizers). Every other section (`[tasks]`,
-   `[dependencies]`, `[toolchain]`) is Coral's manifest surface, and the
-   compiler skips its lines rather than rejecting them.
+   itself, because those change what it compiles. The keys it reads from
+   `[build]` are:
+
+   | Key | Value | Effect |
+   | --- | --- | --- |
+   | `incremental` | `true` | the per-unit split, as `--incremental` |
+   | `sanitize` | `"address"`, `"undefined"` or `"thread"` | a [sanitizer build](/tooling/sanitizers), as `--sanitize=` |
+   | `emit` | `"binary"` (the default) or `"html"` | with `"html"`, `kelpc build` compiles `emit_entry` instead of `entry`, runs it once to print its first view, and does not start it as an application |
+   | `emit_entry` | a file under `src/` | the entry point that `emit = "html"` builds |
+
+   Every other section (`[tasks]`, `[dependencies]`, `[toolchain]`) is Coral's
+   manifest surface, and the compiler skips its lines rather than rejecting them.
 
 `kelpc` is lenient about flat keys it does not use: a manifest carrying
 `http_pool = 8` compiles, because the compiler never looks at it. Coral validates
