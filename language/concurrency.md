@@ -7,7 +7,7 @@ tags: "language, concurrency"
 This page defines the memory model: what a data race is, why one does not
 compile, what a thread may share, and what happens when a thread panics.
 
-The design record is [`plan/mk9-memory-model.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk9-memory-model.md). The syntax is in `syntax.md` §12.5 and §12.6.
+The design record is [`plan/mk9-memory-model.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/mk9-memory-model.md). The syntax is in `syntax.md` §12.5 and §12.6.
 
 v1 has one ordering and real threads. What ships is a memory model with a
 single ordering, an atomic cell, a `Mutex<T>`, a fence, and
@@ -193,7 +193,7 @@ plain location). [`std/sync`'s `Mutex`](/stdlib/sync) can guard a shared queue,
 but the split here is done before the spawn so no lock is needed. Four workers
 are therefore four named
 `Thread<Outcome>` locals, joined in a fixed order, the same shape
-[`std/thread`'s stress test](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/kelpc/tests/fixtures/thread_stress.kp)
+[`std/thread`'s stress test](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/kelpc/tests/fixtures/thread_stress.kp)
 uses for its eight.
 
 No language or stdlib change was needed for this milestone: everything it

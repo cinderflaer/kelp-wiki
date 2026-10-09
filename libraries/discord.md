@@ -4,8 +4,8 @@ description: "A Discord library for bots and webhooks: payload builders that emi
 isPublished: true
 tags: "library, networking"
 ---
-The library's own copy of this page is [`docs/discord.md`](https://homelabone.xenoo.dev/gittea/Juniper/fpl/src/branch/main/docs/discord.md)
-in the [fpl repository](https://homelabone.xenoo.dev/gittea/Juniper/fpl).
+The library's own copy of this page is [`docs/discord.md`](https://homelabone.xenoo.dev/gittea/Lilly/fpl/src/branch/main/docs/discord.md)
+in the [fpl repository](https://homelabone.xenoo.dev/gittea/Lilly/fpl).
 
 A Discord library with two halves and one file. The easy path is a bot or a
 webhook that works: a `Bot` value, payload builders that emit JSON, a gateway
@@ -39,7 +39,7 @@ has to hold the wildcard too:
 
 ```toml
 [dependencies]
-discord = "Juniper/fpl/discord"
+discord = "Lilly/fpl/discord"
 ```
 
 ```kelp

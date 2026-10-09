@@ -134,7 +134,7 @@ attached.
 
 ## Where to report a bug
 
-- The program must be valid per [`plan/syntax.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md),
+- The program must be valid per [`plan/syntax.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md),
   which is the language authority. A construct that is refused by design belongs
   on [Limits in v1](/language/limits), not in a report.
 - Include `kelpc version`, the optimization level, the source, the command, and

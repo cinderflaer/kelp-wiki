@@ -4,7 +4,7 @@ description: "Kelp's type table: Copy, owned and borrowed types, tuples, explici
 isPublished: true
 tags: "language"
 ---
-Source: [`syntax.md` §3](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §3](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
 
 Kelp's types fall into three kinds, and the kind decides what assignment means:
 a `Copy` value is copied, an owned value is *moved*, and a borrowed value is only

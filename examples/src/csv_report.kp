@@ -5,8 +5,8 @@
 // Dependencies:
 //
 //   [dependencies]
-//   csv   = "Juniper/fpl/csv"
-//   table = "Juniper/fpl/table"
+//   csv   = "Lilly/fpl/csv"
+//   table = "Lilly/fpl/table"
 //
 // Demonstrates: CSV parsing over rows of fields, a `Map` used as an
 // accumulator (insertion order is preserved, so the report is stable), a

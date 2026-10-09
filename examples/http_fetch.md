@@ -10,15 +10,15 @@ filesystem grant for the write.
 
 | | |
 | --- | --- |
-| Source | [`src/http_fetch.kp`](https://homelabone.xenoo.dev/gittea/Juniper/kelp-wiki-wikijs/raw/branch/main/examples/src/http_fetch.kp) |
-| Needs | `fsx = "Juniper/fpl/fsx"` |
+| Source | [`src/http_fetch.kp`](https://homelabone.xenoo.dev/gittea/Lilly/kelp-wiki-wikijs/raw/branch/main/examples/src/http_fetch.kp) |
+| Needs | `fsx = "Lilly/fpl/fsx"` |
 | Shows | a grant on an import, a request built as data, a response read, `write_atomic` |
 
 ## The dependency and the two grants
 
 ```toml
 [dependencies]
-fsx = "Juniper/fpl/fsx"
+fsx = "Lilly/fpl/fsx"
 ```
 
 ```kelp

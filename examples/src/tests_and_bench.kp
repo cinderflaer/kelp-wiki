@@ -5,8 +5,8 @@
 // Dependencies:
 //
 //   [dependencies]
-//   testkit  = "Juniper/fpl/testkit"
-//   benchkit = "Juniper/fpl/benchkit"
+//   testkit  = "Lilly/fpl/testkit"
+//   benchkit = "Lilly/fpl/benchkit"
 //
 // `benchkit` calls the monotonic clock, so it needs `time` delegated, the same
 // rule that applies to any gated dependency.

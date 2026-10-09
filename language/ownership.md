@@ -4,7 +4,7 @@ description: "Ownership in Kelp: moves, borrows that end at their last use, curs
 isPublished: true
 tags: "language, ownership"
 ---
-Source: [`syntax.md` §10](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §10](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
 
 Owned values (`String`, `Bytes`, `List`, `Map`, `Box`, `datac`, `enum`) have
 exactly one owner. There is no garbage collector: the owner's scope end is the

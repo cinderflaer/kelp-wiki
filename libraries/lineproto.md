@@ -16,7 +16,7 @@ grant:
 
 ```toml
 [dependencies]
-lineproto = "Juniper/fpl/lineproto"
+lineproto = "Lilly/fpl/lineproto"
 ```
 
 ```kelp

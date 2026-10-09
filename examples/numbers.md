@@ -10,7 +10,7 @@ generator.
 
 | | |
 | --- | --- |
-| Source | [`src/numbers.kp`](https://homelabone.xenoo.dev/gittea/Juniper/kelp-wiki-wikijs/raw/branch/main/examples/src/numbers.kp) |
+| Source | [`src/numbers.kp`](https://homelabone.xenoo.dev/gittea/Lilly/kelp-wiki-wikijs/raw/branch/main/examples/src/numbers.kp) |
 | Needs | `bigint`, `decimal`, `complex`, `mathx`, `stats`, `prng` |
 | Shows | where a float is the wrong tool, and where a random sequence must repeat |
 
@@ -18,12 +18,12 @@ generator.
 
 ```toml
 [dependencies]
-bigint  = "Juniper/fpl/bigint"
-decimal = "Juniper/fpl/decimal"
-complex = "Juniper/fpl/complex"
-mathx   = "Juniper/fpl/mathx"
-stats   = "Juniper/fpl/stats"
-prng    = "Juniper/fpl/prng"
+bigint  = "Lilly/fpl/bigint"
+decimal = "Lilly/fpl/decimal"
+complex = "Lilly/fpl/complex"
+mathx   = "Lilly/fpl/mathx"
+stats   = "Lilly/fpl/stats"
+prng    = "Lilly/fpl/prng"
 ```
 
 Six libraries, six manifest lines, and none of them fetches another.

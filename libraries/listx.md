@@ -11,7 +11,7 @@ No capability.
 
 ```toml
 [dependencies]
-listx = "Juniper/fpl/listx"
+listx = "Lilly/fpl/listx"
 ```
 
 ```kelp

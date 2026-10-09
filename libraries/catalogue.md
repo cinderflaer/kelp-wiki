@@ -5,7 +5,7 @@ isPublished: true
 tags: "library"
 ---
 All twenty-eight first-party libraries, grouped by what they do. Each is a folder in the
-[fpl repository](https://homelabone.xenoo.dev/gittea/Juniper/fpl), a single manifest line each.
+[fpl repository](https://homelabone.xenoo.dev/gittea/Lilly/fpl), a single manifest line each.
 
 ## Data formats
 

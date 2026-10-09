@@ -4,7 +4,7 @@ description: "Kelp's text types, str, View, String and Bytes: conversions, print
 isPublished: true
 tags: "language"
 ---
-Source: [`syntax.md` §11](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §11](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
 
 Kelp has four text types, and the difference between them is where the bytes live
 and whether the length is known.

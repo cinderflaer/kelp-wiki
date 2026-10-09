@@ -4,7 +4,7 @@ description: "How methods are declared with Type.name, when a receiver is shared
 isPublished: true
 tags: "language"
 ---
-Source: [`syntax.md` §8](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §8](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
 
 A method is a function whose first parameter is its receiver. You write it as
 `Type.name`:

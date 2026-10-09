@@ -14,7 +14,7 @@ library to reach for, and this is the importable version.)
 
 ```toml
 [dependencies]
-glob = "Juniper/fpl/glob"
+glob = "Lilly/fpl/glob"
 ```
 
 ```kelp

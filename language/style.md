@@ -4,7 +4,7 @@ description: "House style for Kelp: what kelpc fmt enforces, file order, naming,
 isPublished: true
 tags: "language"
 ---
-Source: [`syntax.md` §19](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §19](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
 
 ## Rules the formatter enforces
 

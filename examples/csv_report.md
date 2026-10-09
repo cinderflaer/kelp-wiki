@@ -9,8 +9,8 @@ example with two dependencies, and the first that builds a `Map`.
 
 | | |
 | --- | --- |
-| Source | [`src/csv_report.kp`](https://homelabone.xenoo.dev/gittea/Juniper/kelp-wiki-wikijs/raw/branch/main/examples/src/csv_report.kp) |
-| Needs | `csv = "Juniper/fpl/csv"`, `table = "Juniper/fpl/table"` |
+| Source | [`src/csv_report.kp`](https://homelabone.xenoo.dev/gittea/Lilly/kelp-wiki-wikijs/raw/branch/main/examples/src/csv_report.kp) |
+| Needs | `csv = "Lilly/fpl/csv"`, `table = "Lilly/fpl/table"` |
 | Shows | CSV rows and fields, a `Map` accumulator, `str.parse_i64`, rendering a table |
 
 ## The dependencies
@@ -18,8 +18,8 @@ example with two dependencies, and the first that builds a `Map`.
 ```toml
 # coral.toml
 [dependencies]
-csv   = "Juniper/fpl/csv"
-table = "Juniper/fpl/table"
+csv   = "Lilly/fpl/csv"
+table = "Lilly/fpl/table"
 ```
 
 ```kelp

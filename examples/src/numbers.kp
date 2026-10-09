@@ -5,12 +5,12 @@
 // Dependencies:
 //
 //   [dependencies]
-//   bigint  = "Juniper/fpl/bigint"
-//   decimal = "Juniper/fpl/decimal"
-//   complex = "Juniper/fpl/complex"
-//   mathx   = "Juniper/fpl/mathx"
-//   stats   = "Juniper/fpl/stats"
-//   prng    = "Juniper/fpl/prng"
+//   bigint  = "Lilly/fpl/bigint"
+//   decimal = "Lilly/fpl/decimal"
+//   complex = "Lilly/fpl/complex"
+//   mathx   = "Lilly/fpl/mathx"
+//   stats   = "Lilly/fpl/stats"
+//   prng    = "Lilly/fpl/prng"
 //
 // Shows: exact arithmetic where a float is wrong (money, big integers), the
 // numeric helpers the standard library stops short of, statistics over a list,

@@ -51,7 +51,7 @@ highlighting, brace matching, the Coral run configurations, New Project and the
 settings page), and only the LSP features are absent.
 
 ```sh
-git clone https://homelabone.xenoo.dev/gittea/Juniper/lighthouse
+git clone https://homelabone.xenoo.dev/gittea/Lilly/lighthouse
 cd lighthouse/intellij
 gradle buildPlugin
 ```
@@ -61,7 +61,7 @@ Disk…**, or add the self-hosted update site once under **Settings ▸ Plugins 
 Manage Plugin Repositories**:
 
 ```text
-https://homelabone.xenoo.dev/gittea/Juniper/lighthouse/raw/branch/main/intellij/updatePlugins.xml
+https://homelabone.xenoo.dev/gittea/Lilly/lighthouse/raw/branch/main/intellij/updatePlugins.xml
 ```
 
 Everything `lighthouse` offers arrives over LSP, so a feature the server gains

@@ -4,7 +4,7 @@ description: "const is a file-level value computed by the compiler. pd is a file
 isPublished: true
 tags: "language, ownership"
 ---
-Source: [`syntax.md` §14](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §14](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
 
 Two declarations live at file scope and are not statements. `const` is a value
 folded at compile time. `pd` (passdown) is a value every function in the module can

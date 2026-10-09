@@ -13,7 +13,7 @@ No capability.
 
 ```toml
 [dependencies]
-url = "Juniper/fpl/url"
+url = "Lilly/fpl/url"
 ```
 
 ```kelp

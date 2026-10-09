@@ -11,7 +11,7 @@ No capability.
 
 ```toml
 [dependencies]
-table = "Juniper/fpl/table"
+table = "Lilly/fpl/table"
 ```
 
 ```kelp

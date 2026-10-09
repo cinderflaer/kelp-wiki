@@ -9,15 +9,15 @@ text. It is the example to read before writing anything with a command line.
 
 | | |
 | --- | --- |
-| Source | [`src/cli_tool.kp`](https://homelabone.xenoo.dev/gittea/Juniper/kelp-wiki-wikijs/raw/branch/main/examples/src/cli_tool.kp) |
-| Needs | `argparse = "Juniper/fpl/argparse"` |
+| Source | [`src/cli_tool.kp`](https://homelabone.xenoo.dev/gittea/Lilly/kelp-wiki-wikijs/raw/branch/main/examples/src/cli_tool.kp) |
+| Needs | `argparse = "Lilly/fpl/argparse"` |
 | Shows | flags against options, defaults, positionals, `--help`, exit codes, `argv[0]` |
 
 ## The dependency
 
 ```toml
 [dependencies]
-argparse = "Juniper/fpl/argparse"
+argparse = "Lilly/fpl/argparse"
 ```
 
 ## The rules this tool follows

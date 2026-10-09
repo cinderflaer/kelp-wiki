@@ -18,7 +18,7 @@ compiler without asking the consumer for anything. The consumer holds the real
 
 ```toml
 [dependencies]
-httpx = "Juniper/fpl/httpx"
+httpx = "Lilly/fpl/httpx"
 ```
 
 ```kelp

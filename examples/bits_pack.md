@@ -9,7 +9,7 @@ fixed-size bit set, and prints a seeded byte stream that repeats on every run.
 
 | | |
 | --- | --- |
-| Source | [`src/bits_pack.kp`](https://homelabone.xenoo.dev/gittea/Juniper/kelp-wiki-wikijs/raw/branch/main/examples/src/bits_pack.kp) |
+| Source | [`src/bits_pack.kp`](https://homelabone.xenoo.dev/gittea/Lilly/kelp-wiki-wikijs/raw/branch/main/examples/src/bits_pack.kp) |
 | Needs | `bits`, `prng` |
 | Shows | MSB-first bit fields, `BitSet` over `Bytes`, and determinism from a seed |
 
@@ -17,8 +17,8 @@ fixed-size bit set, and prints a seeded byte stream that repeats on every run.
 
 ```toml
 [dependencies]
-bits = "Juniper/fpl/bits"
-prng = "Juniper/fpl/prng"
+bits = "Lilly/fpl/bits"
+prng = "Lilly/fpl/prng"
 ```
 
 Neither needs a capability. `prng` is arithmetic on a `u64`, which is why a

@@ -4,7 +4,7 @@ description: "Declaring functions, named arguments, function values, closures, s
 isPublished: true
 tags: "language"
 ---
-Source: [`syntax.md` §7](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §7](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
 
 ## Declaration
 

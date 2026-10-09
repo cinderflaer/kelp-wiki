@@ -10,7 +10,7 @@ of a `Set-Cookie`.
 
 | | |
 | --- | --- |
-| Source | [`src/http_headers.kp`](https://homelabone.xenoo.dev/gittea/Juniper/kelp-wiki-wikijs/raw/branch/main/examples/src/http_headers.kp) |
+| Source | [`src/http_headers.kp`](https://homelabone.xenoo.dev/gittea/Lilly/kelp-wiki-wikijs/raw/branch/main/examples/src/http_headers.kp) |
 | Needs | `httpx` (and `std/http` for its types) |
 | Shows | request data built offline, which the caller then sends under its own grant |
 
@@ -18,7 +18,7 @@ of a `Set-Cookie`.
 
 ```toml
 [dependencies]
-httpx = "Juniper/fpl/httpx"
+httpx = "Lilly/fpl/httpx"
 ```
 
 `httpx` carries its own base64 and percent encoders, because a folder in a git

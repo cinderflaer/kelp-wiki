@@ -11,7 +11,7 @@ runs.
 
 ```toml
 [dependencies]
-benchkit = "Juniper/fpl/benchkit"
+benchkit = "Lilly/fpl/benchkit"
 ```
 
 ```kelp

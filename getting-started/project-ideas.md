@@ -112,7 +112,7 @@ temporary is refused, because the temporary would be freed before the view could
 be used. Bind it to a local first. That one rule explains a large share of the
 text errors you will meet, and [Pitfalls](/language/pitfalls) lists the rest.
 
-**A CSV column tally.** `coral init tally`, add `csv = "Juniper/fpl/csv"` under
+**A CSV column tally.** `coral init tally`, add `csv = "Lilly/fpl/csv"` under
 `[dependencies]`, `coral sync`, then have the program print `row.len()` for each
 row of a file before it counts anything. Half of a small data tool is getting the
 parse and the loop right; the tally is the easy part.

@@ -12,7 +12,7 @@ primitives: there is no SHA here.
 
 ```toml
 [dependencies]
-hash = "Juniper/fpl/hash"
+hash = "Lilly/fpl/hash"
 ```
 
 ```kelp

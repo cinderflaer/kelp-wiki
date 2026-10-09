@@ -14,7 +14,7 @@ its last chapter builds a small tool the same way these programs are built.
 
 That last part is the point. An example that has not been run is a claim, so the
 programs are compiled and executed by
-[`tools/check-examples.sh`](https://homelabone.xenoo.dev/gittea/Juniper/kelp-wiki/src/branch/main/tools/check-examples.sh),
+[`tools/check-examples.sh`](https://homelabone.xenoo.dev/gittea/Lilly/kelp-wiki/src/branch/main/tools/check-examples.sh),
 which builds and runs eighteen programs in nineteen processes (the line-protocol
 pair is two) and prints each one's exit code with its output. Run it yourself:
 
@@ -70,7 +70,7 @@ dependency is a folder in a git repo:
 ```toml
 # coral.toml
 [dependencies]
-json = "Juniper/fpl/json"
+json = "Lilly/fpl/json"
 ```
 
 ```sh

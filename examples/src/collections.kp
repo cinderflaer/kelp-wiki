@@ -5,8 +5,8 @@
 // Dependencies:
 //
 //   [dependencies]
-//   listx = "Juniper/fpl/listx"
-//   set   = "Juniper/fpl/set"
+//   listx = "Lilly/fpl/listx"
+//   set   = "Lilly/fpl/set"
 //
 // Shows: fold, zip, chunks and a comparator sort over a list, then set union,
 // intersection and difference. The two libraries exist because a user module

@@ -9,16 +9,16 @@ uses to check and measure itself without a test framework.
 
 | | |
 | --- | --- |
-| Source | [`src/tests_and_bench.kp`](https://homelabone.xenoo.dev/gittea/Juniper/kelp-wiki-wikijs/raw/branch/main/examples/src/tests_and_bench.kp) |
-| Needs | `testkit = "Juniper/fpl/testkit"`, `benchkit = "Juniper/fpl/benchkit"` |
+| Source | [`src/tests_and_bench.kp`](https://homelabone.xenoo.dev/gittea/Lilly/kelp-wiki-wikijs/raw/branch/main/examples/src/tests_and_bench.kp) |
+| Needs | `testkit = "Lilly/fpl/testkit"`, `benchkit = "Lilly/fpl/benchkit"` |
 | Shows | typed check helpers, a pass/fail report, warmup plus repeats, percentiles |
 
 ## The dependencies, and one grant
 
 ```toml
 [dependencies]
-testkit  = "Juniper/fpl/testkit"
-benchkit = "Juniper/fpl/benchkit"
+testkit  = "Lilly/fpl/testkit"
+benchkit = "Lilly/fpl/benchkit"
 ```
 
 ```kelp

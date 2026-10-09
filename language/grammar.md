@@ -5,7 +5,7 @@ isPublished: true
 tags: "language"
 ---
 This page reproduces the grammar from
-[`syntax.md` §20](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
+[`syntax.md` §20](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
 The syntax file is the authority. `View` is a builtin type name, like `str` or
 `String`, not a keyword.
 

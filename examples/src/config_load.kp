@@ -5,7 +5,7 @@
 // Dependency:
 //
 //   [dependencies]
-//   config = "Juniper/fpl/config"
+//   config = "Lilly/fpl/config"
 //
 // Shows: the subset of TOML that coral.toml itself uses, typed accessors with
 // defaults, and the fact that an unquoted value which is not an integer is a

@@ -77,7 +77,7 @@ version = "0.1.0"
 entry = "src/main.kp"
 
 [dependencies]
-testkit = "Juniper/fpl/testkit"
+testkit = "Lilly/fpl/testkit"
 
 [tasks]
 test = "src/tasks/test.kp"

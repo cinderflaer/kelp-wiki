@@ -7,7 +7,7 @@ tags: "language, ownership"
 A `val` or `var` statement binds a name inside a function body. Top-level names
 are `const` and `pd` instead ([Constants and passdowns](/language/passdowns)).
 
-Source: [`syntax.md` §4](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §4](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
 
 ```kelp
 val n: i64 = 10              // immutable binding, explicit type

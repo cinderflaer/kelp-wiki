@@ -6,9 +6,9 @@ tags: "language, compiler"
 ---
 Every release of Kelp, newest first. The version is the `kelpc` version
 (`kelpc version`), the tag is in the
-[kelp repository](https://homelabone.xenoo.dev/gittea/Juniper/kelp), and the
+[kelp repository](https://homelabone.xenoo.dev/gittea/Lilly/kelp), and the
 release notes and binary asset are on the
-[releases page](https://homelabone.xenoo.dev/gittea/Juniper/kelp/releases).
+[releases page](https://homelabone.xenoo.dev/gittea/Lilly/kelp/releases).
 
 A release entry covers **the language and the compiler together**, because in
 this project they ship as one artifact: a new construct is a lexer, a parser, a
@@ -33,7 +33,7 @@ later release build their own asset from their own tag.
 
 These entries are deliberately short. The authority for what a milestone
 actually contained is
-[`plan/done.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/done.md);
+[`plan/done.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/done.md);
 this page is the index to it.
 
 | Version | Date | Headline |
@@ -96,7 +96,7 @@ checks the markdown and HTML output.
 
 ## 26.10.4 (2026-10-09)
 
-[Release](https://homelabone.xenoo.dev/gittea/Juniper/kelp/releases/tag/v26.10.4)
+[Release](https://homelabone.xenoo.dev/gittea/Lilly/kelp/releases/tag/v26.10.4)
 
 11 commits since 26.10.3, the Polyp output release. The suite passes (1615 tests,
 16 ignored by default) except the debug-info test that needs `gdb`, which the
@@ -118,7 +118,7 @@ examples are frozen.
 
 ## 26.10.3 (2026-10-08)
 
-[Release](https://homelabone.xenoo.dev/gittea/Juniper/kelp/releases/tag/v26.10.3)
+[Release](https://homelabone.xenoo.dev/gittea/Lilly/kelp/releases/tag/v26.10.3)
 
 23 commits since 26.10.2, the language-ergonomics release. The suite passes
 (1604 tests, 16 ignored by default) except the debug-info test that needs
@@ -197,7 +197,7 @@ built).
 
 ## 26.10.2 (2026-10-07)
 
-[Release](https://homelabone.xenoo.dev/gittea/Juniper/kelp/releases/tag/v26.10.2)
+[Release](https://homelabone.xenoo.dev/gittea/Lilly/kelp/releases/tag/v26.10.2)
 
 14 commits since 26.10.1. The suite passes (1593 tests, 16 ignored by default)
 except the debug-info test that needs `gdb`, which the build host does not have;
@@ -234,7 +234,7 @@ which do not exist yet.
 
 ## 26.10.1 (2026-10-07)
 
-[Release](https://homelabone.xenoo.dev/gittea/Juniper/kelp/releases/tag/v26.10.1)
+[Release](https://homelabone.xenoo.dev/gittea/Lilly/kelp/releases/tag/v26.10.1)
 
 41 commits since 26.10.0. The suite passes (1584 tests, 16 ignored by default)
 except the debug-info test that needs `gdb`, which the build host does not have.
@@ -274,7 +274,7 @@ builds without its development files. `std/env` no longer leaks a table per
 
 ## 26.10.0 (2026-10-04)
 
-[Release](https://homelabone.xenoo.dev/gitea/Juniper/kelp/releases/tag/v26.10.0)
+[Release](https://homelabone.xenoo.dev/gitea/Lilly/kelp/releases/tag/v26.10.0)
 
 **Release additions.** Shift counts are checked on both backends, with
 `wrapping_shl` and `wrapping_shr` as the deliberate masking forms. TLS trust
@@ -516,7 +516,7 @@ of it. See [Freestanding mode](/language/freestanding#the-x86-64-target).
 
 ## 26.09.5 (2026-09-28)
 
-[Release](https://homelabone.xenoo.dev/gittea/Juniper/kelp/releases/tag/v26.09.5)
+[Release](https://homelabone.xenoo.dev/gittea/Lilly/kelp/releases/tag/v26.09.5)
 · 22 commits · 203 unit tests, 488 fixtures green.
 
 **`https` works.** [`std/tls`](/stdlib/tls) ships a client-side TLS module and
@@ -561,7 +561,7 @@ already leak-free.
 
 ## 26.09.4 (2026-09-26)
 
-[Release](https://homelabone.xenoo.dev/gittea/Juniper/kelp/releases/tag/v26.09.4)
+[Release](https://homelabone.xenoo.dev/gittea/Lilly/kelp/releases/tag/v26.09.4)
 · 37 commits · 203 unit tests, 473 end-to-end green.
 
 **The small builtin bodies are inlined.** `Bytes`, `String` and `View`'s `len`,
@@ -606,7 +606,7 @@ keys. The table, the method and the caveats are at
 
 ## 26.09.3 (2026-09-25)
 
-[Release](https://homelabone.xenoo.dev/gittea/Juniper/kelp/releases/tag/v26.09.3)
+[Release](https://homelabone.xenoo.dev/gittea/Lilly/kelp/releases/tag/v26.09.3)
 · 15 commits · 203 unit tests, 465 end-to-end green.
 
 **`thread.sleep_ms` and `thread.current_id`.** MK9-S3-M1 stage C2: two ordinary
@@ -634,7 +634,7 @@ debounced re-check uses it.
 
 ## 26.09.2 (2026-09-24)
 
-[Release](https://homelabone.xenoo.dev/gittea/Juniper/kelp/releases/tag/v26.09.2)
+[Release](https://homelabone.xenoo.dev/gittea/Lilly/kelp/releases/tag/v26.09.2)
 · 82 commits · 203 unit tests, 461 end-to-end green.
 
 **Modules are private by default.** A top-level item is private to its module
@@ -686,7 +686,7 @@ of that enum.
 
 ## 26.09.1 (2026-09-21)
 
-[Release](https://homelabone.xenoo.dev/gittea/Juniper/kelp/releases/tag/v26.09.1)
+[Release](https://homelabone.xenoo.dev/gittea/Lilly/kelp/releases/tag/v26.09.1)
 · 130 commits · 179 unit tests, 359 end-to-end green.
 
 **`llvm` is the compiler.** `Backend::DEFAULT` is `Llvm`: `kelpc` lowers its
@@ -767,7 +767,7 @@ tests that shared one output path no longer race.
 
 ## 26.09.0 (2026-09-20)
 
-[Release](https://homelabone.xenoo.dev/gittea/Juniper/kelp/releases/tag/v26.09.0)
+[Release](https://homelabone.xenoo.dev/gittea/Lilly/kelp/releases/tag/v26.09.0)
 · 26 commits · 165 unit tests, 312 end-to-end green on the C backend, 267 of
 them on the assembly backend.
 
@@ -819,7 +819,7 @@ borrow, a capability delegated but never granted, the rejected-template message
 
 ## 0.1.5 (2026-09-20)
 
-[Release](https://homelabone.xenoo.dev/gittea/Juniper/kelp/releases/tag/v0.1.5)
+[Release](https://homelabone.xenoo.dev/gittea/Lilly/kelp/releases/tag/v0.1.5)
 · 84 commits · 112 unit tests, 291 end-to-end green on the C backend, 242 of
 them on the assembly backend.
 
@@ -881,7 +881,7 @@ predates this release and reproduces on the C backend at `-O0`.
 
 ## 0.1.4 (2026-09-19)
 
-[Release](https://homelabone.xenoo.dev/gittea/Juniper/kelp/releases/tag/v0.1.4)
+[Release](https://homelabone.xenoo.dev/gittea/Lilly/kelp/releases/tag/v0.1.4)
 · 2 commits · 80 unit tests, 230 end-to-end green.
 
 Five checker bugs, all found by compiling a real program: an 807-line JSON
@@ -915,7 +915,7 @@ function passes a value where the callee's hidden parameter is a pointer.
 
 ## 0.1.3 (2026-09-19)
 
-[Release](https://homelabone.xenoo.dev/gittea/Juniper/kelp/releases/tag/v0.1.3)
+[Release](https://homelabone.xenoo.dev/gittea/Lilly/kelp/releases/tag/v0.1.3)
 · 3 commits · 80 unit tests, 229 end-to-end green.
 
 **A bare literal takes its sibling operand's type on either side.** The same
@@ -934,7 +934,7 @@ so `BASE + wide` stays a real mismatch.
 
 ## 0.1.2 (2026-09-19)
 
-[Release](https://homelabone.xenoo.dev/gittea/Juniper/kelp/releases/tag/v0.1.2)
+[Release](https://homelabone.xenoo.dev/gittea/Lilly/kelp/releases/tag/v0.1.2)
 · 10 commits · 80 unit tests, 227 end-to-end green.
 
 The five gaps a real program found, plus the reference section that was
@@ -968,7 +968,7 @@ missing. Recorded as **MK8-S2-M1**.
 
 ## 0.1.1 (2026-09-19)
 
-[Release](https://homelabone.xenoo.dev/gittea/Juniper/kelp/releases/tag/v0.1.1)
+[Release](https://homelabone.xenoo.dev/gittea/Lilly/kelp/releases/tag/v0.1.1)
 · 11 commits · 80 unit tests, 214 end-to-end green (every heap fixture also
 rebuilt with `-fsanitize=address` and run).
 

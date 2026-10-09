@@ -13,7 +13,7 @@ No capability.
 
 ```toml
 [dependencies]
-csv = "Juniper/fpl/csv"
+csv = "Lilly/fpl/csv"
 ```
 
 ```kelp

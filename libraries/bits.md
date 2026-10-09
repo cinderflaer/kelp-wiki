@@ -13,7 +13,7 @@ No capability.
 
 ```toml
 [dependencies]
-bits = "Juniper/fpl/bits"
+bits = "Lilly/fpl/bits"
 ```
 
 ```kelp

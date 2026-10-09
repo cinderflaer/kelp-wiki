@@ -13,8 +13,8 @@ remote, landed in your project's `src/deps/`.
 ```toml
 # coral.toml
 [dependencies]
-json = "Juniper/fpl/json"
-hash = "Juniper/fpl/hash"
+json = "Lilly/fpl/json"
+hash = "Lilly/fpl/hash"
 ```
 
 ```kelp
@@ -72,7 +72,7 @@ Each page in this chapter is written to the same shape: what it is, the dependen
 line and capability grant, the whole API with argument and panic behaviour, an
 example whose output was checked against `kelpc`, and what it deliberately does
 **not** do. The library's own source is one file, `lib.kp`, in the
-[fpl repository](https://homelabone.xenoo.dev/gittea/Juniper/fpl).
+[fpl repository](https://homelabone.xenoo.dev/gittea/Lilly/fpl).
 
 ## Pages
 

@@ -10,7 +10,7 @@ Leveled log lines with a unix timestamp and a stable prefix.
 
 ```toml
 [dependencies]
-log = "Juniper/fpl/log"
+log = "Lilly/fpl/log"
 ```
 
 ```kelp

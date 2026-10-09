@@ -34,8 +34,8 @@ entry = "src/main.kp"
 report = "src/tasks/report.kp"
 
 [dependencies]
-util      = "Juniper/kelp-util"          # a whole repo
-json      = "Juniper/fpl/json"           # one folder inside a repo
+util      = "Lilly/kelp-util"          # a whole repo
+json      = "Lilly/fpl/json"           # one folder inside a repo
 local     = "file:///srv/git/fpl#other"  # a full URL, folder after '#'
 
 [toolchain]
@@ -64,7 +64,7 @@ building the directory.
 A dependency is a line you write. `owner/repo` resolves against your Gitea over
 SSH; anything containing `://` or `@` is taken as a full URL and used as written.
 
-**A folder dependency lands flat**: `Juniper/fpl/json` puts the *contents* of
+**A folder dependency lands flat**: `Lilly/fpl/json` puts the *contents* of
 `json/` at `src/deps/json/`, so the import is
 
 ```kelp

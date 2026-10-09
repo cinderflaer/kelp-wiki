@@ -12,7 +12,7 @@ filesystem, so the importer must grant it a pattern.
 
 ```toml
 [dependencies]
-fsx = "Juniper/fpl/fsx"
+fsx = "Lilly/fpl/fsx"
 ```
 
 ```kelp

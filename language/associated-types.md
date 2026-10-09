@@ -8,7 +8,7 @@ A trait can name a **type** that each impl supplies. The trait can promise "I
 produce a `next` value" without saying what that value is. The impl binds the
 type, and generic code reaches it through the bound as `I::Item`.
 
-Source: [`plan/traits.md` §10](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/traits.md).
+Source: [`plan/traits.md` §10](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/traits.md).
 
 Dispatch does not change. `I::Item` is a concrete type at every instantiation,
 just as a type parameter is, so nothing new is lowered and a freestanding image

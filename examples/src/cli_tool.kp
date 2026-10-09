@@ -6,7 +6,7 @@
 // Dependency:
 //
 //   [dependencies]
-//   argparse = "Juniper/fpl/argparse"
+//   argparse = "Lilly/fpl/argparse"
 //
 // Demonstrates: flags versus options (`--name` never takes a value,
 // `--name=value` and `--name value` both do), a declared default, positionals,

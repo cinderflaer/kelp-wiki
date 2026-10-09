@@ -11,7 +11,7 @@
 // `fsx` is a dependency:
 //
 //   [dependencies]
-//   fsx = "Juniper/fpl/fsx"
+//   fsx = "Lilly/fpl/fsx"
 //
 // Demonstrates: the capability grant on an import, an HTTP request built as data,
 // reading a response's status, and `write_atomic` instead of a truncate-in-place

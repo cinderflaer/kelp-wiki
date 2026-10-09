@@ -9,8 +9,8 @@ prints the result canonically. This is the first example with a **dependency**.
 
 | | |
 | --- | --- |
-| Source | [`src/json_filter.kp`](https://homelabone.xenoo.dev/gittea/Juniper/kelp-wiki-wikijs/raw/branch/main/examples/src/json_filter.kp) |
-| Needs | `json = "Juniper/fpl/json"` |
+| Source | [`src/json_filter.kp`](https://homelabone.xenoo.dev/gittea/Lilly/kelp-wiki-wikijs/raw/branch/main/examples/src/json_filter.kp) |
+| Needs | `json = "Lilly/fpl/json"` |
 | Shows | an owned tree, index walking, typed readers, rebuilding a document |
 
 ## The dependency
@@ -21,7 +21,7 @@ A library is a folder in a git repo, so a project declares the folder and gets i
 ```toml
 # coral.toml
 [dependencies]
-json = "Juniper/fpl/json"
+json = "Lilly/fpl/json"
 ```
 
 ```sh
