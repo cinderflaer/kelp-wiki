@@ -111,8 +111,9 @@ target both build, both binaries are run and their stdout and exit status must b
 byte-identical. A target the `llvm` backend cannot build is recorded with its
 refusal message rather than failed, and a crash or a diagnostic that is not a
 named refusal fails the run. It also ratchets a coverage count, `LLVM_BUILT_BASELINE`,
-which may only rise: **223 of the 223 targets** at the MK7 S5 tip, so **no target
-is refused** and the ranking is empty, which is the plan's §4.1 gate. The ranking
+which may only rise. On `main` the constant is 404, and the gate is that no target
+the C oracle builds is a mismatch or a crash. Refusals are recorded, not failed,
+so a refusal is visible in the report rather than hidden. The ranking
 report still prints any refusal grouped by its exact message, so a refusal that
 arrived with a new fixture names the slice it waits on. The sweep compiles the
 whole corpus twice, so it is `#[ignore]`d:
@@ -197,8 +198,8 @@ the repository's own Kelp sources.
 ## Benchmarks
 
 The kernels below are the compiler's own speed gates, written in Kelp, Rust, C++
-and Python. The C++/Rust/Kelp suite over the standard problem set is a different
-thing and lives at [Benchmarks](/compiler/benchmarks).
+and Python. The thirteen-program C, Rust and Kelp suite is a different thing, and
+it lives at [Benchmarks](/tooling/benchmarks).
 
 Two benchmarks under `bench/`, each with a recorded `results.txt`:
 

@@ -8,11 +8,14 @@ Four small pieces turn a commit into a binary somebody else can check and instal
 `build/release.sh` builds it, `build/verify-reproducible.sh` proves the build is
 repeatable, `build/install.sh` installs a downloaded one only after it verifies,
 and `kelpc version --verbose` says what a binary was built from. The design is
-[`plan/reproducible-builds.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/reproducible-builds.md);
+[`plan/reproducible-builds.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/reproducible-builds.md);
 the installer and the version output are tested by `kelpc/tests/release_tooling.rs`.
 They are scripts in the compiler repository, not subcommands of `kelpc`.
 
 ## `kelpc version --verbose`
+
+The output below was copied from a `kelpc 26.09.5` build. The format is the same on
+`kelpc 26.10.4`: the version, then the commit, build date, rustc and LLVM lines.
 
 ```text
 $ kelpc version

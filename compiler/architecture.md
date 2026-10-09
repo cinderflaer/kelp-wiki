@@ -10,7 +10,7 @@ LLVM IR. The pass boundaries are deliberate: a checker bug is easier to find
 when the pass that owns it is the only one running.
 
 Authority:
-[`plan/architecture.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/architecture.md),
+[`plan/architecture.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/architecture.md),
 "Compiler crate layout" and "Key implementation notes".
 
 ## Lexing (`lexer.rs`)
@@ -58,9 +58,6 @@ expression precedence. Three constructs do not survive parsing as themselves:
   hand-written `val h = ...` would give, because the arms have to read a payload
   out of a place that outlives them. Both desugarings stage the *root* of a field
   chain (`ast::temporary_root`), so the whole temporary is freed once.
-
-`pretty.rs` is an AST printer and is dead code: a formatter cannot be built on
-the AST, for the reasons `fmt.rs`'s header gives.
 
 ## Modules and resolution (`resolve.rs`)
 
@@ -136,7 +133,7 @@ this block" and "which die before this return" as it writes each one, and
 | Module | Emits | Notes |
 | --- | --- | --- |
 | `codegen_c.rs` | C source text | value-position blocks use the GNU statement-expression extension `({ ...; expr; })`, which both `gcc` and `clang` accept; the `Bytes`/`String` runtime (allocation, bounds checks, `free`) is the text of `kelpc/runtime/kelp_rt.c`, emitted into every generated program; the generated C carries a `#line` directive before every statement, so a `cc` failure names the `.kp` file and the line the statement is written on (plan item 20, closed) |
-| `codegen_llvm.rs` | LLVM IR | the MK7 backend: a peer of `codegen_c.rs` over the same `tir`, covering the whole language, so it builds every target the C backend builds and the two agree byte for byte over the corpus. It attaches DWARF line locations, so a fault in the object names the `.kp` file and the line the statement is on. One guard stays in `place_of` for an owned rvalue no staging site claimed. See [Backends](/compiler/backends) and the MK7 record in [`plan/done.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/done.md) |
+| `codegen_llvm.rs` | LLVM IR | the MK7 backend: a peer of `codegen_c.rs` over the same `tir`, covering the whole language, so it builds every target the C backend builds and the two agree byte for byte over the corpus. It attaches DWARF line locations, so a fault in the object names the `.kp` file and the line the statement is on. One guard stays in `place_of` for an owned rvalue no staging site claimed. See [Backends](/compiler/backends) and the MK7 record in [`plan/done.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/done.md) |
 | `externs.rs` | the C bodies of `extern fun` | the operations that cannot be written in Kelp at all: `codegen_c.rs` writes them into every generated C program, and the `llvm` path writes the same text to `<out>.externs.c` and links the object it compiles |
 | `kelpc/runtime/kelp_rt.c` | the C runtime text, not a compiler module | the single source for the bytes/string routines, the panic and assert paths, the allocation helpers and `kelp_argc`/`kelp_argv`: `codegen_c.rs` emits it into every generated program, and the `llvm` path links it as an object |
 | `kelpc/build.rs` | the runtime object | compiles `kelp_rt.c` once, at `kelpc`'s own build time, into `kelp_rt.o`; `driver.rs` embeds that object with `include_bytes!` and writes it to a temporary file when the `llvm` path links |
@@ -228,7 +225,7 @@ fun main() {
 | A library or object target | "Using a library" means copying or fetching a folder of `.kp` sources: see [Libraries](/libraries) |
 | A module dependency list | `kelpc check --json` answers with diagnostics; which module depends on which is still not askable outside the compiler, which is the other half of the interface a build cache wants |
 | An optimiser | There is no separate hook to add: `-O0`, `-O1`, `-O2`, `-O3` and `-Os` select the LLVM pass pipeline and the target machine's codegen level, and the same `-O` is given to the per-program C object and the final link. `-O2` is the default. |
-| Incremental compilation and a build cache | `kelpc build --incremental` splits the backend into per-module units and caches their objects by a hash of each unit's IR (see [Incremental builds](/compiler/incremental)); the front end is still whole-program, and [Coral](/getting-started/install) owns the project-level up-to-date check |
+| Incremental compilation and a build cache | `kelpc build --incremental` splits the backend into per-module units and caches their objects by a hash of each unit's IR (see [Incremental builds](/compiler/incremental)); the front end is still whole-program, and [Coral](/tooling/coral) owns the project-level up-to-date check |
 
 ## See also
 

@@ -1,6 +1,6 @@
 ---
 title: "Compiler"
-description: "kelpc is a Rust program that takes .kp sources through lexing, preprocessing, parsing, type checking, move/borrow checking and code generation, then hands the result to a backend. The compiler is..."
+description: "kelpc is a Rust program that takes .kp sources through lexing, preprocessing, parsing, type checking, move and borrow checking, and code generation. This page maps each stage to its source file."
 isPublished: true
 tags: "compiler"
 ---
@@ -19,7 +19,7 @@ cargo build --release -p kelpc
 
 | Stage | File | Job |
 | --- | --- | --- |
-| CLI | `main.rs` | `build`, `run`, `check`, `fmt`, `lint`, `version`; resolves the optimization level and the backend |
+| CLI | `main.rs` | `build`, `run`, `check`, `fmt`, `lint`, `doc`, `cache`, `version`; resolves the optimization level and the backend |
 | Lexing | `lexer.rs` | source to span-carrying tokens; newline-sensitive; UTF-8 in literals |
 | Preprocessing | `preprocess.rs` | `%*alias*%` text substitution, before the parser |
 | Parsing | `parser.rs` | recursive descent plus a Pratt expression parser; `if let` and `for` are desugared here |
@@ -31,16 +31,18 @@ cargo build --release -p kelpc
 | Backend | `backend.rs` | the one backend, `llvm`, and the project's internal oracle switch that reaches the C backend |
 | Finishing | `driver.rs` | writes the artifact and invokes the C compiler |
 | Diagnostics | `diag.rs` | a span is one file's byte range; this maps a module id back to `file:line:col` |
-| Stdlib sources | `stdlib.rs` | the `std/*.kp` text, embedded with `include_str!`, and the capability domains |
+| Stdlib sources | `stdlib.rs` | the `kelpc/std/*.kp` text, embedded with `include_str!`, and the capability domains |
 | C bodies for `extern fun` | `externs.rs` | the operations that cannot be written in Kelp at all: written into every generated C program, and compiled per program from `<out>.externs.c` into the object the `llvm` path links |
-| C runtime text | `kelpc/runtime/kelp_rt.c` | `kelpc`'s own C runtime: the `Bytes`/`String` routines, the panic path and the allocation helpers. `codegen_c.rs` emits it into every generated program, and `build.rs` compiles it into the object the `llvm` path links |
+| C runtime text | `kelpc/runtime/kelp_rt.c` | `kelpc`'s own C runtime: the `Bytes`/`String` routines, the panic path and the allocation helpers. `codegen_c.rs` emits it into every C-oracle program, and `build.rs` compiles it into the object the `llvm` path links |
 | Formatting | `fmt.rs` | `kelpc fmt`, token-level |
+| Documentation | `doc.rs` | `kelpc doc`: reads the `///` and `//!` comments from the token trivia |
+| Linting | `lint.rs` | `kelpc lint`: warnings for the style rules a formatter cannot enforce |
 
 The design authority for this chapter is
-[`plan/architecture.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/architecture.md),
+[`plan/architecture.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/architecture.md),
 with the MK7 backend record, and the retired hand-written track it replaced,
 archived in
-[`plan/done.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/done.md).
+[`plan/done.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/done.md).
 
 ## Pages
 
@@ -49,7 +51,7 @@ archived in
 - [Backends](/compiler/backends): `llvm`, the one backend, and why `c` stays the oracle
 - [Runtime](/compiler/runtime): the C that is still C, and the capability matcher
 - [Tests](/compiler/tests): the fixture suite, the differential sweeps, the memory gate
-- [Benchmarks](/compiler/benchmarks): the C++/Rust/Kelp suite, its current table, and what it has changed
+- [Benchmarks](/compiler/benchmarks): what the C, Rust and Kelp suite says about the compiler
 
 ## See also
 

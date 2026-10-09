@@ -11,13 +11,14 @@ cache, dependencies, toolchains) and calls `kelpc` as a subprocess.
 Coral is now written in Kelp and lives at the root of its repository. The earlier
 Rust implementation is kept on the `rust-legacy` branch for reference only, must not
 be used in production, and its removal is pending. This page follows
-[Coral's README](https://homelabone.xenoo.dev/gittea/Juniper/coral/src/branch/main/README.md),
-which is the authority, and it marks the places where the binary on this machine
-does something the README does not describe. Those are listed again in
-[Where the README and the binary disagree](#where-the-readme-and-the-binary-disagree).
+[Coral's README](https://homelabone.xenoo.dev/gittea/Lilly/coral/src/branch/main/README.md),
+which is the authority for the design. Where the binary's output and the README
+differ, this page follows the binary and says so. Those places are listed again in
+[where this page and the README could disagree](#where-this-page-and-the-readme-could-disagree).
 
-The build this page was written against is Coral `v0.5.4`
-(`coral toolchain coral installed`).
+This page describes Coral as it is on the `main` branch, which is the Kelp port.
+That port has no release tag yet. The newest tag, `v26.09.4`, is the older Rust
+build, which is kept on the `rust-legacy` branch for reference only.
 
 ## Install and where Coral lives
 
@@ -26,19 +27,16 @@ versions on disk live under `~/.coral/toolchains/`, and `~/.coral/bin` is what
 `use` points at:
 
 ```sh
-coral toolchain coral install v0.5.4
-coral toolchain coral use v0.5.4        # ~/.coral/bin/coral -> that build
-coral toolchain kelp install v0.1.4
-coral toolchain kelp use v0.1.4         # ~/.coral/bin/kelpc -> that build
+coral toolchain kelp install v26.10.4
+coral toolchain kelp use v26.10.4       # ~/.coral/bin/kelpc -> that build
 ```
 
 `~/.coral/bin` is not put on `PATH` for you. `use` prints a one-time reminder if
 it is missing, the same way rustup treats `~/.cargo/bin`.
 
-To get Coral itself from a checkout rather than a release asset, the repository
-carries a flake: `nix build .#coral`, or `nix run . -- version`. It builds Coral
-only, since the compiler is this page's business (see
-[Install and build](/getting-started/install#install-coral-with-nix)).
+The flake that builds Coral with Nix, `nix build .#coral`, is on the `v26.09.4` tag
+(the Rust build) and not yet on `main`. For the compiler, see
+[Install and build](/getting-started/install#install-coral-with-nix).
 
 ## The command surface
 
@@ -100,7 +98,7 @@ commands:
 | `coral lint [paths...]` | print the compiler's lint warnings (a comment run, the `else if` link, the project's naming case); always exits zero |
 | `coral test [name-filter] [--json] [--valgrind]` | build and run every fixture under `tests/`, compare stdout, and check the fixtures marked as refused |
 | `coral toolchain kelp|coral ...` | list, installed, install, use, pin |
-| `coral version` / `coral --version` | print the release this binary was built from, as `coral 26.09.1`, padded the way the tag spells it |
+| `coral version` / `coral --version` | print the release this binary was built from, as `coral 26.10.0` on `main` (the version constant in `src/main.kp`), padded the way a tag spells it |
 
 `coral version` and `coral --version` are the same command, and neither reads a
 project: both answer outside a project too.
@@ -266,12 +264,12 @@ http_pool = 4
 report = "src/tasks/report.kp"
 
 [dependencies]
-util = "Juniper/kelp-util"           # the whole repo
-json = "Juniper/fpl/json"            # one folder inside a repo
+util = "example/kelp-util"           # the whole repo
+json = "example/fpl/json"            # one folder inside a repo
 local = "file:///srv/git/fpl#other"  # a full URL, folder after '#'
 
 [toolchain]
-kelp = "v0.1.4"
+kelp = "v26.10.4"
 ```
 
 ### Flat keys
@@ -300,18 +298,18 @@ does not know yet.
 | Section | Shape | Notes |
 | --- | --- | --- |
 | `[caps]` | `domain = ["pattern", ...]` | read by `kelpc`, not Coral: it restricts the entry module's own capability grant; see [below](#caps-the-entry-modules-own-grant) |
-| `[extern."<module id>"]` | `domain`, `library`, `symbols`, `header`, `include_dirs`, `library_dirs`, `pkg_config` | read by `kelpc`, not Coral: it assigns a user module a capability domain and a native FFI surface; see [below](#extern-user-modules-that-bind-a-native-symbol) |
+| `[extern."<module id>"]` | `domain`, `library`, `symbols`, `header`, `include_dirs`, `library_dirs`, `pkg_config` | read by `kelpc`, not Coral: it assigns a user module a capability domain and a native FFI surface; see [below](#user-modules-that-bind-a-native-symbol-extern) |
 | `[unsafe]` | `modules = ["<module id>", ...]` | read by `kelpc`, not Coral: the modules allowed to contain `unsafe`, an `unsafe fun`, a `static mut` access or an `asm`; see [below](#unsafe-modules-that-may-leave-the-checked-language) |
 | `[target]` | `mode`, `triple`, `entry`, `linker_script`, `panic`, `alloc`, `dealloc`, `realloc`, `cpus` | read by `kelpc`, not Coral: a bare-metal build; see [below](#target-a-freestanding-build) |
 | `[tasks]` | `name = "path/to/file.kp"` | each task compiles as its own unit, and `src/tasks/` is where `init` puts them |
 | `[dependencies]` | `name = "owner/repo[/folder]"` | see [Dependencies](#dependencies) |
-| `[toolchain]` | `kelp = "v0.1.4"` | written by `coral toolchain kelp pin`, a line edit that leaves comments and section order alone |
+| `[toolchain]` | `kelp = "v26.10.4"` | written by `coral toolchain kelp pin`, a line edit that leaves comments and section order alone |
 
 Pinning is how a project builds with the compiler it was written against instead
 of whatever `coral toolchain kelp use` last set machine-wide:
 
 ```sh
-coral toolchain kelp pin v0.1.4    # write it into coral.toml
+coral toolchain kelp pin v26.10.4  # write it into coral.toml
 coral toolchain kelp pin           # print it
 coral toolchain kelp pin --clear   # drop it, back to the global default
 ```
@@ -400,7 +398,7 @@ whole-address-space `mmio = ["*"]`, the line to grep for in a review. See
 [Capabilities](/language/capabilities#mmio-device-registers) for what the
 check does and does not decide.
 
-### `[extern."<module id>"]`: user modules that bind a native symbol
+### User modules that bind a native symbol (`[extern]`)
 
 `extern fun` used to be compiler-only: user code got "only compiler-shipped
 stdlib modules may declare 'extern fun'", because a raw `extern fun` bypasses
@@ -590,9 +588,11 @@ Where each kind of build lands, inside the project's `build/`:
 | a task | `build/tasks/task-<name>`, `build/tasks/task-<name>.ll`, `build/tasks/task-<name>.o` |
 
 The two files beside each binary are the backend's own: `llvm` writes the textual
-IR and the object. They were `.c` while the C backend was what built a program,
-and nothing but `kelpc` reads them.
-| build cache | `build/.coral-cache/<unit>.<mode>.fp`, the fingerprints that make `coral run` say "up to date" |
+IR and the object. Nothing but `kelpc` reads them.
+
+The build cache is `build/.coral-cache/`, which holds one fingerprint file per
+target (`<out_name>.<profile>.fp`). Those fingerprints are what make `coral run`
+say "up to date".
 
 Tasks are built as their own units. Declaring one and running it:
 
@@ -622,8 +622,8 @@ A dependency is a line you write, naming a repository or one folder inside one:
 ```toml
 [dependencies]
 polyp = "fpl/polyp"                  # a first-party library, by name
-util = "Juniper/kelp-util"           # the whole repo
-json = "Juniper/fpl/json"            # one folder inside a repo
+util = "example/kelp-util"           # the whole repo
+json = "example/fpl/json"            # one folder inside a repo
 local = "file:///srv/git/fpl#other"  # a full URL, folder after '#'
 ```
 
@@ -670,11 +670,11 @@ The line is written by hand, and `coral sync` is what fetches it:
 
 ```toml
 [dependencies]
-fpl = "Juniper/fpl"           # the whole repo
-url = "Juniper/fpl/url"       # one folder inside it
+fpl = "example/fpl"           # the whole repo
+url = "example/fpl/url"       # one folder inside it
 ```
 
-`Juniper/fpl` is the whole repository, so its checkout lands at `src/deps/fpl/` and
+`example/fpl` is the whole repository, so its checkout lands at `src/deps/fpl/` and
 the import names the folder inside it:
 
 ```kelp
@@ -691,8 +691,8 @@ dependency that is missing; only `coral sync` refreshes one that is already ther
 *contents* are downloaded. They land at `src/deps/<name>/` either way, so the
 import is `impl "deps/<name>/lib"` no matter which repository or folder it came
 from:
-[Coral's README](https://homelabone.xenoo.dev/gittea/Juniper/coral/src/branch/main/README.md):
-a folder dependency lands **flat**, so `Juniper/fpl/json` puts the contents of
+[Coral's README](https://homelabone.xenoo.dev/gittea/Lilly/coral/src/branch/main/README.md):
+a folder dependency lands **flat**, so `example/fpl/json` puts the contents of
 `json/` at `src/deps/json/`, and the import is `impl "deps/json/lib"` no matter
 which repository it came from. The clone behind it uses
 `--filter=blob:none --sparse` so only the named folder comes down, and a server
@@ -701,14 +701,14 @@ that ignores the filter still works: git says so and does the slower thing.
 ```text
 $ cat coral.toml
 name = "coraldemo"
-version = "0.26.9"
+version = "0.1.0"
 entry = "src/main.kp"
 
 [dependencies]
-url = "Juniper/fpl/url"
+url = "example/fpl/url"
 
 $ coral sync
-coral: refreshing 'url' from ssh://gitea@thinkbox:2222/Juniper/fpl.git (url)
+coral: refreshing 'url' from https://git.example.com/gittea/example/fpl.git (url)
 coral: 'url' is at 61f0b8b54c262eeee785038770d1a86a4509ac02
 coral: 'coraldemo' synced (installed 0, fetched 1)
 
@@ -763,15 +763,18 @@ tip. A project with **no** pin gets a report rather than an install, because whi
 compiler a pin-less project uses is `~/.coral/bin/kelpc`'s business and changing
 that is a machine-wide decision a per-project command should not make:
 
+Coral's own messages use a dash between a message and its reason. The examples
+below write a colon in its place.
+
 ```text
 $ coral sync --dry-run
-coral: no [toolchain] pin — builds use kelpc v0.1.4 (from ~/.coral/bin)
+coral: no [toolchain] pin: builds use kelpc v26.10.4 (from ~/.coral/bin)
 coral: would fetch 'json' at the remote tip
 coral: 'depdemo' would install 0 and fetch 1 (nothing changed)
 
 $ coral sync --offline
-coral: no [toolchain] pin — builds use kelpc v0.1.4 (from ~/.coral/bin)
-error: dependency 'json' is not present at the remote tip, and --offline forbids fetching it — run 'coral sync' where the network is available
+coral: no [toolchain] pin: builds use kelpc v26.10.4 (from ~/.coral/bin)
+error: dependency 'json' is not present at the remote tip, and --offline forbids fetching it: run 'coral sync' where the network is available
 
 $ coral build
 coral: fetching 'fpl' at the remote tip
@@ -797,7 +800,7 @@ is `coral sync` after checkout, and a build that must not reach the network is
 
 A version means a git tag on the kelp or coral repository. `install` prefers the
 tag's own Gitea release: when the release carries an asset named for this platform
-(`kelpc-0.1.4-linux-x86_64`), that binary is downloaded, marked executable and put
+(`kelpc-26.10.4-linux-x86_64`), that binary is downloaded, marked executable and put
 at `~/.coral/toolchains/kelp/<ver>/kelpc`, with no cargo involved. An asset whose
 name carries a *different* version is ignored, so a mislabelled asset cannot
 install the wrong compiler; a name that carries no version at all is accepted (a
@@ -805,7 +808,7 @@ generic single-binary release). A tag with no release, no usable asset for this
 platform, or nothing but a `.zip` falls back to
 `git clone --branch <ver> --depth 1` plus `cargo build --release`, and the fallback
 is announced with its reason
-([Coral's README](https://homelabone.xenoo.dev/gittea/Juniper/coral/src/branch/main/README.md)).
+([Coral's README](https://homelabone.xenoo.dev/gittea/Lilly/coral/src/branch/main/README.md)).
 
 Two details from the README that are worth knowing before trusting a failed
 install: the release list lives behind the Gitea HTTPS API, a private instance
@@ -826,15 +829,13 @@ different versions.
 
 ```text
 $ coral toolchain kelp installed
-v0.1.4
-$ coral toolchain coral installed
-v0.5.4
+v26.10.4
 ```
 
 ## Which compiler Coral runs
 
 Coral resolves `kelpc` in this order, and stops at the first hit
-([Coral's README](https://homelabone.xenoo.dev/gittea/Juniper/coral/src/branch/main/README.md)):
+([Coral's README](https://homelabone.xenoo.dev/gittea/Lilly/coral/src/branch/main/README.md)):
 
 1. `$KELPC`, which is how a compiler built from source gets used;
 2. the project's `[toolchain]` pin, installed on the spot if it is not there;
@@ -868,7 +869,7 @@ function exists. It also lists documentation rather than the program, so a
 function with no doc comment above it does not appear in `docs list` at all.
 
 Two consequences of the dependency model, both from
-[Coral's README](https://homelabone.xenoo.dev/gittea/Juniper/coral/src/branch/main/README.md):
+[Coral's README](https://homelabone.xenoo.dev/gittea/Lilly/coral/src/branch/main/README.md):
 a folder dependency carries no manifest at all, so nothing can declare its own
 dependencies, and a whole-repo dependency that carries its own `[dependencies]` is
 not followed, so **nothing fetches a dependency of a dependency**. A per-target

@@ -11,14 +11,14 @@ Four repositories, one language. Nothing here is a monorepo, and each project's
 
 | Repository | What is in it |
 | --- | --- |
-| [`kelp`](https://homelabone.xenoo.dev/gittea/Juniper/kelp) | `kelpc/src` (the compiler), `kelpc/std` (the standard library, in Kelp), `kelpc/runtime` (the reviewed C), `kelpc/tests` (fixtures and gates), `examples/`, `bench/speed/`, `plan/` (the design) |
-| [`coral`](https://homelabone.xenoo.dev/gittea/Juniper/coral) | the build tool and package manager |
-| [`lighthouse`](https://homelabone.xenoo.dev/gittea/Juniper/lighthouse) | `server/` (the LSP server), `intellij/` |
-| [`fpl`](https://homelabone.xenoo.dev/gittea/Juniper/fpl) | one folder per first-party library |
-| [`kelp-wiki`](https://homelabone.xenoo.dev/gittea/Juniper/kelp-wiki) | this documentation site |
+| [`kelp`](https://homelabone.xenoo.dev/gittea/Lilly/kelp) | `kelpc/src` (the compiler), `kelpc/std` (the standard library, in Kelp), `kelpc/runtime` (the reviewed C), `kelpc/tests` (fixtures and gates), `examples/`, `bench/` (the benchmark suite), `plan/` (the design) |
+| [`coral`](https://homelabone.xenoo.dev/gittea/Lilly/coral) | the build tool and package manager |
+| [`lighthouse`](https://homelabone.xenoo.dev/gittea/Lilly/lighthouse) | `server/` (the LSP server), `intellij/` |
+| [`fpl`](https://homelabone.xenoo.dev/gittea/Lilly/fpl) | one folder per first-party library |
+| [`kelp-wiki`](https://homelabone.xenoo.dev/gittea/Lilly/kelp-wiki) | this documentation site |
 
-The local checkout of all of them is `KelpLANG/`, one folder each, so a search
-across the language, the stdlib and the libraries is one `rg`.
+Keep a checkout of each repository side by side, one folder each. A search across
+the language, the stdlib and the libraries is then one `rg` from the parent folder.
 
 ## Building and testing
 
@@ -37,8 +37,8 @@ cargo test --test memory_gate      -- --ignored               # valgrind over th
 cargo test --test cap_matcher      -- --ignored               # the matcher vs its C reference
 ```
 
-`bench/speed/run.sh` times four workloads written in four languages and checks
-their checksums.
+`bench/run.sh` times the thirteen-program suite in C, Rust and Kelp and checks
+their output. `bench/speed/run.sh` times a smaller four-workload set.
 
 ## What a change should carry
 
@@ -76,7 +76,7 @@ the scheme is `26.09.0` in each repository, and it applies to all of them
 (`kelp`, `coral`, `lighthouse`).
 
 - The **release name is the padded one**: the tag is `v26.09.0`, an asset is
-  `kelpc-26.09.0-linux-x86_64`, and `kelpc version` prints `kelpc 26.09.0`. Those
+  `kelpc-26.09.0-linux-x86_64`, and `kelpc version` prints `kelpc 26.10.4` for the release tagged `v26.10.4`. Those
   strings are compared as text (Coral refuses a release asset whose name spells a
   different version), so the padding has to be the same everywhere.
 - **Cargo and npm refuse a leading zero** in a version component, so a
@@ -149,10 +149,11 @@ carries the four keys the git storage module reads (`title`, `description`,
 YAML list. [Source documents](/meta/source-documents) has the front matter and the
 navigation rules in full.
 
-New prose written here avoids em dashes and en dashes. Use a colon or a comma
-for an aside, a semicolon or a full stop between clauses, and a plain hyphen in
-a range. Older pages here did not follow that rule; do not sweep them, only
-write the new text that way.
+This wiki has no em dashes and no en dashes. Use a colon or a comma for an aside,
+a semicolon or a full stop between clauses, and a plain hyphen in a range. Check a
+new page for them before committing it. The generated output of `kelpc doc` is
+the one place a dash can appear, and the [`kelpc doc`](/tooling/kelpc-doc) page
+says so.
 
 The MkDocs layout this repository used before 2026-09-19 (`docs/`,
 `mkdocs.yml`, `hooks/kelp_lexer.py` and the generator scripts under `tools/`) is
@@ -192,7 +193,7 @@ to be updated when that source moves:
 | [Standard library index](/reference/stdlib-index) | `kelpc/std/*.kp` |
 
 The [roadmap page](/meta/roadmap) is a pointer rather than a copy: it names
-`kelp/plan/roadmap.md` as the authority and copies none of its tables, diagrams
+`plan/roadmap.md` in the `kelp` repository as the authority and copies none of its tables, diagrams
 or statuses, so its status cannot drift. The roadmap block on the [home page](/home) is
 kept by hand.
 

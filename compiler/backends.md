@@ -12,7 +12,7 @@ and no `KELPC_BACKEND`.
 | Backend | Emits | Finished with | Status |
 | --- | --- | --- | --- |
 | `llvm` (the one backend) | LLVM IR, then an object | `<out>.ll` and `<out>.o`, then `cc -O2 -o <out> <out>.o -lm` | the whole language the [Language](/language) pages describe; one guard remains for an owned temporary at a place the lowering did not stage, and nothing in the corpus reaches it; the object carries DWARF line locations |
-| `c` (the project's own oracle) | C source text | `cc -O2 -fwrapv -lm` | complete and maintained, reached only through the project's internal switch, and the thing every `llvm` build is compared against: same stdout and exit status byte for byte over the corpus (362 of 655 targets, 0 mismatches, the refusal ranking empty) |
+| `c` (the project's own oracle) | C source text | `cc -O2 -fwrapv -lm` | complete and maintained, reached only through the project's internal switch, and the thing every `llvm` build is compared against: same stdout and exit status byte for byte over the corpus (the gate is zero mismatches; the number of targets built is recorded in `LLVM_BUILT_BASELINE`) |
 
 A retired spelling names its own removal rather than reading as an unknown flag.
 Whatever `--backend=` carries is refused with
@@ -53,7 +53,7 @@ becomes a trait when a third backend makes the interface worth naming.
 `kelpc` lowers the typed IR to **LLVM IR** and lets LLVM generate the object, the
 way `rustc` does. This is MK7, begun at stage S1 on 2026-09-21, and the milestone
 record is
-[`plan/done.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/done.md).
+[`plan/done.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/done.md).
 
 It covers the **whole language**, the surface the [Language](/language) pages
 describe. `c` is still the oracle that build is compared against, and the
@@ -95,15 +95,17 @@ categories below are what the differential sweep measures:
   object so the deny path's text is the C backend's byte for byte.
 
 The corpus agrees byte for byte. The differential sweep builds every fixture the
-C backend builds with `llvm` too, runs both and compares stdout and exit status:
+C backend builds with `llvm` too, runs both and compares stdout and exit status.
+The run ends with one summary line, and its shape is this (the counts change as the
+corpus grows, so none are quoted here):
 
 ```text
-362 of 655 corpus targets built on both backends,
-0 refused, 0 mismatch(es), 0 crash(es)
+llvm coverage sweep: N of M corpus targets built by the 'c' backend (R rejected by it),
+K also built by the 'llvm' backend, F refused, X mismatch(es), Y crash(es)
 ```
 
-`LLVM_BUILT_BASELINE` is 362 and the refusal ranking is empty, which is the
-plan's §4.1 gate. **The baseline is a ratchet**: it may only rise, and a refusal
+`LLVM_BUILT_BASELINE` is the count of corpus targets the `llvm` backend builds, and
+the sweep's gate is zero mismatches, which is the plan's §4.1 gate. **The baseline is a ratchet**: it may only rise, and a refusal
 that arrived with a new fixture is recorded with its message rather than being
 allowed to lower the number. Freestanding work does not move it: a freestanding
 project is LLVM-only (below), so the C oracle never builds one, and the
@@ -262,8 +264,8 @@ Two consequences worth knowing:
    where the baseline is `LLVM_BUILT_BASELINE`:
    it builds every fixture the C backend builds with `llvm`, runs both and compares
    stdout and exit status byte for byte, and records a refusal with its message
-   rather than failing it. The baseline is 362 of the 655 corpus targets and the
-   ranking is empty. A refusal that arrived with a new fixture would still be
+   rather than failing it. The baseline is the `LLVM_BUILT_BASELINE` constant, which is
+   404 on `main` at this writing. A refusal that arrived with a new fixture would still be
    recorded, so the ratchet stays the instrument: it may only rise, and a
    backward step is a regression. On its first run it caught a silent miscompile,
    a borrow returned through the value position of an `if` and a returned

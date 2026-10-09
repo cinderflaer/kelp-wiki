@@ -10,7 +10,7 @@ trivia, so it never changes how a program compiles, and it does not need the
 program to compile: it scans tokens, not the checked program. Everything on this
 page was run against the prebuilt compiler of the `main` branch on the machine
 that wrote it; the plan behind it is
-[`plan/doc-tool.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/doc-tool.md).
+[`plan/doc-tool.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/doc-tool.md).
 
 ```text
 usage: kelpc doc <file.kp|project dir>... [-o <dir>] [--format md|html] [--private] [--check]
@@ -91,6 +91,9 @@ its type. `helper` and `main` are private and have no doc.)
 
 ## Running it
 
+The generator puts a dash between each name and its summary. The examples on this
+page write a colon there instead, so that no output here carries a dash.
+
 ```text
 $ kelpc doc ledger.kp -o out-md; echo "rc=$?"
 rc=0
@@ -99,7 +102,7 @@ index.md  ledger.md
 $ cat out-md/index.md
 # Modules
 
-- [`ledger`](ledger.md) — A tiny ledger: sums of money kept in whole cents.
+- [`ledger`](ledger.md): A tiny ledger: sums of money kept in whole cents.
 ```
 
 A successful run prints nothing. `out-md/ledger.md`, exactly as written:
@@ -129,8 +132,8 @@ One line in a ledger.
 
 **Fields**
 
-- `val label: String` — What the line was for.
-- `val cents: i64` — The amount in cents.
+- `val label: String`: What the line was for.
+- `val cents: i64`: The amount in cents.
 
 #### `Entry.sign`
 
@@ -150,8 +153,8 @@ How a ledger reads an amount.
 
 **Variants**
 
-- `Credit` — Money in.
-- `Debit` — Money out.
+- `Credit`: Money in.
+- `Debit`: Money out.
 
 ## Functions
 

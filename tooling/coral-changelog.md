@@ -6,13 +6,18 @@ tags: "tooling, cli"
 ---
 Every release of [Coral](/tooling/coral), newest first. The version is
 `Cargo.toml`'s `version`, the tag is in the
-[coral repository](https://homelabone.xenoo.dev/gittea/Juniper/coral), and the
+[coral repository](https://homelabone.xenoo.dev/gittea/Lilly/coral), and the
 release asset is `coral-<version>-linux-x86_64`.
+
+The Kelp port of Coral now lives at the root of `main`, and the Rust build moved to
+the `rust-legacy` branch. The port has no tag yet, so no entry describes it. The
+newest tag, `v26.09.4`, still builds the Rust version at its root, with the Kelp
+port beside it in `kelp/`.
 
 Release notes live on the Gitea releases page, and each entry below links to
 its own tag. Not every tag has a release: `v0.1.0`, `v0.2.0`, `v0.2.1`,
 `v0.5.1` and `v0.5.2` are tags only. The authority for what Coral does today is
-[its README](https://homelabone.xenoo.dev/gittea/Juniper/coral/src/branch/main/README.md),
+[its README](https://homelabone.xenoo.dev/gittea/Lilly/coral/src/branch/main/README.md),
 which the [Coral page](/tooling/coral) follows.
 
 **Numbering.** Releases are numbered `YY.MM.N`: the two-digit year, the
@@ -45,7 +50,7 @@ spellings have to be the same one.
 
 ## v26.09.4 (2026-09-28)
 
-[Release](https://homelabone.xenoo.dev/gittea/Juniper/coral/releases/tag/v26.09.4)
+[Release](https://homelabone.xenoo.dev/gittea/Lilly/coral/releases/tag/v26.09.4)
 
 - The asset is `coral-26.09.4-linux-x86_64` beside the `v26.09.4` tag.
 - **A quoted dependency value keeps its `#folder` fragment** (BUG-v2Tqm). The
@@ -64,7 +69,7 @@ spellings have to be the same one.
 
 ## v26.09.3 (2026-09-25)
 
-[Release](https://homelabone.xenoo.dev/gittea/Juniper/coral/releases/tag/v26.09.3)
+[Release](https://homelabone.xenoo.dev/gittea/Lilly/coral/releases/tag/v26.09.3)
 
 - The asset is `coral-26.09.3-linux-x86_64` beside the `v26.09.3` tag; the Rust
   binary this release ships is unchanged from `26.09.2`.
@@ -86,7 +91,7 @@ spellings have to be the same one.
 
 ## v26.09.2 (2026-09-24)
 
-[Release](https://homelabone.xenoo.dev/gittea/Juniper/coral/releases/tag/v26.09.2)
+[Release](https://homelabone.xenoo.dev/gittea/Lilly/coral/releases/tag/v26.09.2)
 
 - The asset is `coral-26.09.2-linux-x86_64` beside the `v26.09.2` tag.
 - **`coral version`** (and `coral --version`) prints the release the binary was
@@ -113,7 +118,7 @@ spellings have to be the same one.
 
 ## v26.09.1 (2026-09-21)
 
-[Release](https://homelabone.xenoo.dev/gittea/Juniper/coral/releases/tag/v26.09.1)
+[Release](https://homelabone.xenoo.dev/gittea/Lilly/coral/releases/tag/v26.09.1)
 
 - The asset is `coral-26.09.1-linux-x86_64` beside the `v26.09.1` tag, the
   padded spelling `toolchain install` compares against the tag as text.
@@ -140,7 +145,7 @@ spellings have to be the same one.
 
 ## v26.09.0 (2026-09-20)
 
-[Release](https://homelabone.xenoo.dev/gittea/Juniper/coral/releases/tag/v26.09.0)
+[Release](https://homelabone.xenoo.dev/gittea/Lilly/coral/releases/tag/v26.09.0)
 
 - The first release under `YY.MM.N`, and the first whose asset name carries it:
   `coral-26.09.0-linux-x86_64` beside the `v26.09.0` tag. `toolchain install`
@@ -165,7 +170,7 @@ spellings have to be the same one.
 
 ## v0.5.4 (2026-09-19)
 
-[Release](https://homelabone.xenoo.dev/gittea/Juniper/coral/releases/tag/v0.5.4)
+[Release](https://homelabone.xenoo.dev/gittea/Lilly/coral/releases/tag/v0.5.4)
 
 - A dependency can name one **folder** inside a repo:
   `sillyname = "Juniper/fpl/sillyname"`. It is fetched with
@@ -175,7 +180,7 @@ spellings have to be the same one.
 
 ## v0.5.3 (2026-09-19)
 
-[Release](https://homelabone.xenoo.dev/gittea/Juniper/coral/releases/tag/v0.5.3)
+[Release](https://homelabone.xenoo.dev/gittea/Lilly/coral/releases/tag/v0.5.3)
 · tag and release notes cover the dependency flow introduced in v0.5.1.
 
 - `coral toolchain <component> install <ver>` tells a **missing release** apart
@@ -211,7 +216,7 @@ Tag only; the release notes for v0.5.3 describe the same flow end to end.
 
 ## v0.5.0 (2026-09-19)
 
-[Release](https://homelabone.xenoo.dev/gittea/Juniper/coral/releases/tag/v0.5.0)
+[Release](https://homelabone.xenoo.dev/gittea/Lilly/coral/releases/tag/v0.5.0)
 
 - **One toolchain version at a time.** `install` and `use` leave the store
   under `~/.coral/toolchains/` holding the version just installed. The new
@@ -227,7 +232,7 @@ Tag only; the release notes for v0.5.3 describe the same flow end to end.
 
 ## v0.4.0 (2026-09-19)
 
-[Release](https://homelabone.xenoo.dev/gittea/Juniper/coral/releases/tag/v0.4.0)
+[Release](https://homelabone.xenoo.dev/gittea/Lilly/coral/releases/tag/v0.4.0)
 
 - **`coral sync`**: materialize declared inputs without building, so the step
   you cache, the step you can audit, and `--offline` are separate from compile.
@@ -253,7 +258,7 @@ Tag only; the release notes for v0.5.3 describe the same flow end to end.
 
 ## v0.3.0 (2026-09-19)
 
-[Release](https://homelabone.xenoo.dev/gittea/Juniper/coral/releases/tag/v0.3.0)
+[Release](https://homelabone.xenoo.dev/gittea/Lilly/coral/releases/tag/v0.3.0)
 
 - **Per-project compiler pinning.** `[toolchain] kelp = "v0.1.1"` in
   `coral.toml` names the `kelpc` a project builds with. Resolution order is

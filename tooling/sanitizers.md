@@ -9,7 +9,7 @@ calls and inline `asm` can. A sanitizer build is the way to find those mistakes:
 the program is compiled with Clang or GCC's runtime checks switched on, and a
 bad access stops the program with a report that names the `.kp` file and line.
 The plan behind it is
-[`plan/sanitizers.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/sanitizers.md).
+[`plan/sanitizers.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/sanitizers.md).
 Everything below was run against the prebuilt compiler of the `main` branch.
 
 ## Turning one on

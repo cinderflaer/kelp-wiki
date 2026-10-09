@@ -15,7 +15,7 @@ same program either way.
 
 The command surface is on the [`kelpc` CLI](/tooling/kelpc-cli#incremental-builds-and-the-object-cache)
 page; this page is how it works. The design authority is
-[`plan/incremental-compilation.md`](https://homelabone.xenoo.dev/gitea/Juniper/kelp/src/branch/main/plan/incremental-compilation.md).
+[`plan/incremental-compilation.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/incremental-compilation.md).
 
 ## The split
 
@@ -150,6 +150,9 @@ machine runs low, running no destructors on any worker.
   state. That is its own slice.
 
 ## Measured numbers
+
+These were measured on an earlier build, not on the 26.10 releases. The commands
+below reproduce them, and a fresh run is the number to trust.
 
 Host: the small dev machine this work runs on (7.8 GiB RAM, limited free
 memory). Every cell is the **median of three runs**, in milliseconds, of a real
