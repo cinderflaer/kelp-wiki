@@ -27,24 +27,34 @@ datac Url(val scheme: String, val host: String, val port: u16, val path: String)
 datac Header(val name: String, val value: String)
 datac Response(val status: i32, val headers: List<Header>, val body: Bytes, val reusable: bool)
 datac RateLimit(
-    val limit: Option<u64>,
-    val remaining: Option<u64>,
-    val reset: Option<f64>,
-    val reset_after: Option<f64>,
-    val bucket: Option<String>,
+    val limit: option.Option<u64>,
+    val remaining: option.Option<u64>,
+    val reset: option.Option<f64>,
+    val reset_after: option.Option<f64>,
+    val bucket: option.Option<String>,
 )
 datac Request(val method: String, val url: String, val headers: List<Header>, val body: Bytes)
 datac Client(val timeout_ms: u64, val max_redirects: i32, val follow_redirects: bool)
-datac Pool(val host: String, val port: u16, val size: usize, val timeout_ms: u64, var idle: List<Conn>)
-datac Lease(val fd: i32, val tls_handle: usize, val reused: bool)
-datac Conn(val fd: i32, val tls_handle: usize)
+datac Pool(
+    val host: String,
+    val port: u16,
+    val size: usize,
+    val timeout_ms: u64,
+    var idle: List<Conn>,
+    var idle_since: List<i64>,
+    var idle_ms: u64,
+)
+datac Lease(val fd: i32, val tls_handle: option.Option<tls.TlsHandle>, val reused: bool)
+datac Conn(val fd: i32, val tls_handle: option.Option<tls.TlsHandle>)
 ```
 
 `Conn` is one open connection, plain or TLS, and replaces the bare `net.Socket`
 everywhere in this module: the dial, the pool, redirect-following and the
 framing reader dispatch on it without needing to know which kind they were
-handed. `tls_handle` is `0` for a plain connection (never a real handshake
-result).
+handed. `tls_handle` is `None` for a plain connection and `Some(handle)` for a
+TLS one. `Conn.is_tls()` answers which kind it is, and `Conn.tls()` returns the
+`tls.TlsStream` view of a TLS connection; it panics on a plain one, so check
+`is_tls()` first.
 
 Constants: `DEFAULT_PORT` (`80`), `DEFAULT_HTTPS_PORT` (`443`),
 `DEFAULT_TIMEOUT_MS` (`30000`), `DEFAULT_MAX_REDIRECTS` (`5`), and `pool_size`:
@@ -60,6 +70,7 @@ spliced in by the compiler from the project's `http_pool` setting in
 | `Client.send(req)` | `Response` | the whole exchange, scheme decides plain or TLS; panics on any failure |
 | `Client.try_send(req)` | `Result<Response, HttpErr>` | `send` with the failures as a value (see below) |
 | `try_get(url)` | `Result<Response, HttpErr>` | `get` with the failures as a value |
+| `post_text(url, body, content_type)` | `Response` | a `POST` of `body` with that `Content-Type`, sent through `default_client()`; panics on failure |
 | `Pool.try_send(req)` / `Pool.try_checkout(use_tls)` | `Result<Response, HttpErr>` / `Result<Lease, HttpErr>` | the pooled forms of the same |
 | `empty_headers()` | `List<Header>` | |
 | `Response.is_ok()` | `bool` | status in `200..299` |
@@ -103,8 +114,6 @@ enum HttpErr {
 | `Client.try_send(req)` | `Client.send(req)` | as above |
 | `Pool.try_send(req)` | `Pool.send(req)` | as above, over a pooled connection |
 | `Pool.try_checkout(use_tls)` | `Pool.checkout(use_tls)` | `Result<Lease, HttpErr>` / `Lease` |
-| `conn_send_all_try` / `conn_recv_try` / `conn_recv_into_try` | the plain trio | `Result<_, HttpErr>` |
-| `send_fresh_try`, `exchange_try`, `one_exchange_try`, `read_response_try`, `follow_url_try`, `content_length_try`, `parse_status_line_try`, `status_code_try` | the plain forms | `Result<_, HttpErr>` |
 
 Every `reason` is the text the panicking form panics with, so a caller that
 logs it prints what `send` would have printed on stderr. The panicking wrappers
@@ -491,8 +500,10 @@ shared and never changed, and the limits, status table and per-connection rules
 are the plain server's. A client whose handshake fails (no certificate where one
 is required, no common protocol, a reset) costs that socket and nothing else: it
 is closed and the loop goes on. `serve_tls_n` returns the number of requests
-answered. Like `net.listen`, `serve_tls` binds every interface; to bind one host,
-listen with `http.listen_on("127.0.0.1", port)` and serve with `serve_tls_on`.
+answered. Like `net.listen`, `serve_tls` binds every interface only when the
+`net` grant admits every interface, and `127.0.0.1` otherwise; to bind one host
+by name, listen with `http.listen_on("127.0.0.1", port)` and serve with
+`serve_tls_on`.
 
 On the client side, `http.try_get_tls(url, &opts)`, `http.get_tls` and
 `Client.try_send_tls(req, &opts)` take a `tls.TlsClientOptions` (private CA as

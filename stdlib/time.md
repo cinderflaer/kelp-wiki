@@ -39,6 +39,9 @@ fun main() {
 
 ## Notes
 
+- `sleep_ms` is in this module because there is nowhere else for it yet, but it
+  takes no authority: sleeping does not touch anything shared. Any module that
+  holds `time` can sleep.
 - `now_unix` is integer seconds: no sub-second precision, no timezone (unix time
   is UTC by definition).
 - Use `now_mono_ns` for measuring: `now_unix` can jump when the wall clock is

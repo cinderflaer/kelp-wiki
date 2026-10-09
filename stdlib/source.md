@@ -1,6 +1,7 @@
 ---
-title: "std/source"
-description: "Call-site source locations for Kelp diagnostics and test reports."
+title: "`std/source`"
+description: "Call-site source locations for Kelp diagnostics and test reports. Ungated."
+isPublished: true
 tags: "stdlib, diagnostics"
 ---
 
@@ -23,3 +24,8 @@ fun check(ok: bool) {
 
 Both values are resolved by the compiler at each call site. They are useful for
 test reports and diagnostics; they are not generated-C or LLVM locations.
+
+## See also
+
+- [`std/trace`](/stdlib/trace), which records the call site of each event
+- [`std/sys`](/stdlib/sys) for the build target

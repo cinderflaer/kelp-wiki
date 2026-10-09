@@ -20,6 +20,7 @@ impl "std/str"
 | `len(s: &str)` | `usize` | bytes, not characters (a `strlen`, so it costs the length of the string) |
 | `is_empty(s: &str)` | `bool` | |
 | `byte(s: &str, i: usize)` | `u8` | byte at `i`; out of range panics. The bounds check reads `i + 1` bytes, not the whole string |
+| `ptr(s: &str)` | `Ptr<u8>` | the address of the first byte, which is the NUL-terminated text itself; reading through it needs `unsafe` |
 | `byte_index(s: &str, i: usize)` | `usize` | the byte offset of character `i` |
 | `char_count(s: &str)` | `usize` | codepoints |
 | `char_at(s: &str, i: usize)` | `u32` | the codepoint at character index `i` |
@@ -101,10 +102,10 @@ fun main() {
   when the answer must be characters.
 - `to_upper`/`to_lower` are ASCII-only; other scripts are left alone.
 - `split` keeps empty pieces, so a trailing separator produces a trailing empty
-  string. That is what makes `fsx.tail` count a file's final newline as an extra
-  line.
+  string. To count the lines of a text file, split on `"\n"` and do not count
+  a final empty piece.
 - `str` cannot be compared with `==` (it is a pointer), so `str.eq` is the
-  comparison — and `str.less` is the ordering, for the same reason. `less`
+  comparison and `str.less` is the ordering, for the same reason. `less`
   compares bytes, not codepoints, which is the same answer `List<u8>.sort` gives
   and the one a caller's sort depends on; write an explicit codepoint comparison
   if that is what you meant.

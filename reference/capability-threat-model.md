@@ -11,8 +11,8 @@ notes are
 [`plan/threat-model.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/threat-model.md)
 and the attacks are
 [`kelpc/tests/threat_model.rs`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/kelpc/tests/threat_model.rs):
-71 tests, one per numbered attack, each playing an author who holds a narrow
-grant and tries to get more. An attack that works is a bug and its test stays as
+75 tests, most of them one per numbered attack, each playing an author who holds
+a narrow grant and tries to get more. An attack that works is a bug and its test stays as
 the regression; a hole too large to close is `#[ignore]`d with the reason, never
 deleted.
 
