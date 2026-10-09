@@ -26,14 +26,14 @@ datac Report(var passed: usize, var failed: usize, var failures: List<String>)
 
 The tally is an explicit `mut Report` parameter rather than a module-scope
 counter: a passdown belongs to the module that declares it, so a library cannot
-keep the caller's state in one — a `mut` parameter is what crosses the module
+keep the caller's state in one: a `mut` parameter is what crosses the module
 boundary.
 
 ## Functions
 
 | Function | Returns | Prints |
 | --- | --- | --- |
-| `new_report()` | `Report` | — |
+| `new_report()` | `Report` | none |
 | `check(r: mut Report, cond: bool, name: &str)` | `Unit` | `ok   <name>` or `FAIL <name>` |
 | `check_eq_i64(r, actual, expected, name)` | `Unit` | as `check` |
 | `check_eq_u64`, `check_eq_usize`, `check_eq_f64`, `check_eq_bool` | `Unit` | as `check` |

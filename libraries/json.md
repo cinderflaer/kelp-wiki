@@ -4,8 +4,8 @@ description: "Parses text into an owned Json tree, reads it back through typed a
 isPublished: true
 tags: "library, data-formats"
 ---
-Parses text into an owned `Json` tree, reads it back through typed accessors —
-including keyed ones that take a default, for a field that may be absent —
+Parses text into an owned `Json` tree, reads it back through typed accessors,
+including keyed ones that take a default, for a field that may be absent,
 queries it by key or by
 [JSON Pointer](https://www.rfc-editor.org/rfc/rfc6901),
 transforms it (clone, equals, merge, sort keys) and writes it compact, pretty or
@@ -90,12 +90,12 @@ impl "std/result"
 ## Predicates
 
 `is_null(v)`, `is_bool(v)`, `is_int(v)`, `is_float(v)`, `is_number(v)` (int or
-float), `is_str(v)`, `is_array(v)`, `is_object(v)` — all `(&Json) -> bool`.
+float), `is_str(v)`, `is_array(v)`, `is_object(v)`, all `(&Json) -> bool`.
 
-`is_integral(v)` — true for every `Int`, and for a finite `Float` that is its
+`is_integral(v)`, true for every `Int`, and for a finite `Float` that is its
 own truncation (`1.0`, `-2.0`; not `1.5`, `inf`, `nan`).
 
-`kind(v)` — the JSON word for the type, as an owned `String`: `"null"`,
+`kind(v)`, the JSON word for the type, as an owned `String`: `"null"`,
 `"boolean"`, `"number"`, `"string"`, `"array"`, `"object"`.
 
 ## Readers
@@ -148,7 +148,7 @@ inside an `Option`. `text_or` returns an owned copy and applies the fallback.
 | `find(v, key)` | `option.Option<usize>` |
 | `get(v, key)` | `&Json`; panics `json.get: key not found` |
 | `keys(v)` | `List<String>` of every key, document order; empty list for a non-object |
-| `index(v)` | `Map<String, usize>` — key to position, for repeated lookups. First occurrence wins |
+| `index(v)` | `Map<String, usize>`: key to position, for repeated lookups. First occurrence wins |
 
 ### Keyed lookup with a default
 
@@ -186,8 +186,8 @@ an empty list.
 val parsed = json.parse("{\"id\":7,\"title\":\"a ticket\",\"tags\":[\"bug\",7,\"ui\"]}")
 if let Ok(doc) = parsed {
     print(json.get_int(doc, "id", 0))            // 7
-    print(json.as_i64(json.get(doc, "id")))       // 7 — the panicking form
-    print(json.get_text(doc, "body", ""))        // "" — the field is absent
+    print(json.as_i64(json.get(doc, "id")))       // 7, the panicking form
+    print(json.get_text(doc, "body", ""))        // "", the field is absent
     print(json.get_text(doc, "title", ""))       // "a ticket"
     val tags = json.get_strings(doc, "tags")      // ["bug", "ui"]
     print(tags.len())                            // 2
@@ -263,7 +263,7 @@ Pointer helpers beyond `has_ptr`/`at`/`ptr_segments`: `is_pointer_index(s)`,
 overflow) and `segment_end`/`segment_end_at`.
 
 Numbers round-trip: `write` picks the shortest spelling that `parse` reads back
-as the same value. A non-finite float (`inf`, `nan` — unreachable from `parse`)
+as the same value. A non-finite float (`inf`, `nan`, unreachable from `parse`)
 is written as `null`. `-0.0` is written `-0.0`. A float is always given a
 fraction or an exponent, so `1.0` never reads back as the integer `1`.
 
@@ -277,7 +277,7 @@ datac ParseError(val message: String, val offset: usize)
 | --- | --- |
 | `parse(text: &str)` | `result.Result<Json, ParseError>`; trailing whitespace allowed, anything else after the value is an error |
 | `parse_ok(text)` | `bool` |
-| `parse_many(text)` | `result.Result<List<Json>, ParseError>` — every value in the text, however separated (NDJSON, a stream). Empty text yields an empty list |
+| `parse_many(text)` | `result.Result<List<Json>, ParseError>`: every value in the text, however separated (NDJSON, a stream). Empty text yields an empty list |
 | `line_of(e, text)` | 1-based line the offset falls on |
 | `column_of(e, text)` | 1-based byte column within that line |
 | `describe(e, text)` | one line: `line 1 column 6 (byte 5): unexpected end of input` |

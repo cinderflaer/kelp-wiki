@@ -61,8 +61,8 @@ actually moving.
 ## Returned, not printed
 
 Every function returns an owned `String`; nothing writes. The escape sequences
-are built from a dynamic byte (`ESC`, 27) that no string literal can spell —
-`syntax.md`'s string escape set is closed and has no `\x1b` — so nothing here has
+are built from a dynamic byte (`ESC`, 27) that no string literal can spell,
+`syntax.md`'s string escape set is closed and has no `\x1b`, so nothing here has
 static storage to borrow from.
 
 ## Example

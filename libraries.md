@@ -4,8 +4,7 @@ description: "fpl is the first-party Kelp library catalogue - one folder per lib
 isPublished: true
 tags: "library"
 ---
-`fpl` is the first-party Kelp library catalogue: one folder per library in a
-single repository, twenty-eight of them at the time of writing.
+The first-party library catalogue: one folder per library in a single repository, twenty-eight of them.
 
 Unlike the standard library, which is compiled into `kelpc` and imported as
 `std/…`, every fpl library is a **dependency you fetch**: a folder from a git
@@ -77,10 +76,40 @@ example whose output was checked against `kelpc`, and what it deliberately does
 
 ## Pages
 
-- [Catalogue](/libraries/catalogue): every library, grouped by what they do
-- [Writing a library](/libraries/writing-a-library): what a library has to be
+- [Catalogue](/libraries/catalogue): every library, grouped by what it does, with what it needs.
+- [Writing a library](/libraries/writing-a-library): what a library has to be.
+- [`argparse`](/libraries/argparse): flags, options, positionals, defaults and rendered `--help` text.
+- [`benchkit`](/libraries/benchkit): warmup and repeat timing over a closure (gated on `time`).
+- [`bigint`](/libraries/bigint): arbitrary-precision integers over base-2^32 limbs.
+- [`bits`](/libraries/bits): `BitSet` over `Bytes`, and MSB-first `BitWriter` and `BitReader`.
+- [`complex`](/libraries/complex): complex numbers with arithmetic, `conj`, `abs`, `arg` and `from_polar`.
+- [`config`](/libraries/config): a TOML/INI-style reader: `key = value`, `[section]` tables and string arrays.
+- [`csv`](/libraries/csv): RFC 4180-style CSV parsing and writing.
+- [`datetime`](/libraries/datetime): civil date and time from unix seconds, and ISO 8601 parse and format.
+- [`decimal`](/libraries/decimal): fixed-point decimals over `i64` with an explicit scale.
+- [`dedup`](/libraries/dedup): duplicate-file grouping, and tree snapshot and drift.
+- [`discord`](/libraries/discord): Discord bots and webhooks over `std/http` and `std/ws` (needs `net`, `rand` and `time`).
+- [`encoding`](/libraries/encoding): base64, base32, base58, hex, percent and form encoding, and a hexdump.
+- [`fsx`](/libraries/fsx): `write_atomic`, `copy_dir`, `tail` and `files_equal` over `std/fs` (gated on `fs`).
+- [`glob`](/libraries/glob): `glob_match` and `glob_filter` over `*` and `?` patterns.
+- [`hash`](/libraries/hash): CRC-32 and FNV-1a checksums.
+- [`httpx`](/libraries/httpx): HTTP helpers over `std/http`: query strings, Basic auth and PUT, DELETE and PATCH.
+- [`json`](/libraries/json): JSON parser and writer, keyed accessors with defaults, JSON Pointer and tree transforms.
+- [`lineproto`](/libraries/lineproto): buffered `send_line` and `read_line` over a `std/net` socket (gated on `net`).
+- [`listx`](/libraries/listx): `List<T>` helpers `std/list` stops short of: `fold`, `zip`, `chunks`, `sort_by` and more.
+- [`log`](/libraries/log): leveled log records to stderr with a timestamp (gated on `time`).
+- [`mathx`](/libraries/mathx): `gcd`, `lcm`, primality, `factorial`, `hypot`, and checked and saturating `i64` arithmetic.
+- [`prng`](/libraries/prng): a seeded, reproducible xorshift64* PRNG.
+- [`set`](/libraries/set): `Set<T>` over `Map`, and `StrSet` for `String`.
+- [`stats`](/libraries/stats): mean, median, variance, percentile, histogram and linear regression over `List<f64>`.
+- [`table`](/libraries/table): column layout with auto-sized widths.
+- [`term`](/libraries/term): ANSI colors and cursor control, honouring `NO_COLOR` (gated on `env`).
+- [`testkit`](/libraries/testkit): assert-style `check` helpers with a pass/fail `Report`.
+- [`url`](/libraries/url): RFC 3986 URI parsing, building and relative-reference resolution.
 
 ## See also
 
 - [Projects and coral.toml](/getting-started/projects): the manifest side
 - [Capabilities](/language/capabilities): what a grant means
+
+[Back to the home page](/)

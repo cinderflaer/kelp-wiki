@@ -176,8 +176,8 @@ fun main() {
   container, passed to a plain parameter, or captured by another closure. Each of
   those is an ordinary type mismatch, because `scoped fun(...)` is a type of its
   own.
-- The builder shape this exists for is `polyp.column { k -> k.text(s.title) }`,
-  where the block reads the view's borrowed state.
+- The builder shape this exists for is a block that reads the view's borrowed state,
+  such as `column { k -> k.text(s.title) }`.
 
 ### Exclusive captures
 

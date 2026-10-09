@@ -32,7 +32,7 @@ See [Testing what you write](/getting-started/testing) for Coral's own fixture r
 [`std/http`](/stdlib/http#the-server) now has a server, with `Limits`, keep-alive and worker threads. A server
 can also be written directly on `std/net`: `net.listen(port)`, `net.accept`, then `net.recv`,
 `net.send_all` and `net.close` on each socket, which is what the
-[playground backend](/family/webkelp-playground) does. Points that mattered:
+[playground backend](/family/webkelp#playground) does. Points that mattered:
 
 - **Bound everything the client controls.** Cap the header and body size, and use `sock.wait_readable(ms)`
   before each `recv` so a client that stops sending cannot hold the loop.

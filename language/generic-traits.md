@@ -133,7 +133,7 @@ takes 1 type argument(s), and 'impl std.convert.From for E' writes 0`).
 
 ## `std/convert`: `From` and `Into`
 
-[`std/convert`](/stdlib/convert) declares the two conversion traits and nothing
+`std/convert` (ungated and freestanding) declares the two conversion traits and nothing
 else:
 
 ```kelp
@@ -145,6 +145,11 @@ pub trait Into<T> {
     fun Self.into().return: T
 }
 ```
+
+`from` has no receiver, so it is called on the type: `AppErr.from(value = e)`, or
+through a bound, `X.from(value = v)` for `fun f<X: convert.From<i32>>(...)`. A type
+may implement several instances (`From<IoErr>`, `From<i32>`), and the call picks one
+by the argument's type.
 
 `std/convert` ships no blanket impl of `Into`: a type that wants `into` writes its
 own `impl Into<U> for X`, and `?` uses `From` only. A user blanket impl
@@ -262,5 +267,4 @@ the returned value to be built from `value`.
 
 - [Errors and panics](/language/errors)
 - [Traits and static dispatch](/language/traits)
-- [`std/convert`](/stdlib/convert)
 - [Associated types](/language/associated-types)
