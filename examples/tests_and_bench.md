@@ -31,7 +31,7 @@ impl "deps/benchkit/lib" caps(time = [])
 
 ## The program
 
-```kelp
+```kelp project
 impl "deps/testkit/lib"
 impl "deps/benchkit/lib" caps(time = [])
 impl "std/str"

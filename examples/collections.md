@@ -27,7 +27,7 @@ Both exist because of one language rule: a user module cannot overload a name. S
 
 ## The program
 
-```kelp
+```kelp project
 impl "deps/listx/lib"
 impl "deps/set/lib"
 impl "std/option"

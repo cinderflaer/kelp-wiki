@@ -129,7 +129,7 @@ fun as_str(v: &Json).return: &str {
   result remains valid for that binding's scope. A returned borrow still cannot
   escape the function, because its promoted owner ends with the frame:
 
-  ```kelp
+  ```kelp refused
   impl "std/str"
 
   // error: a temporary would be freed before the borrow is used

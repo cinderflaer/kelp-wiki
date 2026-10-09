@@ -45,7 +45,7 @@ pub fun is_even(n: i64).return: bool = n % 2 == 0
 
 Then `src/tasks/test.kp`:
 
-```kelp
+```kelp project
 // src/tasks/test.kp -- `coral task test`
 
 impl "shapes/calc"

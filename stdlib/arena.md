@@ -81,7 +81,7 @@ Two blocks out of a local 256-byte region, each written and read back, then a
 `reset` and an `alloc_zeroed` at the first block's address. The two zeros prove
 the fresh block was cleared over the `170` the first user wrote.
 
-```kelp
+```kelp project
 impl "std/arena"
 
 fun main() {

@@ -42,7 +42,7 @@ Both fields are public and immutable; every operation returns a new `Complex`.
 
 ## Example
 
-```kelp
+```kelp project
 impl "deps/complex/lib"
 
 fun main() {

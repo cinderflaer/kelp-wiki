@@ -36,7 +36,7 @@ impl "deps/json/lib"
 
 ## The program
 
-```kelp
+```kelp project
 impl "deps/json/lib"
 
 // A helper, so the walk owns the list it builds.

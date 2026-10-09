@@ -85,7 +85,7 @@ when the header has no `=`.
 
 ## Example
 
-```kelp
+```kelp project
 impl "std/http"
 impl "deps/httpx/lib"
 

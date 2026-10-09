@@ -330,7 +330,7 @@ can update a local accumulator. Its remaining limits are listed under
 `must_use fun` marks a function whose result a caller has to look at. A call to
 one used as a statement, with the result thrown away, is a compile error:
 
-```kelp
+```kelp refused
 must_use fun check(n: i32).return: bool = n > 0
 
 fun main() {

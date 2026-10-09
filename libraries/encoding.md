@@ -140,7 +140,7 @@ library's `query_pairs` leaves `+` alone for the same reason.
 
 ## Example
 
-```kelp
+```kelp project
 impl "deps/encoding/lib"
 impl "std/result"
 

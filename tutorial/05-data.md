@@ -85,7 +85,7 @@ still be printed after the call.
 
 **Assigning an owned value moves it.** Once moved, the old name cannot be used:
 
-```kelp
+```kelp refused
 fun main() {
     val a = String.from_str(s = "x")
     val b = a
@@ -117,7 +117,7 @@ and the caller gets it back afterwards.
 A `val` binding can never change, not even its fields. Changing a field of a
 `val` is refused:
 
-```kelp
+```kelp refused
 datac Counter(val name: String, var count: i32)
 
 fun main() {

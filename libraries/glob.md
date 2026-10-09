@@ -44,7 +44,7 @@ The classic O(len(pattern) × len(text)) DP table, flattened to one
 
 ## Example
 
-```kelp
+```kelp project
 impl "deps/glob/lib"
 
 fun main() {

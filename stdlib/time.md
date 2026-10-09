@@ -19,7 +19,7 @@ any function in the module is the authority.
 | `time.now_mono_ns()` | `i64` | nanoseconds on the **monotonic** clock: for durations, never for dates |
 | `time.sleep_ms(ms: u64)` | `Unit` | |
 
-```kelp
+```kelp project
 impl "deps/datetime/lib"
 impl "std/time"
 

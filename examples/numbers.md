@@ -30,7 +30,7 @@ Six libraries, six manifest lines, and none of them fetches another.
 
 ## The program
 
-```kelp
+```kelp project
 impl "deps/bigint/lib"
 impl "deps/decimal/lib"
 impl "deps/complex/lib"

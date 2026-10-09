@@ -181,7 +181,7 @@ The sub-delimiters RFC 3986 §2.2 allows in a path include `!$&'()*+,;=`, so
 
 ## Example
 
-```kelp
+```kelp project
 impl "deps/url/lib"
 impl "std/str"
 

@@ -110,7 +110,7 @@ a bare number:
 
 ### The smallest bot
 
-```kelp
+```kelp project
 impl "deps/discord/lib" caps(*)
 
 fun on_command(i: &discord.Interaction, bot: &discord.Bot) {
@@ -153,7 +153,7 @@ set back to a no-op as easily as it was set.
 
 ### The smallest webhook post
 
-```kelp
+```kelp project
 impl "deps/discord/lib" caps(*)
 
 fun main() {
@@ -195,7 +195,7 @@ print(discord.respond_interaction(bot, i, deferred.as_str()).status)
 Everything the easy path does is a value the caller can build, keep, print or
 send. The same bot, driven by hand:
 
-```kelp
+```kelp project
 impl "std/ws"
 impl "std/time"
 impl "deps/discord/lib" caps(*)

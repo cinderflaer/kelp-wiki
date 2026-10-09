@@ -128,10 +128,23 @@ That program prints `alpha` then `2`, on both backends. The order is what
 matters: move the `push` before the `print` and the borrow is still used after
 the mutation, so it is refused:
 
+```kelp refused
+impl "std/str"
+
+fun main() {
+    var names: List<String> = List.empty()
+    names.push(String.from_str("alpha"))
+    val first = names.get(0)
+    names.push(String.from_str("beta"))
+    print(first.as_str())
+    print(names.len())
+}
+```
+
 ```text
 $ kelpc check swap.kp
 error: cannot borrow 'names' as exclusive: already borrowed as shared
-  --> swap.kp:10:5
+  --> swap.kp:7:5
 ```
 
 Two structured cases follow from statement granularity. A use inside a loop body

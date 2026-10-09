@@ -85,6 +85,35 @@ one of the three that runs while you type.
 | understand what a dependency is, and why a folder must stand alone | the library model | [Libraries (fpl)](/libraries) |
 | write one | the library rules | [Writing a library](/libraries/writing-a-library) |
 
+## Checking the examples
+
+Every `kelp` program in this wiki is compiled with the release compiler. The
+examples that state their output are run, and the output must match the page.
+The check is one command, run from a checkout of the wiki:
+
+```sh
+scripts/check-examples.sh
+```
+
+It prints the file and line of each example that fails, with a diff for a
+mismatch, and it exits 1 when any fails and 0 when all pass. Pass page paths to
+check only those pages. The run needs `kelpc` on `PATH`, a C linker, `script`
+from util-linux, and the OpenSSL headers for the TLS and HTTP examples (the Kelp
+dev shell provides them). Set `KELPC_LOCK` to a lock file to wrap each compiler
+run in `flock` when several jobs share one machine.
+
+A fence can carry `refused` or `norun` (or both), or `project` on its own:
+
+- `kelp refused`: the compiler must refuse the program, and the block is checked
+  for that.
+- `kelp project`: one file of a multi-file project or a package, which cannot
+  compile alone. It is parsed, not compiled.
+- `kelp norun`: compiled but not run, because its output depends on the network,
+  the clock or the machine.
+
+A `kelp` block with no `fun main` is a fragment. The script lists each fragment
+as skipped, so none is skipped without a trace.
+
 ## See also
 
 - [Install and build](/getting-started/install)

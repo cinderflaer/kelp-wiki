@@ -16,7 +16,7 @@ impl "shapes/circle"                                 // a file in this project
 impl "deps/json/lib"                                 // a dependency
 ```
 
-```kelp
+```kelp project
 fun main() {
     val c = circle.Circle(r = 2.0)
     print(c.area())
@@ -123,7 +123,9 @@ alias %*debug*% = true // 2. aliases, anywhere a statement can start
 const LIMIT: i32 = 10  // 3. constants and passdowns, in any mix
 pd val app = "demo"
 datac Point(val x: i32, val y: i32)   // 4. types and functions, in any mix
-fun main() { ... }
+fun main() {
+    print(LIMIT)
+}
 ```
 
 The parser enforces the steps: an `impl` written after any declaration is a parse

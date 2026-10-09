@@ -46,7 +46,7 @@ bit-by-bit and is callable on its own; the `crc32` loop calls it per byte.
 
 ## Example
 
-```kelp
+```kelp project
 impl "deps/hash/lib"
 
 fun main() {

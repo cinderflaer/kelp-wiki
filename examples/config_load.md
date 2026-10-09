@@ -30,7 +30,7 @@ val parsed = config.parse(text.as_str())
 
 ## The program
 
-```kelp
+```kelp project
 impl "deps/config/lib"
 impl "std/str"
 

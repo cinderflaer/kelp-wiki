@@ -92,6 +92,13 @@ A moved-out value is not dropped, exactly as before: a destructor cannot run for
 a value that has an owner somewhere else.
 
 ```kelp
+datac Leaf(val tag: i32)
+
+fun mut Leaf.drop() {
+    print("leaf")
+    print(self.tag)
+}
+
 fun main() {
     val a = Leaf(tag = 1)
     val b = a
@@ -108,6 +115,13 @@ leaf
 Reassigning an owned `var` frees the value it replaces first:
 
 ```kelp
+datac Leaf(val tag: i32)
+
+fun mut Leaf.drop() {
+    print("leaf")
+    print(self.tag)
+}
+
 fun main() {
     var a = Leaf(tag = 1)
     a = Leaf(tag = 2)
@@ -226,6 +240,7 @@ The exit status is 1. Standard output is `before`, and standard error is
 
 ```text
 before
+panic: boom
 ```
 
 The destructor of `a` never prints `leaf`. The compiler does not check that a

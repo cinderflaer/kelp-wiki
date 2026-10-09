@@ -72,7 +72,7 @@ context asks for another type. A decimal literal is an `f64`. The
 
 **Kelp never converts numbers implicitly.** Mixing types is an error:
 
-```kelp
+```kelp refused
 fun main() {
     val n = 5
     val x: f64 = n * 1.0
@@ -100,7 +100,7 @@ condition must be a `bool`.
 `val` names a value that cannot change. `var` names one that can. Both need a
 starting value, and the type is either inferred from it or written after a colon:
 
-```kelp
+```kelp refused
 fun main() {
     val n = 5
     n = 6

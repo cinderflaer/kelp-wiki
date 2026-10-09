@@ -49,7 +49,7 @@ in an unlisted module like any other.
 `{` follows, so a variable may still be called `unsafe`. The block is an
 expression and a statement, so it can carry a value.
 
-```kelp
+```kelp project
 fun main() {
     var x: i32 = 7
     val px: Ptr<i32> = Ptr.from_ref(&x)
@@ -71,7 +71,7 @@ false
 `unsafe fun name(...)` declares a function that only unsafe context may call.
 Its body is itself an unsafe context, so it needs no block of its own.
 
-```kelp
+```kelp project
 unsafe fun store(p: Ptr<i32>, v: i32) {
     p.write(v)
 }
@@ -147,7 +147,7 @@ binding ('val p: Ptr<i32> = Ptr.null()')
 | `Ptr.try_alloc<T>(count)` | the same allocation without the panic: the null `Ptr<T>` on failure, the byte count checked for wrap on both backends; freestanding it needs an `[target] alloc`/`dealloc` pair |
 | `p.free()` | hosted `free`; unavailable in a freestanding build |
 
-```kelp
+```kelp project
 fun main() {
     unsafe {
         val base: Ptr<i32> = Ptr.alloc<i32>(3)
@@ -188,7 +188,7 @@ fun main() {
 call to the panic handler, so the null check `alloc` used to make for the
 program is the program's own:
 
-```kelp
+```kelp project
 fun main() {
     val max: usize = ~0
     unsafe {
@@ -433,7 +433,7 @@ aligned pair, and have the same rules: `read_unaligned` only reads a `Copy`
 element. Neither converts byte order. A raw pointer access to memory the program
 already laid out is not a data format.
 
-```kelp
+```kelp project
 fun main() {
     unsafe {
         val raw: Ptr<u8> = Ptr.alloc<u8>(16)

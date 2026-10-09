@@ -56,7 +56,7 @@ a difference against a tolerance with `check`.
 
 ## Example
 
-```kelp
+```kelp project
 impl "deps/testkit/lib"
 
 fun main() {

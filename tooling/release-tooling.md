@@ -168,6 +168,13 @@ only protects against a corrupted download. Against a hostile mirror it helps on
 if you got `SHA256SUMS` (or the hash) over a different channel, or compare it with
 the `BUILDINFO` hash of a build you reproduced yourself.
 
+## Checking the examples
+
+The wiki's examples are checked by `scripts/check-examples.sh` in the wiki
+repository: one command, run from a checkout, that compiles every `kelp` program
+with `kelpc` and compares the output of the ones that state it. It exits 1 on any
+mismatch. See [Tooling](/tooling) for the fence attributes and the requirements.
+
 ## See also
 
 - [`kelpc` CLI](/tooling/kelpc-cli): `kelpc version` among the subcommands

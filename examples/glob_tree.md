@@ -23,7 +23,7 @@ glob = "Juniper/fpl/glob"
 
 ## The program
 
-```kelp
+```kelp project
 impl "deps/glob/lib"
 impl "std/fs"
 impl "std/str"

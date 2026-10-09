@@ -107,12 +107,13 @@ fun main() {
 ```
 
 Both the default backend and `KELPC_ORACLE=c` print the same output. The panic
-goes to standard error, and the `print` output is buffered, so the panic line
-shows first:
+goes to standard error. On a terminal the `print` line appears first, as below.
+When standard output is a pipe or a file, the `print` output is buffered until
+the program exits, so the panic line comes first there:
 
 ```text
-panic: shift amount out of range
 2147483648
+panic: shift amount out of range
 ```
 
 The exit status is 1 and `unreachable` is never printed; the panic names no
@@ -120,7 +121,7 @@ amount.
 
 A constant amount never reaches run time:
 
-```kelp
+```kelp refused
 fun main() {
     val x: u32 = 1
     print(x << 33)
@@ -128,8 +129,9 @@ fun main() {
 ```
 
 ```text
+$ kelpc check shift_const_too_wide.kp
 error: a shift by 33 is not defined for a 'u32', whose width is 32 bits: the amount has to be in 0..32 (use wrapping_shl/wrapping_shr to mask it)
-  --> shift_const_too_wide.kp:5:11
+  --> shift_const_too_wide.kp:3:11
 ```
 
 A named `const` amount is folded and refused the same way. For example,

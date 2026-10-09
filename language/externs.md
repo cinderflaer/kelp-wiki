@@ -30,10 +30,12 @@ library = "c"
 symbols = ["getpid"]
 ```
 
-```kelp
+```kelp project
 // src/sys.kp
 pub extern fun getpid().return: i32
+```
 
+```kelp project
 // src/main.kp
 impl "sys" caps(process = ["/**"])
 
@@ -79,7 +81,7 @@ pub extern fun malloc(size: usize).return: Buffer
 pub extern fun free(buf: Buffer)
 ```
 
-```kelp
+```kelp project
 // src/main.kp
 impl "mem" caps(process = ["/**"])
 
@@ -115,7 +117,7 @@ pub extern fun free(block: Block)
 pub fun view(block: Block).return: Buffer = Buffer.cast(block)
 ```
 
-```kelp
+```kelp project
 // src/main.kp
 impl "mem" caps(process = ["/**"])
 
@@ -156,7 +158,7 @@ pub fun missing().return: File = File.null()
 pub fun is_null_file(f: File).return: bool = f.is_null()
 ```
 
-```kelp
+```kelp project
 // src/main.kp
 impl "file" caps(process = ["/**"])
 
@@ -225,7 +227,7 @@ pub extern fun kelp_va_sum(count: i32, ...).return: i32
 pub extern fun kelp_va_mix(count: i32, ...).return: i32
 ```
 
-```kelp
+```kelp project
 // src/main.kp
 impl "helper" caps(env = ["*"])
 
@@ -286,7 +288,7 @@ static inline int kelp_call_twice(void (*fn)(int, void*), void* data, void (*des
 pub extern fun kelp_call_twice(f: move closure(i32), x: i32).return: i32
 ```
 
-```kelp
+```kelp project
 // src/main.kp
 impl "helper" caps(env = ["*"])
 

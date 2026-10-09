@@ -33,7 +33,7 @@ argparse = "Juniper/fpl/argparse"
 
 ## The program
 
-```kelp
+```kelp project
 impl "deps/argparse/lib"
 impl "std/fs"
 impl "std/str"

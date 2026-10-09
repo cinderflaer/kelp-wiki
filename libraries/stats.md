@@ -60,7 +60,7 @@ odd-length list; on an even one both interpolate the two middle ranks.
 
 ## Example
 
-```kelp
+```kelp project
 impl "deps/stats/lib"
 
 fun main() {

@@ -25,7 +25,7 @@ pub fun is_even(n: i64).return: bool = n % 2 == 0
 
 And a test file, `tests.kp`, that imports it:
 
-```kelp
+```kelp project
 impl "lib"
 
 fun main() {
@@ -43,7 +43,7 @@ all checks passed
 
 Now make one check fail, by asserting that 5 is even:
 
-```kelp
+```kelp project
 impl "lib"
 
 fun main() {

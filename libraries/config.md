@@ -101,7 +101,7 @@ file:
 
 ## Example
 
-```kelp
+```kelp project
 impl "deps/config/lib"
 
 fun main() {

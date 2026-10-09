@@ -58,7 +58,7 @@ length and the column will be visually short.
 
 ## Example
 
-```kelp
+```kelp project
 impl "deps/table/lib"
 
 fun main() {

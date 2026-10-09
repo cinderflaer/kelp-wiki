@@ -93,7 +93,7 @@ Sections with no entries are omitted. A trailing newline is included.
 
 ## Example
 
-```kelp
+```kelp project
 impl "deps/argparse/lib"
 
 fun main() {

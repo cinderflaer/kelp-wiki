@@ -427,7 +427,7 @@ symbols = ["getpid"]
 pub extern fun getpid().return: i32
 ```
 
-```kelp
+```kelp project
 // src/main.kp
 impl "sys" caps(process = ["/**"])
 

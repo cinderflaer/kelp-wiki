@@ -53,7 +53,7 @@ a sampled index), not for a fairness-critical draw.
 
 ## Example
 
-```kelp
+```kelp project
 impl "deps/prng/lib"
 
 fun main() {

@@ -515,7 +515,7 @@ private CA (the certificate files are made as in
 [`std/tls`](/stdlib/tls#making-a-test-certificate); `/etc/myapp/certs` was
 replaced by a scratch directory for the run):
 
-```kelp
+```kelp norun
 impl "std/http" caps(net = ["*"])
 impl "std/tls"
 impl "std/tlsfile" caps(fs = ["/etc/myapp/certs/**"])

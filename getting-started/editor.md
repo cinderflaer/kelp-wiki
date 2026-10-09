@@ -119,7 +119,7 @@ Two habits make that pleasant rather than painful:
 Set the editor up, then make it show you something. Write a program with an
 unknown name and save it:
 
-```kelp
+```kelp refused
 fun main() {
     println("hello")
 }

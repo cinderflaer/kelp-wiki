@@ -51,7 +51,7 @@ dividing the product back out (mul).
 
 ## Example
 
-```kelp
+```kelp project
 impl "deps/mathx/lib"
 impl "std/option"
 

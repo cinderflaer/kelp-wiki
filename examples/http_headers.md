@@ -27,7 +27,7 @@ folder you named is fetched.
 
 ## The program
 
-```kelp
+```kelp project
 impl "std/http"
 impl "deps/httpx/lib"
 impl "std/str"

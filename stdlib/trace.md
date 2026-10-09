@@ -8,7 +8,7 @@ tags: "stdlib, diagnostics, profiling"
 `std/trace` writes compact trace records to stderr. It is for explicit
 diagnostic and profiling hooks, not automatic instrumentation.
 
-```kelp
+```kelp norun
 impl "std/source"
 impl "std/trace" caps(time = [])
 

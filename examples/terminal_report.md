@@ -33,7 +33,7 @@ down to the one variable. `log` stamps each record with the clock, so it needs
 
 ## The program
 
-```kelp
+```kelp project
 impl "std/env"
 impl "deps/term/lib" caps(env = ["NO_COLOR"])
 impl "deps/log/lib" caps(time = [])

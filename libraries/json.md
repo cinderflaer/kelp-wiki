@@ -295,7 +295,7 @@ Limits and rules:
 
 ## Example
 
-```kelp
+```kelp project
 impl "deps/json/lib"
 
 fun main() {

@@ -81,7 +81,7 @@ Helpers `pad2(n: i32)` and `pad4(n: i64)` return a zero-padded `String`;
 
 ## Example
 
-```kelp
+```kelp project
 impl "deps/datetime/lib"
 
 fun main() {

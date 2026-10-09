@@ -81,7 +81,7 @@ datac BitReader(val data: Bytes, var pos: usize)
 
 ## Example
 
-```kelp
+```kelp project
 impl "deps/bits/lib"
 
 fun main() {

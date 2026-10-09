@@ -40,7 +40,7 @@ pub fun read(name: &str).return: String {
 entry module holds the wildcard for every domain, and the pattern written on the
 import line is the ceiling for everything the imported module can do.
 
-```kelp
+```kelp project
 impl "std/fs"
 impl "sandbox_vault" caps(fs = ["/tmp/kelp-sandbox/vault/**"])
 

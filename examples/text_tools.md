@@ -28,7 +28,7 @@ prints a fixed date instead of today's.
 
 ## The program
 
-```kelp
+```kelp project
 impl "deps/hash/lib"
 impl "deps/encoding/lib"
 impl "deps/datetime/lib"

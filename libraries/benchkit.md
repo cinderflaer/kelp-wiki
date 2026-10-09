@@ -41,7 +41,7 @@ collect several lines before printing any.
 
 ## Example
 
-```kelp
+```kelp project
 impl "deps/benchkit/lib" caps(time = [])
 impl "std/time"
 

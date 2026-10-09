@@ -64,7 +64,7 @@ when a narrower scale is wanted.
 
 ## Example
 
-```kelp
+```kelp project
 impl "deps/decimal/lib"
 impl "std/result"
 

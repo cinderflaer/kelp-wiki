@@ -63,7 +63,7 @@ scope. Add it separately if a caller needs it.
 
 ## Example
 
-```kelp
+```kelp project
 impl "deps/bigint/lib"
 
 fun main() {

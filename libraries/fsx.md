@@ -76,7 +76,7 @@ that is not what you want.
 
 ## Example
 
-```kelp
+```kelp project
 impl "deps/fsx/lib" caps(fs = ["/tmp/fplverify/**"])
 
 fun main() {

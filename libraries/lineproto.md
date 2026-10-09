@@ -60,7 +60,7 @@ Constants: `CR` (13), `LF` (10).
 
 ## Example: the server side
 
-```kelp
+```kelp project
 impl "std/net"
 impl "deps/lineproto/lib" caps(net = ["127.0.0.1:*"])
 
@@ -84,7 +84,7 @@ fun main() {
 
 A client that connects and sends two lines:
 
-```kelp
+```kelp project
 impl "std/net"
 impl "deps/lineproto/lib" caps(net = ["127.0.0.1:*"])
 

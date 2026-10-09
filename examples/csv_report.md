@@ -32,7 +32,7 @@ and nothing about which repository it came from.
 
 ## The program
 
-```kelp
+```kelp project
 impl "deps/csv/lib"
 impl "deps/table/lib"
 impl "std/str"

@@ -53,7 +53,9 @@ impl "std/fs"          // 1. imports
 const LIMIT: i32 = 10  // 2. constants and passdowns
 pd val app = "demo"
 datac Point(val x: i32, val y: i32)   // 3. types and functions
-fun main() { ... }
+fun main() {
+    print(LIMIT)
+}
 ```
 
 ## Naming
@@ -91,6 +93,7 @@ Two or more consecutive `//` lines with no blank line and no code between them
 suggest one `/* ... */` comment, and `kelpc lint` warns about each run it finds:
 
 ```text
+$ kelpc lint notes.kp
 warning: 3 consecutive '//' lines suggest one '/* ... */' comment
   --> notes.kp:2:5
 ```

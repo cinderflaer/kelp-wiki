@@ -66,7 +66,7 @@ stdout pipe. Integer seconds, no milliseconds, no timezone (unix time is UTC).
 
 ## Example
 
-```kelp
+```kelp project
 impl "deps/log/lib" caps(time = [])
 
 fun main() {

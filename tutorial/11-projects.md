@@ -23,7 +23,7 @@ fun secret().return: i32 = 42
 
 `main.kp` imports it with `impl "geometry"`:
 
-```kelp
+```kelp project
 impl "geometry"
 
 fun main() {
@@ -41,7 +41,7 @@ The file name is the module name: `geometry.kp` is `geometry`. Its `pub` items a
 visible to the file that imports it. Items without `pub`, such as `secret`, are
 private to their own file. Using one from outside is an error:
 
-```kelp
+```kelp project
 impl "geometry"
 
 fun main() {
@@ -80,7 +80,7 @@ pub fun count_lines(path: &str).return: i64 {
 `impl "std/fs"` brings in the file module. Without a grant, the importing file
 must give `notes` the `fs` power, as the next program does:
 
-```kelp
+```kelp project
 impl "notes" caps(fs = ["/tmp/kelp-demo/**"])
 
 fun main() {
@@ -103,7 +103,7 @@ $ kelpc run reader.kp
 The pattern `/tmp/kelp-demo/**` says which paths the module may touch: this folder
 and everything in it. A call to a path outside the pattern stops the program:
 
-```kelp
+```kelp project
 impl "notes" caps(fs = ["/tmp/kelp-demo/**"])
 
 fun main() {
@@ -121,7 +121,7 @@ notes.kp:4:17: panic: '/etc/passwd' is outside the fs capability granted to modu
 If the importing file gives no grant at all, the compiler refuses the program
 before it runs. Here is `main` without the `caps(...)` clause:
 
-```kelp
+```kelp project
 impl "notes"
 
 fun main() {

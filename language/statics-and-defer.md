@@ -86,7 +86,7 @@ error: 'static mut C' is an unsafe operation: reading, writing or taking its add
 The example writes a `static mut`, so its module must be listed under `[unsafe]`
 modules in `coral.toml`:
 
-```kelp
+```kelp project
 impl "std/atomic"
 
 static MAGIC: u32 = 0x2B1D
@@ -240,6 +240,7 @@ the run exits with status 1 and never prints `cleanup`:
 
 ```text
 before panic
+panic: fired
 ```
 
 ### `defer` and `?` cannot share a block

@@ -76,7 +76,7 @@ fun field_needs_quote(s: &str).return: bool
 
 ## Example
 
-```kelp
+```kelp project
 impl "deps/csv/lib"
 
 fun main() {

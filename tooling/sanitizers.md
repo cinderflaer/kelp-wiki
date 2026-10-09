@@ -80,7 +80,7 @@ writes six bytes past the start of a four-byte array through a raw pointer. Its
 manifest is only `name`, and `[unsafe] modules = ["main"]` (the module that may
 use `unsafe`); `src/main.kp` is:
 
-```kelp
+```kelp project
 fun main() {
     var buf: [u8; 4] = [1, 2, 3, 4]
     val bp: Ptr<[u8; 4]> = Ptr.from_ref(&buf)

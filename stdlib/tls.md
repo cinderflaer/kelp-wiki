@@ -363,7 +363,7 @@ OpenSSL's own text along. This program feeds `server_config_pem` a good pair, a
 key from a different certificate, a file that is not PEM as the key, a file that
 is not PEM as the certificate, and a path that does not exist:
 
-```kelp
+```kelp norun
 impl "std/tls"
 impl "std/tlsfile" caps(fs = ["/etc/myapp/certs/**"])
 impl "std/result"
@@ -436,7 +436,7 @@ prefers `h2` then `http/1.1` and requires a client certificate; the client offer
 `cert`. The server reads the request before it closes (closing with it unread
 would reset the connection):
 
-```kelp
+```kelp norun
 impl "std/net" caps(net = ["127.0.0.1:*"])
 impl "std/tls"
 impl "std/tlsfile" caps(fs = ["/etc/myapp/certs/**"])

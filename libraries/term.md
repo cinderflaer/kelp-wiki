@@ -67,7 +67,7 @@ static storage to borrow from.
 
 ## Example
 
-```kelp
+```kelp project
 impl "deps/term/lib" caps(env = ["NO_COLOR"])
 impl "std/env"
 

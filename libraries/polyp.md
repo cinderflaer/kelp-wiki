@@ -353,7 +353,7 @@ nothing keeps it after the widgets exist.
 `examples/polyp-counter/` is the minimal program, complete and buildable. Its `coral.toml` fetches Polyp
 with `polyp = "fpl/polyp"`, and its imports are:
 
-```kelp
+```kelp project
 impl "deps/polyp/core/core"
 impl "deps/polyp/backends/gtk/polyp/lib" caps(ui = ["*"])
 impl "std/env"

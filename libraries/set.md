@@ -80,7 +80,7 @@ datac StrSet(var entries: Map<String, bool>)
 
 ## Example
 
-```kelp
+```kelp project
 impl "deps/set/lib"
 
 fun main() {

@@ -63,7 +63,7 @@ directory. The [kelpc command line](/tooling/kelpc-cli) lists the other options.
 `kelpc check` does everything a build does except write the executable, so it is
 the fastest way to ask whether a file is correct. Here is a file with a mistake:
 
-```kelp
+```kelp refused
 fun main() {
     val x: i32 = "text"
     print(x)

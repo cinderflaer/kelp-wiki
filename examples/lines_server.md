@@ -31,7 +31,7 @@ impl "deps/lineproto/lib" caps(net = ["127.0.0.1:*"])
 
 ## The server
 
-```kelp
+```kelp project
 impl "std/net"
 impl "std/str"
 impl "std/process"
@@ -84,7 +84,7 @@ the only structural difference.
 
 ## The client
 
-```kelp
+```kelp project
 impl "std/net"
 impl "std/str"
 impl "std/process"

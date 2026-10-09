@@ -26,7 +26,7 @@ Neither needs a capability. `prng` is arithmetic on a `u64`, which is why a
 
 ## The program
 
-```kelp
+```kelp project
 impl "deps/bits/lib"
 impl "deps/prng/lib"
 
