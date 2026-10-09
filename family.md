@@ -4,11 +4,7 @@ description: "Projects built on Kelp rather than inside it: tools and languages 
 isPublished: true
 tags: "family"
 ---
-The Kelp toolchain (`kelpc`, Coral, Lighthouse) and the library catalogue (fpl) are
-the core of the project. The **Kelp family** is everything built *on* Kelp: programs
-that are written in the language, use Coral as their build tool, and live in the same
-Gitea. They are the language's proof that it can carry real software, and they are
-where its rough edges get found first.
+Projects built on Kelp rather than inside it: tools and languages written in Kelp, the conventions they share, and how to start another one.
 
 ## Projects
 
@@ -16,18 +12,12 @@ where its rough edges get found first.
 | --- | --- | --- | --- |
 | [WebKelp](/family/webkelp) | a markdown-style language (`.wk`) that compiles to plain HTML and CSS, with an escape hatch for everything HTML and CSS can do. The live demo and playground have been removed. | Kelp | [`Juniper/polyp` (folder `web/`)](https://homelabone.xenoo.dev/gittea/Juniper/polyp/src/branch/main/web) |
 
-The core repositories, for comparison, are listed on the [home page](/home).
-
 ## Pages
 
-- [WebKelp](/family/webkelp): what it is, how to build it, and a first page.
-- [WebKelp syntax reference](/family/webkelp-syntax): every construct, the page settings,
-  the CSS pipeline, and what is deliberately not supported.
-- [WebKelp playground](/family/webkelp-playground): the in-browser editor, its Kelp backend, and its limits.
-- [How WebKelp is built](/family/webkelp-internals): the module layout, the data flow, the
-  capability split and the test setup.
-- [Writing tools in Kelp](/family/writing-tools-in-kelp): the structure the family projects
-  share, and the compiler errors a first real program runs into.
+- [WebKelp](/family/webkelp): what it is, how to build it, the live demo and playground that were removed, and a first page.
+- [WebKelp syntax reference](/family/webkelp-syntax): every construct, the page settings, the CSS pipeline and what is not supported.
+- [How WebKelp is built](/family/webkelp-internals): the module layout, the data flow, the capability split and the test setup.
+- [Writing tools in Kelp](/family/writing-tools-in-kelp): the structure the family projects share, and the compiler errors a first program runs into.
 
 ## What a family project looks like
 
@@ -46,8 +36,6 @@ stay small:
    diffs them. Compilers and generators are easy to test this way and hard to test any other.
 5. **Its own documentation page here**, in this chapter.
 
-## See also
+The core repositories are listed in [Contributing](/meta/contributing).
 
-- [Tooling](/tooling) for `kelpc`, Coral and Lighthouse
-- [Projects and coral.toml](/getting-started/projects)
-- [Libraries (fpl)](/libraries)
+[Back to the home page](/)

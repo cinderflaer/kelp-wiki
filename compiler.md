@@ -4,6 +4,17 @@ description: "kelpc is a Rust program that takes .kp sources through lexing, pre
 isPublished: true
 tags: "compiler"
 ---
+How `kelpc` turns `.kp` sources into a program: the pipeline, the backend and the test gates.
+
+## Pages
+
+- [Pipeline](/compiler/architecture): each stage, and what it is responsible for.
+- [Incremental builds](/compiler/incremental): per-module compilation units, the content-addressed object cache, parallel workers and the measured numbers.
+- [Backends](/compiler/backends): `llvm`, the one backend, and why `c` stays the oracle.
+- [Runtime](/compiler/runtime): the C that is still C, and the capability matcher.
+- [Tests](/compiler/tests): the fixture suite, the differential sweeps and the memory gate.
+- [Benchmarks](/compiler/benchmarks): what the C, Rust and Kelp suite says about the compiler.
+
 `kelpc` is a Rust program that takes `.kp` sources through lexing, preprocessing,
 parsing, type checking, move/borrow checking and code generation, then hands the
 result to a backend. The compiler is a single pipeline in a single crate, and the
@@ -44,18 +55,11 @@ with the MK7 backend record, and the retired hand-written track it replaced,
 archived in
 [`plan/done.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/done.md).
 
-## Pages
-
-- [Pipeline](/compiler/architecture): each stage, and what it is responsible for
-- [Incremental builds](/compiler/incremental): per-module compilation units, the content-addressed object cache, parallel workers, and the measured numbers
-- [Backends](/compiler/backends): `llvm`, the one backend, and why `c` stays the oracle
-- [Runtime](/compiler/runtime): the C that is still C, and the capability matcher
-- [Tests](/compiler/tests): the fixture suite, the differential sweeps, the memory gate
-- [Benchmarks](/compiler/benchmarks): what the C, Rust and Kelp suite says about the compiler
-
 ## See also
 
 - [Install and build](/getting-started/install): building `kelpc` and running a file
 - [Language](/language): the surface syntax these stages implement
 - [Capabilities](/language/capabilities): the model the checker enforces
 - [Changelog](/changelog): what each release changed in the language and in these stages
+
+[Back to the home page](/)

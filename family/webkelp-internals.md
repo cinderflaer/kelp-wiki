@@ -42,7 +42,7 @@ webkelp/
 | `page` | ~220 | front matter, `Meta`, the document shell, fragment mode |
 | `attrs` | ~160 | `Attrs`, `parse`, `split_trailing`, `looks_like_attrs` |
 | `main` | ~150 | argument handling, reading and writing files, directory walking |
-| `server` | ~250 | the [playground](/family/webkelp-playground) backend: sockets, request limits, UTF-8 validation |
+| `server` | ~250 | the [playground](/family/webkelp#playground) backend: sockets, request limits, UTF-8 validation |
 | `theme` | ~65 | `base_css()` |
 
 ## The capability split
@@ -195,7 +195,7 @@ regression. A new behaviour gets a new case rather than an edit to an old one.
 
 ## See also
 
-- [WebKelp playground](/family/webkelp-playground)
+- [WebKelp playground](/family/webkelp#playground)
 - [Writing tools in Kelp](/family/writing-tools-in-kelp)
 - [Capabilities](/language/capabilities)
 - [Text](/language/text) and [`std/str`](/stdlib/str)

@@ -7,7 +7,7 @@ tags: "language"
 Source: [`plan/traits.md` §13](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/traits.md).
 
 A `datac` or `enum` can have the arithmetic operators, the order operators and
-string interpolation by implementing a trait. [`std/ops`](/stdlib/ops) declares
+string interpolation by implementing a trait. `std/ops` declares
 one trait per operator and [`std/fmt`](/stdlib/fmt) gains `Display`. Each
 operator is a **desugar in the front end** into an ordinary method call, so the
 borrow checker and both backends see a plain call and a freestanding image may
@@ -31,6 +31,17 @@ unchanged.
 `cmp` returns negative for less, zero for equal and positive for greater, like
 `memcmp`. Each operator trait takes no type parameters and declares exactly the
 one method, so a type either has the operator or does not.
+
+## The module
+
+```kelp
+impl "std/ops"
+```
+
+`std/ops` is ungated and admitted to the freestanding set. Its whole content is
+the seven declarations in [The traits](#the-traits), with no blanket impls and
+nothing derived. The traits can be written as `ops.Add` after `impl "std/ops"`.
+`std/fmt` supplies `Display`; see [`std/fmt`](/stdlib/fmt).
 
 ## An example
 
@@ -177,7 +188,6 @@ really adds, or that `cmp` agrees with `eq` on the same type.
 
 ## See also
 
-- [`std/ops`](/stdlib/ops)
 - [`std/fmt`](/stdlib/fmt)
 - [Operators and expressions](/language/expressions)
 - [Traits and static dispatch](/language/traits)

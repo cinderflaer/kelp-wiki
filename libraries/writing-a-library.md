@@ -11,7 +11,7 @@ consumer needs from it is **a folder in a git repo**.
 
 ```
 mylib/
-    lib.kp            # the entry file — the consumer names it, so the name is a convention
+    lib.kp            # the entry file (the consumer names it, so the name is a convention)
     ...               # any other .kp files lib.kp imports
 ```
 

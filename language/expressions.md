@@ -54,7 +54,7 @@ val c = 7.0 / 2.0    // 3.5
 - Float arithmetic is IEEE: `nan`, `inf` and `-0.0` behave as usual, and
   `math.is_nan` / `math.is_finite` exist to test them.
 - A `datac` or `enum` gets `+ - * / %`, unary `-` and `< <= > >=` by implementing
-  the [`std/ops`](/stdlib/ops) traits, and `"${x}"` and `print(x)` by
+  the [`std/ops`](/language/operator-traits) traits, and `"${x}"` and `print(x)` by
   implementing `fmt.Display`; see
   [Operator traits and `Display`](/language/operator-traits). Builtin types keep
   their builtin operators.

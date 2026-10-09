@@ -6,21 +6,19 @@ tags: "reference"
 ---
 Lookup pages: the things you come back to rather than read through.
 
-| Page | For |
-| --- | --- |
-| [Standard library index](/reference/stdlib-index) | every public name in `std/*`, one line each |
-| [Capability patterns](/reference/capability-patterns) | the pattern grammar for `fs`, `net`, `process`, `env`, `time`, `rand` |
-| [Capability threat model](/reference/capability-threat-model) | what the grants protect, the attacker assumed, the nine holes closed, the gaps still open |
+## Pages
 
-## The language chapter's own lookup pages
+- [Standard library index](/reference/stdlib-index): every public name in `std/*`, one signature per line.
+- [Capability patterns](/reference/capability-patterns): the pattern grammar for `fs`, `net`, `process`, `env`, `time` and `rand`.
+- [Capability threat model](/reference/capability-threat-model): what the grants protect, the attacker assumed, the holes closed and the gaps still open.
 
-| Page | For |
-| --- | --- |
-| [Grammar summary](/language/grammar) | the whole surface grammar on one page |
-| [Lexical structure](/language/lexical) | keywords, literals, escapes, operators |
-| [Types](/language/types) | the type table, `Copy` vs owned vs borrowed |
-| [Pitfalls](/language/pitfalls) | compile errors and their fixes |
-| [Limits in v1](/language/limits) | what the language deliberately does not have |
+## Lookup pages in the language chapter
+
+- [Grammar summary](/language/grammar): the whole surface grammar on one page.
+- [Lexical structure](/language/lexical): keywords, literals, escapes and operators.
+- [Types](/language/types): the type table, and `Copy` vs owned vs borrowed.
+- [Pitfalls](/language/pitfalls): compile errors and their fixes.
+- [Limits in v1](/language/limits): what the language deliberately does not have.
 
 ## The builtin types
 
@@ -33,3 +31,5 @@ language rather than in the index:
 - [Text](/language/text): `String`, `Bytes`, `View`
 - [Collections](/language/collections): `List`, `Map`, `Box`, `[T; N]`
 - [`std/atomic`](/stdlib/atomic): `Atomic<T>` and its one ordering, `Ordering`
+
+[Back to the home page](/)

@@ -4,10 +4,20 @@ description: "Three programs sit around the language: kelpc compiles, Coral owns
 isPublished: true
 tags: "tooling"
 ---
-Three programs sit around the language. `kelpc` compiles, Coral owns the
-project, and Lighthouse serves your editor. Each one does one job, and none of
-them does another's. This page explains the split and points you to the page for
-each tool.
+The three programs around the language: `kelpc` compiles, Coral owns the project, and Lighthouse serves editors.
+
+## Pages
+
+- [`kelpc` CLI](/tooling/kelpc-cli): every subcommand and flag, where artifacts land, the backend, `fmt`'s rules and environment variables.
+- [`kelpc doc`](/tooling/kelpc-doc): the documentation generator: `///` and `//!` comments, its options and `--check`.
+- [Sanitizer builds](/tooling/sanitizers): `--sanitize=address|undefined|thread` and `[build] sanitize`, and what each one catches.
+- [Front-end fuzzing and parser limits](/tooling/fuzzing): the fuzzer, and the 200-level nesting and 800-link chain limits with their errors.
+- [Benchmarks](/tooling/benchmarks): the thirteen-program suite, its rules and the current results against C and Rust.
+- [Release tooling](/tooling/release-tooling): `build/release.sh`, the reproducibility check, the verifying installer and `kelpc version --verbose`.
+- [Coral](/tooling/coral): the manifest key by key, the command surface, the dependency model and the toolchain store.
+- [Lighthouse](/tooling/lighthouse): the two sources of truth, the feature table, editor setup for IntelliJ and the gaps.
+- [Coral changelog](/tooling/coral-changelog): every Coral release, and what it changed.
+- [Lighthouse changelog](/tooling/lighthouse-changelog): every Lighthouse release, and what it changed.
 
 | Piece | What it owns | Repository |
 | --- | --- | --- |
@@ -75,31 +85,10 @@ one of the three that runs while you type.
 | understand what a dependency is, and why a folder must stand alone | the library model | [Libraries (fpl)](/libraries) |
 | write one | the library rules | [Writing a library](/libraries/writing-a-library) |
 
-## Pages
-
-- [`kelpc` CLI](/tooling/kelpc-cli): every subcommand and flag, where artifacts
-  land, the one backend and its oracle, `fmt`'s rules and its refusals,
-  environment variables, and what a project changes about module resolution.
-- [`kelpc doc`](/tooling/kelpc-doc): the documentation generator: `///` and `//!`
-  comments, its options and `--check`, what a page shows, and its limits.
-- [Sanitizer builds](/tooling/sanitizers): `--sanitize=address|undefined|thread`
-  and `[build] sanitize`, the C-backend-only rule, and what each sanitizer catches.
-- [Front-end fuzzing and parser limits](/tooling/fuzzing): the fuzzer, and the
-  200-level nesting and 800-link chain limits with their exact errors.
-- [Benchmarks](/tooling/benchmarks): the thirteen-program suite, its rules, and
-  the current results against C and Rust.
-- [Release tooling](/tooling/release-tooling): `build/release.sh`, the
-  reproducibility check, the verifying installer, and `kelpc version --verbose`.
-- [Coral](/tooling/coral): the manifest key by key, the command surface, the
-  dependency model, the toolchain store, and environment variables.
-- [Lighthouse](/tooling/lighthouse): the two sources of truth, the feature table,
-  editor setup for the IntelliJ plugin, and the deliberate gaps.
-- [Coral changelog](/tooling/coral-changelog) and
-  [Lighthouse changelog](/tooling/lighthouse-changelog): every release of each
-  repository, and what it changed.
-
 ## See also
 
 - [Install and build](/getting-started/install)
 - [Projects and coral.toml](/getting-started/projects)
 - [Compiler](/compiler)
+
+[Back to the home page](/)
