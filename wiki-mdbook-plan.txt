@@ -1,0 +1,230 @@
+Kelp wiki as an mdBook site, beside Wiki.js
+============================================
+
+Status: prototype on branch wiki-mdbook. Wiki.js is not changed and stays up.
+The page files are unchanged except four link fixes (listed at the end).
+
+
+1. What is in the repo
+----------------------
+
+book.toml                  mdBook config. src = "src" names the staged copy.
+SUMMARY.md                 sidebar, generated from the folder layout and the
+                           front matter. Do not edit by hand.
+scripts/wiki_book.py       summary | stage OUT | check OUT | build OUT
+                           Standard library only. The build directory is given
+                           on the command line and must be outside the repo.
+wiki-mdbook-plan.txt       this file (not .md, so Wiki.js does not import it).
+
+The page files stay the way Wiki.js reads them. The script never writes the
+pages; "stage" makes a copy with the front matter removed.
+
+Regenerate and build:
+
+    python3 scripts/wiki_book.py summary              # refresh SUMMARY.md
+    python3 scripts/wiki_book.py build /path/outside/repo/kelp-book
+
+If mdbook is not on PATH the build runs it through "nix shell nixpkgs#mdbook".
+The build last ran with mdBook 0.5.2 and produced zero broken links and zero
+anchor warnings.
+
+
+2. Front matter and what the book renders
+-----------------------------------------
+
+Kept:    title. It becomes the page's H1 when the body has no H1 (all 179 pages
+         have none, because Wiki.js draws the title itself) and the
+         chapter name in the sidebar.
+Dropped: description, tags, isPublished from the rendered page. isPublished
+         false pages are left out of SUMMARY.md and are not staged. No page on
+         main or unreleased is isPublished false today, so nothing is hidden.
+
+The repo README.md is not a page in the book. It describes the storage backend
+and is not wiki content. Confirm this is the intent (see section 7).
+
+
+3. Sidebar order: what was and was not reproduced
+--------------------------------------------------
+
+The Wiki.js sidebar order is not in this repo. It lives in the navigation row
+of the Wiki.js database, mirrored as /var/lib/wikijs/nav.json on homelabone.
+That file was not read while preparing this branch (access was denied), so the
+generated order is NOT yet the live sidebar order.
+
+Current generator rule: the home page first, then each top-level page with
+its folder's pages nested under it, sorted by file name. Tutorial chapters
+already sort by their numeric prefix.
+
+To match the live order exactly, export the nav row from the admin UI (or the
+existing one-line psql command in README.md) and add an ordering step to
+summary: a plain list of paths in the exported order, with unlisted pages
+falling back to the file-name order. This is a small change once the list is
+available. Until then the book sidebar will differ from Wiki.js.
+
+
+4. Hosting: both sites, same source
+-----------------------------------
+
+Wiki.js keeps serving kelp.xenoo.dev exactly as now. The book is a second,
+static site built from the same main branch. Options:
+
+A. Static files under the same host, path /book/ (RECOMMENDED)
+   What it needs: a directory on homelabone (for example
+   /var/lib/kelp-book/current) and one nginx location in /etc/nixos/wikijs.nix:
+   location /book/ { alias /var/lib/kelp-book/current/; try_files $uri $uri.html $uri/ =404; }
+   The tunnel already serves kelp.xenoo.dev, so no DNS record, no tunnel
+   ingress rule and no Cloudflare cache purge is needed. Wiki.js is not touched:
+   its own locations keep their paths. The book's site-url must be "/book/" so
+   its search index and asset paths resolve under the prefix.
+
+B. Subdomain, for example book.kelp.xenoo.dev
+   What it needs: a DNS record, a tunnel ingress rule in the tunnel config,
+   and a second nginx server block or a tunnel route straight to the static
+   directory. The tunnel token has no cache purge permission (README.md), so
+   a 404 cached by Cloudflare during setup would need to wait out its TTL.
+   Clean URLs, but more moving parts.
+
+C. Hosted static site outside homelabone (Cloudflare Pages, GitHub or Gitea
+   Pages). What it needs: an account on that service and a deploy credential
+   in CI. Adds a second place the wiki lives, so it is not recommended while
+   Wiki.js stays.
+
+Recommendation: A. It reuses the existing tunnel and nginx, adds no DNS or
+credentials, and leaves Wiki.js alone. Decision still needed from the owner
+on the path (/book/ is the proposal).
+
+
+5. Sync: where the build runs and what triggers it
+---------------------------------------------------
+
+Source of truth: origin main, as today. unreleased is still merged to main
+at release, and only main feeds the book.
+
+Recommended trigger: a systemd timer on homelabone, every five minutes like
+the Wiki.js sync. It fetches origin main into a local clone, and when the HEAD
+sha differs from the last built sha it runs the build script into a new
+directory and switches a symlink (current) to it. Steps:
+
+    git -C /var/lib/kelp-book/src fetch origin main && reset --hard origin/main
+    python3 scripts/wiki_book.py build /var/lib/kelp-book/build-<sha>
+    ln -sfn build-<sha> /var/lib/kelp-book/current
+
+What it needs: mdbook (added to the NixOS config, or nix shell in the unit),
+read access to the Gitea repo (the same kind of read the Wiki.js git module
+already has), a failure log, and the old build kept for one step to roll back.
+
+Why not CI: a Gitea Actions runner would be a new service to run and keep
+updated, and it would need a deploy credential to reach homelabone. The timer
+needs neither.
+
+Optional later: a Gitea push webhook on main that starts the same unit
+immediately, for a build within seconds of a merge instead of up to five
+minutes. Not needed for the first version.
+
+A build that fails leaves the previous symlink in place, so the site never
+goes down on a bad merge. The check step's broken-link result gates the
+symlink switch.
+
+
+6. Old Wiki.js URLs and redirects
+---------------------------------
+
+Wiki.js stays on the same host, so every existing kelp.xenoo.dev/<path> URL
+keeps working with no redirect. The book adds URLs under /book/ and does not
+replace the old ones.
+
+If a later step moves the book to the root, or a page is renamed:
+- Wiki.js: keep the old URL as-is. Whether Wiki.js redirects renamed pages
+  was not checked; do not rely on it.
+- The book: add nginx rewrites from the Wiki.js path to the book path, for
+  example rewrite ^/language/types$ /book/language/types.html permanent;
+  generated from the same page list the summary step already walks.
+- Anchors: the check step resolves anchors with its own slug rule, which is
+  not Wiki.js's slugger; it was not compared against Wiki.js. The anchors fixed
+  on this branch were stale in the source. Anchor misses are warnings, not
+  failures.
+
+Note: mdBook writes .html files. Clean URLs without .html come from the
+try_files line in option A.
+
+
+7. Open questions for the owner
+-------------------------------
+
+- Hosting path: /book/ on kelp.xenoo.dev (A), a subdomain (B), or external (C).
+- Sidebar order: approve exporting the live nav row so the book matches it.
+- README.md: keep it out of the book (current), or include it as a page.
+- Wiki.js stays. The owner said it is retired only on a later decision, so no
+  step in this plan removes or replaces it.
+
+
+8. Link fixes made on this branch (page files, body text only)
+--------------------------------------------------------------
+
+language/capabilities.md, language/externs.md, libraries/polyp.md
+  /tooling/coral#extern-user-modules-that-bind-a-native-symbol
+  -> /tooling/coral#user-modules-that-bind-a-native-symbol-extern
+  (the heading is "User modules that bind a native symbol ([extern])"; the old
+  anchor was never generated, so it was broken on Wiki.js too)
+language/functions.md
+  /language/limits#scoped-blocks -> /language/limits
+  (limits.md has no such heading)
+
+These four edits must reach main with the same merge as the book, because
+main is the shared source.
+
+
+9. Known build warnings, not fixed
+-----------------------------------
+
+mdBook warns about unclosed HTML tags in stdlib/tls.md: the text "<pattern>"
+and "<this>" is read as an HTML tag. The page renders, but the text may be
+hidden. Fix by wrapping those in backticks in the page source (a change to
+the page, so it is left for a separate commit).
+
+family/webkelp-syntax.md uses [Buy](/shop.wk) and similar as a markdown
+example in a code block. The script leaves non-page absolute links as written
+and warns about them; they are examples, not broken links.
+
+
+10. Feature mapping: Wiki.js features and their book replacement
+----------------------------------------------------------------
+
+Search          Wiki.js database search over titles, descriptions and
+                content. Replaced by mdBook's built-in client-side search
+                (title, headings and body text). The description field is no
+                longer searched.
+Page tree       Wiki.js navigation STATIC plus the path tree. Replaced by the
+                SUMMARY.md sidebar (nested, generated).
+Menu order      Wiki.js navigation row. Replaced by the generated order; the
+                live order needs the nav export (section 3).
+Link checks    Not a Wiki.js feature (broken links were silent). Replaced by
+                scripts/wiki_book.py check, which fails the build on a broken
+                file link and warns on anchors.
+Comments        Not visible in the repo. If enabled on Wiki.js it stays there.
+                The book has no comments. Lost on the book; use Gitea issues.
+Tags            Wiki.js tag browser. Lost on the book (mdBook has no tag
+                pages). The tags stay in the front matter for Wiki.js.
+Description     Per-page meta description. Lost on the book (the rendered page
+                does not carry it).
+Highlighting    Wiki.js uses a custom Prism grammar for Kelp. The book uses
+                highlight.js. Kelp is not known to either; the blocks render
+                plain. A highlight.js language file can be added with
+                additional-js later.
+Theme           Wiki.js injectCSS with the seaweed green accent. Replaced by
+                mdBook additional-css, which needs the same colours copied.
+                The book is not yet themed.
+Editing         Wiki.js in-browser editor saves commits. Lost on the book: it
+                is read-only; edits go through git (as the repo already allows).
+Sync            Wiki.js pulls every five minutes both ways. The book is one
+                way: main to a static site, on the timer in section 5. Pages
+                edited in the browser stay on Wiki.js and reach the book only
+                when committed.
+Access          Wiki.js can hide pages (isPublished false). Kept for the book:
+                such pages are left out of SUMMARY.md and not staged.
+Syntax of titles  Wiki.js reads title from front matter; the book uses the
+                same value as the H1 and the sidebar label.
+Breadcrumbs     Wiki.js shows the path. The book shows the chapter and the
+                sidebar position. Lost as breadcrumbs.
+Last edited     Wiki.js shows the last edit and the author. Lost on the book.
+                It could come back from git log in the build if wanted.

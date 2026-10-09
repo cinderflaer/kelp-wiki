@@ -8,7 +8,7 @@ tags: "language, capability"
 legal only in a module the manifest assigned an `[extern."<module id>"]` section,
 and the module is then gated exactly like a `std/...` one: an importer must
 delegate a capability domain. The manifest keys are documented on
-[Coral: the manifest](/tooling/coral#extern-user-modules-that-bind-a-native-symbol);
+[Coral: the manifest](/tooling/coral#user-modules-that-bind-a-native-symbol-extern);
 this page is the language side.
 
 A raw `extern fun` would bypass `caps(...)` by construction, so nothing gates what
@@ -344,7 +344,7 @@ destructor make that ownership explicit.
 
 ## See also
 
-- [Coral: the manifest](/tooling/coral#extern-user-modules-that-bind-a-native-symbol)
+- [Coral: the manifest](/tooling/coral#user-modules-that-bind-a-native-symbol-extern)
 - [Capabilities](/language/capabilities)
 - [Modules and imports](/language/modules)
 - [Types](/language/types)

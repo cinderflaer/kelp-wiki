@@ -188,7 +188,7 @@ The consumer then does two things by hand.
 
    `header` is one key per section, which is why the queue is its own module: `polyp_queue.h` is a header
    of the library and `gtk/gtk.h` is GTK's, and a section names one. See
-   [Coral: the manifest](/tooling/coral#extern-user-modules-that-bind-a-native-symbol).
+   [Coral: the manifest](/tooling/coral#user-modules-that-bind-a-native-symbol-extern).
 
 ## API
 
@@ -699,7 +699,7 @@ v5 is a layout and packaging release. The library's behaviour is the v4 behaviou
   benchmark
 - [Polyp on bare metal](/libraries/polyp-freestanding): the two QEMU kernels and
   the framebuffer equivalence proof
-- [Coral: the manifest](/tooling/coral#extern-user-modules-that-bind-a-native-symbol)
+- [Coral: the manifest](/tooling/coral#user-modules-that-bind-a-native-symbol-extern)
 - [User FFI](/language/externs)
 - [Functions](/language/functions#trailing-blocks-and-scoped-parameters)
 - [Capabilities](/language/capabilities)
