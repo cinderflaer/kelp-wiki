@@ -659,6 +659,7 @@ v5 is a layout and packaging release. The library's behaviour is the v4 behaviou
   The HTML is written as `index.html` beside the built binary.
 - **Plan.** The design and open decisions are in the Polyp repository at `docs/plan/polyp-v5.md`. See
   [Polyp v5 plan](/libraries/polyp-v5-plan).
+- **Release notes.** Every release is listed in the [Polyp changelog](/libraries/polyp-changelog).
 
 ## Known limits
 
