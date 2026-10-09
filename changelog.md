@@ -38,6 +38,7 @@ this page is the index to it.
 
 | Version | Date | Headline |
 | --- | --- | --- |
+| [26.10.5](#26105-2026-10-09) | 2026-10-09 | `for x in xs.iter()` and `for (k, v) in m.iter()` walk in place; `sync.rendezvous` and `sync.select2`/`select3`; Unicode simple case mapping and byte-offset `str.slice`; faster search, split, base64/base32 and float formatting; `[alias]` in `coral.toml` replaces `alias.kpconf` |
 | [26.10.4](#26104-2026-10-09) | 2026-10-09 | Polyp HTML output (`[build] emit = "html"`); Polyp v5 impl ids in the examples |
 | [26.10.3](#26103-2026-10-08) | 2026-10-08 | `.return:` replaces `.R:`; tuple positions, patterns and `const`s, `for (k, v)` over a `Map`; `loop`, labels and `break value`; disjoint field borrows; methods with type parameters, generic impls and `where`; `std/iter` adapters; float literals, `f32` math, line continuation |
 | [26.10.2](#26102-2026-10-07) | 2026-10-07 | `must_use fun`, TLS encrypted keys and live certificate reload, `net.listen_on`, multipart/form-data bodies, pool idle timeout, large array literals compile fast |
@@ -55,6 +56,43 @@ this page is the index to it.
 | [0.1.2](#012-2026-09-19) | 2026-09-19 | `View`, `char` literals, bitwise operators, `str` to `String` coercion |
 | [0.1.1](#011-2026-09-19) | 2026-09-19 | the `for` loop, `spawn_in`/`run_in`, fallible `try_run`, `fs.symlink` |
 | [0.1.0](#010-no-release) | 2026-09-19 | first tag: the core language, modules, containers, capabilities, stdlib |
+
+## 26.10.5 (2026-10-09)
+
+[Release](https://homelabone.xenoo.dev/gittea/Lilly/kelp/releases/tag/v26.10.5)
+
+11 commits since 26.10.4, the iteration, channel and standard library release. The
+suite passes (1632 tests, 16 ignored by default) except
+`a_fault_resolves_to_a_kp_file_and_line`, the debug-info test that needs a tool the
+build host does not have, as in 26.10.4.
+
+**Iterating with `.iter()`.** `for x in xs.iter()` and `for (k, v) in m.iter()` run
+the same walk as `for x in xs` and `for (k, v) in m`. No iterator value is built,
+and the loop body may not mutate the list being walked.
+
+**Channels.** `sync.rendezvous<T>()` makes a zero-capacity channel: a send completes
+only once a receive takes the value. `sync.bounded(0)` still panics. `sync.select2`
+and `sync.select3` wait on receive cases over one element type and return
+`Pick.Got(index, value)` or `Pick.Closed(index)`; a closed, empty channel counts as
+ready.
+
+**Standard library.** `str.to_upper` and `str.to_lower` apply the Unicode 16.0.0
+simple (one-to-one) case mappings; multi-character mappings such as U+00DF are not
+applied. `str.slice(s, from, to)` takes byte offsets, which must start a codepoint
+or be the end of the string. `str.index_of` and `str.replace` are about 85 times
+faster on a 4000-piece haystack, `path.split` about 20 times faster on 20000
+components, `base64` and `base32` about 2x and 1.7x faster on 2 MB buffers, and
+`str.from_f64` (and so `fmt.float`) about 2x faster on 400000 two-decimal values.
+
+**Aliases live in `coral.toml`.** Aliases come from an `[alias]` section of the
+project's `coral.toml`, one `name = "path"` per line. The project-root
+`alias.kpconf` file is no longer read and is removed. The path must be a relative
+module path with no leading `/` and no `..` component.
+
+**The doc generator never writes a dash.** Generated pages carry no em or en dash
+characters and no entities for them: member and index lines use a colon or a
+hyphen instead, and copied doc comments have any dash replaced. A regression test
+checks the markdown and HTML output.
 
 ## 26.10.4 (2026-10-09)
 
