@@ -1,11 +1,10 @@
 ---
 title: "Types"
-description: "Source section - syntax.md \u00a73."
+description: "Kelp's type table: Copy, owned and borrowed types, tuples, explicit numeric conversions, and generic type arguments."
 isPublished: true
 tags: "language"
 ---
-Source section:
-[`syntax.md` §3](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §3](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
 
 Kelp's types fall into three kinds, and the kind decides what assignment means:
 a `Copy` value is copied, an owned value is *moved*, and a borrowed value is only
@@ -39,7 +38,7 @@ valid inside the scope that lent it.
 | `fun(T, U).return: V` | Copy | a function value: a function pointer, with the parameters it takes and what it returns |
 | `closure(T, U).return: V` | owned | a function value **plus** the environment its captures were moved into |
 
-There is no `void`: a function with no `.return: T` returns `Unit`, which has no
+There is no `void`. A function with no `.return: T` returns `unit`, which has no
 representation, so a binding of one holds nothing ([Returns](/language/returns)).
 
 ## Tuples
@@ -56,10 +55,10 @@ fun min_max(xs: &List<i32>).return: (i32, i32) {
 val (lo, hi) = min_max(xs)      // a tuple value is read by destructuring
 ```
 
-- **Two or more elements.** `(T)` is not a one-element tuple: it is the
+- **Two or more elements.** `(T)` is not a one-element tuple. It is the
   parenthesized type `T`, exactly as `(e)` is the parenthesized expression `e`,
   so `val x = (5)` binds an `i32`. `()` as a type is refused by name, because the
-  absent value's type is spelled `unit`. `()` as a value is the absent value: it
+  absent value's type is spelled `unit`. `()` as a value is the absent value. It
   can be returned, passed and bound, and it is the success payload of a
   `Result<unit, E>` ([Result](/stdlib/result)).
 - **A tuple owns its elements.** There is nothing to declare: the compiler
@@ -125,9 +124,9 @@ val back: u8 = idx.to_u8()     // panics if it does not fit
 val small = idx.try_to_u8()    // Option<u8>: None where to_u8 would panic
 ```
 
-`try_to_<T>` exists exactly where the plain conversion can fail: a widening is
-already exact, so `b.try_to_usize()` is not a method (write `b.to_usize()`), and
-the diagnostic names that rule. The `Option` it hands back is
+`try_to_<T>` exists only where the plain conversion can fail. A widening is already
+exact, so `b.try_to_usize()` is not a method. Write `b.to_usize()` instead, and the
+diagnostic says so. The `Option` it hands back is
 [`std/option`](/stdlib/option)'s, so `if let Some(v) = idx.try_to_u8()` needs no
 type written anywhere. That module has to be somewhere in the program's import
 graph; a program that imports `std/str` has it already, since `std/str` imports
@@ -137,10 +136,10 @@ A float converts to the other float width with `f32.to_f64()` (exact) and
 `f64.to_f32()` (rounds to the nearest `f32`; an infinity when too large).
 
 `n * 1.0` with `n` an integer is a **type error**, not a conversion (syntax.md
-§5.0). What does adapt is a *literal*: an integer literal where a float is
-expected is that float, so `x * 2`, `val w: f64 = 3` and `half(5)` for an `f32`
-parameter all work, as long as the float holds the number exactly (up to 2^24 for
-`f32`, 2^53 for `f64`). A value never converts.
+§5.0). What does adapt is a *literal*. An integer literal where a float is
+expected becomes that float, so `val w: f64 = 3` works, and so does `half(5)` for
+an `f32` parameter. The value must be exact in the float type (up to 2^24 for
+`f32` and 2^53 for `f64`). A variable never converts.
 
 ## Generic types
 
@@ -157,9 +156,9 @@ val p: Pair<i32, String> = Pair(first = 1, second = "one")
   `List<Option<i32>>`, `Box<Pair<i32, i32>>`. The count is checked.
 - Two instantiations are two different types: `Pair<i32, i32>` cannot be passed
   where `Pair<String, String>` is expected.
-- A type argument may not be `str` or a reference: a field may not be borrowed.
-  A tuple is concrete, so it is a legal type argument: `List<(i32, i32)>`,
-  `Box<(String, u64)>`.
+- A type argument may not be `str` or a reference, because a field may not be
+  borrowed. A tuple is concrete, so it is a legal type argument: `List<(i32, i32)>`
+  and `Box<(String, u64)>` both work.
 - A generic type may refer to itself **through a `Box` or a `List`**.
 - A `fun` may declare type parameters too (`fun identity<T>(x: T).return: T`), and a
   call site instantiates them, by inference or by writing them

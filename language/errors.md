@@ -1,93 +1,105 @@
 ---
 title: "Errors and panics"
-description: "Source section - syntax.md \u00a718."
+description: "Kelp has no exceptions. A failure is a value, Option or Result, and ? passes it up. A failure with no way to recover is a panic, which ends the process."
 isPublished: true
 tags: "language, errors"
 ---
-Source section:
-[`syntax.md` §18](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
-
-Kelp has **no exceptions and no `try`**. A failure is a value: `Option<T>` when
-the failure carries nothing, `Result<T, E>` when it carries something. A
+Kelp has **no exceptions and no `try`**. A failure is a value. Use `Option<T>` when
+the failure carries nothing, and `Result<T, E>` when it carries a reason. A
 condition that cannot be handled becomes a `panic`, which ends the process.
+
+Source: [`syntax.md` §18](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
 
 ## `Option` and `Result`
 
-Both are ordinary enums, and the compiler knows their *shape*, not the module
-they came from, so a program's own declaration of either works identically:
+Both are ordinary enums from the standard library. Import them with `impl`, and
+write the types with the module name:
 
-```kelp
-enum Option<T> {
-    Some(val value: T)
-    None
-}
+| Type | Import | Variants |
+| --- | --- | --- |
+| `option.Option<T>` | `impl "std/option"` | `Some(value)`, `None` |
+| `result.Result<T, E>` | `impl "std/result"` | `Ok(value)`, `Err(error)` |
 
-enum Result<T, E> {
-    Ok(val value: T)
-    Err(val error: E)
-}
-```
-
-Neither ships methods: both are generic, and a generic `enum`'s template
-declares none, so the combinators are free functions in
+Each module provides free functions such as `option.is_none(o = maybe)`, and most
+of them also exist as methods, such as `maybe.is_none()`. See
 [`std/option`](/stdlib/option) and [`std/result`](/stdlib/result).
 
 ```kelp
-val parsed = str.parse_i64(text)
-if let Ok(n) = parsed {
-    print(n + 1)
-}
+impl "std/option"
+impl "std/result"
+impl "std/str"
 
-if option.is_none(o = maybe) {
-    print("nothing")
-}
+fun main() {
+    val parsed = str.parse_i64(s = "41")
+    if let Ok(n) = parsed {
+        print(n + 1)
+    }
 
-print(result.unwrap_or(r = parsed, fallback = 0))
+    val maybe: option.Option<i32> = option.Option.None
+    if option.is_none(o = maybe) {
+        print("nothing")
+    }
+
+    print(result.unwrap_or(r = parsed, fallback = 0))
+}
 ```
 
 ## `?`: propagation
 
-`expr?` evaluates `expr`; if it carries a failure, that failure is returned out of
-the enclosing function, otherwise the expression's value is the success payload.
+`expr?` evaluates `expr`. If it carries a failure, the failure is returned from the
+enclosing function. Otherwise the expression's value is the success payload.
 
 ```kelp
+impl "std/result"
+impl "std/str"
+
+fun half(n: i64).return: result.Result<i64, str.ParseErr> {
+    return result.Result.Ok(value = n / 2)
+}
+
 fun quarter(n: i64).return: result.Result<i64, str.ParseErr> {
     val h = half(n = n)?
     return half(n = h)
 }
 ```
 
-- The enclosing function must return the same shape. When the failure payload
-  type is the same, it is moved across as is. When it differs, `?` converts it
-  through `From`: with `impl convert.From<str.ParseErr> for AppErr`, a
-  `Result<_, str.ParseErr>` can be propagated out of a function returning
-  `Result<_, AppErr>`, and the operator calls `AppErr.from(e)`. With no such
-  impl the error names both types and the impl to write. `Option` has no payload
-  to convert. See [Generic traits, `From` and `?` conversion](/language/generic-traits);
-  `result.map_err` still works for a one-off conversion.
-- A function returning `Unit` (including `main`) has nowhere to propagate to.
-- The value composes: `1 + half(n = n)?`.
-- A failure returns immediately, dropping the frame's locals exactly as a
-  `return` does.
-- It moves a payload out of the operand, so a **borrow cannot be an operand**.
-- It applies to the expression it is written on, so a tuple is never its operand.
-  When a tuple is the *success* payload, `?` reaches the `Result` the element is
-  and hands the tuple back: with
-  `fun mk(n: i32).return: Result<(i32, i32), String>`, the line
-  `val (a, b) = mk(n)?` binds the tuple and takes it apart. A tuple is not an
-  `enum`, so `?` written on the tuple itself is the ordinary "the operand must be
-  an `enum`" refusal ([Types](/language/types)).
+- The enclosing function must return the same kind of enum. When the failure types
+  match, the failure passes through unchanged. When they differ, `?` converts it
+  through `From`. Given `impl convert.From<str.ParseErr> for AppErr`, a
+  `Result<_, str.ParseErr>` can be propagated out of a function that returns
+  `Result<_, AppErr>`, and the operator calls `AppErr.from(e)`. Without that impl,
+  the error names both types and the impl to write. `Option` has no failure
+  payload, so it never converts. See
+  [Generic traits, `From` and `?` conversion](/language/generic-traits).
+  For a one-off conversion, `result.map_err` also works.
+- A function that returns `unit` (including `main`) has nowhere to propagate to.
+- The result composes inside an expression: `1 + half(n = n)?`.
+- A failure returns at once, and the frame's locals are dropped as they are for a
+  `return`.
+- `?` moves the payload out of its operand, so **a borrow cannot be the operand**.
+- `?` applies to the expression it is written on. When the success payload is a
+  tuple, `?` works on the `Result` and hands the tuple back. With
+  `fun mk(n: i32).return: result.Result<(i32, i32), String>`, the line
+  `val (a, b) = mk(n)?` binds the tuple and takes it apart. Writing `?` on the tuple
+  itself is an error, because a tuple is not an `enum` ([Types](/language/types)).
 
 ## `panic` and `assert`
 
-`panic(message)` ends the program with a non-zero status; `assert(cond)` is the
-checked form (`panic: assertion failed`). The message is a `str` or an **owned
-`String`**, so a message built in the failing branch needs no binding and no
+`panic(message)` ends the program with a non-zero status. `assert(cond)` is the
+checked form, and it panics with `assertion failed`. The message is a `str` or an
+owned `String`, so a message built in the failing branch needs no binding and no
 `.as_str()`:
 
 ```kelp
-panic(fmt.int(n))          // `fmt.int` returns a `String`; it goes straight in
+impl "std/fmt"
+
+fun main() {
+    val n: i64 = 3
+    panic(fmt.int(n))          // fmt.int returns a String, which goes straight in
+}
 ```
+
+Typical messages:
 
 ```
 panic: assertion failed
@@ -96,31 +108,30 @@ panic: Bytes.get: index out of bounds
 panic: String.from_bytes: input is not valid utf-8
 ```
 
-Almost everything that can fail with no value to return panics: out-of-range
-indices, popping an empty list, `option.unwrap` on `None`, a failing syscall, a
-division by zero in [`complex.div`](/libraries/complex), a scale mismatch in
-[`decimal`](/libraries/decimal).
+Most failures that have no value to return are panics. Examples are an index out of
+range, popping an empty list, `unwrap` on `None`, a failing system call, and a
+division by zero in [`complex.div`](/libraries/complex). A scale mismatch in
+[`decimal`](/libraries/decimal) is another.
 
-On bare metal there is no stderr and no process to end, so a freestanding
-project names its own handler with `[target] panic` and receives the message
-there, either as `fun(msg: str)` or as the location-carrying
-`fun(msg: str, file: str, line: u32)`; a panic that fires while the handler runs
-reaches a double-panic path instead of recursing. [Freestanding
-mode](/language/freestanding#panic-semantics) has the two shapes, the
-double-panic rule and the table of checks with their messages.
+On bare metal there is no stderr and no process to end. A freestanding project
+names its own handler with `[target] panic`, and the handler receives the message.
+The handler is either `fun(msg: str)` or `fun(msg: str, file: str, line: u32)`. A
+panic inside the handler goes to a double-panic path instead of recursing. See
+[Freestanding mode](/language/freestanding#panic-semantics) for both shapes, the
+double-panic rule and the table of checks.
 
-The one kind of failure that ships *both* ways is a narrowing number
-conversion: `n.to_u8()` panics on a value that does not fit, and `n.try_to_u8()`
-hands back an [`Option`](/stdlib/option) instead, so a value that may be out of
-range is something the caller branches on rather than something the process
-dies of.
+One conversion fails in both ways. A narrowing number conversion such as `n.to_u8()`
+panics when the value does not fit. `n.try_to_u8()` returns an
+[`Option`](/stdlib/option) instead, so the caller decides what to do.
 
-**The divergence rule.** A block whose *last statement* is a `panic(...)`
-diverges, so it satisfies any declared return type, including a borrowed one.
-That is what makes a "this cannot happen" accessor expressible:
+**The divergence rule.** A block whose last statement is `panic(...)` never
+returns. So it satisfies any declared return type, including a borrowed one. This
+is how a "this cannot happen" accessor is written:
 
 ```kelp
-fun unwrap<T>(o: &Option<T>).return: T {
+impl "std/option"
+
+fun unwrap<T>(o: &option.Option<T>).return: T {
     if let Some(v) = o {
         return v
     }
@@ -128,18 +139,18 @@ fun unwrap<T>(o: &Option<T>).return: T {
 }
 ```
 
-It applies to a function body's tail and nowhere else: a `panic` cannot be the arm
-of an `if`/`when` used as a value.
+The rule covers a function body's last statement only. A `panic` cannot be the arm
+of an `if` or `when` that produces a value.
 
 ## Which to use
 
 | Situation | Tool |
 | --- | --- |
-| absent value | `Option<T>` |
-| failure with a reason | `Result<T, E>` |
-| failure the caller cannot act on | `panic` |
-| invariant that must hold | `assert` |
-| a library's accessor for a known-valid conversion | `panic` at the end, per the divergence rule |
+| The value may be absent | `Option<T>` |
+| The failure has a reason the caller can act on | `Result<T, E>` |
+| The failure cannot be handled by the caller | `panic` |
+| An invariant that must always hold | `assert` |
+| A library accessor for a conversion that is known to be valid | `panic` at the end, under the divergence rule |
 
 ## See also
 

@@ -1,11 +1,10 @@
 ---
 title: "Return types and `return`"
-description: "Source section - syntax.md \u00a77.1 and \u00a76.4. The `.return: T` clause written after the parameter list, expression bodies against `return`, the divergence rule, and the elision rule for a borrowed return."
+description: "The .return: T clause, expression and block bodies, what return does, the divergence rule for panic, and the rule that a returned borrow must come from a parameter."
 isPublished: true
 tags: "language"
 ---
-Source sections:
-[`syntax.md` §7.1 and §6.4](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §7.1 and §6.4](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
 
 ## The `.return: T` clause
 
@@ -13,22 +12,21 @@ The return type is written **after** the parameter list, introduced by `.return`
 
 ```kelp
 fun add(a: i32, b: i32).return: i32 = a + b     // expression body, requires .return
-fun greet(name: &str) {                    // no .return: returns Unit
+fun greet(name: &str) {                    // no .return: returns unit
     print(str.concat("hello, ", name))
 }
 ```
 
 - `.return` marks "this returns". There is no `->` return marker and no trailing type.
-- **No `.return` means `Unit`.** A function with no return clause returns the absent
-  value.
+- **No `.return` means `unit`.** A function with no return clause returns the
+  absent value.
 - There is no inferred return type for a block body. The signature always says
   what comes back, and the body has to agree with it.
-- `Unit` has no representation, so it is refused where a value has to be stored (a
-  field, a `List` element, a `Map` value), while a binding of a `Unit` value is
-  allowed and holds nothing: `val x = noise()` and `val y: unit = x` both compile,
-  and a `Unit` parameter is not passed. A function returning `Unit` has nowhere for
-  `?` to propagate to, which includes `main` ([Errors and
-  panics](/language/errors)).
+- `unit` has no representation, so it cannot be stored in a field, a tuple, a
+  `List` element or a `Map` value. A binding of a `unit` value is allowed, and it
+  holds nothing: `val x = noise()` compiles. A function that returns `unit` has
+  nowhere for `?` to propagate to, and that includes `main`
+  ([Errors and panics](/language/errors)).
 - A generic function may write a type parameter in the return type
   (`fun identity<T>(x: T).return: T`). `main` may not take type parameters
   ([Generics and type parameters](/language/generics)).
@@ -72,7 +70,7 @@ signal for tail-expression status. An expression-bodied function does not use
 ## What `return` does
 
 - `return expr` delivers the value the signature promises. A mismatch between
-  `expr` and `.return` is a `return type mismatch` error naming both types.
+  `expr` and `.return` is an error: `return type mismatch: expected 'i32', found 'str'`.
 - `return` can appear anywhere in the block, so it is how a function leaves early.
 - Returning drops the frame's locals on the way out, exactly as reaching the end
   of the body does ([Ownership and borrowing](/language/ownership)).
@@ -86,7 +84,9 @@ declared return type, including a borrowed one. That is what makes a "this canno
 happen" accessor expressible:
 
 ```kelp
-fun unwrap<T>(o: &Option<T>).return: T {
+impl "std/option"
+
+fun unwrap<T>(o: &option.Option<T>).return: T {
     if let Some(v) = o {
         return v
     }
@@ -116,9 +116,9 @@ fun as_str(v: &Json).return: &str {
 
 - A payload bound by a pattern counts as derived from the scrutinee it came out
   of, which is why the second function type-checks.
-- `.return: View` therefore means "a view of one of my parameters". A view of a local is
-  refused by name:
-  `cannot return this value as 'View': ... only a 'str' literal can be returned`.
+- `.return: View` therefore means "a view of one of my parameters". A view of a
+  local is refused by name:
+  `cannot return a borrow of 'local': 'View' borrows from its first reference parameter 'text', so the returned value must be derived from 'text'`.
   Return an owned `String`, or take the view as a parameter.
 - When a whole `when` is the returned value, the arm bindings are out of scope
   before the merged root is computed. Return from *inside* the arm
@@ -130,11 +130,15 @@ fun as_str(v: &Json).return: &str {
   escape the function, because its promoted owner ends with the frame:
 
   ```kelp
-  // error: this returns a borrow of a temporary
-  fun bad().return: str = String.from_str("x").as_str()
+  impl "std/str"
 
-  val ok = String.from_str("x").as_str()
-  print(ok.len())
+  // error: a temporary would be freed before the borrow is used
+  fun bad().return: str = String.from_str(s = "x").as_str()
+
+  fun main() {
+      val ok = String.from_str(s = "x").as_str()
+      print(str.len(ok))
+  }
   ```
 
   A field of a call's result follows the same rule: `val name =

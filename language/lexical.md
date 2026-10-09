@@ -1,11 +1,10 @@
 ---
 title: "Lexical structure"
-description: "Source section - syntax.md \u00a72."
+description: "The surface tokens of Kelp: comments and doc comments, line rules, keywords, literals and their escapes, string templates and operators."
 isPublished: true
 tags: "language"
 ---
-Source section:
-[`syntax.md` §2](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §2](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
 
 ## Comments
 
@@ -117,16 +116,15 @@ print(math.pow(base = 2.0,
 ```
 
 A line that **ends in a binary or assignment operator** (`+ - * / && || = == != <= >=`
-and the compound assignments), in `,`, in `.` or in a `when` arrow `->` goes on to
-the next line (26.10.3). The leading form does not: a line that *starts* with an
-operator is a new statement, so put the operator last. `<`, `>`, `%`, `&` and `|` are
-left out because they also close and open type arguments, end an alias pattern or end a pattern. Two
-statements on one line with no separator is an error.
+and the compound assignments), in `,`, in `.` or in a `when` arrow `->` continues on
+the next line (from 26.10.3). A line that *starts* with an operator is a new
+statement, so put the operator at the end of the line. Two statements on one line
+need a separator, and without one it is an error.
 
 ```kelp
 val total = base +
     tax                    // one statement
-val n = text.
+val n = xs.
     len()                  // a trailing `.` continues too
 ```
 
@@ -158,8 +156,8 @@ val h = 0b1010          // integer literal, binary
 val i = b'x'            // byte literal
 ```
 
-- **Integer literals** are decimal, or hexadecimal after `0x` and binary after
-  `0b`: `0xff`, `0b1010`. A radix literal is the same value as its decimal
+- **Integer literals** are decimal, hexadecimal after `0x`, or binary after `0b`:
+  `0xff`, `0b1010`. A radix literal is the same value as its decimal
   spelling (`0xff` is `255`), and like any literal it has no width of its own:
   it takes the integer type its context requires, and `i32` when nothing
   determines it, so `val mask: u8 = 0xff` and `val mask: u64 = 0xff` both work.
@@ -253,7 +251,7 @@ The complete operator set (§2.6):
 | assignment | `=` `+=` `-=` `*=` `/=` `%=` |
 | references | `&` `&mut` `*` |
 | propagation | `?` |
-| separators and access | `.` `,` `:` `(` `)` `{` `}` |
+| separators and access | `.` `,` `:` `(` `)` `[` `]` `{` `}` |
 | `when` arms only | `->` |
 | character literal | `'` |
 | byte literal | `b'` |
@@ -264,8 +262,8 @@ Two things are worth knowing up front:
   `&x` borrows, `a & b` masks.
 - `<<` and `>>` are two adjacent characters, not one token, so a nested type
   argument list (`List<List<i32>>`) still closes.
-- `[` and `]` are lexed but no expression uses them; they exist for capability
-  grant lists.
+- `[` and `]` form array literals and array types, and they hold lists in a
+  capability grant (`caps(fs = ["/srv/**"])`).
 
 ## See also
 

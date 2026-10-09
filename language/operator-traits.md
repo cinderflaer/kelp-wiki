@@ -4,8 +4,7 @@ description: "std/ops declares Add, Sub, Mul, Div, Rem, Neg and Ord and std/fmt 
 isPublished: true
 tags: "language"
 ---
-Source section:
-[`plan/traits.md` §13](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/traits.md).
+Source: [`plan/traits.md` §13](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/traits.md).
 
 A `datac` or `enum` can have the arithmetic operators, the order operators and
 string interpolation by implementing a trait. [`std/ops`](/stdlib/ops) declares
@@ -170,11 +169,11 @@ false
   [`From`](/language/generic-traits) instead).
 - Any operator through a trait of your own: the front end names the `std/ops`
   traits by their canonical names, not "any trait with a method called `add`".
-- Blanket impls and `derive`: no impl is generated, so a type has no `==`, `<` or
-  `Display` unless it writes one.
+- `derive`: the compiler generates no impl. A type has no `<` or `Display` unless
+  it writes one.
 
-The compiler trusts the shapes as declared, so nothing checks that an `add` is an
-addition or that a `cmp` agrees with an `eq` on the same type.
+The compiler trusts each method's shape as declared. It does not check that `add`
+really adds, or that `cmp` agrees with `eq` on the same type.
 
 ## See also
 

@@ -1,11 +1,10 @@
 ---
 title: "Modules and imports"
-description: "Source section - syntax.md \u00a713."
+description: "A module is a file. impl names it and can grant it authority. Covers module names, pub visibility, file order, pd and const, and aliases."
 isPublished: true
 tags: "language"
 ---
-Source section:
-[`syntax.md` §13](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §13](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
 
 A module **is** a file. `impl` names it, and optionally grants it authority.
 
@@ -36,10 +35,9 @@ fun main() {
   entry module**, a path ending in `/lib` under `deps/`, is named after the
   directory Coral fetched it into: `impl "deps/json/lib"` is `json`, whichever
   repository or folder it came from.
-- **`impl "path" as name` is removed.** The clause used to name the module;
-  now the module's own name is the only name, and a program that still writes the
-  clause gets a parse error that names the fix. Where the name you wanted is not
-  the module's own name, rename the call sites instead.
+- **`impl "path" as name` is removed.** A module has one name, its own. A program
+  that still writes the `as` clause gets an error that names the module's name to
+  use instead.
 - **A bare name belongs to the module that writes it.** Every module names its
   own items without qualification; another module's item is reached as
   `alias.Item`, never by its bare name.
@@ -51,7 +49,7 @@ fun main() {
 ## Visibility
 
 Every top-level item is **private to its own module**. A module that imports
-another reaches only the items that module exports with `pub` (A-13):
+another reaches only the items that module exports with `pub`:
 
 ```kelp
 pub const LIMIT: i32 = 10
@@ -75,8 +73,8 @@ pub extern fun clock_ticks().return: u64
   is what another module uses, and that function can be `pub`.
 - A method never takes `pub`. A method's reachability follows its declaring
   type, so `pub datac Circle` is what lets another module call `value.area()` on
-  a `Circle` it holds, however the method was declared. `pub fun Circle.area()`
-  is a parse error that says to mark the type instead.
+  a `Circle` it holds, however the method was declared. Writing `pub` on a method
+  is an error that says to mark the type instead.
 - Inside its own file an item is reachable by its bare name whether or not it is
   written `pub`. `pub` governs only another module's `alias.Item` spelling.
 - A private item that exists gets an error of its own, distinct from a name that
@@ -164,20 +162,19 @@ fun log_area(c: Circle) {
 }
 ```
 
-- A function that mentions a passdown gets it wired in as a hidden parameter; one
+- A function that mentions a passdown gets it wired in as a hidden parameter. One
   that never mentions one pays nothing.
-- The hidden parameter is a **borrow**, and its mutability is what the function
-  does with the passdown: a function that writes it — directly, or through a
-  function it calls — holds an exclusive borrow, and one that only reads it
-  holds a shared one. So `pd var` is writable from inside functions while the
+- The hidden parameter is a **borrow**. A function that writes the passdown,
+  directly or through a function it calls, holds an exclusive borrow. A function
+  that only reads it holds a shared one. So `pd var` is writable from inside functions while the
   ordinary borrow rules still apply: two functions cannot hold the same passdown
   exclusively at once, and one call cannot take it both exclusively and shared
   (`combine(tally, tally)` where `combine` takes `mut Tally` is refused). A
   `pd var` that no function writes is a shared borrow everywhere, so handing it
   to a function that also reads it is fine.
 - A passdown is module-scoped. A local of the same name shadows it inside that
-  scope, and there is no spelling for reaching another module's passdown — which
-  is also why a library cannot keep the caller's tally in one.
+  scope. There is no spelling for reaching another module's passdown, which is
+  also why a library cannot keep the caller's tally in one.
 - An owned passdown is freed once, at process exit.
 
 A `pd var` that nothing writes is the common case for configuration and lookup
@@ -196,9 +193,9 @@ fun main() {
 }
 ```
 
-Write it once — `config = ...` in any function, or a `mut` method on it — and
-every reference in the chain becomes an exclusive borrow instead, which is what
-makes the write checked rather than free.
+Write to it once, with `config = ...` in any function or a `mut` method on it.
+After that, every reference in the chain is an exclusive borrow, which is what
+makes the write checked.
 
 > **Why a library still takes a `mut` parameter**
 >
@@ -216,8 +213,8 @@ anywhere in the tree. See [Projects and coral.toml](/getting-started/projects).
 
 ## Aliases
 
-`alias %*name*% = <raw text to end of line>` is textual substitution that runs
-before parsing, so it can rewrite an import path:
+`alias %*name*% = <raw text to end of line>` is textual substitution, and it runs
+before parsing. It can rewrite an import path:
 
 ```kelp
 alias %*db*% = "storage/postgres"

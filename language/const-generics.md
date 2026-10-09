@@ -1,11 +1,10 @@
 ---
 title: "Const generics and `impl Trait` arguments"
-description: "A datac, enum or fun may take `const N: usize` (or another integer, bool or char) as a type parameter, inferred from an array argument; `fun f(x: impl Shape)` is sugar for a bounded type parameter. No arithmetic on N in a type, no impl Trait returns."
+description: "A datac, enum or fun can take a const parameter such as N: usize, inferred from an array argument. fun f(x: impl Shape) is shorthand for a bounded type parameter. Arithmetic on N in a type and impl Trait returns are refused."
 isPublished: true
 tags: "language"
 ---
-Source section:
-[`plan/const-generics.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/const-generics.md).
+Source: [`plan/const-generics.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/const-generics.md).
 
 Two spellings that remove a reason to write a converter: a **const type
 parameter**, a compile-time value in the type-argument slot, and **`impl Trait`
@@ -110,7 +109,7 @@ false
 - A parameter written `&[i32; N]` is a borrow of the caller's array, the one way
   to say that, because an array is otherwise a by-value type.
 - A `bool` parameter (`datac Flag<const ON: bool>`) reads as a bool in the body.
-- A `char` parameter (since 26.10.4) reads as a character in the body, and each
+- A `char` parameter (from 26.10.4) reads as a character in the body, and each
   character is its own instantiation:
 
   ```kelp

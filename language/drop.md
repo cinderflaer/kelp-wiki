@@ -1,6 +1,6 @@
 ---
 title: "User `Drop`"
-description: "`fun mut T.drop()` gives a user `datac` or `enum` a destructor. It runs first at every drop point, then the fields drop; a moved value is not dropped, a partial move is refused, and a panic runs no destructor."
+description: "fun mut T.drop() gives a user datac or enum a destructor. It runs at every drop point, before the fields drop. A moved value is not dropped, a partial move is refused, and a panic runs no destructor."
 isPublished: true
 tags: "language, ownership, kernel"
 ---
@@ -13,19 +13,20 @@ the value that holds it. The design is
 ## The surface
 
 ```kelp
-datac LockGuard(val held: bool)
+datac Lock(val name: String)
 
-fun mut LockGuard.drop() {
-    LOCK.store(value = false, order = atomic.Ordering.SeqCst)
+fun mut Lock.drop() {
+    print("unlock ")
+    print(self.name)
 }
 ```
 
-`fun mut T.drop()` on a user `datac` or `enum` is that type's destructor. It
-takes the value as an exclusive borrow (`mut` receiver), takes no parameters, and
-returns nothing. It is not spelled through a trait: `trait Drop` is refused
-where it is written, and the method name **is** the declaration, the shape A-12
-slice 1 already chose for a declared `Map` key pair (`fun T.hash()` /
-`fun T.eq(other: &T)`, syntax.md §9.4). See
+`fun mut T.drop()` on a user `datac` or `enum` is that type's destructor. It takes
+the value as an exclusive borrow (a `mut` receiver), takes no parameters and
+returns nothing.
+
+It is not spelled through a trait. `trait Drop` is refused where it is written.
+The method name is the declaration. See
 [Traits and static dispatch](/language/traits).
 
 ## Order of drops
@@ -49,8 +50,8 @@ The drop points are the ones the plan already had:
 Locals die last-in-first-out, so the field order above is the order within one
 value, not across values.
 
-The examples are the `kelpc/tests/fixtures/drop_*.kp` fixtures, hosted programs;
-build one with `kelpc build <file.kp> -o <out>` and run it.
+The examples below follow the `kelpc/tests/fixtures/drop_*.kp` fixtures. They are
+hosted programs: build one with `kelpc build <file.kp> -o <out>` and run it.
 
 ```kelp
 datac Leaf(val tag: i32)
@@ -142,7 +143,6 @@ environment and drops it where the environment is dropped, including on a worker
 thread.
 
 ```text
-$ ./drop_container
 pushed
 leaf
 1
@@ -181,10 +181,10 @@ error: cannot move field 'leaf' out of 'h' by value: it is a type with a destruc
 error: 'Leaf.drop' cannot be called: an explicit destructor call is an error, because the value's own drop already runs when its owner dies
 ```
 
-- **Every derived-copy use.** A `Drop` type is not `Copy` (user types never are
-  in v1) and is excluded from the derived-copy fixpoint, so `List<Guard>.clone()`
-  and `List.slice`, `Map.values`/`get_or` and a `Map` key of a `Drop` type are
-  refused rather than silently producing two owners of one resource.
+- **Every derived-copy use.** A `Drop` type is not `Copy`. User types are never
+  `Copy` in v1. Calls that would copy it are refused, so `List<Guard>.clone()`,
+  `List.slice`, `Map.values`, `Map.get_or`, and a `Map` key of a `Drop` type all
+  fail. This avoids two owners of one resource.
 
 ```text
 error: List<Leaf>.clone is not defined: 'Leaf' declares 'fun mut Leaf.drop()', and a type with a destructor is not `Copy`, so a second owner of the same resource would be freed twice
@@ -221,20 +221,16 @@ fun main() {
 }
 ```
 
+The exit status is 1. Standard output is `before`, and standard error is
+`panic: boom`.
+
 ```text
-$ ./drop_panic >out 2>err
-$ echo $?
-1
-$ cat out
 before
-$ cat err
-panic: boom
 ```
 
-`a`'s destructor never prints `leaf`. A destructor is not checked for being
-idempotent, for dropping a value of the same type, or for being panic-free: a
-destructor that panics is a panic from the drop point, with no unwinding to run
-the remaining drops of the frame.
+The destructor of `a` never prints `leaf`. The compiler does not check that a
+destructor is idempotent or panic-free. A destructor that panics is a panic from
+the drop point, and with no unwinding the remaining drops of the frame are skipped.
 
 ## See also
 

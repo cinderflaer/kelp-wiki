@@ -1,11 +1,10 @@
 ---
 title: "Text"
-description: "Source section - syntax.md \u00a711."
+description: "Kelp's text types, str, View, String and Bytes: conversions, printing, building text, parsing numbers, and the traps to avoid."
 isPublished: true
 tags: "language"
 ---
-Source section:
-[`syntax.md` §11](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §11](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
 
 Kelp has four text types, and the difference between them is where the bytes live
 and whether the length is known.
@@ -54,7 +53,7 @@ print(some_str)          // a str
 print(owned_string)      // a String, read without being consumed
 print(owned_bytes)       // a Bytes buffer
 print("first\nsecond")    // one call, two lines
-print("name\tvalue")     // tabs, too — see the escape set in §2.4
+print("name\tvalue")     // tabs, too; see the escape set in Lexical structure
 ```
 
 `print` takes exactly one positional argument and accepts scalars, `str`,
@@ -117,8 +116,8 @@ val text = "the quick brown fox"
 val v = text.view()             // one strlen, once
 
 print(v.len())                  // 19
-print(v.get(0))                 // 116  ('t'; out of range panics)
-print(v.slice(4, 9))            // "quick" — a view, nothing allocated
+print(v.get(0))                 // 116, the byte for 't'; out of range panics
+print(v.slice(4, 9))            // "quick": a view, nothing allocated
 print(v.eq("quick".view()))     // byte-wise, length-aware
 
 val owned: String = v.slice(4, 9)   // copies by length, not by strlen
@@ -149,13 +148,13 @@ val n: i32 = -7
 print(n.to_i64())            // widening, exact
 print(fmt.int(n.to_i64()))   // "-7" as a String
 
-val parsed = str.parse_i64("41")     // Result<i64, str.ParseErr>
+val parsed = str.parse_i64(s = "41")   // Result<i64, str.ParseErr>
 if let Ok(v) = parsed {
     print(v + 1)
 }
 
 val big: i64 = 3
-val x: f64 = big.to_f64()            // 3.0 — the only integer->float widening
+val x: f64 = big.to_f64()            // 3.0, the only integer-to-float widening
 ```
 
 - `to_<T>()` exists on every integer type for every integer type, plus
@@ -164,9 +163,10 @@ val x: f64 = big.to_f64()            // 3.0 — the only integer->float widening
 - `try_to_<T>()` is the fallible twin, for the pairs whose plain conversion can
   lose a value: it hands back `Option<T>`, so a caller tests rather than
   panicking. A widening has no `try_to_<T>` (see [Types](/language/types)).
-- `str.from_i64`, `str.from_u64`, `str.from_f64(x, decimals)` return `String`.
+- `str.from_i64`, `str.from_u64` and `str.from_f64(x, decimals)` return `String`.
 - `str.parse_i64`, `str.parse_u64`, `str.parse_f64` return
-  `Result<T, str.ParseErr>`, where `ParseErr` is `Empty` or `Invalid`.
+  `Result<T, str.ParseErr>`. `ParseErr` has two variants, `Empty` (the text was
+  empty) and `Invalid` (the text is not a number).
 
 ## Two traps
 

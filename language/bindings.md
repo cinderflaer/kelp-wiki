@@ -1,21 +1,18 @@
 ---
 title: "Bindings and assignment"
-description: "Source section - syntax.md \u00a74. `val` and `var`, where the type comes from, what an assignment does to an owned value, and which paths may be written."
+description: "How val and var bindings work: where the type comes from, what assignment does to an owned value, and which paths may be written."
 isPublished: true
 tags: "language, ownership"
 ---
-Source section:
-[`syntax.md` §4](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
+A `val` or `var` statement binds a name inside a function body. Top-level names
+are `const` and `pd` instead ([Constants and passdowns](/language/passdowns)).
 
-A `val` or `var` statement binds a name inside a function body. Top-level names are
-`const` and `pd` instead ([Constants and passdowns](/language/passdowns)), because
-the parser allows only `impl`, `const`, `pd`, `datac`, `enum` and `fun` at file
-scope.
+Source: [`syntax.md` §4](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
 
 ```kelp
-val n = 10               // immutable binding, type inferred
-var total: i64 = 0       // mutable binding, explicit type
-total += n               // compound assignment: total = total + n
+val n: i64 = 10              // immutable binding, explicit type
+var total: i64 = 0           // mutable binding
+total += n                   // compound assignment: total = total + n
 val (lo, hi) = min_max(xs)   // destructuring: one binding per tuple position
 ```
 
@@ -23,21 +20,20 @@ val (lo, hi) = min_max(xs)   // destructuring: one binding per tuple position
 
 - `val` cannot be assigned after the declaration.
 - `var` can.
-- Both require an initializer: the grammar for an ordinary binding is
-  `val`/`var` `name` [`: type`] `= expr`. A binding whose name is replaced by a
-  parenthesized pattern takes one tuple apart instead (see below).
+- Both need an initializer: `val` or `var`, the name, an optional `: type`, then
+  `= expr`. A parenthesized pattern in place of the name takes a tuple apart
+  instead (see below).
 
-Mutability is a property of the *path*, and a `var` binding is only the first
-step. A `datac` field is assignable only when both of these hold:
+Mutability belongs to the *path*, not just the binding. A `datac` field is
+assignable only when both of these hold:
 
 1. the field is declared `var` in the `datac`, and
-2. the path to it is mutable, which means a `var` binding, a `mut` parameter, or
-   a field of one.
+2. the path to it is mutable: a `var` binding, a `mut` parameter, or a field of
+   one.
 
 Failing either condition is its own error. The same rule decides which methods may
-be called: `fun mut Type.name()` needs a mutable path, so it fails with
-`cannot assign to 'c': not declared 'var'` on a `val` binding
-([Methods and receivers](/language/methods)).
+be called: `fun mut Type.name()` needs a mutable path, so calling it on a `val`
+binding fails ([Methods and receivers](/language/methods)).
 
 ```kelp
 datac Counter(val id: i32, var count: i32)
@@ -56,36 +52,35 @@ c.id = 5                 // error: the field `id` is declared val
 
 - The type is inferred from the initializer, or written after `:`.
 - An empty container takes its element type from the first operation that has to
-  know it: `var xs = List.empty()` followed by `xs.push(1)` is a `List<i32>`, a
-  `Map` takes its key and its value from the first `insert`, and a `Box` its
+  know it. `var xs = List.empty()` followed by `xs.push(1)` is a `List<i32>`, a
+  `Map` takes its key and value from the first `insert`, and a `Box` takes its
   element from `set`. Write the type on the binding
   (`var xs: List<i32> = List.empty()`) when nothing decides it, which is what a
-  container that is only ever measured (`xs.len()`) hits
+  list that is only ever measured (`xs.len()`) hits
   ([Collections](/language/collections)).
 - An integer literal takes the type its context requires, and `i32` when nothing
   determines it ([Lexical structure](/language/lexical)). There is no implicit
-  numeric conversion afterwards, so the annotation is a real decision and not a
-  formatting choice.
-- A **character** literal follows the same rule (and is `char` when nothing asks
-  for an integer), while a **byte** literal is a `u8` whatever the context asks
-  for: `val nl = b'\n'` needs no annotation, and `val n: i64 = b'x'` is refused
-  rather than widened ([Lexical structure](/language/lexical)).
+  numeric conversion afterwards, so the annotation is a real decision.
+- A **character** literal follows the same rule and is `char` when nothing asks
+  for an integer. A **byte** literal is always a `u8`: `val nl = b'\n'` needs no
+  annotation, and `val n: i64 = b'x'` is refused rather than widened
+  ([Lexical structure](/language/lexical)).
 
 ## Assignment
 
-Assignment to an owned binding moves the new value in and drops the old one:
+Assigning to an owned binding moves the new value in and drops the old one:
 
 ```kelp
 var name = String.from_str(s = "first")
 name = String.from_str(s = "second")   // the first String is freed here
 ```
 
-That is how a recursive structure is rebuilt in a loop, and it is also why the
-left side must be mutable: the old value has to be dropped
+That is how a recursive structure is rebuilt in a loop, and it is why the left
+side must be mutable: the old value has to be dropped
 ([Ownership and borrowing](/language/ownership)).
 
 Compound assignment exists for `+`, `-`, `*`, `/` and `%`. It desugars to a read,
-the operation, and a write, so it obeys the same mutability and borrow rules as
+the operation and a write, so it follows the same mutability and borrow rules as
 those three steps written out.
 
 ```kelp
@@ -95,13 +90,13 @@ total %= 3          // total = total % 3
 ```
 
 There are no compound forms for the bitwise operators. `~`, `&`, `|`, `^`, `<<`
-and `>>` are expressions only
-([Operators and expressions](/language/expressions)).
+and `>>` are expressions only ([Operators and expressions](/language/expressions)).
+`x &= 1` does not parse.
 
 ## Destructuring a tuple
 
-A binding may take one tuple value apart in the same statement
-([Types](/language/types) has the type):
+A binding may take one tuple value apart in the same statement. The tuple's type
+is covered on [Types](/language/types).
 
 ```kelp
 val (lo, hi) = min_max(xs)      // one binding per position
@@ -110,26 +105,30 @@ val (_, text) = read_pair()     // `_` ignores a position
 val ((x, y), z) = corners()     // a nested tuple takes a nested pattern
 ```
 
-- The number of positions the pattern writes has to equal the number of
-  elements the tuple has; a pattern written for another arity is refused with
-  both counts.
-- `_` ignores a position instead of binding it. What it holds stays in the value
-  that was destructured, so an owned element an `_` ignores is freed by that
-  value's own drop.
-- `val` and `var` mean what they mean on an ordinary binding, for every
-  position: `var (a, b) = ...` makes both `a` and `b` assignable.
+- The pattern must name as many positions as the tuple has. A pattern written for
+  another arity is refused, and the message gives both counts.
+- `_` ignores a position instead of binding it. The ignored value stays in the
+  tuple that was destructured, so an owned element that `_` ignores is freed by
+  that tuple's own drop.
+- `val` and `var` apply to every position: `var (a, b) = ...` makes both `a` and
+  `b` assignable.
 - **A destructuring binding takes no written type.** `val (a, b): (i32, i32) = ...`
-  is refused, because one written type for several positions could not be checked
-  against the positions it names. Bind the whole value first when its type needs
-  writing: `val p: (i32, i32) = ...`, then `val (a, b) = p`.
-- The initializer is moved into the binding, exactly as `val p = place` takes a
-  place, and each position is then read out of that value. The whole value is
-  bound once, so a second binding of the same place is a use of a moved value,
-  and two positions that write one name are ordinary shadowing. That is the
-  partial move [Ownership and borrowing](/language/ownership) states.
+  is refused, because one written type for several positions cannot be checked
+  against each one. Bind the whole value first when its type needs writing:
+
+  ```kelp
+  val p: (i32, i32) = (1, 2)
+  val (a, b) = p
+  ```
+
+- The initializer is moved into the binding, as `val p = place` moves a place, and
+  each position is then read out of that value. The whole value is bound once, so
+  a second binding of the same place is a use of a moved value. Two positions that
+  write one name are ordinary shadowing. This is the partial move described on
+  [Ownership and borrowing](/language/ownership).
 - An initializer that is a borrow of a tuple binds every `Copy` position and
-  refuses an owned one; that is the rule a field of a borrow already follows. The
-  initializer has to be a tuple at all: `val (a, b) = 7` is refused by name.
+  refuses an owned one, the same rule a field of a borrow follows. The initializer
+  must be a tuple: `val (a, b) = 7` is refused.
 
 ## See also
 

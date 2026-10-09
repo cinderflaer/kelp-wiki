@@ -1,6 +1,6 @@
 ---
 title: "User FFI"
-description: "`extern fun` and `extern type` bind a project's own modules to native symbols. A `coral.toml` section names the domain, the library, the header and the allowlisted symbols; `...` takes extra arguments, `fun(...)` passes a function pointer and `move closure(...)` passes a retained callback."
+description: "extern fun and extern type bind a project's own modules to native symbols. A coral.toml section names the domain, the library and the allowed symbols. Covers handles, variadics and callbacks."
 isPublished: true
 tags: "language, capability"
 ---

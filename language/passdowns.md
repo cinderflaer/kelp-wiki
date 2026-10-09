@@ -1,11 +1,10 @@
 ---
 title: "Constants and passdowns"
-description: "Source section - syntax.md \u00a714. `const` is a top-level compile-time value; a `pd` passdown is a top-level binding every function in the module can name, wired in as a hidden borrow."
+description: "const is a file-level value computed by the compiler. pd is a file-level binding that every function in its module can name, passed as a hidden borrow."
 isPublished: true
 tags: "language, ownership"
 ---
-Source section:
-[`syntax.md` §14](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §14](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
 
 Two declarations live at file scope and are not statements. `const` is a value
 folded at compile time. `pd` (passdown) is a value every function in the module can
@@ -20,6 +19,7 @@ const PI2: f64 = math.PI * 2.0
 
 const PAGE_SIZE: usize = 4096
 const ENTRY_SIZE: usize = 8
+const TABLE_ENTRIES: usize = entries_for(pages = 64)
 
 fun entries_for(pages: usize).return: usize {
     var total: usize = 0
@@ -30,26 +30,24 @@ fun entries_for(pages: usize).return: usize {
     }
     total
 }
-
-const TABLE_ENTRIES: usize = entries_for(pages = 64)
 ```
 
 - The type is mandatory.
+- Every `const` and `pd` must come before the first `datac`, `enum`, `trait` or
+  `fun` in the file.
 - The initializer is **evaluated while the compiler runs**. It may use a
   literal, another `const` declared before it, the operators (arithmetic,
   comparison, `&&`/`||`, the bitwise ones), an integer conversion such as
-  `n.to_usize()`, `if`/`else`, and **a call to a plain `fun`** whose own body
-  stays inside that set. The function does not have to be declared before the
-  `const` that calls it, and a call is an ordinary call: named and positional
-  arguments bind to the parameters, and a recursive call works as long as it
-  terminates.
+  `n.to_usize()`, `if`/`else`, `while`, and **a call to a plain `fun`** whose body
+  stays inside that set. The function can be declared after the `const` that calls
+  it. A call takes named or positional arguments, and a recursive call works as
+  long as it terminates.
 - What is out of reach: a builtin (`print`, `panic`, `assert`), an `extern fun`,
   a method call, a generic function, a `when`, a `?`, an array or a `datac`
-  value, and a template. Each is refused by name.
+  value, and a template. Each is refused.
 - Evaluation is bounded, because it is the compiler doing the running: one
   million steps and sixty-four nested calls.
-- The result has to be a scalar: an integer, a float, a `bool`, a `char` or a
-  `str`. Arithmetic is the declared type's, so a `u8` wraps at 256 and `>>` on a
+- The result has to be a scalar, a `bool`, a `char` or a `str`. Arithmetic is the declared type's, so a `u8` wraps at 256 and `>>` on a
   signed type is arithmetic, exactly as at runtime.
 - Every use is substituted as a literal, so a `const` costs no storage and no work
   at startup.
@@ -111,16 +109,16 @@ fun main() {
 
 ### Scope
 
-- A passdown is module-scoped. Every function in the module may name it, and no
+- A passdown is module-scoped. Every function in its module can name it, and no
   other module can.
 - A `pd` never takes `pub`: `pub pd val x = 1` is refused where it is written,
   because a passdown is module-scoped by design. A `fun` that reads the passdown
   is what another module uses, and that function can be `pub`.
 - A local `val` or `var` of the same name shadows it inside that scope.
 - There is no spelling for reaching another module's passdown. A library therefore
-  cannot tally into its caller's state: that is why [`testkit`](/libraries/testkit)
-  takes an explicit `mut Report`, because a `mut` parameter crosses a module
-  boundary and a `pd var` cannot.
+  cannot tally into its caller's state. A `mut` parameter can cross a module
+  boundary, and a `pd var` cannot. This is why [`testkit`](/libraries/testkit)
+  takes an explicit `mut Report`.
 - An owned passdown is freed once, at process exit.
 
 A `pd var` that nothing writes is the common shape for configuration and lookup

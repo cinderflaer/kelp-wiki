@@ -1,401 +1,138 @@
 ---
-title: "Limits in v1"
-description: "Source section - syntax.md \u00a717. Most are settled for good; a few are open work tracked on the roadmap, marked (open) below."
+title: "Limits of the language"
+description: "What Kelp leaves out on purpose, what is not built yet, and the fixed limits the compiler enforces. Each item links to the page that explains the rule."
 isPublished: true
 tags: "language"
 ---
-Source section:
-[`syntax.md` §17](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
-Most of these are settled design decisions, each with a workaround in this
-documentation. A few are gaps nobody has ruled out for good, they are tracked
-on [the roadmap](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/roadmap.md)
-and may ship later. Those are marked **(open)**, with the item that tracks
-them.
+Kelp leaves some things out on purpose. Other things are not built yet. This page
+lists both, plus the fixed limits the compiler enforces. Each item links to the
+page that explains the rule.
 
-## Control flow
+Source: [`syntax.md` §17](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
+The [roadmap](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/roadmap.md)
+tracks the items that are planned.
 
-- **`break` and `continue` exist** and act on the innermost loop, in a `while`
-  and in either `for`. `loop`, labelled
-  `break`/`continue` and `break value` out of a `loop` used as a value exist
-  (26.10.3); `while` and `for` cannot break with a value, and a deferred action
-  cannot contain any of them
-  ([Iterators, `for` and `break`](/language/iterators)).
+## Left out on purpose
 
-## Errors
+These are design decisions. None of them is planned.
 
-- **`?` converts a failure only through a `From` impl.** An identical failure
-  type is moved across as is; a different one needs
-  `impl convert.From<E1> for E2`, and the operator calls `E2.from(e1)`. There is
-  no boxing, no blanket `Into`, and `?` never consults `Into`. `result.map_err`
-  is still the bridge for a one-off conversion
-  ([Generic traits, `From` and `?` conversion](/language/generic-traits)).
-- A function returning `Unit` has nowhere to propagate to.
+| Missing | Use instead |
+| --- | --- |
+| Exceptions and `try`/`catch` | `Option`, `Result`, `?`, and `panic` for failures with no way to recover ([Errors](/language/errors)) |
+| A garbage collector | Ownership, with each value freed at the end of its owner's scope ([Ownership](/language/ownership)) |
+| Macros | Text substitution with `alias` ([Modules](/language/modules#aliases)) |
+| `goto` | `break`, `continue`, labels and `return` ([Control flow](/language/control-flow)) |
+| `derive` | Write the impl by hand ([Operator traits](/language/operator-traits)) |
+| Operator overloading outside `std/ops` | Implement `std/ops` and `fmt.Display` ([Operator traits](/language/operator-traits)) |
+| Overloading a user function name | Put the type in the name, as in `pick_i32` and `pick_f64` |
+| Lifetime syntax (`'a`) | Borrows end at their last use, and a returned borrow must come from a parameter ([Ownership](/language/ownership)) |
+| Undefined-behaviour escape hatch | `unsafe` marks code that the compiler cannot check. It does not allow undefined behaviour ([Unsafe](/language/unsafe)) |
+| `async` and coroutines | Threads, with `thread.spawn` and `thread.join` ([Concurrency](/language/concurrency)) |
 
-## Source size and shape
+## Not built yet
 
-- **Nesting is capped at 200 levels, and a chain at 800 links.** The parser
-  refuses more than 200 levels of expressions, prefix operators, types, type
-  arguments, blocks and binding patterns inside one another, and more than 800
-  links in an operator or access chain, with an ordinary error
-  (`this nests more than 200 levels deep ...`, `this chain of operators or
-  accesses is longer than 800 links ...`). Written code is nowhere near either.
-  See [Front-end fuzzing and parser limits](/tooling/fuzzing).
+These are not part of the language today.
+
+### Traits and generics
+
+- A trait object of a generic trait, such as `&dyn From<i32>`.
+- A trait object of a trait with an associated type. A borrowed trait object cannot
+  be stored in a field, a container, a return type or a `static`.
+- An upcast from `&dyn B` to `&dyn A`.
+- An impl for one instantiation, such as `impl Name for Pair<i32, String>`.
+- A blanket impl of a trait that takes type arguments, such as `impl<T> Into<U> for T`.
+- A bound on an associated type's own declaration, such as
+  `type Item: Iterator<Item = i64>`.
+- Default values for associated types, generic associated types, and associated
+  constants.
+- Type parameters on a trait method. A trait method cannot take `<T>`.
+- `impl Trait` as a return type. Use a named type parameter or `Box<dyn Trait>`.
+- Const parameters on a method, and arithmetic on a const parameter inside a type,
+  such as `[T; N + 1]`.
+
+See [Traits](/language/traits), [Generic traits](/language/generic-traits),
+[Associated types](/language/associated-types) and
+[Const generics](/language/const-generics).
+
+### Ownership and borrows
+
+- Explicit lifetimes, and borrows stored in struct fields or enum payloads.
+- Closures that capture a borrow. A closure owns what it captures.
+- A `&` stored in a `List`, `Map`, `Box` or array element.
+- A scoped block that is stored, returned or put in a container. A block can
+  only be passed as an argument to the call it was written in. See
+  [Scoped blocks](/language/functions#trailing-blocks-and-scoped-parameters).
+- A block that writes through an exclusive capture and returns a borrow. Return an
+  owned value instead.
+
+### Functions and names
+
+- Named nested functions. Use a closure, which is a `fun` literal that captures
+  bindings from its scope ([Functions](/language/functions#closures)).
+
+### Concurrency
+
+- Select over several channels, and rendezvous channels with zero capacity.
+- Thread-local storage.
+- A panic does not unwind. A panicking worker's owned values are not dropped, and
+  a thread handle that nobody joins leaks its result slot.
+- Memory orders other than `SeqCst`. `Relaxed`, `Acquire` and `Release` are reserved.
+
+See [Concurrency](/language/concurrency).
+
+### Foreign code and unsafe
+
+- An `extern "C"` block. Declare each function with `extern fun`
+  ([User FFI](/language/externs)).
+- Function-pointer types for user externs, and passing a `repr(C)` struct by value.
+- `AtomicPtr` and `transmute`.
+- Provenance and an address-space model. A range granted under `mmio` allows any
+  address reachable from it by arithmetic ([Capabilities](/language/capabilities)).
+
+### Libraries and text
+
+- A borrowing `List.iter()` that yields `&T`. Use `iter.into_iter` or `iter.cloned`
+  ([Iterators](/language/iterators)).
+- Regular-expression literals. Use [`std/regex`](/stdlib/regex) with a pattern
+  string.
+- `str.to_upper` and `str.to_lower` change ASCII letters only.
+
+### Networking
+
+- A WebSocket server. [`std/ws`](/stdlib/ws) is a client only.
+- WebSocket extensions and subprotocols, and automatic reconnect.
+
+For what the networking and TLS modules support, see [`std/net`](/stdlib/net),
+[`std/http`](/stdlib/http) and [`std/tls`](/stdlib/tls).
+
+## Fixed limits
+
+The compiler enforces these numbers. Written code is far from them.
+
+| Limit | Value | Error |
+| --- | --- | --- |
+| Nesting of expressions, types, blocks and patterns | 200 levels | `... nests more than 200 levels deep` |
+| Links in one operator or access chain | 800 | `... is longer than 800 links` |
+| Steps while evaluating one `const` | 1,000,000 | `this constant expression did not finish within 1000000 steps` |
+| Nested calls while evaluating one `const` | 64 | a diagnostic naming the call depth |
+| `[target] cpus` in a freestanding build | 1 to 64 | `must be between 1 and 64` |
+
+See [Front-end fuzzing and parser limits](/tooling/fuzzing) for the parser limits.
 
 ## Compile time
 
-Large generated programs (long method chains, deeply nested calls and generics,
-nested blocks, 300-arm `elif` ladders, 200-field `datac`s, a 5,000-element list
-literal) are built on both backends by `kelpc/tests/scaling.rs`, and a step over
-20 seconds fails the test. The notes are
-[`plan/scaling.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/scaling.md).
+The compiler's scaling tests build large generated programs on both backends:
+long method chains, deeply nested calls, 300-arm `elif` ladders, 200-field
+`datac`s and 5,000-element list literals. A step that takes over 20 seconds fails
+the test.
 
-- **Long method chains and nested generic calls take linear time now.** Type
-  checking used to infer a method call's receiver twice (once to find its type,
-  once as the `self` argument), so each link doubled the work of the link below:
-  `a.f().f().f()...` took 0.4 s at 16 links and 21 s at 22 (the plan's figures),
-  and a chain of 400 never finished. Arguments of a generic call or a generic
-  `datac`/`enum` construction were checked twice in the same way, so
-  `id(id(id(...)))` was exponential too. The checker keeps the first result and
-  reuses it; no program that was accepted or refused changed, and no diagnostic
-  did. A 400-link chain of a `datac` method (`x.inc().inc()...`) passes `kelpc
-  check`, and built with the prebuilt compiler (LLVM, default `-O2`) in about
-  0.2 s and printed `400`.
-- **The parser limits are the real ceiling.** The parser refuses more than 800
-  links in a chain and more than 200 levels of nesting
-  ([Front-end fuzzing and parser limits](/tooling/fuzzing)), so a 400-link chain, 90
-  nested calls and 60 nested `if` blocks are about the largest shapes a program
-  can reach. Both limits were kept.
-- **A very large array literal used to be slow at `-O2`; it no longer is.** An
-  all-constant literal of 256 or more elements bound to a local is emitted as a
-  private constant global plus one copy into the local (a 5,000-element
-  `[i32; 5000]` went from about 3.8 s to 0.16 s at `-O2` on the LLVM backend).
-  Shorter literals, literals with a non-constant element and literals that are
-  not bound directly (passed to a call, returned) keep the aggregate form, so a
-  very large literal in one of those positions can still be slow: bind it to a
-  `val` first.
-- Smaller costs the plan lists, all linear: 150 chained closures take about 1 s on
-  LLVM and 1.6-2.2 s on the C oracle, and 50 nested generic enum constructions
-  take 1.1-1.5 s.
-
-## Data and generics
-
-- **A tuple is a value like any other, `const` included.** A position is read by
-  `t.0`, by a destructuring binding, by `for (a, b) in pairs` and by a tuple
-  pattern in `when (a, b)` (which may hold literals and nested tuples), and a
-  `const` may be a tuple of constants (`const ORIGIN: (i32, i32) = (1, 2)`).
-  A tuple has two or more
-  elements, so there is no one-element tuple: `(T)` is the type `T`, and `()` as a
-  type is refused by name, and `()` as a value is the absent `unit` value, which
-  cannot be an element either (`((), 1)` is refused). Bind the whole tuple to a `val` when its positions need to be
-  visible separately. See [Types](/language/types).
-- **A receiver on a generic type writes the type's own parameters, in order**
-  (`fun Pair<A, B>.first()`); a method may add type parameters of its own after
-  its name (`fun Pair<A, B>.map_first<C>(...)`, 26.10.3) but not a `const` one.
-  See [Generics and type parameters](/language/generics).
-- **An `enum` may declare a receiver method, generic or not** (a generic one since
-  26.10.3), and a value of the type calls it (`val e = E.A`, then `e.tag()`); a
-  receiver that builds the variant names a type, so `E.A.tag()` is refused. The
-  `Map` key pair below is such a method. A method borrows its receiver, so the
-  `Option`/`Result` combinators that take the value by `move` (`unwrap_or`, `map`
-  on a `Result`) stay free functions.
-- **A `Map` key must be keyable.** The compiler derives the key's hash and
-  equality from the fields, so the derived set is `String`, an integer, `bool`,
-  `char`, or a `datac`/`enum`/tuple whose every field, variant payload or
-  position is itself keyable. A `datac` or `enum` outside that set becomes a key
-  by declaring both `fun T.hash().return: u64` and `fun T.eq(other: &T).return: bool`,
-  which the map calls instead of a derived pair; the key is still cloned into the
-  entry, so the type has to be deep-copyable. A float is refused (`nan`), and a
-  `Bytes`, container, view, borrow or `datac`/`enum` with a field outside the set
-  is refused with a message naming that field or the half of the pair that is
-  missing.
-- **No user overloading** (permanent: `abs`, `min`, `max`, `clamp` are the
-  only overloads in the language, and they are stdlib-only). User `extern`
-  bodies bind to real symbols (MK9-S1-M1, roadmap B-1): a `coral.toml`
-  `[extern."<module id>"]` section assigns a user module one of the seven
-  capability domains (`ui` included) plus a native library, a `header`,
-  `include_dirs`/`library_dirs`, an optional `pkg_config` package and an
-  allowlisted symbol set, so its `extern fun` declarations bind a real C
-  symbol under a name the section can rename, gated exactly like a stdlib
-  module. `extern type` handles with parents, `null()`/`cast()`, `...`
-  variadics and `move closure(...)` callbacks all ship; see
-  [User FFI](/language/externs) and
-  [Coral: the manifest](/tooling/coral#extern-user-modules-that-bind-a-native-symbol).
-  **(still open)** `extern "C"` block syntax, function-pointer types for user
-  externs, and a `repr(C)` struct crossing by value.
-
-## Scoped blocks
-
-A trailing block (`f { x -> ... }`) passes a `scoped fun(...)` parameter, and it
-may write what it captures ([Trailing blocks and scoped
-parameters](/language/functions#trailing-blocks-and-scoped-parameters)). The
-limits of that rule:
-
-- **A block cannot be stored**, returned or put in a container: a scoped value is
-  a type of its own and lives exactly as long as the call it was written in. A
-  retained callback (a button's `on_click`) is still a message value, not a block.
-- **A block inside a block may capture the outer block's exclusive capture**
-  (26.10.3). The inner call's other arguments are checked against it exactly as
-  they are for a local.
-- **One owner, one exclusive capture per call.** A second capture of the same
-  owner in the same call, a call whose other arguments or receiver mention the
-  owner, and a borrow of the owner still used after the call are all refused.
-- **A block captures the fields its body uses**, not the whole variable: a block
-  that writes `s.count` can run in a call that borrows `s.items`
-  ([Ownership](/language/ownership)). A block that passes the capture on whole, or
-  reaches a field through an `enum`, a `Box` or an index, captures all of it.
-- A block that writes through an exclusive capture **cannot return a borrow**
-  (`str`, `View`, `&T`); return an owned value.
-- One call cannot pass the same `mut` parameter twice unless every use is a
-  shared reborrow: `g(s, s)` with two `mut` parameters, or with one `mut` and one
-  `&` parameter in either order, is refused ("already borrowed exclusively").
-- `kelpc fmt` has no rule for re-wrapping a trailing block yet (open item 75).
-
-## Feature interactions
-
-Every pair of the 2026-10 language features that had not been tested together is
-a fixture (`matrix_*.kp`) run on both backends. Each cell either works with its
-output pinned or is refused with a message that says what to do next:
-
-| Pair | Result |
-| --- | --- |
-| associated types with `Box<dyn>` | refused by name: use a bounded type parameter (`<T: Source>`) instead |
-| generic traits with operator traits | refused: `ops.Add` takes no type argument, the right-hand side is always `&Self`, so there is no `impl Add<Vec2> for Vec2` |
-| iterators with `defer` | works: a `defer` in a loop body runs once per iteration, including the one a `return` leaves; a function-level `defer` runs last |
-| iterators with const generics | limit: `impl Iterator for Ring<3>` is a trait for a generic instantiation, refused; wrap it in a non-generic cursor `datac` that walks the `Ring<N>` through a generic function |
-| `From` with `?` inside an iterator's `next` | refused where the shapes differ (`next` returns an `Option`, so `?` there can only propagate `None`); convert in a helper that returns a `Result` and turn the failure into `None` with a `when` |
-| `Display` with a generic function | works: `<T: fmt.Display>` calls `to_text`, and the same value interpolates in a template |
-| `Ord` with `Map` keys | works, and `Ord` is never consulted: a declared `hash`/`eq` (or the derived field-wise pair) decides key identity, so an `Ord` that calls every pair equal still leaves two keys in the map |
-| operator traits in a freestanding build | works: `std/ops` is in the freestanding allowed set |
-
-## Ownership
-
-- **A partial move takes one projection of an owned local.** `val xs = bag.xs`
-  moves that field out of an owned `val`/`var` local or a `move T` parameter, and
-  the binding keeps the fields that stayed. An owned `enum` payload read by value
-  out of an owned place is the same partial move, which is what a `when`/`if let`
-  over an owned place does with the payload it binds. A position of a tuple read
-  out of an owned binding is the same partial move, and read out of a borrow it
-  is refused. A nested owned field path is supported: it moves only its final
-  field, leaving sibling fields readable; a borrowed structure is still refused.
-- **The helpers whose receiver stays a borrow are `Copy`-only.** `option.unwrap`
-  on an `Option<String>` and `result.map` over a `Result<T, MyErr>` take their
-  receiver with `move` now, so both work. `option.or_else`, `result.unwrap`,
-  `result.unwrap_or`, `result.unwrap_err`, `result.expect`, `result.expect_err`,
-  `result.and_then`, `result.or_else` and `list.filter` over a `List<String>`
-  read through a borrow and rebuild what they hand back, so the payload (or the
-  accepted element) must be `Copy`.
-- **No references (and no `View`) in fields, `List` elements, `Map` values,
-  array elements or `Box` contents.** Text you must store is a `String`; a view
-  is taken at the point of use.
-- A `View` never becomes a `str`: a slice has no NUL after it, so `str.len`/
-  `str.eq` on one would read past the slice. Take `v.to_string()`.
-
-## Containers
-
-- **A `List` element and a `Box` element may be a `List` or a `Box`;** a `Map`
-  value and an array element may not be a container at all, and every container
-  refuses a borrow, a `str`, a `View`, an atomic, a function value and `Unit` as
-  an element. A map that holds a list, or a named row, wraps the inner one in a
-  one-field `datac` (as `csv.Row`, `listx.Chunk`, `table.Row` do).
-- **`[T; N]` is fixed at its written length.** There is no `[T; 0]`, no `a[i]`
-  subscript (write `.get`/`.set`, as on a `List`) and no growth. The repeat form
-  `[x; N]` copies `x` into every slot, so its element has to own nothing, which
-  is the one array shape a `datac` element cannot take: write the elements out,
-  or start from a literal and `set` each one. An array cannot be a `List` or
-  `Map` element, and an array element cannot be a `List`, `Map` or `Box`.
-- **`for` walks a `List`, an array, a `Map` (`for (key, value) in map`), or any type
-  that implements `std/iter`'s `Iterator`** or is an iterator by shape. `std/iter` has
-  `map`, `filter`, `take`, `skip`, `enumerate`, `zip` and `chain`, and the owned list
-  iterator `into_iter` (26.10.3). **(open)** A borrowing `List.iter()` yielding `&T`
-  does not exist. A generic impl (`impl<I: Iterator> Iterator for Take<I>`) is
-  accepted, and `std/iter`'s own adapters use the by-shape rule instead
-  ([Iterators, `for` and `break`](/language/iterators)).
-
-## Compile-time evaluation
-
-- **A `const` is the same language, not a second one.** Its initializer may use
-  the operators, `if`, an integer conversion, other `const`s, and a call to a
-  plain `fun` whose own body stays inside that set. There is no `comptime`
-  block, no compile-time `List`/`Map`, and no `size_of`/`align_of`; a builtin, an
-  `extern fun` and a method call are all out of reach, so `str.len("x")` cannot
-  be a constant.
-- Evaluation is bounded: one million steps and sixty-four nested calls, and
-  exceeding either is a diagnostic. A constant that calls a function is running
-  inside the compiler, so the function has to terminate on the values the
-  constant gives it.
-
-## Networking
-
-- **`std/http` also serves HTTP/1.1.** The server is pure Kelp over `std/net`,
-  with a `Limits` table, keep-alive, pipelining, chunked and
-  `Expect: 100-continue` request bodies, and `serve_threaded` worker threads.
-  **A listener binds the interface its grant allows:** `net.listen(port)` has no
-  host argument, so a loopback-only grant (`127.0.0.1:8080`) binds `127.0.0.1`
-  and a grant that includes `*` binds every interface
-  ([threat model](/reference/capability-threat-model)); `net.listen_on(host,
-  port)` names the host and is checked on `host:port` like `connect`. `net.mono_ms`, `net.try_accept`,
-  `Listener.set_timeout` and `net.try_shutdown_write` exist for it.
-- **(decided 2026-09-26, roadmap item 37; done, MK5-S4b-M1)** TLS shipped:
-  [`std/tls`](/stdlib/tls) links the system OpenSSL, and `http.parse_url` now
-  accepts `https`, and `ws.parse_url` accepts `wss` (`ws.connect_url` runs the
-  WebSocket handshake over the same TLS layer, taking the scheme off the parsed
-  URL).
-- **TLS also serves.** [`std/tls`](/stdlib/tls#serving-tls) builds a
-  `ServerConfig` from PEM bytes (`tls.server_config_pem`), accepts with
-  `tls.accept`, negotiates ALPN, and can require client certificates (mutual
-  TLS); [`std/http`](/stdlib/http#serving-https) serves HTTPS with
-  `http.serve_tls`. Its limits: verification cannot be turned off on either
-  side; `tlsfile.read_key` checks a key file's permissions and `read_pem` does
-  not; an encrypted private key takes `ServerOptions.key_password`;
-  `ServerConfig.reload_pem` swaps the certificate for new handshakes;
-  `serve_tls` binds every interface (bind a host with `http.listen_on` and
-  `serve_tls_on`); and the HTTP server speaks HTTP/1.1 only,
-  so ALPN names a protocol but does not make the server speak `h2`.
-- **`std/ws` is a client, not a server.** Not scheduled anywhere on the
-  roadmap: a WebSocket server, extensions (`Sec-WebSocket-Extensions`, so
-  `permessage-deflate` and the `zlib-stream` transport a compressed gateway
-  asks for), subprotocols (`Sec-WebSocket-Protocol`), redirects, automatic
-  reconnect, and waiting for the peer's answering `Close` inside `close`. A
-  caller that wants that answer reads until it sees `Msg.Close` or end of file
-  first, because waiting would block on a peer that has already gone and v1
-  has no way to time that out.
-- **`ws.parse_url` splits the port at the first `:`**, so an IPv6 literal is not
-  expressible, the same rule `net`'s capability patterns follow.
-- A WebSocket frame above `MAX_FRAME` (1048576 bytes) is a protocol error rather
-  than an allocation of whatever the peer announced, and a response head above
-  `MAX_HEAD` (8192 bytes) is refused the same way.
-
-The two clients carry these limits by decision, not by accident: `std/http` is
-[`syntax.md` §16.12](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md)
-and `std/ws` is §16.18 of the same document.
-
-## Concurrency
-
-- **Real threads exist, with a move-only crossing rule.** `thread.spawn(entry,
-  arg)` in [`std/thread`](/stdlib/thread) starts an OS thread, and
-  `thread.join(handle)` waits for it and consumes the handle, handing back `Ok`
-  with the worker's value or `Err` with the panic text. An owned argument is
-  **moved** into the worker, and the single borrow that may cross is a shared
-  borrow of a `pd` whose pointee has no reachable `var` field. `Atomic<T>` in
-  [`std/atomic`](/stdlib/atomic) is one location every access to which is a
-  single atomic operation, and it satisfies that rule by construction, so a
-  `pd val` atomic is the shared counter a worker and its joiner both reach. A
-  `&mut T`, a `str`, a `View`, a frame local's `&T` and a `datac` with a
-  reachable `var` field are all refused. The workers are OS threads rather than
-  green ones, and a program that needs isolation rather than sharing still
-  spawns a process.
-- **One ordering, and nothing else around it.** The single ordering v1 has is
-  `SeqCst`; `Relaxed`, `Acquire` and `Release` are reserved, not shipped. There
-  are no async and no coroutines, with no roadmap item tracking either yet.
-  **Channels and a thread pool have shipped**, hosted only:
-  `sync.bounded`/`sync.unbounded` with `Sender<T>` and `Receiver<T>` in
-  [`std/sync`](/stdlib/sync#channels), and [`std/pool`](/stdlib/pool). A channel
-  carries owned borrow-free values only, has no `select` and no zero-capacity
-  form, and `send` returns an `Option` the compiler does not force a caller to
-  read; a pool creates one thread per job, so it bounds concurrency rather than
-  thread creation.
-  `Mutex`, `RwLock` and `Condvar` have shipped ([`std/sync`](/stdlib/sync));
-  thread-local storage is still a named backlog item (B-11, MK9-S3-M3) rather
-  than ruled out, it is simply not built. Per-CPU storage has shipped: `percpu static mut` lays out
-  `[target] cpus` copies and `cpu_index()`/`cpu_count()` read it back, in a
-  freestanding build only; see [Per-CPU storage](/language/percpu). Today's shared-mutable shapes for hosted threads are `Atomic<T>`,
-  `Mutex<T>`, `RwLock<T>` and `Condvar`, and values move between threads over a
-  channel; a worker that needs to share something else still takes its own
-  copy instead, the way
-  `examples/download_pool.kp` gives each thread its own `http.Pool`. Two leaks
-  are admitted: a panicking worker's frame is abandoned, and a handle nobody
-  joins is detached with its worker record leaked (a bare `thread.spawn(...)` statement is refused, but a handle bound to a `val` and never joined still leaks). `must_use fun` exists ([Functions](/language/functions#must_use)); `Sender.send` carries it.
-  A user `Drop` now exists ([User `Drop`](/language/drop)), but it does not run
-  on the panic path: there is still no unwinding. A worker that returns `unit`
-  joins to `Result<unit, ThreadErr>` with nothing in its `Ok`, the same shape
-  `None` already has.
-  `thread.fence(order)` in [`std/thread`](/stdlib/thread) joins the total order
-  while naming no location, and changes nothing a single-threaded program can
-  observe. [Concurrency in v1](/language/concurrency) has the model as it
-  stands and what it still does not have.
-
-## Text
-
-- `str.to_upper`/`to_lower` are **ASCII-only**.
-- A string is UTF-8 by convention and bytes by API: most functions count bytes and
-  the codepoint helpers are the separate `char_*` set.
-- **No regular-expression literals in the language.** Patterns are data, so a
-  regex is [`std/regex`](/stdlib/regex): a linear-time Pike VM over bytes with a
-  documented subset, freestanding with the `[target] alloc`/`dealloc` pair.
-  [`glob`](/libraries/glob)
-  still has the `*`/`?` shell patterns.
-
-## Not present at all
-
-**Settled for good**, with no roadmap item working toward them: no
-exceptions, no garbage collector, no macros. These are the headline design, not
-gaps: ownership without a GC, `Result` instead of throwing, and text
-substitution (`kelpc`'s aliases) instead of a hygienic macro system. Operators
-are overloaded only through the `std/ops` traits on a `datac`/`enum`
-([Operator traits and `Display`](/language/operator-traits)); there is no
-`derive`, no bitwise or `&&`/`||` overloading and no user operator trait.
-
-**(open)** The rest of this list is absent from v1 today but is either an
-active roadmap item or a named future milestone, not a closed decision:
-
-- **Provenance and address-space control.** `unsafe`, raw pointers and the
-  layout and data-format surface the kernel path needed have shipped
-  (`unsafe` blocks and `unsafe fun`, `Ptr<T>` with
-  `offset`/`byte_offset`/`cast`/`addr`, volatile and unaligned access,
-  `alloc`/`free` and the fallible `try_alloc`, `repr(c)`/`repr(packed)`/
-  `repr(align(N))`, `size_of`/`align_of`/`offset_of`, the byte-order
-  conversions, the `[unsafe] modules` gate, and the [`std/arena`](/stdlib/arena)
-  bump region): see [Unsafe code and raw
-  pointers](/language/unsafe). `from_addr` names an address, and a freestanding
-  module must hold an `mmio` grant to do it, but there is still no provenance or
-  address-space model, which is why a granted range admits any address reachable
-  from it by arithmetic. `AtomicPtr`, `transmute` and a read of a non-`Copy`
-  element are absent too.
-- **Traits: what is still absent.** A-12. Named traits shipped in slices:
-  static dispatch and bounds, default methods, supertraits and builtin impls,
-  the borrowed trait object `&dyn Name`, [associated types](/language/associated-types),
-  [generic traits and `From`](/language/generic-traits), the owned
-  [`Box<dyn Name>`](/language/box-dyn), the [operator traits and
-  `Display`](/language/operator-traits), and
-  [`impl Trait` in argument position](/language/const-generics); see
-  [Traits and static dispatch](/language/traits). What is still absent: an upcast
-  between trait objects, an impl for one instantiation (`impl Name for Pair<i32, String>`),
-  and blanket impls of a trait with type arguments (blanket impls with no trait
-  arguments shipped in 26.10.4, and `impl<T: A> B for Pair<T>` in 26.10.3, see
-  [Traits](/language/traits)),
-  a bound or equality constraint on an associated type in a bound
-  (`I: Iterator<Item = i64>`), default or generic associated types and
-  associated consts, generic trait methods, `impl Trait` in a return position,
-  `dyn` of a generic trait or of a trait with an associated type, `dyn` in a
-  field or a return type when it is a `&dyn`, and the rest of the refusal list
-  on those pages. A user `Drop` is a smaller thing that shipped on its own,
-  `fun mut T.drop()`, and is not a trait; see [User `Drop`](/language/drop).
-- **Const generics: value parameters only.** `<const N: usize>`, `bool` and, since
-  26.10.4, `char` shipped ([Const generics](/language/const-generics)); arithmetic
-  on the parameter inside a type (`[T; N + 1]`), a const parameter on a trait and
-  a const parameter of any other type are refused.
-- **Lifetime syntax, and the borrows it would allow in fields.** A-11/A-8.
-  Two of A-11's pieces have shipped: a bound borrow ends at its last use rather
-  than at the end of its scope, and a reference binding remembers the owner its
-  value came from, so a pointer local can walk a structure as a cursor
-  ([Ownership and borrowing](/language/ownership#cursors-and-provenance)).
-  A direct text-view binding may promote its temporary owner, and a `datac` may
-  store `str`/`View` when construction moves its String/Bytes owner into an
-  earlier field of the same value. What stays out is explicit lifetime syntax
-  (`'a`), enum-payload and container borrows, raw reference fields, and closures
-  that capture a borrow.
-- No undefined-behaviour escape hatch: `unsafe` marks the operations the
-  compiler cannot check, it does not make undefined behaviour allowed, the same
-  way Rust's `unsafe` does not.
-- **Named nested functions.** No roadmap item names this one at all, closures
-  (a `fun` literal capturing a binding) shipped instead and cover most of
-  what a nested function would be for; a named one that can recurse or be
-  referenced before its own definition is simply an unanswered question
-  rather than a decision either way.
+A very large array literal is fastest when it is bound directly to a `val`. A
+literal passed to a call or returned keeps the slower form, so bind it first. See
+[Collections](/language/collections#restriction-the-element-set).
 
 ## See also
 
-- [Concurrency in v1](/language/concurrency)
+- [Concurrency](/language/concurrency)
 - [Pitfalls](/language/pitfalls)
 - [Ownership and borrowing](/language/ownership)
 - [Collections](/language/collections)

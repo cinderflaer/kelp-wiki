@@ -1,18 +1,17 @@
 ---
 title: "Functions"
-description: "Source section - syntax.md \u00a77."
+description: "Declaring functions, named arguments, function values, closures, scoped blocks with exclusive captures, must_use, and how pd passdowns become hidden parameters."
 isPublished: true
 tags: "language"
 ---
-Source section:
-[`syntax.md` §7](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §7](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
 
 ## Declaration
 
 ```kelp
 fun add(a: i32, b: i32).return: i32 = a + b        // expression body, requires .return
 
-fun greet(name: &str) {                       // no .return: returns Unit
+fun greet(name: &str) {                       // no .return: returns unit
     print(str.concat("hello, ", name))
 }
 
@@ -26,8 +25,8 @@ fun abs_diff(a: i32, b: i32).return: i32 {         // block body
 
 - The keyword is `fun`; the return type is written `.return: T` **after** the
   parameter list. There is no `->`, no trailing type, and no inferred return type
-  for a block body. No `.return` means `Unit`.
-- **`.R:` is the outdated spelling** of the same marker (since 26.10.3). It still
+  for a block body. No `.return` means `unit`.
+- **`.R:` is an outdated spelling** of the same marker (outdated since 26.10.3). It still
   compiles, `kelpc build` and `kelpc run` print an `outdated:` finding for each
   one, and `--deny-outdated` turns the findings into errors; it is removed in the
   next development cycle. The two mean exactly the same thing and both are
@@ -43,8 +42,8 @@ fun abs_diff(a: i32, b: i32).return: i32 {         // block body
 
 ## Named arguments
 
-Named arguments are allowed at any call site with more than one parameter, and
-are matched by name first, then positionally:
+A call with more than one parameter can name its arguments. Names are matched
+first, and the rest are matched by position:
 
 ```kelp
 val p = Circle(r = 2.0, x = 1.0)
@@ -57,7 +56,7 @@ twice. The convention in this repository is to use named arguments wherever a
 call would otherwise be ambiguous: in practice every `datac` construction with
 two or more fields.
 
-## Overloading, recursion
+## Overloading and recursion
 
 - **A user program cannot overload a name.** `fun pick(a: i32)` and
   `fun pick(a: f64)` collide. Overloading exists only inside the shipped standard
@@ -101,7 +100,7 @@ fun make(step: i32).return: closure(i32).return: i32 {
 }
 
 val f = make(3)
-print(f(7))                        // 21 — `step` outlives `make`
+print(f(7))                        // 21, because `step` outlives `make`
 ```
 
 Capture rules:
@@ -351,8 +350,8 @@ on, branching on it or binding it counts as using it.
 
 A function that mentions a `pd` binding gets it wired in as a hidden parameter;
 one that never mentions one pays nothing. The parameter is a shared borrow
-unless the function writes the passdown — directly, or through a function it
-calls — in which case it is exclusive. See
+unless the function writes the passdown, directly or through a function it
+calls, in which case it is exclusive. See
 [Modules and imports](/language/modules).
 
 ## See also

@@ -53,9 +53,8 @@ error: the initializer is not constant: a 'i32' static is initialized with a lit
 
 ### Where a static lives
 
-A static initialised to all zero goes to `.bss` (LLVM `zeroinitializer`, the
-section default); any other value goes to `.data`; a `section("...")` clause
-overrides both. An immutable static with a nonzero value is emitted `constant`
+A static whose value is all zeros goes to `.bss`. Any other value goes to `.data`. A
+`section("...")` clause overrides both. An immutable static with a nonzero value is emitted `constant`
 (read-only), except one that holds an `Atomic`, which is emitted mutable so its
 methods can write through the shared borrow.
 
@@ -83,6 +82,9 @@ error: 'static mut C' is an unsafe operation: reading, writing or taking its add
   order = SeqCst)` needs no `unsafe`, because every `Atomic` operation takes a
   shared borrow. This is the shape a kernel's per-CPU counter or a shared flag
   wants without an audit entry.
+
+The example writes a `static mut`, so its module must be listed under `[unsafe]`
+modules in `coral.toml`:
 
 ```kelp
 impl "std/atomic"
@@ -154,10 +156,9 @@ fun with_lock().return: bool {
 }
 ```
 
-`defer EXPR` is a statement. `EXPR` is one expression (a block counts: `defer
-{ ... }`), and it is checked and emitted exactly as if it were written at every
-exit of the block it is written in; the value of `EXPR` is discarded. `defer`
-is a keyword, so no program that named a variable `defer` changes meaning.
+`defer EXPR` is a statement. `EXPR` is one expression, and a block counts, as in
+`defer { ... }`. The compiler checks it and emits it as if it were written at each
+exit of the block. The value of `EXPR` is discarded. `defer` is a keyword.
 
 ### Semantics
 

@@ -1,6 +1,6 @@
 ---
 title: "Kernel 0"
-description: "The freestanding examples that boot under QEMU: the UART driver, trap handlers, per-CPU statics, Sv39 tables, a syscall ABI, an allocator, panic locations, `mmio` and `irq`/`frames` grants, a preemptive scheduler and the x86-64 port with its IDT."
+description: "The freestanding examples that boot under QEMU: the UART driver, traps, per-CPU statics, Sv39 tables, a syscall ABI, panic locations, device grants, a preemptive scheduler, and the x86-64 port."
 isPublished: true
 tags: "language, freestanding, kernel"
 ---
@@ -16,7 +16,7 @@ The build side is [Freestanding mode](/language/freestanding).
 ## Running one
 
 The examples need `qemu-system-riscv64`, `qemu-system-aarch64`,
-`qemu-system-x86_64` and `ld.lld`, which `dev-kernel.nix` supplies. Each has a
+`qemu-system-x86_64` and `ld.lld`, which the repository's Nix shell supplies. Each has a
 `run.sh` that builds the project, boots it under `timeout 20 qemu-system-riscv64
 -machine virt -bios none -nographic -no-reboot -serial mon:stdio -kernel <elf>`,
 reads QEMU's own stdout until the last expected line appears, kills QEMU, and
@@ -25,14 +25,14 @@ kernel's intent: the assertion is a comparison against the bytes that came out
 of the serial port.
 
 ```sh
-nix-shell dev-kernel.nix --run 'examples/kernel0/run.sh'
+examples/kernel0/run.sh
 ```
 
 The script builds with `target/debug/kelpc` by default; `KELPC` points it at
 another binary. The real output, from a build of the current tree:
 
 ```text
-run.sh: booted /home/juniper/Projects/kelp-native-ui/overnight/wt-docs2/examples/kernel0 and the UART printed:
+run.sh: booted examples/kernel0 and the UART printed:
 hello from kelp
 ```
 
@@ -59,8 +59,8 @@ hello from kelp
 
 ## IRQ lines and frames as capabilities
 
-`examples/kernel0-caps` is kernel stage 18: two device capabilities beside the
-`mmio` grant, both narrowed in the manifest so the grant and the code say the
+`examples/kernel0-caps` adds two device capabilities beside the `mmio` grant,
+both narrowed in the manifest so the grant and the code say the
 same thing.
 
 ```toml
@@ -93,7 +93,7 @@ entry grants it line 10 and it reaches for 11, which the test suite copies into
 a scratch project and asserts is refused.
 
 ```sh
-nix-shell dev-kernel.nix --run 'examples/kernel0-caps/run.sh'
+examples/kernel0-caps/run.sh
 ```
 
 ```text
@@ -108,7 +108,7 @@ See [Capabilities](/language/capabilities#irq-and-frames-interrupt-lines-and-phy
 
 ## The x86-64 port
 
-The third ISA (kernel stage 20) boots the same way from the reader's side: a
+The third ISA boots the same way from the reader's side: a
 `[target] triple = "x86_64-unknown-none"` project, built by `kelpc` and loaded
 by QEMU. What differs is the loader. SeaBIOS' Xen PVH support scans the image's
 `PT_NOTE` headers for the `XEN_ELFNOTE_PHYS32_ENTRY` note and jumps to the
@@ -124,7 +124,7 @@ names. Port I/O is not memory-mapped, so the manifest carries no `mmio` grant:
 `in`/`out` name a port number, not a `Ptr.from_addr`.
 
 ```sh
-nix-shell dev-kernel.nix --run 'examples/kernel0-x86_64/run.sh'
+examples/kernel0-x86_64/run.sh
 ```
 
 ```text
@@ -139,7 +139,7 @@ executes `ud2`. With no IDT that is a triple fault, so the machine resets and
 `-no-reboot` turns the reset into an exit the test can read.
 
 ```sh
-nix-shell dev-kernel.nix --run 'examples/kernel0-x86_64-lmode/run.sh'
+examples/kernel0-x86_64-lmode/run.sh
 ```
 
 ```text
@@ -154,9 +154,8 @@ greeting and `long mode on` whole.
 
 ## x86-64 interrupts: the IDT, the exceptions and the timer
 
-`examples/kernel0-x86_64-idt` is kernel stage 22, the hole the `lmode` boot
-leaves open: it builds a real IDT, handles four CPU exceptions and takes the
-8254/8259 timer interrupt, with the same shape the riscv64 trap stages use (a
+`examples/kernel0-x86_64-idt` covers the part the `lmode` boot leaves open: it builds a real IDT, handles four CPU exceptions and takes the
+8254/8259 timer interrupt, with the same shape as the riscv64 trap examples (a
 naked vector, a frame the compiler does not know about, a Kelp dispatcher, and a
 resuming `iretq`). The design is
 [`plan/x86-idt.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/x86-idt.md).
@@ -218,7 +217,7 @@ page (`"0x200000000+0x1000"`). No compiler change was needed: `Ptr.from_fn`,
 all in place.
 
 ```sh
-nix-shell dev-kernel.nix --run 'KELPC=<kelpc> examples/kernel0-x86_64-idt/run.sh'
+KELPC=<kelpc> examples/kernel0-x86_64-idt/run.sh
 ```
 
 ```text
@@ -290,8 +289,8 @@ pub fun halt() {
 Text arrives as a `str`, the same type a hosted program writes, and
 `str.len`/`str.byte` are the compiler's own byte loops, so no `strlen` and no
 `[u8; N]` copy sits between the caller and the device. `wfi` has no Kelp
-spelling, so the halt is inline `asm`; v1 has no bitwise operators, which is why
-bit 5 of `LSR` is written `(value / 32) % 2`.
+spelling, so the halt is inline `asm`. The example writes bit 5 of `LSR` as
+`(value / 32) % 2` rather than `(value >> 5) & 1`, which keeps the reading simple.
 
 The entry and the panic handler are ordinary Kelp in the entry module:
 
@@ -355,7 +354,7 @@ One boot can show only one check, because a panic ends the machine, so `run.sh`
 rewrites the selector in a scratch copy and boots the project once per check:
 
 ```sh
-nix-shell dev-kernel.nix --run 'examples/kernel0-panic2/run.sh'
+examples/kernel0-panic2/run.sh
 ```
 
 ```text
@@ -420,9 +419,9 @@ plus one `asm`, and the language never sees the trap.
 
 ## Address spaces: Sv39
 
-The mapping stage is `examples/kernel0-vm`. Its Sv39 module, `src/vm.kp`, is
-written in the language the earlier stages built and the one construct it leans
-on is the stage-5 `asm`: a linker-script symbol has no Kelp spelling, so the
+The mapping example is `examples/kernel0-vm`. Its Sv39 module, `src/vm.kp`, is
+written in the language the earlier examples build. The one construct it leans
+on is `asm`: a linker-script symbol has no Kelp spelling, so the
 frame region arrives through `asm("la {0}, __frames_start", out("r") _)`, the
 same way the compiler's own `_start` reaches `__stack_top`. The design is
 [`plan/address-spaces.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/address-spaces.md).
@@ -441,7 +440,7 @@ table, an identity map, the UART page, the high page, the drop to supervisor
 mode, paging on, the alias and the unmap. The image, its stack and the frame
 region are identity-mapped as one 4 MiB RWX span; splitting `.text`/`.rodata`/
 `.data` apart needs section bounds the language cannot name, and the point of the
-stage is the walk, not W^X. One page at `0x3F_FFFF_F000` (one page below 2^38,
+example is the walk, not W^X. One page at `0x3F_FFFF_F000` (one page below 2^38,
 the highest canonical Sv39 low address) maps to a fresh frame. Under paging the
 kernel writes `0xC0FFEE` through the high virtual name, reads it back, asks
 `translate` for the physical address and reads the same bytes through the
@@ -457,7 +456,7 @@ translate, and `satp` is written in supervisor mode, so the code that turns the
 MMU on is already running at the privilege the MMU applies to.
 
 The second example, `examples/kernel0-vm-fault`, is the S-mode handler. `stvec`
-names a naked `align(4)` function, the stage-5 idiom, which saves the
+names a naked `align(4)` function, the `asm` idiom, which saves the
 caller-saved registers, calls its report function through `sscratch`, and either
 advances `sepc` by the faulting instruction's own length (read from its low bits,
 because the target enables the compressed extension) and `sret`s, or halts.
@@ -466,7 +465,7 @@ a load from an address no leaf maps (`scause` 13, `stval` the address) and a
 store to the read-only leaf (15). One boot prints both.
 
 ```sh
-nix-shell dev-kernel.nix --run 'examples/kernel0-vm/run.sh; examples/kernel0-vm-fault/run.sh'
+examples/kernel0-vm/run.sh; examples/kernel0-vm-fault/run.sh
 ```
 
 ```text
@@ -487,7 +486,7 @@ fault: scause 0xd stval 0x40000000
 fault: scause 0xf stval 0x3ffffff000
 ```
 
-What this stage deliberately leaves out: TLB shootdown (`flush_tlb` is one local
+What this example deliberately leaves out: TLB shootdown (`flush_tlb` is one local
 `sfence.vma`), ASIDs (`satp` always carries ASID 0), huge pages (the walker
 translates a superpage leaf and refuses to split one, but `map_page` only writes
 a 4 KiB leaf), Sv48 (only mode 8 is encoded), W^X, and demand paging. Frames are
@@ -576,7 +575,7 @@ stack, replaces `X` with `55 + (-a0)` (the hex digit of the errno magnitude, so
 kernel prints `kernel survived`.
 
 ```sh
-nix-shell dev-kernel.nix --run 'examples/kernel0-user/run.sh'
+examples/kernel0-user/run.sh
 ```
 
 ```text
@@ -607,7 +606,7 @@ The timer-driven scheduler in the next section is a separate image,
 
 ## A timer interrupt and a preemptive scheduler
 
-`examples/kernel0-sched` is kernel stage 21: the machine timer and a
+`examples/kernel0-sched` shows the machine timer and a
 preemptive round-robin scheduler, still in machine mode with no paging. It is
 the process-model half the user-mode example above leaves out. The design is
 [`plan/scheduler.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/scheduler.md).
@@ -631,7 +630,7 @@ The task table is `static mut TASKS: [Task; 3]`, and a `Task` holds a saved
 register file, the scheduler address the entry calls, a state, an id and its
 own 4096-byte stack, so the whole table is one object in `.bss`. An array
 static's element may now be a `datac` or another array, recursively, which is
-the one compiler change this stage forced; `tests/projects/static_datac_array`
+the one compiler change this example forced; `tests/projects/static_datac_array`
 pins it on both backends.
 
 A timer tick is handled by a naked `trap_entry`. `mscratch` holds the address of
@@ -640,8 +639,7 @@ general registers, `mepc` and `mstatus` into the task table itself, calls
 `schedule(frame: Ptr<TrapFrame>)`, restores whichever frame the scheduler
 returns, and ends in `mret`. The word just past `mstatus` in each frame is the
 address of `schedule`, which is how a naked function reaches a Kelp function
-without spelling its mangled symbol (the same idiom kernel stage 11 used for its
-dispatch slot). `schedule` reads `mcause`: a machine timer interrupt re-arms
+without spelling its mangled symbol (the same idiom the trap dispatch slot uses). `schedule` reads `mcause`: a machine timer interrupt re-arms
 `mtimecmp`, counts the tick and may stop the machine, and an `ecall` advances
 the saved `mepc` past the instruction; both then fall into the same `pick`,
 which rotates to the next READY task and returns its frame.
@@ -663,7 +661,7 @@ times, that no line is torn (each is exactly `<letter> <count>`) and that the
 stop line is whole:
 
 ```sh
-nix-shell dev-kernel.nix --run 'KELPC=<kelpc> examples/kernel0-sched/run.sh'
+KELPC=<kelpc> examples/kernel0-sched/run.sh
 ```
 
 ```text
@@ -700,14 +698,14 @@ A 2850000
 sched: done ticks=40
 ```
 
-What is deliberately not in this stage: priorities, blocking, sleep/wake, a run
+What is deliberately not in this example: priorities, blocking, sleep/wake, a run
 queue with anything but "next READY", task exit and reaping (the state field
 exists so those have somewhere to go); SMP (the image runs on hart 0 and the
 lock's interrupt masking is a one-hart argument); and preemption of user mode
 (these tasks run in machine mode).
 
 Every manifest under `examples/kernel0*` also carries an `mmio` grant now, the
-stage-16 check that a freestanding module may name only an address it was
+check that a freestanding module may name only an address it was
 granted. The UART drivers hold exactly their device's window
 (`0x10000000+0x100` for the riscv64 NS16550, `0x09000000+0x1000` for the aarch64
 PL011), and the modules that build a pointer from a computed address (a
@@ -734,7 +732,7 @@ balanced
 And the aarch64 boot, on QEMU's `virt` machine with `-cpu cortex-a57`:
 
 ```sh
-nix-shell dev-kernel.nix --run 'examples/kernel0-aarch64/run.sh'
+examples/kernel0-aarch64/run.sh
 ```
 
 ```text
@@ -766,7 +764,7 @@ down page by page into the same guard, which is the case a `sub sp` alone would
 miss.
 
 ```sh
-nix-shell dev-kernel.nix --run 'examples/kernel0-stack/run.sh'
+examples/kernel0-stack/run.sh
 ```
 
 ```text
@@ -813,12 +811,11 @@ first is not enough on its own: `lld` places an unnamed orphan (`.eh_frame`,
 which LLVM emits for the driver functions' unwinding tables) *before* `.text`,
 so the script names `.eh_frame` explicitly and gives it its own output section.
 `kernel.ld` also defines `__stack_top` 16 KiB above the image, which the stub
-loads into `sp`. These two facts are the only ones the stage-4 note said a
-script could get wrong silently.
+loads into `sp`. These two facts are the only ones a script could get wrong silently.
 
 ## What is still missing
 
-The remaining gaps, in order, from
+The remaining gaps, from
 [`plan/kernel0-status.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/kernel0-status.md):
 
 - **The interrupt path exists, but not as a language construct.** A riscv64
@@ -831,32 +828,25 @@ The remaining gaps, in order, from
   installs `mtvec` itself and enables nothing, and the line `kernel0-caps`
   claims is still not wired to a handler. Panic semantics with no OS, the row's
   other half, is the [section above](#panic-location-and-the-double-panic).
-- **The `interrupt`/calling-convention attributes** stage 5 deferred are still
-  open, so a trap handler is a naked body the compiler does not understand as a
+- **The `interrupt` and calling-convention attributes** are still open, so a trap handler is a naked body the compiler does not understand as a
   handler.
 - **`Ptr.alloc`/`Ptr.free` still have no allocator hook.** The global allocator
-  reroutes `Box`/`List`/`Map`/`String`/`Bytes`, and stage 13 added the
-  [`std/arena`](/stdlib/arena) bump region and the fallible `Ptr.try_alloc`, but
+  reroutes `Box`/`List`/`Map`/`String`/`Bytes`, and the
+  [`std/arena`](/stdlib/arena) bump region and the fallible `Ptr.try_alloc` are
+  available, but
   the `Ptr.alloc`/`free` pair is still the hosted `malloc`/`free` and is refused
   in freestanding.
-- **Stages 6, 8, 9, 12, 13, 14, 16, 18, 19, 20, 21 and 22 have shipped.** User
-  `Drop` (stage 6) is [`fun mut T.drop()`](/language/drop); per-CPU storage
-  (stage 8) is [per-CPU statics](/language/percpu); the MMU and the syscall ABI
-  (stage 9) are the two examples above; freestanding `String`/`Bytes` and
-  arena/`try_alloc` (stages 12 and 13) are
-  [Freestanding mode](/language/freestanding) and
-  [`std/arena`](/stdlib/arena); the stack guard and the `probe-stack`
-  attribute (stage 14) are the section above; the `mmio`, `irq` and `frames`
-  capabilities (stages 16 and 18) are the grants the examples carry and the
-  section above; the freestanding standard subset (stage 19) is
-  [Freestanding mode](/language/freestanding#the-freestanding-standard-subset);
-  the x86-64 target (stage 20) is the section above; and the machine timer with
-  the preemptive scheduler (stage 21) and the x86-64 IDT, the exceptions and the
-  PIC+PIT timer (stage 22) are the two sections above.
+- **Shipped:** user `Drop` ([`fun mut T.drop()`](/language/drop)), per-CPU
+  statics ([Per-CPU storage](/language/percpu)), freestanding `String` and `Bytes`,
+  the [`std/arena`](/stdlib/arena) bump region and `Ptr.try_alloc`, the stack guard
+  and probe, the `mmio`, `irq` and `frames` grants, the
+  [freestanding standard subset](/language/freestanding#the-freestanding-standard-subset),
+  the x86-64 target, the machine timer with the preemptive scheduler, and the x86-64
+  IDT with the PIC and PIT timer. The sections above show each one.
 - **The remaining holes are the rest of the process model.** No `interrupt`
   attribute exists, so a trap handler is still a naked body the compiler does
   not understand as a handler, and `Ptr.alloc`/`Ptr.free` still have no hook. A
-  preemptive scheduler exists for machine-mode riscv64 tasks (stage 21), but
+  preemptive scheduler exists for machine-mode riscv64 tasks, but
   there is no `fork`, no `exec`/`wait`, no priorities or blocking, no TLB
   shootdown, no SMP and no preemption of user mode; x86-64 has an IDT and a
   PIC+PIT timer, but no APIC, SMP, ACPI or user mode.

@@ -1,13 +1,13 @@
 ---
 title: "Grammar summary"
-description: "Reproduced from syntax.md \u00a720, which is the authority. Note that View is an ordinary identifier here - it is a builtin type name like str or String, not a keyword."
+description: "The whole Kelp surface grammar on one page, in the notation of syntax.md section 20. View is a type name, not a keyword."
 isPublished: true
 tags: "language"
 ---
-Reproduced from
-[`syntax.md` §20](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md),
-which is the authority. Note that `View` is an ordinary identifier here: it is a
-builtin type name like `str` or `String`, not a keyword.
+This page reproduces the grammar from
+[`syntax.md` §20](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
+The syntax file is the authority. `View` is a builtin type name, like `str` or
+`String`, not a keyword.
 
 ```
 program      := line* EOF
@@ -148,7 +148,8 @@ chain        := [ "elif" expr block chain
   `val label: String = if flag { "yes" } else { "no" }` works.
 - `(T)` is the parenthesized type `T`, and `(e)` is the parenthesized expression
   `e`, so a tuple has two or more positions and there is no one-element tuple;
-  `()` is neither a type nor a value, because the absent value's type is `unit`.
+  `()` is not a type. The absent value's type is `unit`, and `()` as a value is
+  that absent value.
   A tuple value is read by a destructuring `val`/`var`, by a constant index
   (`t.0`), by `for (a, b) in ...` and by a tuple pattern in `when`
   ([Bindings and assignment](/language/bindings)).

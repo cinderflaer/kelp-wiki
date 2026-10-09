@@ -1,19 +1,16 @@
 ---
 title: "Control flow"
-description: "Source section - syntax.md \u00a76."
+description: "How Kelp branches and loops: if, elif, if let, while, for, when with patterns and tuple patterns, and return, including the rules that refuse some loops."
 isPublished: true
 tags: "language"
 ---
-Source section:
-[`syntax.md` §6](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §6](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
 
-Kelp has `if`/`else` (with `if let`), `for`, `while`, `when`, `return`, and
-`break` and `continue` inside a loop, `loop { ... }` for an endless loop, and a
-label on a loop for leaving or continuing an outer one, and `break value` out of
-a `loop` used as a value. There is no `goto` and no exceptions. `break` leaves the innermost loop and
-`continue` goes on to its next pass, `break 'outer` and `continue 'outer` act on
-the loop labelled `'outer`
-([Iterators, `for` and `break`](/language/iterators)).
+Kelp has `if`/`else` (with `if let`), `for`, `while`, `when` and `return`. Inside
+a loop, `break` leaves it and `continue` starts its next pass. `loop { ... }` is
+an endless loop, and `break value` leaves a `loop` with a value. A loop can carry
+a label, so `break 'outer` and `continue 'outer` act on that loop. There is no
+`goto` and no exceptions. See also [Iterators, `for` and `break`](/language/iterators).
 
 ## `if` / `else`
 
@@ -203,9 +200,9 @@ fun area(s: &Shape).return: f64 = when s {
   never the field alone.
 - Matching must be exhaustive: either every variant has an arm, or an `else ->`
   arm is present.
-- There are no guards, no literal patterns and no nested patterns in v1. An arm
-  head is a variant name with one binding per payload field, and `_` ignores a
-  payload. The one exception is a **tuple pattern**, below.
+- There are no guards in v1. Outside a tuple pattern, an arm head is a variant
+  name with one binding per payload field, and `_` ignores a payload. Literal and
+  nested patterns are only available inside a **tuple pattern**, below.
 - A payload binds as a copy when `Copy`, **by value** when it is owned and the
   scrutinee is an owned place, and as a shared borrow otherwise.
 
@@ -215,7 +212,9 @@ Several values can be matched together by writing them as a tuple and each arm a
 a tuple pattern:
 
 ```kelp
-fun combine(a: &Option<i32>, b: &Option<i32>).return: i32 = when (a, b) {
+impl "std/option"
+
+fun combine(a: &option.Option<i32>, b: &option.Option<i32>).return: i32 = when (a, b) {
     (Some(x), Some(y)) -> x + y
     (Some(x), None) -> x
     (None, y) -> 0
@@ -224,11 +223,12 @@ fun combine(a: &Option<i32>, b: &Option<i32>).return: i32 = when (a, b) {
 
 - A position is a variant pattern (`Some(x)`, `None`; a capitalized name), a
   **literal** (`0`, `-1`, `'a'`, `true`), a **nested tuple pattern**
-  (`((a, b), c)`), a lowercase name that matches anything and binds it, or `_`. All arms have the
-  same number of positions, at least two. `else` may stand for the rest.
+  (`((a, b), c)`), a lowercase name that matches anything and binds it, or `_`.
+  All arms have the same number of positions, at least two. `else` may stand for
+  the rest.
 - A scrutinee written as a tuple literal is **not built**: its elements are the
   positions, so a parameter or a field is matched where it lives and a borrowed
-  element (`&Option<i32>`) is fine. Any other tuple value is bound once and its
+  element (`&option.Option<i32>`) is fine. Any other tuple value is bound once and its
   positions are matched.
 - Arms are tried in order, the first position that an arm names a variant for is
   matched first, and each level is an ordinary single-position `when`, so the
@@ -271,7 +271,9 @@ declared return type, including a borrowed one. That rule is what makes a
 "this cannot happen" accessor expressible:
 
 ```kelp
-fun unwrap<T>(o: &Option<T>).return: T {
+impl "std/option"
+
+fun unwrap<T>(o: &option.Option<T>).return: T {
     if let Some(v) = o {
         return v
     }

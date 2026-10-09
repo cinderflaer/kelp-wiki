@@ -1,11 +1,10 @@
 ---
 title: "Ownership and borrowing"
-description: "Source section - syntax.md \u00a710."
+description: "Ownership in Kelp: moves, borrows that end at their last use, cursors, partial moves, and when values are freed."
 isPublished: true
 tags: "language, ownership"
 ---
-Source section:
-[`syntax.md` §10](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §10](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
 
 Owned values (`String`, `Bytes`, `List`, `Map`, `Box`, `datac`, `enum`) have
 exactly one owner. There is no garbage collector: the owner's scope end is the
@@ -46,8 +45,8 @@ A temporary is already an owner, so `consume(String.from_str("bob"))` needs no
 binding. A **borrow cannot be moved out of**: `fun forward(s: String).return: usize =
 consume(s)` is an error, because `s` belongs to the caller.
 
-A tuple is an owned value like any other, so a parameter of the type borrows the
-argument and `move (A, B)` is the parameter form that takes it over:
+A tuple is an owned value like any other. A parameter of the tuple's type borrows
+the argument. To take the tuple over, write `move (A, B)`, as in
 `fun take(p: move (String, i32))`.
 
 Assignment to an existing `var` moves the new value in and frees the old value,
@@ -287,11 +286,10 @@ fun peek_word(h: &Held).return: usize = when h {
 }
 ```
 
-The helpers whose receiver stays a borrow are `Copy`-only on the side they
-rebuild: `option.or_else`, `result.unwrap`/`unwrap_or`/`unwrap_err`/`expect`/
-`expect_err`/`and_then`/`or_else` and `list.filter` over a `List<String>`. `option.unwrap` on an
-`Option<String>` and `result.map` over a `Result<T, MyErr>` take their receiver
-with `move` and work.
+Some helpers take their receiver as a borrow, and they only work on `Copy`
+payloads. Examples are `option.or_else` and `result.and_then`. Others take the
+receiver with `move`, so they also work on owned payloads. Examples are
+`option.unwrap` on an `Option<String>` and `result.map` on a `Result<T, MyErr>`.
 
 ## Drops
 

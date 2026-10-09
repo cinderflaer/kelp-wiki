@@ -1,12 +1,10 @@
 ---
 title: "Iterators, `for` and `break`"
-description: "`for x in it` walks any type that implements std/iter's Iterator, `for` over a List or array keeps its index walk, and `break`/`continue` are ordinary loop control. std/iter ships Range and three drain helpers; the adapters are not there yet."
+description: "for x in it walks any type that implements std/iter's Iterator. A List or array keeps its index walk. Covers break, continue, labels, loop values and the std/iter helpers and adapters."
 isPublished: true
 tags: "language"
 ---
-Source sections:
-[`plan/iterators.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/iterators.md)
-and [`plan/iterators-status.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/iterators-status.md).
+Source: [`plan/iterators.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/iterators.md) and [`plan/iterators-status.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/iterators-status.md).
 
 `for` has two meanings, chosen by the type of what it walks:
 
@@ -272,18 +270,29 @@ with `break` or `return`. A label is written before a loop, as `'name:`, and
 
 ## `std/iter`
 
-[`std/iter`](/stdlib/iter) is pure Kelp and ships the trait, `Range` with
-`range` and `range_step`, `count`, `sum_i64` and `collect_list`, the owned list
-iterator (`into_iter`, `cloned`) and the adapters `map`, `filter`, `take`, `skip`,
-`enumerate`, `zip` and `chain`. They chain, because an adapter is itself an
-iterator:
+[`std/iter`](/stdlib/iter) is written in Kelp. It provides the trait and these helpers:
+
+| Kind | Functions |
+| --- | --- |
+| Sources | `range`, `range_step`, `into_iter` (owned items from a list), `cloned` (a copy of a list) |
+| Adapters | `map`, `filter`, `take`, `skip`, `enumerate`, `zip`, `chain` |
+| Drains | `count`, `sum_i64`, `collect_list`, `any`, `all`, `find`, `last`, `fold` |
+
+An adapter is itself an iterator, so adapters chain:
 
 ```kelp
 impl "std/iter"
 
-var evens = iter.filter(iter.into_iter(xs), fun(x: &i64).return: bool = x % 2 == 0)
-for v in iter.map(evens, fun(x: &i64).return: i64 = x * 10) {
-    print(v)
+fun main() {
+    var xs: List<i64> = List.empty()
+    xs.push(1)
+    xs.push(2)
+    xs.push(3)
+    xs.push(4)
+    val evens = iter.filter(iter.into_iter(xs), fun(x: &i64).return: bool = x % 2 == 0)
+    for v in iter.map(evens, fun(x: &i64).return: i64 = x * 10) {
+        print(v)
+    }
 }
 ```
 
@@ -292,11 +301,6 @@ for v in iter.map(evens, fun(x: &i64).return: i64 = x * 10) {
 - **A borrowing `List.iter()`** that yields `&T`: a borrow into a list cannot outlive the
   iterator that hands it out without a way to say how long it lives. `iter.into_iter`
   moves the list in and yields owned items, and `iter.cloned(&xs)` walks a copy.
-- Not a gap, but worth knowing: a generic impl works too,
-  `impl<I: iter.Iterator> iter.Iterator for Twice<I> { type Item = I::Item ... }`
-  ([Traits](/language/traits)); `std/iter`'s adapters use the simpler by-shape
-  rule, under which a generic `datac` whose template declares `fun mut
-  Name<P, ...>.next().return: option.Option<Item>` is an `Iterator`.
 
 ## See also
 

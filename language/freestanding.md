@@ -444,7 +444,7 @@ entry call, so the compiler's `memcpy` and float lowering is safe.
 ### The x86-64 target
 
 `[target] triple = "x86_64-unknown-none"` (the `-elf` spelling too) is the
-third ISA (kernel stage 20). QEMU's x86 `-kernel` has no loader that starts an
+third ISA. QEMU's x86 `-kernel` has no loader that starts an
 ELF64 image in long mode the way its riscv64 and aarch64 `virt` machines do.
 Instead SeaBIOS scans the image's `PT_NOTE` program headers for the
 `XEN_ELFNOTE_PHYS32_ENTRY` note (type 18, owner `Xen`), loads the ELF's
@@ -484,7 +484,7 @@ manifest needs no `mmio` grant: `in`/`out` name a port number, not a
 `Ptr.from_addr`. `kmain` prints its greeting and halts:
 
 ```sh
-nix-shell dev-kernel.nix --run 'examples/kernel0-x86_64/run.sh'
+examples/kernel0-x86_64/run.sh
 ```
 
 ```text
@@ -504,7 +504,7 @@ With no IDT the `#UD` is a triple fault, so the machine resets; the boot test
 runs QEMU with `-no-reboot` and asserts the two lines came out first:
 
 ```sh
-nix-shell dev-kernel.nix --run 'examples/kernel0-x86_64-lmode/run.sh'
+examples/kernel0-x86_64-lmode/run.sh
 ```
 
 ```text
@@ -518,8 +518,7 @@ stack, `syscall`/`sysret` and x86 user mode. An IDT with four CPU exception
 gates and the PIC+PIT timer does ship, `examples/kernel0-x86_64-idt`
 ([Kernel 0](/language/kernel#x86-64-interrupts-the-idt-the-exceptions-and-the-timer)),
 so what a kernel still needs on x86-64 is the local and I/O APIC and ACPI
-enumeration. The `interrupt`/calling-convention attributes stage 5 deferred are
-still open. `cpu_index()` has no x86-64 lowering yet, so a `percpu` static is
+enumeration. The `interrupt` and calling-convention attributes are still open. `cpu_index()` has no x86-64 lowering yet, so a `percpu` static is
 refused by name for this triple, and there is no second x86-64 boot path (a
 Multiboot 1 header): SeaBIOS' PVH support accepts the ELF64 image on this
 machine's QEMU, so the fallback is not carried.

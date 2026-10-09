@@ -1,11 +1,10 @@
 ---
 title: "Traits and static dispatch"
-description: "Source section - syntax.md \u00a79.5. A trait has methods with optional default bodies and supertraits; `impl Trait for Type` covers a datac, enum or builtin; `fun f<T: A + B>` bounds a type parameter; `&dyn Name` dispatches through a vtable."
+description: "Traits: methods with optional default bodies, supertraits, impl Trait for Type, bounds such as fun f<T: A + B>, static dispatch, &dyn trait objects, generic and blanket impls."
 isPublished: true
 tags: "language"
 ---
-Source sections:
-[`syntax.md` §9.5 and §9.5.1-9.5.2](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §9.5 and §9.5.1-9.5.2](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
 
 A `trait` is a named set of methods. `impl` makes a type provide them, and a
 generic function may then require that its type parameter implements one. A
@@ -53,10 +52,10 @@ the method's type would be. A method with **no body** is a **signature**:
 - The trait name is an ordinary top-level name. `pub trait Shape` exports it the
   way a `pub datac` is exported, and a trait declared in another module is
   reached through the alias as `shape.Shape`.
-- A trait may not declare a type parameter, and neither may one of its methods,
-  so `trait Name<T>` and `fun Self.m<T>()` are both refused by name. A signature
-  names only `Self`, the types of the declaring module, and what that module
-  exports.
+- A trait can take type parameters, as in `trait Scale<T>`. See
+  [Generic traits](/language/generic-traits). A trait method cannot take type
+  parameters of its own: `fun Self.m<T>()` inside a trait is refused. A signature
+  names only `Self`, the trait's own parameters, and the types its module exports.
 - `Drop` is the one name a user cannot use. `trait Drop` is refused where it is
   written, with the destructor spelling in the message:
 
@@ -64,8 +63,8 @@ the method's type would be. A method with **no body** is a **signature**:
   error: the trait 'Drop' is built in: a type's destructor is written 'fun mut T.drop()', not through a trait
   ```
 
-  `fun mut T.drop()` is unchanged, and so is every other compiler-known name
-  pair (`hash`/`eq`).
+  `fun mut T.drop()` is the destructor spelling. The `hash` and `eq` pair is also
+  fixed by name ([Collections](/language/collections)).
 
 ## Implementing a trait
 
@@ -453,7 +452,7 @@ supertrait's `area` through a `&dyn Named`, which has `Shape`'s methods first.
   is refused, and the message names the owned form this language does not have:
 
   ```
-  error: a trait object has to be borrowed: write '&dyn Name' (or '&mut dyn Name'), not a bare 'dyn Name' ...
+  error: 'dyn Shape' is not a type on its own: an owned trait object is written 'Box<dyn Shape>', and a borrowed one '&dyn Shape'
   ```
 
 - A trait object is legal **as a parameter type and as a local binding type**
@@ -578,19 +577,18 @@ already had, and the borrow checker sees the same node. So:
 
 ## What traits still do not do
 
-Later slices added [associated types](/language/associated-types),
+These pages cover the features that grew out of traits: [associated types](/language/associated-types),
 [generic traits and `From`](/language/generic-traits), the owned
 [`Box<dyn Name>`](/language/box-dyn), the
-[operator traits and `Display`](/language/operator-traits) and
-[`impl Trait` in argument position](/language/const-generics#impl-trait-in-argument-position),
-so each of those is no longer refused. What this page's feature set still
-refuses, each where it is written with a message that names the follow-up:
+[operator traits and `Display`](/language/operator-traits), and
+[`impl Trait` in argument position](/language/const-generics#impl-trait-in-argument-position).
+
+The following are still refused. Each is refused where it is written, with a message:
 
 - **A bare `dyn Name`** (an unsized value in place). Refused by name.
 - **`&dyn` in a field, a payload, a container element, a return type or a
-  `static`.** These are the storage positions a borrow may not take, and the
-  refusal is the ordinary borrowed-type one. (`Box<dyn Name>` is the owned form
-  that can be stored and returned.)
+  `static`.** These are positions where a borrow may not live. `Box<dyn Name>` is
+  the owned form that can be stored and returned.
 
   ```
   error: '&dyn Shape' cannot be a return type: a borrowed trait object points at a value the caller owns, and a return would have to name how long that borrow lives; take it as a parameter, or return an owned value
@@ -600,9 +598,9 @@ refuses, each where it is written with a message that names the follow-up:
   own type, and the same holds for `Box<dyn>`.
 - **Object-unsafe traits** (returning `Self` or taking another `Self`), a generic
   trait and a trait with an associated type behind `dyn`, refused as above.
-- An impl for **one instantiation** (`impl Name for Pair<i32, String>`), which is
-  still refused. Blanket impls (`impl<T: A> B for T`) shipped in 26.10.4, see
-  [Blanket impls and coherence](#blanket-impls-and-coherence):
+- An impl for **one instantiation** (`impl Name for Pair<i32, String>`). Blanket
+  impls (`impl<T: A> B for T`) shipped in 26.10.4 and are described in
+  [Blanket impls and coherence](#blanket-impls-and-coherence). The refusal reads:
 
   ```
   error: an impl for a generic type writes the type's parameters, in order, as its own: 'impl<T: Bound> Trait for Type<T>'; an impl for one instantiation ('Type<i32>') is not supported - implement the trait for a non-generic wrapper, or give the type an inherent method
@@ -639,23 +637,18 @@ fun show<T: Describe>(x: &T).return: i32 { return x.describe() }
   receiver on a generic type).
 - **`where`** is a second spelling of a bound on a function or an impl:
   `fun f<T, U>(a: &T, b: &U) where T: A, U: A + B`. It bounds a parameter from the
-  `<...>` list; a bound on a projection (`where I::Item: Display`) and an equality
-  constraint (`I: Iterator<Item = i64>`) are not supported.
-- Not supported: an impl for one instantiation, a const parameter on an impl,
-  `dyn` of a generic impl, and operators through a generic impl. A blanket impl
-  is supported with the limits in the next section.
-
-- **A bound on a method's own type parameters** (a generic trait method,
-  `fun Self.map<U>(...)`), and a second impl of a trait for a type.
+  `<...>` list. A bound on a projection, such as `where I::Item: Display`, is not
+  supported yet.
+- Not supported on a generic impl: an impl for one instantiation, a const
+  parameter on an impl, a `dyn` of a generic impl, and operators through a generic
+  impl.
 - **Operators through a trait of your own.** Only the `std/ops` traits and
-  `fmt.Display` are looked at by the operators and by `"${x}"`.
+  `fmt.Display` are used by the operators and by `"${x}"`.
 
-The bound is a guarantee that the trait's methods exist, not that they are the
-only methods in scope: a call to an inherent method of the concrete type, or to
-a method of another bound on the same parameter, compiles too. A default body is
-only checked for the impls that use it, and the compiler does not check that a
-vtable's slot order matches any other vtable's; it computes the one order for
-the pair the same way at every call site.
+A bound says that the trait's methods exist. It does not say they are the only
+methods in scope. A call to an inherent method of the concrete type, or to a
+method of another bound on the same parameter, also compiles. A default body is
+checked only for the impls that use it.
 
 ## Blanket impls and coherence
 
@@ -695,8 +688,7 @@ Refused by name, with the reason in the message:
   from a `&i32`), since the blanket impl has no vtable of its own;
 - a bound that cannot be checked on a builtin container: `List<i32>` answers to
   its bare name, so `xs.tag()` is refused for a `Tagged` blanket on `Describe`;
-- a bound on a projection (`where I::Item: Describe`), which is the next step of
-  the generic-impl work and not yet built.
+- a bound on a projection (`where I::Item: Describe`), which is not supported yet.
 
 ## See also
 

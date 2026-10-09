@@ -1,11 +1,10 @@
 ---
 title: "Generics and type parameters"
-description: "Source section - syntax.md \u00a73 and \u00a79.3. Type parameters on `datac`, `enum` and `fun`, generic receivers, explicit type arguments, and how an instantiation is inferred."
+description: "Type parameters on datac, enum and fun, how each use site instantiates them, explicit type arguments, bounds, and generic receivers and methods."
 isPublished: true
 tags: "language, collections"
 ---
-Source sections:
-[`syntax.md` §3 and §9.3](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §3 and §9.3](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
 
 `datac`, `enum` and `fun` may take type parameters. Each use site instantiates them
 into a concrete type, and two instantiations of one template are two different
@@ -16,7 +15,7 @@ types with their own generated code.
 ```kelp
 datac Pair<A, B>(val first: A, val second: B)
 
-enum Option<T> {
+enum Maybe<T> {
     Some(val value: T)
     None
 }
@@ -24,12 +23,12 @@ enum Option<T> {
 fun identity<T>(x: T).return: T = x
 ```
 
-- The parameter list is `<` name (`,` name)* `>` between the declared name and the
-  declaration's own `(` or `{`, or a function's parameter list.
+- The parameter list sits between the name and the `(` or `{`, written as
+  `<A, B>`. A function's list sits after its name.
 - A parameter is in scope in every field or payload type of its declaration, and
   in a function's parameter list and return type.
-- A parameter name must not be a builtin type, and a generic type must not share
-  its name with a non-generic one.
+- A parameter name cannot be a builtin type name. A generic type cannot share its
+  name with a non-generic one.
 
 ## Writing an instantiation
 
@@ -37,16 +36,16 @@ The arguments are written wherever a type is written:
 
 ```kelp
 val p: Pair<i32, String> = Pair(first = 1, second = String.from_str(s = "one"))
-val n: Option<i32> = Option.Some(value = 7)
-val xs: List<Option<i32>> = List.empty()
+val n: Maybe<i32> = Maybe.Some(value = 7)
+val xs: List<Maybe<i32>> = List.empty()
 ```
 
 - The argument count is checked. Writing `Pair` with no arguments is an error that
   names the arguments it needs.
 - A type argument must be a concrete type. There is no way to write a parameter at
   a use site.
-- A type argument may not be `str` or a reference, because that would make a field
-  or a payload borrowed, which v1 forbids ([Types](/language/types)).
+- A type argument may not be `str` or a reference, because a field or payload may
+  not hold a borrow in v1 ([Types](/language/types)).
 - A generic type may refer to itself through a `Box` or a `List`, and that is the
   only way to write a recursive generic type.
 
@@ -55,13 +54,13 @@ val xs: List<Option<i32>> = List.empty()
 The expected type is consulted first, then each argument:
 
 ```kelp
-val a: Option<i32> = Option.Some(value = 7)   // T from the payload
-val b: Option<i32> = Option.None              // T from the expected type only
+val a: Maybe<i32> = Maybe.Some(value = 7)   // T from the payload
+val b: Maybe<i32> = Maybe.None              // T from the expected type only
 val p = Pair(first = 1, second = String.from_str(s = "one"))   // A = i32, B = String
 ```
 
 - A parameter that neither the expected type nor the arguments determine is an
-  error that names it, with the fix to write: `val x: Option<i32> = ...`.
+  error that names it, with the fix to write: `val x: Maybe<i32> = ...`.
 - An integer literal takes its type from the expected type or from the other
   argument, not from the `i32` default.
 - A payload-less variant cannot take an instantiation, because there is no call to
@@ -73,7 +72,7 @@ When inference has nothing to go on, the instantiation is written at the call si
 as `Name<...>(`. The `<` is written against the name and the `(` against the `>`:
 
 ```kelp
-val some = Option.Some<i64>(value = 7)
+val some = Maybe.Some<i64>(value = 7)
 print(identity<i32>(x = 5))
 ```
 
@@ -109,7 +108,7 @@ fun mut Pair<A, B>.replace_second(v: B) { second = v }
   `fun Opt<T>.map<U>(...)` are written like a method on a generic `datac`, and a
   value of the instantiation calls them (`o.map(f)`). A method always borrows its
   receiver, so one that must take the value apart by `move` (`unwrap_or`) stays a
-  free function, as `std/option` does.
+  free function, as in `std/option`.
 
 ## Generic functions
 
@@ -155,7 +154,18 @@ fun describe<T: Shape + Named>(s: &T).return: f64 = s.area() + s.name_length()
 - Bounds are checked transitively. A bounded generic may call another bounded
   generic with its own parameter, and the inner call is checked when the outer
   function is instantiated.
-- The bound goes on the parameter, or in a `where` clause after the signature (`fun f<T>(x: &T) where T: Name`); a `where` bound names a parameter from the `<...>` list.
+- The bound goes on the parameter, or in a `where` clause after the signature.
+  The `where` clause names a parameter from the `<...>` list:
+
+  ```kelp
+  trait Name {
+      fun Self.name_len().return: i32
+  }
+
+  fun show<T>(x: &T).return: i32 where T: Name {
+      return x.name_len()
+  }
+  ```
 - A bound may name a trait with arguments (`<X: From<i32>>`), and a bounded
   parameter reaches a trait's associated type as `I::Item`
   ([Generic traits](/language/generic-traits),
@@ -171,10 +181,10 @@ fun describe<T: Shape + Named>(s: &T).return: f64 = s.area() + s.name_length()
 
 ## What is not generic
 
-- No `const` parameter of a method's own.
-- No `enum` methods, generic or not.
-- No higher-rank or higher-kinded form: a type argument is always a concrete type.
-- No generic `main`.
+- A method's own `const` parameter is not supported yet.
+- A type argument is always a concrete type. There are no higher-rank or
+  higher-kinded forms.
+- `main` cannot take type parameters.
 
 ## See also
 

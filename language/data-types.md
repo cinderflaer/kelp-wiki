@@ -1,11 +1,10 @@
 ---
 title: "`datac` and `enum`"
-description: "Source section - syntax.md \u00a79."
+description: "datac is a record where every field exists in every value. enum is a tagged union where one variant is live. Covers construction, matching, generics and methods."
 isPublished: true
 tags: "language"
 ---
-Source section:
-[`syntax.md` §9](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §9](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
 
 Kelp has two ways to declare a type: a **record** (`datac`), where every field
 exists in every value, and a **tagged union** (`enum`), where exactly one variant
@@ -21,9 +20,21 @@ datac Node(val value: i32, val next: Box<Node>)
 
 - Fields are declared `val` (immutable) or `var` (mutable), one per
   comma-separated entry.
-- **A `datac` holds owned data only.** A `str` field, a reference field or a
-  `Unit` field is illegal, because the `datac` owns its fields and must be able
-  to free them. Store a `String`.
+- **A `datac` holds owned data.** Store a `String`, not a `&str`. A `str` field is
+  accepted only when the text cannot dangle. A string literal qualifies. A borrow
+  of a local `String` qualifies only when that `String` is moved into an earlier
+  `String` or `Bytes` field of the same value. A generic instantiation with `str`
+  is refused:
+
+  ```kelp
+  datac Label(val owner: String, val text: str)
+
+  fun main() {
+      val owner = String.from_str(s = "title")
+      val label = Label(owner = owner, text = owner.as_str())   // ok: owner moves into the first field
+      print(label.text)
+  }
+  ```
 - A field of another `datac` type is stored **inline**, so that type must be
   declared earlier in the same file. A self-referencing or forward-referencing
   field must be behind a `Box` or a `List`:
@@ -124,33 +135,49 @@ Both declarations accept type parameters, and each use site instantiates them:
 ```kelp
 datac Pair<A, B>(val first: A, val second: B)
 
-enum Option<T> {
+enum Maybe<T> {
     Some(val value: T)
     None
 }
 
 val p: Pair<i32, String> = Pair(first = 1, second = "one")
-val n: Option<i32> = Option.Some(value = 7)
+val n: Maybe<i32> = Maybe.Some(value = 7)
 ```
 
 - Write the arguments wherever a type is written: `Pair<i32, String>`,
   `List<Option<i32>>`, `Box<Pair<i32, i32>>`.
 - Two instantiations of one template are two different types.
 - A type argument may not be `str` or a reference.
-- Type arguments are **inferred at a construction**; write them explicitly only
-  when inference has nothing to go on: `Option.Some<i64>(value = 7)`.
-- A payload-less variant cannot take an instantiation, because there is no call to
-  attach it to: write the expected type instead:
-  `val none: Option<i32> = Option.None`.
+- Type arguments are **inferred at a construction**. Write them explicitly only
+  when inference has nothing to go on: `Maybe.Some<i64>(value = 7)`.
+- A payload-less variant cannot take an explicit type argument, because there is
+  no call to attach it to. Write the expected type instead:
+  `val none: Maybe<i32> = Maybe.None`.
 
 ## Methods
 
-A `datac` may carry methods ([Methods and receivers](/language/methods)), and so
-may a concrete `enum`: `fun Shape.label()`, called on a value of the type
-(`val s = Shape.Empty`, then `s.label()`), while `Shape.Empty.label()` is refused
-because a receiver that builds the variant names a type rather than a value. A
-generic `enum`'s template carries none, so combinators over `Option`/`Result` are
-free functions in `std/option` and `std/result`.
+A `datac` can carry methods, and so can an `enum` ([Methods and receivers](/language/methods)).
+A method on a concrete enum is called on a value of that type:
+
+```kelp
+enum Shape {
+    Circle(val r: f64)
+    Empty
+}
+
+fun Shape.label().return: str = "shape"
+
+fun main() {
+    val s = Shape.Empty
+    print(s.label())
+}
+```
+
+Calling a method on a variant path is refused, because the receiver would need a
+value and the variant path names only a type. `Shape.Empty.label()` fails, so bind
+the variant to a value first. A generic enum can carry methods too, from 26.10.3
+on. Where a method must take the value apart by `move`, as `unwrap_or` does, the
+standard library provides it as a free function instead.
 
 ## See also
 

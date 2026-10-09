@@ -1,11 +1,10 @@
 ---
 title: "Capabilities"
-description: "Source section - syntax.md \u00a715."
+description: "A program cannot read a file, open a socket, spawn a process or read the clock unless its module was granted that resource. The grant is written in the source."
 isPublished: true
 tags: "language, capability"
 ---
-Source section:
-[`syntax.md` §15](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §15](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
 
 Kelp's headline feature: **a program cannot read a file, open a socket, spawn a
 process or read the clock unless the module making the call was granted that
@@ -26,7 +25,7 @@ instead of by auditing it.
   **`rand`**, **`ui`**, **`mmio`**, **`irq`** and **`frames`**.
 - Each has a corresponding bare built-in namespace, and the *only* way to reach
   the outside is through a stdlib module that holds it (`kelpc/src/stdlib.rs`),
-  or, since MK9-S1-M1 (roadmap B-1), a **user** module a project's `coral.toml`
+  or a **user** module a project's `coral.toml`
   assigns one of the seven name domains (`fs`, `net`, `process`, `env`, `time`,
   `rand`, `ui`) to, plus a native library and an
   allowlisted symbol set, so its own `extern fun` declarations can bind to a
@@ -221,9 +220,10 @@ whole-address-space grant has to be written where a reviewer will see it,
 `[caps] mmio = ["*"]` or `caps(mmio = ["*"])`. A range can only be delegated by
 a module that holds it, the same no-escalation rule every other domain has.
 
-A constant shift of 64 or more bits is not folded (and a `u32` operand folds at 32 bits, as the program computes it), so `0x10000000 + (0x100000 <<
-70)` is a computed address (refused under a range grant) rather than being folded
-to the granted `0x10000000`.
+A constant shift of 64 or more bits is not folded, and a `u32` operand folds at 32
+bits, as the program computes it. So `0x10000000 + (0x100000 << 70)` is a
+computed address (refused under a range grant) rather than being folded to the
+granted `0x10000000`.
 
 The limits are honest and worth writing down: the check is on the address a
 pointer is **born** at, so an offset applied afterwards (`p.byte_offset(n)`,
@@ -238,7 +238,7 @@ for the design.
 
 ### `irq` and `frames`: interrupt lines and physical frames
 
-Two more device capabilities (kernel stage 18). Both reuse the range vocabulary
+Two more device capabilities. Both reuse the range vocabulary
 above, and both are **values** rather than a pointer's birth address: a driver
 is handed a `Line` or a `Frame` and the type is the record of the grant. A
 grant is a list of patterns or the whole resource as `["*"]`:
@@ -317,9 +317,9 @@ impl "deps/lineproto/lib" caps(net = ["127.0.0.1:*"])
 ```
 
 `fsx` needs `fs`, `log` and `benchkit` need `time`, `term` needs `env` for
-`NO_COLOR`, and `lineproto` needs `net`. A library holding no authority (`json`, `hash`, `month`-style arithmetic) needs
-nothing, and that is a property you can
-check by reading one line.
+`NO_COLOR`, and `lineproto` needs `net`. A library that holds no authority, such
+as a pure parser or a calculator, needs no grant at all. You can check that by
+reading one line.
 
 There is a subtle case worth knowing: a module can hold a domain *without using
 it*, purely to satisfy the compiler on behalf of its own imports. `httpx` is the
@@ -372,11 +372,10 @@ and which argument position holds the resource is a property of that signature, 
 a call through the pointer has no check to emit and no place to put one. The
 compiler therefore refuses the value by name, for the wrapper spelling and the
 `extern fun` one alike, and whether or not the naming module holds the domain
-(`kelpc/src/infer.rs::function_value_at`, commit `fccb578`). A function *literal*
-over a gated call
-(`val f = fun(p: &str).return: Bytes = fs.read(p)`) is a different shape: its body is a
-direct call in the module that wrote it, so it is checked at run time like any
-other. Nothing in the shipped stdlib or in the examples uses a gated item as a
+(`kelpc/src/infer.rs::function_value_at`). A function *literal*
+over a gated call (`val f = fun(p: &str).return: Bytes = fs.read(p)`) is a different
+shape: its body is a direct call in the module that wrote it, so it is checked at
+run time like any other. Nothing in the shipped stdlib or in the examples uses a gated item as a
 value.
 
 ## Testing a restriction

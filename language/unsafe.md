@@ -365,8 +365,8 @@ or two-byte tag but report it as `i32`, the narrowest Kelp integer that holds it
 Every integer wider than a byte has `x.swap_bytes()`, `x.to_be()` and `x.to_le()`,
 plus the two static forms written on the type name, `u32.from_be(x)` and
 `u32.from_le(x)`. The set is `u16`, `u32`, `u64`, `i32`, `i64`, `usize`, `isize`.
-`u8` has none, deliberately: swapping one byte is the identity. `i16` does not
-exist in v1.
+`u8` has none, deliberately: swapping one byte is the identity. `i16` is not a
+Kelp type.
 
 The direction is a property of the *target*, asked rather than assumed: the LLVM
 backend reads the target's byte order from its data layout, and the C backend

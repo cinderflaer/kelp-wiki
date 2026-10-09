@@ -1,15 +1,14 @@
 ---
 title: "Operators and expressions"
-description: "Source section - syntax.md \u00a75."
+description: "Operator precedence and arithmetic, bitwise operators and shifts, == on user types, borrows, the ? operator and tuple values."
 isPublished: true
 tags: "language"
 ---
-Source section:
-[`syntax.md` §5](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §5](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
 
 ## Precedence
 
-Loosest first (§5):
+From the loosest binding to the tightest:
 
 | Level | Operators | Associativity |
 | --- | --- | --- |
@@ -23,7 +22,7 @@ Loosest first (§5):
 | 8 | `<<` `>>` | left |
 | 9 | `+` `-` | left |
 | 10 | `*` `/` `%` | left |
-| 11 | unary `-` `!` `~` `&` `&mut` `*`, postfix `?`, call, field access | — |
+| 11 | unary `-` `!` `~` `&` `&mut` `*`, postfix `?`, call, field access | none (binds tightest) |
 
 > **The bitwise operators bind tighter than the comparisons**
 >
@@ -31,8 +30,9 @@ Loosest first (§5):
 >
 > ```kelp
 > if flags & MASK == 0 { }   // Kelp: (flags & MASK) == 0
->                            // C:    flags & (MASK == 0) — the classic bug
 > ```
+>
+> In C the same line reads `flags & (MASK == 0)`, which is the classic bug.
 >
 > `|` stays looser than `^`, which stays looser than `&`, so masking still
 > reads the way C programmers expect (`a | b & c` is `a | (b & c)`); only the
@@ -41,13 +41,13 @@ Loosest first (§5):
 ## Arithmetic
 
 ```kelp
-val a = 7 / 2        // 3 — integer division truncates toward zero
-val b = -7 % 3       // -1 — % follows the dividend's sign, as in C
+val a = 7 / 2        // 3: integer division truncates toward zero
+val b = -7 % 3       // -1: % follows the dividend's sign, as in C
 val c = 7.0 / 2.0    // 3.5
 ```
 
 - Integer `/` truncates toward zero and `%` follows the dividend's sign.
-  **Division by zero is undefined rather than checked.**
+- **Division by zero is undefined.** It is not checked at run time.
 - Integer `+`, `-` and `*` overflow is **not checked**: it wraps. If a wrap
   matters, use the checked or saturating helpers in
   [`mathx`](/libraries/mathx).
@@ -106,9 +106,9 @@ fun main() {
 }
 ```
 
-Both the default backend and `KELPC_ORACLE=c` print the same (run with the
-current main on 2026-10-04; the panic goes to standard error and the `print` is
-buffered, so the panic line shows first):
+Both the default backend and `KELPC_ORACLE=c` print the same output. The panic
+goes to standard error, and the `print` output is buffered, so the panic line
+shows first:
 
 ```text
 panic: shift amount out of range
@@ -132,9 +132,12 @@ error: a shift by 33 is not defined for a 'u32', whose width is 32 bits: the amo
   --> shift_const_too_wide.kp:5:11
 ```
 
-A named `const` amount is folded and refused the same way (`x >> AMOUNT` with
-`const AMOUNT: u8 = 8` on a `u8`: "a shift by 8 is not defined for a 'u8', whose
-width is 8 bits"). The masking forms, with `one: u32 = 1` and `big: u32 = 0x80000000`:
+A named `const` amount is folded and refused the same way. For example,
+`x >> AMOUNT` with `const AMOUNT: u8 = 8` on a `u8` fails with `a shift by 8 is
+not defined for a 'u8', whose width is 8 bits`.
+
+The masking forms take the amount modulo the width. Here `one: u32 = 1` and
+`big: u32 = 0x80000000`:
 
 ```kelp
 print(one.wrapping_shl(33))   // 2, the amount is 33 & 31
@@ -160,7 +163,7 @@ length-aware, exactly like `view.eq`), and for a `View` against a `str` (the
 `str` is viewed first). Comparing two `str` values is refused, because it would
 compare addresses; use `str.eq`.
 
-**A type gets `==`/`!=` by declaring `eq`.** A `datac` or `enum` `T` that
+**A type gets `==` and `!=` by declaring `eq`.** A `datac` or `enum` `T` that
 declares `fun T.eq(other: &T).return: bool` gets the operators from that method:
 
 ```kelp
@@ -187,15 +190,16 @@ fun main() {
   `hash` and `eq`, and a lone `hash` is still refused
   ([Collections](/language/collections)).
 - The signature is fixed: exactly one parameter, a **shared borrow** of `T`,
-  returning `bool`. A different signature is refused where the method is
-  declared, with the spelling to write:
+  returning `bool`. The compiler refuses any other shape where the method is
+  declared. For example:
 
   ```
-  error: 'P.eq' takes exactly one parameter, a shared borrow of 'P', so write 'fun P.eq(other: &P).return: bool'
+  error: 'P.eq' must take 'other: &P': a lookup compares the caller's key against an entry the caller does not own, so the argument cannot be moved
   ```
 
-- **Nothing is derived.** A `datac`/`enum` without a declared `eq` keeps the
-  refusal, and so does `<`/`<=`/`>`/`>=` on any such type:
+- **Nothing is derived.** A `datac` or `enum` without a declared `eq` cannot be
+  compared, and `<`, `<=`, `>` and `>=` are refused on any user type that has no
+  ordering impl:
 
   ```
   error: cannot compare 'P' values with '==': a datac has no generated equality
@@ -231,14 +235,14 @@ fun quarter(n: i64).return: result.Result<i64, String> {
 
 Rules (§5.2):
 
-- It works on `Option` **or** `Result`: the compiler knows the *shape*, not the
-  module, so a program's own declaration of either works.
+- It works on `Option` **or** `Result`. The compiler checks the shape of the enum,
+  not the module it came from.
 - The enclosing function must return an enum of the same shape, with the same
   failure payload type, or one that an `impl From<E1> for E2` converts: `?` calls
   `E2.from(e1)` when the two differ ([Generic traits](/language/generic-traits)).
   Without such an impl, `Result<i64, String>` cannot be propagated out of a
   function returning `Result<i64, IoErr>`.
-- A function returning `Unit` (including `main`) has nowhere to propagate to.
+- A function returning `unit` (including `main`) has nowhere to propagate to.
 - The value composes: `1 + half(n = n)?`.
 - A failure returns immediately, so the enclosing function's locals are dropped
   on the way out, exactly as any `return` drops them.
@@ -265,19 +269,20 @@ val first = pair.0              // or one position by constant index
 ```
 
 - `(e)` is the parenthesized expression `e`, not a one-element tuple: `val x =
-  (5)` binds an `i32`, and `()` is refused by name because the absent value is
-  `unit`.
+  (5)` binds an `i32`.
+- `()` is the absent value, of type `unit`. You can bind it, return it and pass it,
+  but you cannot print it or store it in a tuple, a field or a container.
 - A position is read by a **constant index**: `pair.0`, and `pair.1.0` for a
   nested tuple. The index is a literal; reading an owned position of a local is a
   partial move, as for a `datac` field. A destructuring binding
   ([Bindings and assignment](/language/bindings)) reads several at once.
-- A tuple is a record, so it is not printable: `print` takes a scalar, a `str`
-  or a `String`. Print each position instead.
+- `print` takes a scalar, a `str` or a `String`. To print a tuple, print each
+  position.
 
-## Compound assignment
+## Assignment
 
-`= += -= *= /= %=` are the assignment operators. `+=` on an owned value (for
-example pushing through a `mut` receiver) works the same way a method call does.
+Assignment and compound assignment (`+=`, `-=`, `*=`, `/=`, `%=`) are covered on
+[Bindings and assignment](/language/bindings).
 
 ## See also
 

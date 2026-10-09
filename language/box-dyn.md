@@ -1,17 +1,16 @@
 ---
 title: "Owned trait objects: `Box<dyn Trait>`"
-description: "`Box<dyn Name>` is an owned fat pointer: a `Box<T>` coerces to it where `T` implements the trait, calls go through the vtable, `get()` borrows a `&dyn`, and dropping runs the concrete type's drop. No upcasts, `take`, or generic traits."
+description: "Box<dyn Name> is an owned trait object. A Box<T> coerces to it, calls go through a vtable, get() borrows a &dyn, and dropping runs the concrete type's drop. There are no upcasts or take()."
 isPublished: true
 tags: "language"
 ---
-Source section:
-[`plan/traits.md` §12](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/traits.md).
-
 [Traits](/language/traits) gave a trait object a *borrowed* spelling, `&dyn Name`.
 `Box<dyn Name>` is the owned one: a value that owns a heap allocation, knows
 which trait's methods it can answer, and knows how to drop what it points at. It
 is the way to keep several different types behind one trait in a `List`, a field
 or a return value.
+
+Source: [`plan/traits.md` §12](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/traits.md).
 
 ## An example
 

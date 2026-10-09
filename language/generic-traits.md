@@ -1,11 +1,10 @@
 ---
 title: "Generic traits, `From` and `?` conversion"
-description: "A trait may take type parameters, `std/convert` declares From and Into, a trait method with no receiver is called on the type, and `?` converts a failure through an `impl From<E1> for E2`. No blanket `Into` in `std/convert`, and no dyn of a generic trait."
+description: "A trait can take type parameters. std/convert declares From and Into, and ? converts a failure through an impl From<E1> for E2. Covers static methods, impls per instance and the limits."
 isPublished: true
 tags: "language, errors"
 ---
-Source section:
-[`plan/traits.md` §11](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/traits.md).
+Source: [`plan/traits.md` §11](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/traits.md).
 
 A trait can take **type parameters of its own**, so it can say "I convert a `T`"
 rather than only "I have these methods". On top of that, `?` converts a failure
@@ -100,11 +99,11 @@ It prints, on both backends:
 - `Meters.make(seed = five)` is resolved against every impl of every trait that
   declares a static `make`. A type that implements two instances of one trait
   (`Make<i64>` and `Make<bool>`) is dispatched by the **argument type**.
-- A bare integer literal is an `i32`, so `Meters.make(seed = 5)` finds no
-  `Make<i32>` and is refused (`no static method 'Meters.make' matches the
-  argument type(s) 'i32'`). Bind the value to a typed `val` first, as the
-  example does. In a bounded function such as `build<X: Make<i64>>(n: i64)` the
-  parameter's own type does the job.
+- The argument's type picks the impl. A bare integer literal takes its type from
+  the impl it is passed to, so it is not `i32` by default in that case. When a type
+  has several static impls over different integer types, bind the value to a typed
+  `val` first, as the example does. In a bounded function such as
+  `build<X: Make<i64>>(n: i64)`, the parameter's own type does the job.
 - `X.make(seed = n)` inside `build<X: Make<i64>>` is the same call through a
   bound.
 - A call written with the trait's name, `Make.make(seed = eleven)`, is accepted
@@ -126,7 +125,7 @@ An impl writes the trait's arguments after its name:
 a second identical one is a coherence error that names both:
 
 ```
-error: trait 'std.convert.From' already has an impl for 'T' (written in module 'from_duplicate_impl'): a trait is implemented for a type at most once
+error: trait 'Make' already has an impl for 'Meters' (written in module 'gt3'): a trait is implemented for a type at most once
 ```
 
 Writing the wrong number of arguments is refused too (`trait 'std.convert.From'
@@ -219,11 +218,11 @@ on `parse(s = s)` goes through the first impl. The value-too-big case builds an
 `AppErr` explicitly with `AppErr.from(value = n)`, which picks the second impl
 by the argument's type.
 
-- With no matching impl the message names both failure types and the impl to
-  write:
+- With no matching impl, the message names both failure types. It then names the
+  impl to write, `impl From<IoErr> for AppErr`:
 
   ```
-  error: '?' cannot convert a failure: 'std.result.Result<i32, IoErr>' carries 'IoErr' and the enclosing function returns 'std.result.Result<i32, AppErr>', whose failure carries 'AppErr' — write 'impl From<IoErr> for AppErr { fun from(value: IoErr).return: AppErr { ... } }' so the operator has a conversion to call
+  error: '?' cannot convert a failure: 'std.result.Result<i32, IoErr>' carries 'IoErr' and the enclosing function returns 'std.result.Result<i32, AppErr>' ...
   ```
 
 - The two enums may be different declarations; only the failure payload may now
@@ -252,8 +251,9 @@ Each of these is refused where it is written:
   ([Associated types](/language/associated-types)).
 - **A supertrait that itself has arguments** (`trait Sorted<T>: Compare<T>`). A
   supertrait without arguments works.
-- **Generic methods** (`fun Self.map<U>(...)`) and generic static methods.
-- **An equality constraint** on a parameter (`I: Iterator<Item = i64>`).
+- **Type parameters on a trait method.** `fun Self.map<U>(...)` inside a `trait`
+  is refused: the signature names `Self` and the trait's own types. A method on a
+  type can have them, as [Generics](/language/generics) describes.
 
 The compiler trusts a `From` body like any other method body: nothing requires
 the returned value to be built from `value`.

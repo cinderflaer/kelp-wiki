@@ -1,18 +1,17 @@
 ---
 title: "Collections"
-description: "Source section - syntax.md \u00a712."
+description: "The builtin containers: List<T>, Map<K, V>, Box<T> and the fixed-size array [T; N]. What each one may hold, and its methods."
 isPublished: true
 tags: "language"
 ---
-Source section:
-[`syntax.md` §12](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §12](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
 
 Three containers are compiler builtins: `List<T>`, `Map<K, V>` and `Box<T>`. They
 are owned values with the same move and drop rules as everything else, and each
 one owns its elements. The element sets are not the same: a `List` element and a
 `Box` element may themselves be a `List` or a `Box`, while a `Map` value is
 narrower, and every container refuses a borrow, a view, an atomic, a function
-value and `Unit` as an element.
+value and `unit` as an element.
 
 A fourth type is not a container at all in that sense: `[T; N]`, a fixed-size
 array whose length is part of its type. It allocates nothing, so it is what a
@@ -46,14 +45,14 @@ while !xs.is_empty() {
 | `List.of(x)` | one value | a list holding it |
 | `len()` / `is_empty()` | shared | `usize` / `bool` |
 | `get(i)` | shared, `usize` | the element, or a borrow of it |
-| `set(i, v)` | exclusive | `Unit` |
-| `push(v)` | exclusive | `Unit`; moves the element in |
+| `set(i, v)` | exclusive | `unit` |
+| `push(v)` | exclusive | `unit`; moves the element in |
 | `pop()` | exclusive | the last element, moved out |
-| `insert(i, v)` / `remove(i)` | exclusive | `Unit` / the removed element |
-| `clear()` | exclusive | `Unit` |
+| `insert(i, v)` / `remove(i)` | exclusive | `unit` / the removed element |
+| `clear()` | exclusive | `unit` |
 | `clone()` | shared | a second owned list: the elements are copied, and every owned element with them |
-| `sort()` | exclusive | `Unit`, for sortable elements |
-| `reverse()` | exclusive | `Unit` |
+| `sort()` | exclusive | `unit`, for sortable elements |
+| `reverse()` | exclusive | `unit` |
 | `contains(v)` | shared | `bool`, for comparable elements |
 | `slice(from, to)` | shared | a copy of the range, for clonable elements |
 
@@ -98,15 +97,14 @@ contain one.
 
 The element type may be a scalar, `String`, `Bytes`, a `datac`/`enum`, a tuple,
 another `List`, or a `Box`. It may **not** be a `Map`, a borrow, a `str`, a
-`View`, an atomic, a function value or `Unit`. A list of lists needs no wrapper:
+`View`, an atomic, a function value or `unit`. A list of lists needs no wrapper:
 
 ```kelp
 val rows: List<List<String>> = List.empty()
 ```
 
-A one-field `datac` is still how a library gives the inner list a name, as
-`csv.Row`, `listx.Chunk` and `table.Row` do; it is a naming choice, not a
-requirement of the language.
+To hold a list inside a list element through a name, wrap it in a one-field
+`datac`. That is a naming choice, not a requirement of the language.
 
 `Box<T>` is the owning pointer for a *recursive* type:
 
@@ -135,13 +133,28 @@ print(runs.get(key = 7))
 - Entries keep **insertion order**, which is why `keys()` and `values()` are lists
   and not hash order.
 - **`Map<V>` written with one argument means `Map<String, V>`.**
-- **A key must be keyable.** The compiler derives the key's hash and equality from `K`, so the derived set is `String`, an integer, `bool`, `char`, or a `datac`/`enum`/tuple whose every field, variant payload or position is itself keyable. A `datac` or `enum` the derivation refuses becomes a key by declaring both `fun T.hash().return: u64` and `fun T.eq(other: &T).return: bool`, which the map calls instead of a derived pair and never alongside one; both halves are required, the two signatures are fixed (a shared receiver, no type parameters, `eq` taking one `&T`), and a half or a signature the map cannot call is refused where it is declared. The key is still cloned into the entry, so the type has to be deep-copyable as well. A float is refused (`nan != nan` would make an inserted key unfindable), and a `Bytes`, container, view, borrow or `datac`/`enum` with a field outside those sets is refused with a message that names the field (or names the half of the pair that is missing). A tuple declares no method, so it is a key by derivation or not at all.
+- **A key must be keyable.** The compiler derives a key's hash and equality from
+  `K`. A derived key is `String`, an integer, `bool`, `char`, or a `datac`, `enum`
+  or tuple whose every field is itself keyable. A float is refused, because
+  `nan != nan` would make an inserted key impossible to find again.
+- **A key type can declare its own hash and equality instead.** A `datac` or `enum`
+  that the derivation refuses needs both of these, with exactly these signatures:
+
+  ```kelp
+  fun T.hash().return: u64
+  fun T.eq(other: &T).return: bool
+  ```
+
+  The map then calls these two in place of a derived pair. Declare both or neither.
+  The key is still cloned into the entry, so the type must also be deep-copyable.
+- A `Bytes`, container, view, borrow, or a `datac`/`enum` with a field outside the
+  keyable set is refused. The message names the field, or the missing half of the
+  pair.
 - **A value is narrower than a list element.** The value set is a scalar,
   `String`, `Bytes`, a `datac`/`enum` or a tuple, so `Map<String, List<i32>>` and
   `Map<String, Box<i32>>` are refused; a value that holds a list wraps it in a
   one-field `datac`.
-- `Map<K, V>` is neither a list element nor a map value, so
-  `Map<String, Map<i32>>` is impossible.
+- A `Map` cannot be a list element or a map value.
 - A `String`-keyed map takes its key as a bare `str` in every method (the map
   copies it in), a scalar key is passed by value, and a user key type is passed by
   shared borrow. That split is why
@@ -152,21 +165,20 @@ print(runs.get(key = 7))
   order, `keys()` order and tombstone reuse are unchanged. It is the constructor
   for a caller that knows how many entries it is about to insert, and the only
   way to pay the growth once rather than as a series of rebuilds. The argument
-  takes the binding's written types for `K` and `V`, as `Map.new()` does, because
-  it is a count and not an element.
+  gets its key and value types from the binding, as `Map.new()` does.
 
 | Method | Returns |
 | --- | --- |
 | `Map.new()` / `Map.empty()` | an empty map; key and value types from the binding, or from the first `insert` |
 | `Map.with_capacity(n)` | the same empty map with room for `n` entries; `n` is a `usize` or an `i64` |
 | `len()` / `is_empty()` | `usize` / `bool` |
-| `insert(key, v)` | `Unit`; stores `true`-style upsert |
+| `insert(key, v)` | `unit`; stores `true`-style upsert |
 | `get(key)` | the value, or a borrow of it; panics when absent |
 | `get_or(key, fallback)` | the value or the fallback |
 | `has(key)` | `bool` |
 | `remove(key)` | the value, moved out; **panics** when the key is absent |
 | `keys()` / `values()` | `List<K>` / `List<V>`, insertion order |
-| `clear()` | `Unit` |
+| `clear()` | `unit` |
 
 ## `Box<T>`
 
@@ -190,7 +202,7 @@ list = Node(value = 2, next = Box.of(list))
 | `Box.of(v)` | a box holding `v` |
 | `is_empty()` | `bool` |
 | `get()` | a copy for a `Copy` element, otherwise a borrow |
-| `set(v)` | `Unit` |
+| `set(v)` | `unit` |
 | `take()` | the value, moved out; the box is left empty. **Panics** on an empty box |
 
 A `Box` can also hold a trait object, `Box<dyn Name>`, which has its own method
@@ -226,7 +238,7 @@ print(grid.get(i = 2).get(i = 1))
 | `len()` | shared | `usize`, as a compile-time constant |
 | `is_empty()` | shared | `bool`, always `false` |
 | `get(i)` | shared, `usize` | the element, or a borrow of it |
-| `set(i, v)` | exclusive, `usize` | `Unit` |
+| `set(i, v)` | exclusive, `usize` | `unit` |
 
 - The length is a **compile-time constant**: a literal, another `const`, or an
   expression over them ([Constants](/language/passdowns) has the rules). A `val`

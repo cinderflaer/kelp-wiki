@@ -103,8 +103,8 @@ language produced.
 
 ## The riscv64 `_start` stub parks the other harts
 
-A `percpu` image with `cpus > 1` is QEMU's `-smp 2` with `-bios none`, and
-without firmware QEMU starts **every** hart at the entry. The riscv64 `_start`
+A `percpu` image with `cpus > 1` runs under QEMU's `-smp 2` with `-bios none`. Without
+firmware, QEMU starts **every** hart at the entry. The riscv64 `_start`
 stub therefore reads `mhartid` first and parks any hart whose id is not zero on
 `wfi` **before** it loads `sp`, so a secondary never touches memory and never
 reaches the entry. A single-hart image (the default `-smp 1`) reads 0 and falls
@@ -137,8 +137,11 @@ sets `tp = 0`, writes `4` into its copy and prints it; it then sets `tp = 1` by
 hand, so the same name reads the untouched second copy; `cpu_index()` and
 `cpu_count()` print `1` and `2`.
 
+Run the script from a shell where `kelpc`, `qemu-system-riscv64` and `ld.lld` are on
+`PATH`. A Nix shell for the repository provides all three:
+
 ```sh
-nix-shell dev-kernel.nix --run 'examples/kernel0-percpu/run.sh'
+examples/kernel0-percpu/run.sh
 ```
 
 ```text

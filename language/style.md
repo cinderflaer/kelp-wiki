@@ -1,11 +1,10 @@
 ---
 title: "Style"
-description: "Source section - syntax.md \u00a719."
+description: "House style for Kelp: what kelpc fmt enforces, file order, naming, and the lint warnings for comments, else if and naming case."
 isPublished: true
 tags: "language"
 ---
-Source section:
-[`syntax.md` §19](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §19](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
 
 ## Rules the formatter enforces
 
@@ -21,7 +20,7 @@ and comment rules, and nothing else:
   a run of blank lines at one but never inserts a blank line you did not write.
 - Comments are `//`, written as full sentences when they explain a decision, and
   never to restate the next line. `/* ... */` is for the two things a line comment
-  cannot do — a note that spans lines, and commenting out a region of code. Block
+  cannot do: a note that spans lines, and commenting out a region of code. Block
   comments nest, so commenting out a region that already contains one works.
 
 `fmt` holds four invariants, and they are why it is safe to run on any file:
@@ -68,10 +67,10 @@ fun main() { ... }
   does not match it, so either case keeps compiling whatever the setting says. A
   file with no `coral.toml` to read gets the default.
 - Type names stay `PascalCase` and `const` names stay `UPPER_SNAKE` whatever the
-  setting says, and a fetched dependency under `src/deps/` is not linted for its
+  setting says. A fetched dependency under `src/deps/` is not linted for its
   names at all: it is not your project's code.
-- Named arguments are used wherever a call would otherwise be ambiguous: in
-  practice every `datac` construction with two or more fields:
+- Use named arguments wherever a call would otherwise be ambiguous. In practice,
+  that means every `datac` construction with two or more fields:
   `Circle(r = 2.0, x = 1.0)`.
 
 ## What `fmt` will not do
@@ -139,12 +138,10 @@ warning: function 'read_text' is snake_case, and this project asks for camelCase
   library's exception: the stdlib keeps its locked `snake_case`, so a
   `camelCase` project is never warned about `str.is_empty`, and a `snake_case`
   project is never warned about the stdlib's `read_text` either.
-- Type names stay `PascalCase` and `const` names stay `UPPER_SNAKE` whatever the
-  setting says.
 - A leading `_` is not part of either case: `_unused` and `_unused_name` are an
   ordinary `camelCase` pair, and the underscore is kept in the suggestion.
-- A file outside a project gets the option's default (`camelCase`), and a file
-  under the project's `src/deps/` gets no case rule at all.
+- A file outside a project gets the default (`camelCase`). A file under the
+  project's `src/deps/` gets no case rule at all.
 - The suggestion is a starting point, not a rename: `lint` writes nothing, and
   `read_HTTP` is suggested as `readHttp` rather than guessed at.
 

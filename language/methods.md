@@ -1,20 +1,19 @@
 ---
 title: "Methods and receivers"
-description: "Source section - syntax.md \u00a78."
+description: "How methods are declared with Type.name, when a receiver is shared or mut, how self works, and the rules for returning borrows from methods."
 isPublished: true
 tags: "language"
 ---
-Source section:
-[`syntax.md` §8](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §8](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
 
-A method is a function whose first parameter is a receiver, written
+A method is a function whose first parameter is its receiver. You write it as
 `Type.name`:
 
 ```kelp
 datac Counter(val id: i32, var count: i32)
 
-fun Counter.total().return: i32 = id + count          // shared receiver
-fun mut Counter.bump() {                          // exclusive receiver
+fun Counter.total().return: i32 = id + count   // shared receiver
+fun mut Counter.bump() {                   // exclusive receiver
     count += 1
 }
 ```
@@ -31,13 +30,13 @@ print(c.total())
 ## Rules
 
 - Inside the method, fields are read and written **by their bare names**. `self`
-  also works as the whole receiver, for the rare method that needs to hand the
-  value on (`self` is an ordinary identifier, not a keyword).
+  is the whole receiver, for a method that needs to pass the value on.
 - `fun Type.name()` takes a **shared** borrow of the receiver, so it may be
   called on a `val` binding.
 - `fun mut Type.name()` takes an **exclusive** borrow, so the receiver must be
   reachable mutably: a `var` binding, a `mut` parameter, or a field of one.
-  Calling it on a `val` binding fails with `cannot assign to 'c': not declared 'var'`.
+  Calling it on a `val` binding fails with `cannot assign to 'c': not declared
+  'var'`, where `c` is the binding's name.
 - Passing a receiver to a method does not move it: the receiver is always
   borrowed, which is why there is no `fun move Type.name()`.
 - An **exclusive receiver's borrow starts after its own arguments are checked**,
@@ -48,22 +47,22 @@ print(c.total())
   xs.insert(0, xs.get(0) + 1)
   ```
 
-  Both were two statements with a temporary before. The deferral permits reading
-  and shared-borrowing the receiver; moving it or borrowing it exclusively again
-  inside the argument list is still a conflict, and a shared borrow of the
-  receiver that is still live when its own borrow begins (`p.copy_from(p)`) is
-  refused with `cannot borrow 'p' as exclusive: already borrowed as shared`.
-- `self` inside `fun mut T.m()` is a `&mut T`: a pointer, and `Copy`, so naming a
-  field and then calling another method on `self` is legal.
+  Before this rule, each of these needed a temporary. The deferral allows reading
+  and shared-borrowing the receiver. Moving it, or borrowing it exclusively again
+  inside the argument list, is still a conflict. A shared borrow of the receiver
+  that is still live when the exclusive borrow starts is refused. For example,
+  `p.copy_from(p)` fails with `cannot borrow 'p' as exclusive: already borrowed as
+  shared`.
+- Inside `fun mut T.m()`, `self` is a `&mut T`. It is a pointer and it is `Copy`,
+  so you can name a field and then call another method on `self`.
 - A **concrete `enum`** may declare a receiver method too, and a call on a value of
   the enum type resolves it: `val s = Shape.Empty`, then `s.label()`. A receiver
   that builds the variant names a type rather than a value, so `Shape.Empty.label()`
   is refused with `an 'enum' method is called on a value, not on a variant path`:
   bind the variant first.
-- A method declared by a `trait`, and the method that implements it in an `impl`
-  block, write the receiver as `Self` rather than the type's name: `fun
-  Self.area()`. Everywhere else the receiver names its type
-  ([Traits and static dispatch](/language/traits)).
+- A method declared in a `trait`, and the method that implements it in an `impl`
+  block, write the receiver as `Self`, as in `fun Self.area()`. Everywhere else,
+  the receiver names its type ([Traits and static dispatch](/language/traits)).
 
 ## Return types that borrow
 
@@ -127,8 +126,8 @@ fun mut Pair<A, B>.replace_second(v: B) { second = v }
 - The type arguments are the receiver's own instantiation, so `p.first_of()` on a
   `Pair<i32, String>` is instantiated once for `A = i32, B = String`.
 - A method may add type parameters of its own, after its name
-  (`fun Pair<A, B>.map_first<C>(...)`), and a method may be declared on a generic
-  `enum` (`fun Opt<T>.is_has()`); both are inferred at the call
+  (`fun Pair<A, B>.map_first<C>(...)`). A method may also be declared on a generic
+  `enum` (`fun Opt<T>.is_has()`). Both are inferred at the call
   ([Generics](/language/generics)).
 
 ## Free functions versus methods

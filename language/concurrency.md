@@ -4,12 +4,10 @@ description: "The language's own memory model: why a data race does not compile,
 isPublished: true
 tags: "language, concurrency"
 ---
-This page is the model's own definition (MK9-S3-M2), not a pointer to one:
-what a data race is, why v1 refuses to let one compile, what a thread may
-share, and what happens when one panics. `plan/mk9-memory-model.md` is the
-design record it was decided from, kept for the reasoning that did not need to
-survive into this page, and `syntax.md` §12.5-12.6 is the syntax authority for
-the surface this page describes.
+This page defines the memory model: what a data race is, why one does not
+compile, what a thread may share, and what happens when a thread panics.
+
+The design record is [`plan/mk9-memory-model.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk9-memory-model.md). The syntax is in `syntax.md` §12.5 and §12.6.
 
 v1 has one ordering and real threads. What ships is a memory model with a
 single ordering, an atomic cell, a `Mutex<T>`, a fence, and
@@ -51,7 +49,7 @@ keeping on record:
   does not compile*; it also needs a runtime that a freestanding target does
   not have, and it makes "correct" a property of the test run rather than of
   the source. A dynamic checker is still wanted as a *testing instrument*
-  (a Miri-equivalent, proposed for MK11-S2-M1) — evidence about the checker,
+  (a Miri-style checker) that gives evidence about the checker,
   not the enforcement mechanism.
 - **Not channels-only.** A channel is a value type a program may use (it
   ships, in [`std/sync`](/stdlib/sync#channels)), but it cannot be *the*
@@ -104,14 +102,14 @@ check applies to it: the day a second variant exists, every `when` over an
 ordering is re-checked, and the compiler names the missing arms instead of
 silently falling into a default.
 
-On x86-64 the `SeqCst` cost is real but narrow (extra cost only on a store,
-roughly 3.5 ns against 0.2 ns, an `XCHG` or `MFENCE` instead of a plain `MOV`;
-a load or a read-modify-write such as `fetch_add`/`compare_exchange` costs the
-same at any ordering). On ARM and RISC-V the gap would be larger, since even
-acquire and release need real barriers there. What the weaker orderings buy is
-lock-free structures and spinlocks for kernel-grade code, which is not v1's
-target — so v1 ships the one ordering everything else can be checked against,
-and leaves the others to be added, not designed around, later.
+On x86-64, `SeqCst` costs extra only on a store, which compiles to an `XCHG` or
+`MFENCE` instead of a plain `MOV`. A load or a read-modify-write such as
+`fetch_add` or `compare_exchange` costs the same at any ordering. On ARM and
+RISC-V the gap is larger, because even acquire and release need real barriers.
+
+The weaker orderings exist for lock-free structures and spinlocks in kernel code.
+That is not v1's target, so v1 ships the one ordering that everything else can be
+checked against. The others are left to be added later, not designed around now.
 
 ## The cell two threads share
 
@@ -119,11 +117,11 @@ An [`Atomic<T>`](/stdlib/atomic) is one location every access to which is a
 single atomic operation. A shared counter is declared **`pd val`**, because a
 `val` passdown hands a function a shared borrow, which is the borrow a thread
 argument may take. A `pd var` counter works as well, including a store followed
-by a load in one function, because an atomic's operations are shared borrows
-reborrowed from the passdown's hidden reference; what `var` adds is the exclusive
-borrow a function takes when it assigns to the passdown itself, and that borrow
-may not cross to a thread. That is the same rule that keeps a `&mut T` from being sent anywhere
-([Ownership and borrowing](/language/ownership)).
+by a load in one function. An atomic's operations are shared borrows taken from
+the passdown's hidden reference. What `var` adds is the exclusive borrow a
+function takes when it assigns to the passdown itself, and that borrow may not
+cross to a thread. This is the same rule that keeps a `&mut T` from being sent
+anywhere ([Ownership and borrowing](/language/ownership)).
 
 **A `Mutex<T>` is the second shape.** It also has no reachable `&mut` path,
 because the lock is the only way to reach `T`, so a `&Mutex<T>` crosses the
@@ -167,19 +165,19 @@ program that spawns nothing: a panic in `main`, or in a worker nothing joins
 before the process ends, still ends the process with `exit(1)`.
 
 **v1 has no unwinding, and the consequence is admitted rather than hidden.**
-Kelp has no exceptions, no `catch` and no user `Drop` yet, so a panicking
-worker's frame is abandoned: the owned values it held are never dropped. That
+Kelp has no exceptions and no `catch`, so a panicking worker's frame is
+abandoned: the owned values it held are never dropped. That
 is a deliberate trade against the two alternatives, both worse here: real
 unwinding needs a `Drop` story the language does not have, and aborting the
 whole process is exactly what this policy removes. A handle nobody joins is
 the same shape: dropping it detaches the worker, which keeps running, and its
-result slot is leaked rather than freed out from under it. Both leaks close
-when user `Drop` ships (MK9-S6-M1); until then, a program that spawns threads
-accepts them as the cost of surviving a single worker's failure.
+result slot is leaked rather than freed out from under it. Until a panic can
+unwind, a program that spawns threads accepts these leaks as the cost of
+surviving a single worker's failure.
 
 ## A worked example: concurrent downloads
 
-`examples/download_pool.kp` (MK6-S2-M1) is the payoff of the rules above: N
+`examples/download_pool.kp` is the payoff of the rules above: N
 paths fetched from one host by four worker threads, each holding its own
 [`http.Pool`](/stdlib/http) and never sharing it with another thread. A pool's
 `var idle` field is exactly the shared mutable state a `thread.spawn` argument
@@ -210,8 +208,7 @@ than decided speculatively; none of them blocks anything above:
 - **`compare_exchange`, strong form only, or a `_weak` alongside it?** The weak
   form only helps inside a loop that retries anyway.
 - **A `pd` atomic inside a capability-gated module** is a capability question
-  as well as a memory-model one, scoped to MK10-S1 (capability model
-  extensions), where the vocabulary for it lives.
+  as well as a memory-model one. It waits for the capability design to cover it.
 - **`Relaxed`, `Acquire` and `Release`** are reserved argument values, not
   shipped: see "One ordering" above.
 - **Channels and a pool shipped without changing the rule above.** They are

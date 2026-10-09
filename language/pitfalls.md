@@ -1,6 +1,6 @@
 ---
 title: "Pitfalls"
-description: "The rules that explain most compile errors, with the message each one produces and the fix. Source - syntax.md \u00a718 and \u00a722."
+description: "The compile errors and runtime panics that come up most often, with the message each one prints and the fix for it."
 isPublished: true
 tags: "language"
 ---
@@ -55,7 +55,7 @@ and [Cursors and provenance](/language/ownership#cursors-and-provenance).
 | Message | What happened | Fix |
 | --- | --- | --- |
 | `cannot compare 'P' values with '=='` | a `datac`/`enum` gets `==`/`!=` only from a declared `eq`, and nothing is derived | declare `fun P.eq(other: &P).return: bool`, which `a == b` lowers to (`a.eq(&b)`); or compare the fields directly, or match with `when` |
-| `cannot compare 'P' values with '<'` | `<`/`<=`/`>`/`>=` are refused on every owned `datac`/`enum`, declared `eq` or not | compare the fields you mean, or write the ordering method you want |
+| `cannot compare 'P' values with '<'` | `<`/`<=`/`>`/`>=` are refused on a `datac`/`enum` with no `Ord` impl, whether or not it has `eq` | implement `ops.Ord` (see [Operator traits](/language/operator-traits)), or compare the fields you mean |
 | `'P.eq' takes exactly one parameter, a shared borrow of 'P'` | the `eq` method has the wrong signature | write `fun P.eq(other: &P).return: bool`: one parameter, a shared borrow of the type, returning `bool` |
 | `cannot compare 'A' with 'B'` | the two operands are different types | make both sides the same type |
 
@@ -71,7 +71,7 @@ and [Cursors and provenance](/language/ownership#cursors-and-provenance).
 | `a 'str' is NUL-terminated, so a raw NUL byte cannot be in a string literal` | the same rule for the byte written literally rather than escaped: the `str` ends there, so the literal cannot carry one; build arbitrary bytes with `Bytes` (`Bytes.empty` then `push`) |
 | `the character '中' (U+4E2D) does not fit in 'u8'` | a character literal takes the type its context asks for; use a wider type, or the byte you meant |
 | `operator requires matching integer operands, found 'u8' and 'bool'` | `& \| ^ << >> ~` are integer-only and both operands must be the *same* type |
-| a `n * 1.0` type error | there is no implicit conversion of a *value*: `n.to_f64()` (a float literal on an integer, never; an integer literal on a float adapts) |
+| a type error on `n * 1.0` | integers and floats do not mix. Convert the integer first with `n.to_f64()`. An integer literal adapts to a float type, but a variable does not |
 | `i32.to_u64: value out of range` (runtime) | the plain conversion panics when the value does not fit; `n.try_to_u64()` returns `Option<T>` instead, so the caller can test |
 
 ## Collections
@@ -142,9 +142,9 @@ and [Cursors and provenance](/language/ownership#cursors-and-provenance).
 | two `fun pick(...)` overloads collide | a user module cannot overload; spell the type into the name |
 | `Shape.Empty.label()` is refused | a receiver that builds a variant names a type; bind it first (`val s = Shape.Empty`, then `s.label()`) |
 
-## The one behaviour that is not a warning
+## Integer overflow is not checked
 
-Integer `+`, `-` and `*` overflow is **unchecked**: it wraps silently. If a wrap
+Integer `+`, `-` and `*` overflow **wraps silently**. The compiler gives no warning. If a wrap
 matters, use [`mathx`](/libraries/mathx)'s checked or saturating forms.
 
 ## See also
