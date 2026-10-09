@@ -13,8 +13,8 @@ impl "std/encoding"
 ```
 
 Every encoder takes `&Bytes` and returns `String`; every decoder takes `&str`
-and returns `Result<Bytes, DecodeErr>`, except the two percent decoders, which
-return `Result<String, DecodeErr>`. One failure case, `DecodeErr.Invalid`, for
+and returns `Result<Bytes, DecodeErr>`, except `percent_decode` and `form_decode`,
+which return `Result<String, DecodeErr>`. One failure case, `DecodeErr.Invalid`, for
 every decoder: the input is not in the alphabet, or its shape is not the one the
 scheme defines. The decoders carry no position, so there is nothing for a richer
 error to say.
@@ -29,6 +29,8 @@ error to say.
 | `encoding.base58_decode(s: &str)` | `Result<Bytes, DecodeErr>` | |
 | `encoding.hex_encode(b: &Bytes)` | `String` | lowercase, two characters per byte |
 | `encoding.hex_decode(s: &str)` | `Result<Bytes, DecodeErr>` | either case, even length |
+| `encoding.hex_value(c: u8)` | `option.Option<u8>` | the value of one hex digit, either case; `None` for anything else |
+| `encoding.hex_upper(nibble: u8)` / `encoding.hex_lower(nibble: u8)` | `u8` | the ASCII digit for a value from 0 to 15, in uppercase or lowercase |
 | `encoding.percent_encode(s: &str)` | `String` | RFC 3986 §2.3, a space is `%20` |
 | `encoding.percent_decode(s: &str)` | `Result<String, DecodeErr>` | `+` is left alone |
 | `encoding.form_encode(s: &str)` | `String` | form-urlencoded: a space is `+` |

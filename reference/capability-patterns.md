@@ -31,6 +31,13 @@ the compiler for a module you do not want to let out.
 | `time` | no pattern | (an empty list is the whole grant) |
 | `rand` | no pattern | (an empty list is the whole grant) |
 | `ui` | `*` only | the domain gate alone: no display call names the display |
+| `mmio` | `0xBASE+LEN`, or `*` | the byte range of a device register block; `LEN` counts bytes |
+| `frames` | `0xBASE+LEN`, or `*` | the physical byte range `frame.claim` may take frames from |
+| `irq` | a decimal line (`10`), an inclusive range (`32-47`), or `*` | the interrupt lines `irq.claim` may take |
+
+The three range domains are written as ranges, not as paths or names. `BASE` and
+`LEN` take hex (`0x`) or decimal, and `LEN` must be at least 1. `irq` takes
+decimal only, so a line number reads the same to the author and the checker.
 
 ## `net`
 
@@ -47,11 +54,20 @@ impl "std/net" caps(net = ["*"])                     // anything
 - The connection pool in [`std/http`](/stdlib/http) is keyed on the host as
   written for exactly this reason.
 - A bare `host` matches any port on that host.
+- `*` in a host stands for one label only: `*.example.com` matches
+  `api.example.com`, not `a.b.example.com`. A bare `*` matches any host.
 - A host part made only of digits, dots and `*` (`10.0.0.*`) matches **IPv4
-  literals only**, never a name like `10.0.0.xyz`.
-- For `net.listen` the host part picks the interface: `*`, `0.0.0.0` or a glob
-  matching it binds every interface, anything else binds `127.0.0.1`. See the
-  [threat model](/reference/capability-threat-model).
+  literals only**, a dotted quad, never a name like `10.0.0.xyz`, whatever DNS
+  says about that name. See the [threat model](/reference/capability-threat-model).
+- **Listening is checked differently.** `net.listen(port)` is checked on the
+  **port alone**. Its host part decides only the interface: a grant that admits
+  every interface (a host of `*`, `0.0.0.0`, a glob matching `0.0.0.0`, or no host
+  at all) binds every interface, and any other grant (`127.0.0.1:*`) binds
+  `127.0.0.1` alone, so a loopback grant cannot become a public server.
+  `net.listen_on(host, port)` is checked on `host:port` like `connect`: a grant of
+  `127.0.0.1:8080` allows `listen_on("127.0.0.1", 8080)` and refuses
+  `listen_on("0.0.0.0", 8080)`. Passing `"*"` or `"0.0.0.0"` binds every
+  interface.
 
 ## `fs` and `process`
 

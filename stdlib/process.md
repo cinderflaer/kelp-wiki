@@ -56,7 +56,7 @@ datac Child(
 | `Child.wait()` | `i32` | exit code; `mut` receiver |
 | `Child.is_running()` | `bool` | `mut` receiver |
 | `Child.kill(signal: i32)` | `Unit` | |
-| `exit(code: i32)` | — | ends the process with that status |
+| `exit(code: i32)` | `Unit` | ends the process with that status |
 | `getpid()` | `i64` | |
 
 `args` **includes** the program itself: `args().get(0)` is the program's own

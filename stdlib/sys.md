@@ -26,3 +26,8 @@ fun main() {
 
 Compare with `str.eq`; `==` on a `str` is refused because it would compare
 addresses.
+
+## See also
+
+- [`std/source`](/stdlib/source) for the call site of a line of code
+- [`std/str`](/stdlib/str) for `str.eq`, the comparison a `str` needs
