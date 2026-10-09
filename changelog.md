@@ -67,9 +67,9 @@ build host does not have.
 **Polyp HTML output.** `[build] emit = "html"` in `coral.toml` writes a Polyp
 app's first frame as a static `index.html` beside the built binary, and
 `[build] emit_entry` names the program that builds it. The entry file calls
-`polyp.emit_html(init, view)`. A Polyp HTML build needs no env grant. Column, row,
-text, button and spacer become their HTML elements; every other node becomes a
-`div` with a `data-kind` attribute. The page has no event wiring and shows the
+`polyp.emit_html(init, view)`. A Polyp HTML build needs no env grant. Text becomes
+a `p`, a button a `button`, a column or row a flex `div`, and a spacer an empty
+`div` of its height; every other node becomes a `div` with a `data-kind` attribute. The page has no event wiring and shows the
 first frame only. See [Polyp](/libraries/polyp).
 
 **Polyp v5 examples.** The Polyp examples use the Polyp v5 impl ids
