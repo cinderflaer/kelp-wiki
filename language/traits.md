@@ -600,8 +600,9 @@ refuses, each where it is written with a message that names the follow-up:
   own type, and the same holds for `Box<dyn>`.
 - **Object-unsafe traits** (returning `Self` or taking another `Self`), a generic
   trait and a trait with an associated type behind `dyn`, refused as above.
-- **Blanket impls** (`impl<T: A> B for T`) and an impl for **one instantiation**
-  (`impl Name for Pair<i32, String>`):
+- An impl for **one instantiation** (`impl Name for Pair<i32, String>`), which is
+  still refused. Blanket impls (`impl<T: A> B for T`) shipped in 26.10.4, see
+  [Blanket impls and coherence](#blanket-impls-and-coherence):
 
   ```
   error: an impl for a generic type writes the type's parameters, in order, as its own: 'impl<T: Bound> Trait for Type<T>'; an impl for one instantiation ('Type<i32>') is not supported - implement the trait for a non-generic wrapper, or give the type an inherent method
@@ -640,9 +641,9 @@ fun show<T: Describe>(x: &T).return: i32 { return x.describe() }
   `fun f<T, U>(a: &T, b: &U) where T: A, U: A + B`. It bounds a parameter from the
   `<...>` list; a bound on a projection (`where I::Item: Display`) and an equality
   constraint (`I: Iterator<Item = i64>`) are not supported.
-- Not supported: a blanket impl, an impl for one instantiation, a const
-  parameter on an impl, `dyn` of a generic impl, and operators through a
-  generic impl.
+- Not supported: an impl for one instantiation, a const parameter on an impl,
+  `dyn` of a generic impl, and operators through a generic impl. A blanket impl
+  is supported with the limits in the next section.
 
 - **A bound on a method's own type parameters** (a generic trait method,
   `fun Self.map<U>(...)`), and a second impl of a trait for a type.
@@ -655,6 +656,47 @@ a method of another bound on the same parameter, compiles too. A default body is
 only checked for the impls that use it, and the compiler does not check that a
 vtable's slot order matches any other vtable's; it computes the one order for
 the pair the same way at every call site.
+
+## Blanket impls and coherence
+
+Since 26.10.4 an impl may cover every type that meets a bound. A blanket impl
+takes one type parameter, which is the whole self type, and it names no trait
+arguments:
+
+```kelp
+trait Describe { fun Self.describe().return: i32 }
+impl Describe for i32 { fun Self.describe().return: i32 = self }
+
+trait Tagged { fun Self.tag().return: i32 }
+impl<T: Describe> Tagged for T {
+    fun Self.tag().return: i32 { return self.describe() * 100 }
+}
+
+fun main() {
+    val n: i32 = 7
+    print(n.tag())        // 700: i32 is Describe, so it is Tagged
+}
+```
+
+- A type has the blanket trait's methods when every bound on `T` holds for it.
+  A type without `Describe` has no `tag`, and a generic function bounded by
+  `T: Tagged` accepts `i32` and any other `Describe` type.
+- Coherence is overlap-free, with no specialization: two impls of one trait may
+  not overlap, whatever their bounds. So `impl Describe for i32` next to
+  `impl<T: Shown> Describe for T` is refused, and the error names both impls.
+- A bound that leads back to the blanket impl's own trait (`impl<T: Describe>
+  Describe for T`) is refused.
+
+Refused by name, with the reason in the message:
+
+- a blanket impl of a trait with type arguments (`impl<T> Into<U> for T`), or one
+  that binds an associated type or has a trait default;
+- a `dyn` coercion of a type whose trait comes from a blanket impl (`&dyn Tagged`
+  from a `&i32`), since the blanket impl has no vtable of its own;
+- a bound that cannot be checked on a builtin container: `List<i32>` answers to
+  its bare name, so `xs.tag()` is refused for a `Tagged` blanket on `Describe`;
+- a bound on a projection (`where I::Item: Describe`), which is the next step of
+  the generic-impl work and not yet built.
 
 ## See also
 

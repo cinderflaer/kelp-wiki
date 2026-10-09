@@ -4,6 +4,14 @@ description: "Every WebKelp construct: Markdown blocks and inline spans, attribu
 isPublished: true
 tags: "family, reference"
 ---
+
+> # ARCHIVED PROJECT: WEBKELP MOVED TO POLYP
+>
+> WebKelp now lives in the Polyp repository, in the `web/` folder:
+> https://homelabone.xenoo.dev/gittea/Juniper/polyp
+>
+> The WebKelp repository is archived, and its demo and playground sites have been removed.
+> This page is kept for reference only and may be out of date.
 WebKelp is Markdown plus three additions: **attributes** on anything, **containers** that
 make any element, and **CSS blocks**. Raw HTML is always allowed. This page is the
 complete reference; the [overview](/family/webkelp) is the short version.

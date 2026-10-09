@@ -4,6 +4,14 @@ description: "The WebKelp compiler is about 2,500 lines of Kelp in eight modules
 isPublished: true
 tags: "family, compiler"
 ---
+
+> # ARCHIVED PROJECT: WEBKELP MOVED TO POLYP
+>
+> WebKelp now lives in the Polyp repository, in the `web/` folder:
+> https://homelabone.xenoo.dev/gittea/Juniper/polyp
+>
+> The WebKelp repository is archived, and its demo and playground sites have been removed.
+> This page is kept for reference only and may be out of date.
 WebKelp's compiler is a Coral-style Kelp project of about 2,500 lines with no
 dependencies beyond `std/*`. This page is for someone reading or changing it. For using it,
 see the [overview](/family/webkelp) and the [syntax reference](/family/webkelp-syntax).

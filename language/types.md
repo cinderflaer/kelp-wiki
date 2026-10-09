@@ -58,8 +58,10 @@ val (lo, hi) = min_max(xs)      // a tuple value is read by destructuring
 
 - **Two or more elements.** `(T)` is not a one-element tuple: it is the
   parenthesized type `T`, exactly as `(e)` is the parenthesized expression `e`,
-  so `val x = (5)` binds an `i32`. `()` is refused by name, because the absent
-  value's type is spelled `unit`.
+  so `val x = (5)` binds an `i32`. `()` as a type is refused by name, because the
+  absent value's type is spelled `unit`. `()` as a value is the absent value: it
+  can be returned, passed and bound, and it is the success payload of a
+  `Result<unit, E>` ([Result](/stdlib/result)).
 - **A tuple owns its elements.** There is nothing to declare: the compiler
   derives one record per element list, and an element is stored by value where
   the tuple sits. An element is field-like, so a borrow, a `str` or a `View`

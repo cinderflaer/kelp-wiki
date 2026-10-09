@@ -7,7 +7,7 @@ tags: "library, ui, freestanding"
 Polyp's display-free half draws into any framebuffer a `Platform` hands it, so it
 also runs with no operating system under it. The proof is two bare-metal
 projects, `examples/polyp-fb-riscv64/` and `examples/polyp-fb-x86_64/`, that link
-the same `core.kp`, the same `soft/` rasterizer, the same `soft_backend.kp` and
+the same `core.kp`, the same `backends/soft/soft/` rasterizer, the same `soft_backend.kp` and
 the same application program into an image with no libc, boot under QEMU, and
 print a checksum per frame. The claim is narrow and total: they draw the **same
 pixels** as the hosted run. The original design is
@@ -34,7 +34,7 @@ Each project is a `[target]` freestanding build,
 - A bump arena in a second `static mut [u8; N]`, named by `[target] alloc` and
   `[target] dealloc`, so `List`, `String` and `Box` allocate through the project
   and the image links no libc.
-- A platform, `FbPlatform`, that implements `soft/platform.Platform`:
+- A platform, `FbPlatform`, that implements `backends/soft/soft/platform.Platform`:
   `framebuffer` returns the static surface, `present` counts the rectangles it was
   handed and advances a fake clock by 100 ms, `now_ms` returns that clock, and
   `poll_event` answers from a timed script that is empty here, because the
@@ -56,7 +56,7 @@ writes through (`0x10100000+0x20`). The framebuffer is a static, not
 memory-mapped, and the x86-64 port driver moves a COM1 byte through `in`/`out`,
 so neither needs a grant and the x86-64 manifest has no `[caps]` section. Both
 manifests list the modules that carry a pointer (`uart`, `fb_platform`,
-`deps/polyp/soft/fb`, `deps/polyp/soft/draw`).
+`deps/polyp/backends/soft/soft/fb`, `deps/polyp/backends/soft/soft/draw`).
 
 On riscv64 the project also registers its static surface with QEMU's `ramfb`
 device through fw_cfg (`src/ramfb.kp` reads the file directory, finds `etc/ramfb`
@@ -172,7 +172,7 @@ the worked example (about two hundred lines of project code;
    `str.len`/`str.byte` one byte at a time; nothing in Polyp needs a formatted
    write, because the scenario builds its own lines.
 6. **`[unsafe] modules`** for the modules that take a pointer to the surface or
-   write a pixel (`fb_platform`, `soft/fb`, `soft/draw`) and the device driver.
+   write a pixel (`fb_platform`, `backends/soft/soft/fb`, `backends/soft/soft/draw`) and the device driver.
    `core.kp`, `soft_backend.kp`, `font.kp`, `damage.kp`, `event.kp`,
    `platform.kp` and the scenario contain no `unsafe`.
 7. **`[caps] mmio`, only for a memory-mapped device.** A UART at a fixed address
@@ -194,15 +194,15 @@ allowed set. None is a compiler change:
 1. **The progress fraction is an integer permille, not an `f64`.** `Props.permille`
    and the `progress` widget carry an `i32` in `0..=1000`. The `f64` comparison in
    `node_props_eq` and the view's `done.to_f64() / total.to_f64()` were two
-   soft-float calls on a riscv64 target with no FPU. `soft/frac.kp`, which
+   soft-float calls on a riscv64 target with no FPU. `backends/soft/soft/frac.kp`, which
    decoded an `f64`'s bits into a permille for the paint path, is deleted;
-   `gtk_backend.kp` and `headless_backend.kp` convert the permille to the `f64`
+   `backends/gtk/gtk_backend.kp` and `backends/headless/headless_backend.kp` convert the permille to the `f64`
    GTK and the text dump want, hosted arithmetic no bare-metal image emits.
 2. **The core's counters are `Atomic` statics.** A passdown is refused bare-metal
    because its initializer runs through `kelp_init_pds`, which only the hosted
    entry point calls. An `Atomic` static's methods write through a shared borrow,
    so the core still contains no `unsafe`.
-3. **The entry-text snapshot moved to `examples/polyp/diag.kp`.** It is the one
+3. **The entry-text snapshot moved to `core/diag.kp`.** It is the one
    counter that is a `List<String>`, and a heap type cannot be a static.
    `diag.capture(backend)` runs at the end of a hosted run; a freestanding project
    does not import the module.

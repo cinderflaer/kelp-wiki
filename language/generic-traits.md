@@ -1,6 +1,6 @@
 ---
 title: "Generic traits, `From` and `?` conversion"
-description: "A trait may take type parameters, `std/convert` declares From and Into, a trait method with no receiver is called on the type, and `?` converts a failure through an `impl From<E1> for E2`. No blanket impls, and no dyn of a generic trait."
+description: "A trait may take type parameters, `std/convert` declares From and Into, a trait method with no receiver is called on the type, and `?` converts a failure through an `impl From<E1> for E2`. No blanket `Into` in `std/convert`, and no dyn of a generic trait."
 isPublished: true
 tags: "language, errors"
 ---
@@ -147,8 +147,10 @@ pub trait Into<T> {
 }
 ```
 
-There are **no blanket impls**: a type that wants `into` writes its own
-`impl Into<U> for X`, and `?` uses `From` only.
+`std/convert` ships no blanket impl of `Into`: a type that wants `into` writes its
+own `impl Into<U> for X`, and `?` uses `From` only. A user blanket impl
+(`impl<T: A> B for T`) exists since 26.10.4, but only for a trait with no type
+arguments, so it cannot give `Into<U>` to every type ([Traits](/language/traits)).
 
 ## `?` converts through `From`
 
@@ -235,7 +237,10 @@ by the argument's type.
 
 Each of these is refused where it is written:
 
-- **No blanket impls** (`impl<T> Into<U> for T`), for any trait.
+- **A blanket impl of a trait with type arguments** (`impl<T> Into<U> for T`), and
+  a blanket impl that binds an associated type or has a trait default. A blanket
+  impl of a trait with no arguments is supported since 26.10.4
+  ([Traits](/language/traits)).
 - **`dyn` of a generic trait** (`&dyn`, `Box<dyn>`): the vtable has no slot for a
   parameter.
 

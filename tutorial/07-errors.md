@@ -164,7 +164,7 @@ error: '?' cannot convert a failure: 'std.result.Result<i64, std.str.ParseErr>' 
   --> c7bad1.kp:9:13
 ```
 
-There are no blanket impls and `?` never uses `Into`, only `From`.
+`std/convert` has no blanket `Into`, and `?` never uses `Into`, only `From`.
 
 ## `panic`
 

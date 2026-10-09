@@ -38,6 +38,7 @@ this page is the index to it.
 
 | Version | Date | Headline |
 | --- | --- | --- |
+| [26.10.4](#26104-2026-10-09) | 2026-10-09 | Polyp HTML output (`[build] emit = "html"`); Polyp v5 impl ids in the examples |
 | [26.10.3](#26103-2026-10-08) | 2026-10-08 | `.return:` replaces `.R:`; tuple positions, patterns and `const`s, `for (k, v)` over a `Map`; `loop`, labels and `break value`; disjoint field borrows; methods with type parameters, generic impls and `where`; `std/iter` adapters; float literals, `f32` math, line continuation |
 | [26.10.2](#26102-2026-10-07) | 2026-10-07 | `must_use fun`, TLS encrypted keys and live certificate reload, `net.listen_on`, multipart/form-data bodies, pool idle timeout, large array literals compile fast |
 | [26.10.1](#26101-2026-10-07) | 2026-10-07 | fallible `std/fs` mutators, `std/http`/`std/net`/`std/tls` that return errors, `wss://`, `process.run_inherit`, enum-payload double move refused |
@@ -54,6 +55,28 @@ this page is the index to it.
 | [0.1.2](#012-2026-09-19) | 2026-09-19 | `View`, `char` literals, bitwise operators, `str` to `String` coercion |
 | [0.1.1](#011-2026-09-19) | 2026-09-19 | the `for` loop, `spawn_in`/`run_in`, fallible `try_run`, `fs.symlink` |
 | [0.1.0](#010-no-release) | 2026-09-19 | first tag: the core language, modules, containers, capabilities, stdlib |
+
+## 26.10.4 (2026-10-09)
+
+[Release](https://homelabone.xenoo.dev/gittea/Juniper/kelp/releases/tag/v26.10.4)
+
+11 commits since 26.10.3, the Polyp output release. The suite passes (1615 tests,
+16 ignored by default) except the debug-info test that needs `gdb`, which the
+build host does not have.
+
+**Polyp HTML output.** `[build] emit = "html"` in `coral.toml` writes a Polyp
+app's first frame as a static `index.html` beside the built binary, and
+`[build] emit_entry` names the program that builds it. The entry file calls
+`polyp.emit_html(init, view)`. A Polyp HTML build needs no env grant. Column, row,
+text, button and spacer become their HTML elements; every other node becomes a
+`div` with a `data-kind` attribute. The page has no event wiring and shows the
+first frame only. See [Polyp](/libraries/polyp).
+
+**Polyp v5 examples.** The Polyp examples use the Polyp v5 impl ids
+(`deps/polyp/core/core`, `deps/polyp/backends/gtk/polyp/lib`,
+`deps/polyp/backends/gtk/gtk`, `deps/polyp/backends/gtk/queue`,
+`deps/polyp/backends/soft/...`). The `polyp` namespace is unchanged, and the v0
+examples are frozen.
 
 ## 26.10.3 (2026-10-08)
 

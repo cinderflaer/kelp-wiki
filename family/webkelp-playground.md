@@ -4,7 +4,15 @@ description: "An in-browser editor for WebKelp: write source on the left, see th
 isPublished: true
 tags: "family, networking"
 ---
-The playground is at [**homelabone.xenoo.dev/webkelpplay**](https://homelabone.xenoo.dev/webkelpplay/).
+
+> # ARCHIVED PROJECT: WEBKELP MOVED TO POLYP
+>
+> WebKelp now lives in the Polyp repository, in the `web/` folder:
+> https://homelabone.xenoo.dev/gittea/Juniper/polyp
+>
+> The WebKelp repository is archived, and its demo and playground sites have been removed.
+> This page is kept for reference only and may be out of date.
+The playground has been removed from the server. This page describes how it worked.
 Type WebKelp on the left and the page it compiles to appears on the right, with no login.
 It is built the way the rest of the [Kelp family](/family) is: the page is written in
 [WebKelp](/family/webkelp), and the backend is a Kelp program.

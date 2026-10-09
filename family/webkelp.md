@@ -4,6 +4,14 @@ description: "WebKelp is a markdown-style language that compiles to plain HTML a
 isPublished: true
 tags: "family, cli"
 ---
+
+> # ARCHIVED PROJECT: WEBKELP MOVED TO POLYP
+>
+> WebKelp now lives in the Polyp repository, in the `web/` folder:
+> https://homelabone.xenoo.dev/gittea/Juniper/polyp
+>
+> The WebKelp repository is archived, and its demo and playground sites have been removed.
+> This page is kept for reference only and may be out of date.
 WebKelp is a markdown-style language, in `.wk` files, that compiles to plain **HTML and
 CSS**. The compiler is a single native binary written in Kelp, and the output is static
 files with no JavaScript unless you write some.
@@ -17,16 +25,13 @@ It has two goals that pull in opposite directions, and the design is the answer 
 
 ## Live demo
 
-[**homelabone.xenoo.dev/webkelpdemo**](https://homelabone.xenoo.dev/webkelpdemo/) is a page written
-entirely in WebKelp. A button in the corner toggles between the rendered page and the `.wk` source it was
-compiled from, so you can see each construct next to its output. No login is needed. The source is
-`demo/index.wk` in the repository, and `demo/build.sh` builds it.
+The live demo has been removed from the server. Its source is still in the repository:
+`demo/index.wk` is a page written entirely in WebKelp, and `demo/build.sh` builds it.
 
 ## Playground
 
-[**homelabone.xenoo.dev/webkelpplay**](https://homelabone.xenoo.dev/webkelpplay/) is an in-browser editor:
-write WebKelp on the left and see the compiled page on the right, live. Links carry your source in the URL, so
-you can share a page without saving anything. See [WebKelp playground](/family/webkelp-playground).
+The playground has been removed from the server. It was an in-browser editor: write WebKelp on the left and
+see the compiled page on the right. See [WebKelp playground](/family/webkelp-playground) for the reference.
 
 ## A first page
 

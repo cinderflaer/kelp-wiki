@@ -8,9 +8,9 @@ Coral is the build tool and package manager for Kelp. The division is the point:
 `kelpc` stays the compiler, and Coral owns the project (manifest, tasks, build
 cache, dependencies, toolchains) and calls `kelpc` as a subprocess.
 
-It is a plain Rust CLI with no external crates, kept simple enough to port to Kelp
-part by part once the language covers what it needs; a port is a long-term want
-rather than a scheduled milestone (`kelp/plan/roadmap.md`, open item 72). This page follows
+Coral is now written in Kelp and lives at the root of its repository. The earlier
+Rust implementation is kept on the `rust-legacy` branch for reference only, must not
+be used in production, and its removal is pending. This page follows
 [Coral's README](https://homelabone.xenoo.dev/gittea/Juniper/coral/src/branch/main/README.md),
 which is the authority, and it marks the places where the binary on this machine
 does something the README does not describe. Those are listed again in
@@ -621,17 +621,48 @@ A dependency is a line you write, naming a repository or one folder inside one:
 
 ```toml
 [dependencies]
+polyp = "fpl/polyp"                  # a first-party library, by name
 util = "Juniper/kelp-util"           # the whole repo
 json = "Juniper/fpl/json"            # one folder inside a repo
 local = "file:///srv/git/fpl#other"  # a full URL, folder after '#'
 ```
 
-- `owner/repo` resolves against your Gitea (`CORAL_REGISTRY` overrides the
-  default). The first two segments are the repository; anything after them names a
-  folder inside it.
+- `fpl/<name>` names a first-party library from Coral's built-in catalogue. The
+  catalogue starts with one entry, `polyp`, which is the repository `polyp` under
+  the configured owner, so `polyp = "fpl/polyp"` fetches the whole repo into
+  `src/deps/polyp/`. A name the catalogue does not list is an error that names the
+  catalogue. A catalogue entry is a whole repo, so `fpl/<name>/<folder>` is refused.
+- `owner/repo` resolves against the configured registry (see
+  [Configuration](#configuration)). The first two segments are the repository;
+  anything after them names a folder inside it. An `owner/repo` source names its
+  own owner, so only the registry is read for it.
 - Anything containing `://` or an `@` is treated as a full URL and used as written,
   and names a folder with a `#` fragment, because a URL's path means whatever its
-  host says it means.
+  host says it means. A full URL reads no configuration at all.
+
+### Configuration
+
+Coral has no Gitea host or account built in. Two values come from configuration,
+each read at run time from the first source that has it:
+
+| value | what it is for | environment variable, then config file key |
+| --- | --- | --- |
+| registry | the Gitea base URL: `owner/repo` sources, the catalogue, the toolchain | `CORAL_REGISTRY`, then `registry` |
+| owner | the account `fpl/<name>` resolves under, and the account the toolchain repos live under | `CORAL_OWNER`, then `owner` |
+
+The config file is `$CORAL_CONFIG` if set, else `$XDG_CONFIG_HOME/coral/config.toml`,
+else `~/.config/coral/config.toml`. It holds `key = "value"` lines, with `#` comments
+and `[section]` headers skipped:
+
+```toml
+registry = "https://git.example.com/gittea"
+owner = "example"
+```
+
+A missing file is not an error. A value that neither source supplies is, and the
+error names both ways to set it. With the config above, `example/kelp-util` is
+fetched from `https://git.example.com/gittea/example/kelp-util.git`, and
+`polyp = "fpl/polyp"` fetches `example/polyp`.
 
 ### A whole-repo dependency
 
@@ -819,7 +850,10 @@ pin rebuilds rather than replaying a cached artifact.
 | --- | --- |
 | `KELPC` | the compiler to run, ahead of the pin, `~/.coral/bin` and `PATH` |
 | `CORAL_HOME` | overrides `~/.coral` (used by Coral's own tests) |
-| `CORAL_REGISTRY` | overrides the default Gitea registry that `owner/repo` resolves against |
+| `CORAL_REGISTRY` | the Gitea base URL that `owner/repo` resolves against, ahead of the config file's `registry` (no default) |
+| `CORAL_OWNER` | the account `fpl/<name>` resolves under, ahead of the config file's `owner` (no default) |
+| `CORAL_CONFIG` | the config file's path, ahead of `$XDG_CONFIG_HOME/coral/config.toml` and `~/.config/coral/config.toml` |
+| `XDG_CONFIG_HOME`, `HOME` | where the default config file is looked for when `CORAL_CONFIG` is unset |
 | `CORAL_TOKEN`, `GITEA_TOKEN` | a Gitea token, sent as `Authorization: token ...` for the release list and the asset download |
 
 ## What is not here yet
