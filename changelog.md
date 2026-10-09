@@ -134,7 +134,7 @@ over the parameters), and `where T: A, U: B` is a second spelling of a bound. Se
 `take`, `skip`, `enumerate`, `zip` and `chain` are adapters that nest, and `any`,
 `all`, `find`, `last` and `fold` consume. A generic type whose template declares
 `fun mut Name<...>.next().return: option.Option<Item>` is an `Iterator` by shape.
-See [`std/iter`](/stdlib/iter).
+See [`std/iter`](/language/iterators).
 
 **Numbers.** An integer literal where a float is expected is that float (`x * 2`,
 `val w: f64 = 3`) when the float holds it exactly. `f32.to_f64()` and
