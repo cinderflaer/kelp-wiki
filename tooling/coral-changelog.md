@@ -9,10 +9,9 @@ Every release of [Coral](/tooling/coral), newest first. The version is
 [coral repository](https://homelabone.xenoo.dev/gittea/Lilly/coral), and the
 release asset is `coral-<version>-linux-x86_64`.
 
-The Kelp port of Coral now lives at the root of `main`, and the Rust build moved to
-the `rust-legacy` branch. The port has no tag yet, so no entry describes it. The
-newest tag, `v26.09.4`, still builds the Rust version at its root, with the Kelp
-port beside it in `kelp/`.
+The Kelp port of Coral is the build tool on `main`, under `src/`, and the Rust build
+moved to the `rust-legacy` branch. The newest tag, `v26.10.5`, is the first release of
+the port. `v26.09.4` is the last tag that builds the Rust version.
 
 Release notes live on the Gitea releases page, and each entry below links to
 its own tag. Not every tag has a release: `v0.1.0`, `v0.2.0`, `v0.2.1`,
@@ -32,6 +31,7 @@ spellings have to be the same one.
 
 | Version | Date | Headline |
 | --- | --- | --- |
+| [v26.10.5](#v26105-2026-10-09) | 2026-10-09 | the Kelp port is the build tool; the toolchain tracks the newest Kelp release only |
 | [v26.09.4](#v26094-2026-09-28) | 2026-09-28 | a quoted `#folder` dependency value parses again; an official Nix flake |
 | [v26.09.3](#v26093-2026-09-25) | 2026-09-25 | a second implementation, written in Kelp, ships beside the Rust one |
 | [v26.09.2](#v26092-2026-09-24) | 2026-09-24 | `coral version`, `coral fmt`/`lint`, `coral test` |
@@ -47,6 +47,32 @@ spellings have to be the same one.
 | [v0.2.1](#v021-2026-09-19) | 2026-09-19 | `find_kelpc` checks `~/.coral/bin/kelpc` before `PATH` |
 | [v0.2.0](#v020-2026-09-19) | 2026-09-19 | toolchain management: install and switch a kelp and a coral |
 | [v0.1.0](#v010-2026-09-19) | 2026-09-19 | Coral v1: init, build, run, check, clean, tasks, cache, deps |
+
+## v26.10.5 (2026-10-09)
+
+[Release](https://homelabone.xenoo.dev/gittea/Lilly/coral/releases/tag/v26.10.5)
+
+The first release of the Kelp port. Coral is written in Kelp and ships as
+`coral-26.10.5-linux-x86_64`. Its Rust predecessor stays on the `rust-legacy` branch.
+
+- **The toolchain is always the newest Kelp release.** `coral toolchain` manages only
+  the Kelp compiler. `latest` names the newest `vYY.MM.N` tag, and `update` installs
+  and links it. There are no version pins in a manifest and no way to install an
+  older release.
+- **Registry and owner come from configuration.** Nothing about one Gitea instance is
+  compiled in. The registry is read from `CORAL_REGISTRY`, then the config file; the
+  owner from `CORAL_OWNER`, then the config file. The config file is
+  `$CORAL_CONFIG`, else `$XDG_CONFIG_HOME/coral/config.toml`, else
+  `~/.config/coral/config.toml`.
+- **`fpl/<name>` dependencies.** A source names a first-party library as `fpl/<name>`,
+  and the catalog in the port maps that name to its repository. A catalog entry is a
+  whole repository; a folder inside one is written `fpl/<name>/<folder>`.
+- **Quoted `#` values parse as in the Rust build.** A `#` inside quotes is part of the
+  value, so a `#folder` fragment in a quoted dependency survives. A `#` outside quotes
+  still starts a comment.
+- **Messages carry no em or en dashes.** Toolchain and error text uses plain punctuation.
+- **68 fixtures.** The Rust unit tests that matter are ported to Kelp fixtures, and
+  `coral test` runs them. The suite passes on the release commit.
 
 ## v26.09.4 (2026-09-28)
 
