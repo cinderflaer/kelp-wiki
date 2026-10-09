@@ -13,7 +13,7 @@ No capability.
 
 ```toml
 [dependencies]
-encoding = "Juniper/fpl/encoding"
+encoding = "Lilly/fpl/encoding"
 ```
 
 ```kelp

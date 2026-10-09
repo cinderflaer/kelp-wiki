@@ -7,7 +7,7 @@ tags: "stdlib, networking"
 A WebSocket **client** (RFC 6455), over `ws://` and `wss://`. It holds `net` and `rand`.
 
 Source section:
-[`syntax.md` §16.18](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
+[`syntax.md` §16.18](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
 
 ```kelp
 impl "std/ws" caps(net = ["gateway.example.com:80"], rand = [])

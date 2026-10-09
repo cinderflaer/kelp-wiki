@@ -4,7 +4,7 @@ description: "The .return: T clause, expression and block bodies, what return do
 isPublished: true
 tags: "language"
 ---
-Source: [`syntax.md` §7.1 and §6.4](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §7.1 and §6.4](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
 
 ## The `.return: T` clause
 

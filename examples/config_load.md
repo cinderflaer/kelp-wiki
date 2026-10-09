@@ -9,7 +9,7 @@ is what a tool does with `coral.toml` before it does anything else.
 
 | | |
 | --- | --- |
-| Source | [`src/config_load.kp`](https://homelabone.xenoo.dev/gittea/Juniper/kelp-wiki-wikijs/raw/branch/main/examples/src/config_load.kp) |
+| Source | [`src/config_load.kp`](https://homelabone.xenoo.dev/gittea/Lilly/kelp-wiki-wikijs/raw/branch/main/examples/src/config_load.kp) |
 | Needs | `config` |
 | Shows | the TOML subset the manifest format uses, typed accessors, defaults, and why `1.5` is text |
 
@@ -17,7 +17,7 @@ is what a tool does with `coral.toml` before it does anything else.
 
 ```toml
 [dependencies]
-config = "Juniper/fpl/config"
+config = "Lilly/fpl/config"
 ```
 
 The text is in the program so the example runs with no file. In a tool the same

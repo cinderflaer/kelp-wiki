@@ -29,8 +29,8 @@ And in a consumer:
 
 ```toml
 [dependencies]
-mylib = "Juniper/mylib"            # the whole repo
-other = "Juniper/fpl/other"        # one folder inside a repo
+mylib = "Lilly/mylib"            # the whole repo
+other = "Lilly/fpl/other"        # one folder inside a repo
 local = "file:///srv/git/fpl#third" # a full URL, folder after '#'
 ```
 

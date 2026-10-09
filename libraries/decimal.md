@@ -13,7 +13,7 @@ No capability.
 
 ```toml
 [dependencies]
-decimal = "Juniper/fpl/decimal"
+decimal = "Lilly/fpl/decimal"
 ```
 
 ```kelp
@@ -114,7 +114,7 @@ true
 
 - Range: `value` is an `i64`, so the maximum scaled value is about 9.22×10¹⁸;
   `from_i64` and `mul` can overflow silently: integer `+`/`-`/`*` overflow is
-  unchecked ([syntax.md](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md) §5).
+  unchecked ([syntax.md](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md) §5).
   Keep `scale` small if `value` is large.
 - `rescale` narrowing uses the "round half away from zero" rule, with the
   half-way test done exactly on the integer remainder.

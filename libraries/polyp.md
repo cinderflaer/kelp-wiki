@@ -16,7 +16,7 @@ Gated on `ui` (the display domain, [Capabilities](/language/capabilities)). Only
 the GTK backend needs the grant; the core, the headless backend and the software
 backend name no display symbol and need no capability.
 
-Since v5, Polyp is its own repository: [`juniper/polyp`](https://homelabone.xenoo.dev/gittea/Juniper/polyp).
+Since v5, Polyp is its own repository: [`lilly/polyp`](https://homelabone.xenoo.dev/gittea/Lilly/polyp).
 The Kelp repository keeps consumer copies in `examples/polyp*/`. `examples/polyp-v0/` is a frozen copy of the
 earlier plain-constructor API and `examples/polyp-counter-v0/` its counter. A consumer declares Polyp in its own
 `coral.toml` (see [Using the library](#using-the-library) and [Polyp v5](#polyp-v5)).
@@ -26,10 +26,10 @@ There is no published version number. **v2** added the keyed patch, `scrolled`,
 **v3** split the library into a core and one module per backend, and added the
 display-free path; the application surface is unchanged apart from the tree's
 type, which is `core.Node<M>` now that it lives in the core. The design is
-[`plan/polyp-v3.md`](https://homelabone.xenoo.dev/gitea/Juniper/kelp/src/branch/main/plan/polyp-v3.md).
+[`plan/polyp-v3.md`](https://homelabone.xenoo.dev/gitea/Lilly/kelp/src/branch/main/plan/polyp-v3.md).
 **v4** adds timers and integer animation, UTF-8 text in the soft backend, an
 on-demand accessibility tree, and memoised pure subtrees. Its implementation
-record is [`plan/polyp-v4.md`](https://homelabone.xenoo.dev/gitea/Juniper/kelp/src/branch/main/plan/polyp-v4.md).
+record is [`plan/polyp-v4.md`](https://homelabone.xenoo.dev/gitea/Lilly/kelp/src/branch/main/plan/polyp-v4.md).
 
 ## The layering
 
@@ -692,7 +692,7 @@ v5 is a layout and packaging release. The library's behaviour is the v4 behaviou
 
 ## See also
 
-- [Polyp repository](https://homelabone.xenoo.dev/gittea/Juniper/polyp): the library source and its README
+- [Polyp repository](https://homelabone.xenoo.dev/gittea/Lilly/polyp): the library source and its README
 - [Polyp v5 plan](/libraries/polyp-v5-plan): where the v5 plan lives
 - [Polyp on a framebuffer](/libraries/polyp-soft): the software rasterizer, the
   soft backend, the five-function `Platform` contract, the work budgets and the
@@ -703,5 +703,5 @@ v5 is a layout and packaging release. The library's behaviour is the v4 behaviou
 - [User FFI](/language/externs)
 - [Functions](/language/functions#trailing-blocks-and-scoped-parameters)
 - [Capabilities](/language/capabilities)
-- [`plan/polyp-v3.md`](https://homelabone.xenoo.dev/gitea/Juniper/kelp/src/branch/main/plan/polyp-v3.md):
+- [`plan/polyp-v3.md`](https://homelabone.xenoo.dev/gitea/Lilly/kelp/src/branch/main/plan/polyp-v3.md):
   the design record

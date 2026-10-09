@@ -5,9 +5,9 @@
 // Dependencies:
 //
 //   [dependencies]
-//   term  = "Juniper/fpl/term"
-//   log   = "Juniper/fpl/log"
-//   table = "Juniper/fpl/table"
+//   term  = "Lilly/fpl/term"
+//   log   = "Lilly/fpl/log"
+//   table = "Lilly/fpl/table"
 //
 // Two of the three are gated, and the consumer writes the grant:
 //

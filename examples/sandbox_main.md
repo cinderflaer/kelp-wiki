@@ -10,7 +10,7 @@ and dies.
 
 | | |
 | --- | --- |
-| Sources | [`src/sandbox_main.kp`](https://homelabone.xenoo.dev/gittea/Juniper/kelp-wiki-wikijs/raw/branch/main/examples/src/sandbox_main.kp), [`src/sandbox_vault.kp`](https://homelabone.xenoo.dev/gittea/Juniper/kelp-wiki-wikijs/raw/branch/main/examples/src/sandbox_vault.kp) |
+| Sources | [`src/sandbox_main.kp`](https://homelabone.xenoo.dev/gittea/Lilly/kelp-wiki-wikijs/raw/branch/main/examples/src/sandbox_main.kp), [`src/sandbox_vault.kp`](https://homelabone.xenoo.dev/gittea/Lilly/kelp-wiki-wikijs/raw/branch/main/examples/src/sandbox_vault.kp) |
 | Needs | nothing beyond the standard library |
 | Shows | a grant the consumer narrows, delegation inside a module, and a refusal |
 

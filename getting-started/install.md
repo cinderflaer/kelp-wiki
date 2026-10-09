@@ -25,7 +25,7 @@ to copy it from.
 ## Build the compiler
 
 ```sh
-git clone https://homelabone.xenoo.dev/gittea/Juniper/kelp
+git clone https://homelabone.xenoo.dev/gittea/Lilly/kelp
 cd kelp
 nix-shell shell.nix          # LLVM 21 dev, LLVM_SYS_211_PREFIX, OpenSSL dev
 cargo build --release -p kelpc
@@ -68,8 +68,8 @@ Coral carries an official `flake.nix` at its repository root, so a machine with
 flakes enabled needs no Rust toolchain to build it:
 
 ```sh
-nix run git+https://homelabone.xenoo.dev/gittea/Juniper/coral -- version
-nix build git+https://homelabone.xenoo.dev/gittea/Juniper/coral
+nix run git+https://homelabone.xenoo.dev/gittea/Lilly/coral -- version
+nix build git+https://homelabone.xenoo.dev/gittea/Lilly/coral
 ./result/bin/coral version
 ```
 
@@ -77,7 +77,7 @@ A tag is a flake ref too, but the full ref path is what resolves, since a short
 name is looked for under `refs/heads/` only:
 
 ```sh
-nix build git+https://homelabone.xenoo.dev/gittea/Juniper/coral?ref=refs/tags/v26.09.4
+nix build git+https://homelabone.xenoo.dev/gittea/Lilly/coral?ref=refs/tags/v26.09.4
 ```
 
 With no `ref` the default branch is used, so the two commands above take `main`.

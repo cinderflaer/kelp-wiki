@@ -12,7 +12,7 @@ No capability.
 
 ```toml
 [dependencies]
-set = "Juniper/fpl/set"
+set = "Lilly/fpl/set"
 ```
 
 ```kelp

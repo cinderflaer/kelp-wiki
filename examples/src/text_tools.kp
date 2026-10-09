@@ -5,9 +5,9 @@
 // Dependencies:
 //
 //   [dependencies]
-//   hash     = "Juniper/fpl/hash"
-//   encoding = "Juniper/fpl/encoding"
-//   datetime = "Juniper/fpl/datetime"
+//   hash     = "Lilly/fpl/hash"
+//   encoding = "Lilly/fpl/encoding"
+//   datetime = "Lilly/fpl/datetime"
 //
 // Shows: content hashes for a cache key, a base64 round trip, percent-encoding
 // for a URL, and a civil date printed from a Unix seconds count. Nothing here

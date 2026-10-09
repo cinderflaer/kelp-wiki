@@ -9,7 +9,7 @@ comparator sort, and the three set operations.
 
 | | |
 | --- | --- |
-| Source | [`src/collections.kp`](https://homelabone.xenoo.dev/gittea/Juniper/kelp-wiki-wikijs/raw/branch/main/examples/src/collections.kp) |
+| Source | [`src/collections.kp`](https://homelabone.xenoo.dev/gittea/Lilly/kelp-wiki-wikijs/raw/branch/main/examples/src/collections.kp) |
 | Needs | `listx`, `set` |
 | Shows | closure-shaped helpers over a `List`, and `Set<T>` against `StrSet` |
 
@@ -17,8 +17,8 @@ comparator sort, and the three set operations.
 
 ```toml
 [dependencies]
-listx = "Juniper/fpl/listx"
-set   = "Juniper/fpl/set"
+listx = "Lilly/fpl/listx"
+set   = "Lilly/fpl/set"
 ```
 
 Both exist because of one language rule: a user module cannot overload a name. So

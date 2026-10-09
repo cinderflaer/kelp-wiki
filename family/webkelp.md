@@ -8,7 +8,7 @@ tags: "family, cli"
 > # ARCHIVED PROJECT: WEBKELP MOVED TO POLYP
 >
 > WebKelp now lives in the Polyp repository, in the `web/` folder:
-> https://homelabone.xenoo.dev/gittea/Juniper/polyp
+> https://homelabone.xenoo.dev/gittea/Lilly/polyp
 >
 > The WebKelp repository is archived, and its demo and playground sites have been removed.
 > This page is kept for reference only and may be out of date.
@@ -172,7 +172,7 @@ Exit code `0` is success, `1` is a failure (a missing file, an existing `index.w
 ## Build it
 
 ```sh
-git clone http://localhost:8085/Juniper/webkelp.git
+git clone http://localhost:8085/Lilly/webkelp.git
 cd webkelp
 kelpc build . -o webkelp
 tests/run.sh          # golden tests; set WEBKELP=./webkelp

@@ -8,7 +8,7 @@ Owned values are already freed at the end of their scope, on every exit path
 ([Ownership and borrowing](/language/ownership)). A user **`Drop`** lets a type
 run its own code at each of those drop points, so a lock flag can be coupled to
 the value that holds it. The design is
-[`plan/drop.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/drop.md).
+[`plan/drop.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/drop.md).
 
 ## The surface
 

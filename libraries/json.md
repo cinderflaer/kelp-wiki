@@ -15,7 +15,7 @@ No capability. Nothing here touches a file, a socket or the clock.
 
 ```toml
 [dependencies]
-json = "Juniper/fpl/json"
+json = "Lilly/fpl/json"
 ```
 
 ```kelp

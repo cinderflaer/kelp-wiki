@@ -27,7 +27,7 @@ datac ThreadErr(val message: String)
 `spawn` and `join` are not in the builtin signature table: what crosses the
 thread boundary decides their types, so the checker builds the signature at each
 call site. Neither call, and not the fence either, can be written in Kelp, so
-[`kelpc/std/thread.kp`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/kelpc/std/thread.kp)
+[`kelpc/std/thread.kp`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/kelpc/std/thread.kp)
 declares none of them: its header documents the surface, exactly as
 `std/atomic` documents the atomic methods it declares nowhere. The compiler
 lowers `spawn` and `join` through the pthread machinery of
@@ -142,7 +142,7 @@ The rule is "a panic ends the thread it happened in", and the process ends when
 
 v1 has no unwinding, no user `Drop` and no `must_use`, and two leaks follow from
 that. Both are deliberate, and both are recorded in
-[`plan/mk9-memory-model.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/mk9-memory-model.md)
+[`plan/mk9-memory-model.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/mk9-memory-model.md)
 section 5:
 
 - **A panicking worker's frame is abandoned.** A panic ends the worker by

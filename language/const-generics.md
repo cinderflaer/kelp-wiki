@@ -4,7 +4,7 @@ description: "A datac, enum or fun can take a const parameter such as N: usize, 
 isPublished: true
 tags: "language"
 ---
-Source: [`plan/const-generics.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/const-generics.md).
+Source: [`plan/const-generics.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/const-generics.md).
 
 Two spellings that remove a reason to write a converter: a **const type
 parameter**, a compile-time value in the type-argument slot, and **`impl Trait`

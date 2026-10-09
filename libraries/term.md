@@ -11,7 +11,7 @@ color functions specifically.
 
 ```toml
 [dependencies]
-term = "Juniper/fpl/term"
+term = "Lilly/fpl/term"
 ```
 
 ```kelp

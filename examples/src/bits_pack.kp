@@ -5,8 +5,8 @@
 // Dependencies:
 //
 //   [dependencies]
-//   bits = "Juniper/fpl/bits"
-//   prng = "Juniper/fpl/prng"
+//   bits = "Lilly/fpl/bits"
+//   prng = "Lilly/fpl/prng"
 //
 // Shows: packing a flag and two narrow fields into two bytes, reading them back,
 // a fixed-size bit set over Bytes, and a seeded generator so the "random" bytes

@@ -13,7 +13,7 @@ dependency to declare, and every function is testable on a list built by hand.
 
 ```toml
 [dependencies]
-dedup = "Juniper/fpl/dedup"
+dedup = "Lilly/fpl/dedup"
 ```
 
 ```kelp

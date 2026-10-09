@@ -11,7 +11,7 @@ No capability.
 
 ```toml
 [dependencies]
-stats = "Juniper/fpl/stats"
+stats = "Lilly/fpl/stats"
 ```
 
 ```kelp
@@ -41,7 +41,7 @@ datac Fit(val slope: f64, val intercept: f64, val r_squared: f64)
 ## Population vs sample
 
 `variance`/`stddev` are the **population** forms (divide by `n`, not `n − 1`).
-A user module cannot overload a function name ([syntax.md](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md) §7.2), so there is no
+A user module cannot overload a function name ([syntax.md](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md) §7.2), so there is no
 second spelling: take the sample form yourself by multiplying by `n / (n − 1)`.
 
 ## Histogram semantics

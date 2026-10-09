@@ -8,7 +8,7 @@ tags: "family, reference"
 > # ARCHIVED PROJECT: WEBKELP MOVED TO POLYP
 >
 > WebKelp now lives in the Polyp repository, in the `web/` folder:
-> https://homelabone.xenoo.dev/gittea/Juniper/polyp
+> https://homelabone.xenoo.dev/gittea/Lilly/polyp
 >
 > The WebKelp repository is archived, and its demo and playground sites have been removed.
 > This page is kept for reference only and may be out of date.

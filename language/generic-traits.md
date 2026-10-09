@@ -4,7 +4,7 @@ description: "A trait can take type parameters. std/convert declares From and In
 isPublished: true
 tags: "language, errors"
 ---
-Source: [`plan/traits.md` §11](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/traits.md).
+Source: [`plan/traits.md` §11](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/traits.md).
 
 A trait can take **type parameters of its own**, so it can say "I convert a `T`"
 rather than only "I have these methods". On top of that, `?` converts a failure

@@ -9,7 +9,7 @@ colour that switches itself off according to the `NO_COLOR` convention.
 
 | | |
 | --- | --- |
-| Source | [`src/terminal_report.kp`](https://homelabone.xenoo.dev/gittea/Juniper/kelp-wiki-wikijs/raw/branch/main/examples/src/terminal_report.kp) |
+| Source | [`src/terminal_report.kp`](https://homelabone.xenoo.dev/gittea/Lilly/kelp-wiki-wikijs/raw/branch/main/examples/src/terminal_report.kp) |
 | Needs | `term` (env), `log` (time), `table` |
 | Shows | two grants in one program, escapes against plain text, and stdout against stderr |
 
@@ -17,9 +17,9 @@ colour that switches itself off according to the `NO_COLOR` convention.
 
 ```toml
 [dependencies]
-term  = "Juniper/fpl/term"
-log   = "Juniper/fpl/log"
-table = "Juniper/fpl/table"
+term  = "Lilly/fpl/term"
+log   = "Lilly/fpl/log"
+table = "Lilly/fpl/table"
 ```
 
 ```kelp

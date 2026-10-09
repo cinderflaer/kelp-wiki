@@ -14,7 +14,7 @@ No capability: this is arithmetic on a `u64`, not a random source.
 
 ```toml
 [dependencies]
-prng = "Juniper/fpl/prng"
+prng = "Lilly/fpl/prng"
 ```
 
 ```kelp

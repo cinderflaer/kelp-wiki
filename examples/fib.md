@@ -9,7 +9,7 @@ that shows a function, a loop and two kinds of output in twenty lines.
 
 | | |
 | --- | --- |
-| Source | [`src/fib.kp`](https://homelabone.xenoo.dev/gittea/Juniper/kelp-wiki-wikijs/raw/branch/main/examples/src/fib.kp) |
+| Source | [`src/fib.kp`](https://homelabone.xenoo.dev/gittea/Lilly/kelp-wiki-wikijs/raw/branch/main/examples/src/fib.kp) |
 | Needs | nothing, not even the standard library |
 | Shows | recursion, `while`, `.return: i64`, `print` versus `print!` |
 

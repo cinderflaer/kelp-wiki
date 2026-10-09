@@ -11,7 +11,7 @@ No capability.
 
 ```toml
 [dependencies]
-testkit = "Juniper/fpl/testkit"
+testkit = "Lilly/fpl/testkit"
 ```
 
 ```kelp

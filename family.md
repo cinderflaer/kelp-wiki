@@ -10,7 +10,7 @@ Projects built on Kelp rather than inside it: tools and languages written in Kel
 
 | Project | What it is | Written in | Repository |
 | --- | --- | --- | --- |
-| [WebKelp](/family/webkelp) | a markdown-style language (`.wk`) that compiles to plain HTML and CSS, with an escape hatch for everything HTML and CSS can do. The live demo and playground have been removed. | Kelp | [`Juniper/polyp` (folder `web/`)](https://homelabone.xenoo.dev/gittea/Juniper/polyp/src/branch/main/web) |
+| [WebKelp](/family/webkelp) | a markdown-style language (`.wk`) that compiles to plain HTML and CSS, with an escape hatch for everything HTML and CSS can do. The live demo and playground have been removed. | Kelp | [`Lilly/polyp` (folder `web/`)](https://homelabone.xenoo.dev/gittea/Lilly/polyp/src/branch/main/web) |
 
 ## Pages
 

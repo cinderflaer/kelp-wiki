@@ -4,7 +4,7 @@ description: "A program cannot read a file, open a socket, spawn a process or re
 isPublished: true
 tags: "language, capability"
 ---
-Source: [`syntax.md` §15](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §15](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
 
 Kelp's headline feature: **a program cannot read a file, open a socket, spawn a
 process or read the clock unless the module making the call was granted that
@@ -233,7 +233,7 @@ provenance model; and `mmio` says nothing about what is at the address (a fault
 taken on a probe page is granted like a device register). Freestanding is
 LLVM-only by design, so the C oracle never sees the check. See
 [Kernel 0](/language/kernel) for the grants the examples carry and
-[`plan/device-caps.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/device-caps.md)
+[`plan/device-caps.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/device-caps.md)
 for the design.
 
 ### `irq` and `frames`: interrupt lines and physical frames

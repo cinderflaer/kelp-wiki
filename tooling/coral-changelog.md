@@ -199,7 +199,7 @@ The first release of the Kelp port. Coral is written in Kelp and ships as
 [Release](https://homelabone.xenoo.dev/gittea/Lilly/coral/releases/tag/v0.5.4)
 
 - A dependency can name one **folder** inside a repo:
-  `sillyname = "Juniper/fpl/sillyname"`. It is fetched with
+  `sillyname = "Lilly/fpl/sillyname"`. It is fetched with
   `--filter=blob:none --sparse` and copied flat into `src/deps/<name>/`, so
   `impl "deps/sillyname/lib"` works and a sibling library in that repo is never
   downloaded.

@@ -5,7 +5,7 @@
 // Dependencies:
 //
 //   [dependencies]
-//   httpx = "Juniper/fpl/httpx"
+//   httpx = "Lilly/fpl/httpx"
 //
 // Shows: a query string built from name/value pairs, a URL assembled from it, a
 // Basic auth header, the method helpers past GET and POST, and the value out of

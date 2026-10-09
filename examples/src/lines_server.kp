@@ -5,7 +5,7 @@
 // Dependencies and the grant:
 //
 //   [dependencies]
-//   lineproto = "Juniper/fpl/lineproto"
+//   lineproto = "Lilly/fpl/lineproto"
 //
 //   impl "deps/lineproto/lib" caps(net = ["127.0.0.1:*"])
 //

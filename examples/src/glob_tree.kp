@@ -5,7 +5,7 @@
 // Dependency:
 //
 //   [dependencies]
-//   glob = "Juniper/fpl/glob"
+//   glob = "Lilly/fpl/glob"
 //
 // Demonstrates: `fs.walk` (which returns full paths *and* directories, so files
 // are filtered with `fs.is_file`), a glob filter over a `List<String>`, and a

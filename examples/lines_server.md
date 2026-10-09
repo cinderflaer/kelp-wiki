@@ -10,15 +10,15 @@ writing anything that talks over TCP.
 
 | | |
 | --- | --- |
-| Sources | [`src/lines_server.kp`](https://homelabone.xenoo.dev/gittea/Juniper/kelp-wiki-wikijs/raw/branch/main/examples/src/lines_server.kp), [`src/lines_client.kp`](https://homelabone.xenoo.dev/gittea/Juniper/kelp-wiki-wikijs/raw/branch/main/examples/src/lines_client.kp) |
-| Needs | `lineproto = "Juniper/fpl/lineproto"`, with `net` delegated |
+| Sources | [`src/lines_server.kp`](https://homelabone.xenoo.dev/gittea/Lilly/kelp-wiki-wikijs/raw/branch/main/examples/src/lines_server.kp), [`src/lines_client.kp`](https://homelabone.xenoo.dev/gittea/Lilly/kelp-wiki-wikijs/raw/branch/main/examples/src/lines_client.kp) |
+| Needs | `lineproto = "Lilly/fpl/lineproto"`, with `net` delegated |
 | Shows | `net.listen` and `net.accept`, a CRLF reader, a granted host on both sides |
 
 ## The dependency and the grants
 
 ```toml
 [dependencies]
-lineproto = "Juniper/fpl/lineproto"
+lineproto = "Lilly/fpl/lineproto"
 ```
 
 Both programs delegate `net`, and both name the host they use. The library holds

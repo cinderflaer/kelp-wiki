@@ -11,7 +11,7 @@ No capability.
 
 ```toml
 [dependencies]
-bigint = "Juniper/fpl/bigint"
+bigint = "Lilly/fpl/bigint"
 ```
 
 ```kelp

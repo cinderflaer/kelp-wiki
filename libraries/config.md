@@ -12,7 +12,7 @@ No capability.
 
 ```toml
 [dependencies]
-config = "Juniper/fpl/config"
+config = "Lilly/fpl/config"
 ```
 
 ```kelp

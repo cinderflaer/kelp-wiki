@@ -5,7 +5,7 @@ isPublished: true
 tags: "language"
 ---
 The language chapter: the surface syntax of Kelp, one page per topic. The authority is
-[`plan/syntax.md`](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/syntax.md),
+[`plan/syntax.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md),
 and each page cites the section it came from.
 
 ## Pages

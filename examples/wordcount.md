@@ -10,7 +10,7 @@ to compare.
 
 | | |
 | --- | --- |
-| Source | [`src/wordcount.kp`](https://homelabone.xenoo.dev/gittea/Juniper/kelp-wiki-wikijs/raw/branch/main/examples/src/wordcount.kp) |
+| Source | [`src/wordcount.kp`](https://homelabone.xenoo.dev/gittea/Lilly/kelp-wiki-wikijs/raw/branch/main/examples/src/wordcount.kp) |
 | Needs | nothing but the standard library (the `fs` capability) |
 | Shows | reading text, a byte loop over a `str`, `fmt` and `str.concat` for output |
 

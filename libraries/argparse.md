@@ -11,7 +11,7 @@ No capability.
 
 ```toml
 [dependencies]
-argparse = "Juniper/fpl/argparse"
+argparse = "Lilly/fpl/argparse"
 ```
 
 ```kelp

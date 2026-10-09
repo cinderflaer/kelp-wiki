@@ -13,7 +13,7 @@ arithmetic from a seconds count the caller supplies. For the current time use
 
 ```toml
 [dependencies]
-datetime = "Juniper/fpl/datetime"
+datetime = "Lilly/fpl/datetime"
 ```
 
 ```kelp

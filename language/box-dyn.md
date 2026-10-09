@@ -10,7 +10,7 @@ which trait's methods it can answer, and knows how to drop what it points at. It
 is the way to keep several different types behind one trait in a `List`, a field
 or a return value.
 
-Source: [`plan/traits.md` §12](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/traits.md).
+Source: [`plan/traits.md` §12](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/traits.md).
 
 ## An example
 

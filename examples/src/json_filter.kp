@@ -7,7 +7,7 @@
 // project declares it:
 //
 //   [dependencies]
-//   json = "Juniper/fpl/json"
+//   json = "Lilly/fpl/json"
 //
 // and imports it as `deps/json/lib` after `coral sync`.
 //

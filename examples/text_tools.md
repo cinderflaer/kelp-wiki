@@ -9,7 +9,7 @@ build tool does with text before it writes a cache key or a log line.
 
 | | |
 | --- | --- |
-| Source | [`src/text_tools.kp`](https://homelabone.xenoo.dev/gittea/Juniper/kelp-wiki-wikijs/raw/branch/main/examples/src/text_tools.kp) |
+| Source | [`src/text_tools.kp`](https://homelabone.xenoo.dev/gittea/Lilly/kelp-wiki-wikijs/raw/branch/main/examples/src/text_tools.kp) |
 | Needs | `hash`, `encoding`, `datetime` |
 | Shows | three content hashes, two encodings and their round trips, a date from a seconds count |
 
@@ -17,9 +17,9 @@ build tool does with text before it writes a cache key or a log line.
 
 ```toml
 [dependencies]
-hash     = "Juniper/fpl/hash"
-encoding = "Juniper/fpl/encoding"
-datetime = "Juniper/fpl/datetime"
+hash     = "Lilly/fpl/hash"
+encoding = "Lilly/fpl/encoding"
+datetime = "Lilly/fpl/datetime"
 ```
 
 None of them needs a capability. `datetime` in particular does not read the clock:

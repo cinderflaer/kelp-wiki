@@ -4,7 +4,7 @@ description: "std/ops declares Add, Sub, Mul, Div, Rem, Neg and Ord and std/fmt 
 isPublished: true
 tags: "language"
 ---
-Source: [`plan/traits.md` §13](https://homelabone.xenoo.dev/gittea/Juniper/kelp/src/branch/main/plan/traits.md).
+Source: [`plan/traits.md` §13](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/traits.md).
 
 A `datac` or `enum` can have the arithmetic operators, the order operators and
 string interpolation by implementing a trait. `std/ops` declares

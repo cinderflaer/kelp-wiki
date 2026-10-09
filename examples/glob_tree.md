@@ -10,15 +10,15 @@ pattern filter.
 
 | | |
 | --- | --- |
-| Source | [`src/glob_tree.kp`](https://homelabone.xenoo.dev/gittea/Juniper/kelp-wiki-wikijs/raw/branch/main/examples/src/glob_tree.kp) |
-| Needs | `glob = "Juniper/fpl/glob"` |
+| Source | [`src/glob_tree.kp`](https://homelabone.xenoo.dev/gittea/Lilly/kelp-wiki-wikijs/raw/branch/main/examples/src/glob_tree.kp) |
+| Needs | `glob = "Lilly/fpl/glob"` |
 | Shows | `fs.walk`, `glob.glob_filter`, `fs.is_file`, `std/path`, a running total |
 
 ## The dependency
 
 ```toml
 [dependencies]
-glob = "Juniper/fpl/glob"
+glob = "Lilly/fpl/glob"
 ```
 
 ## The program
