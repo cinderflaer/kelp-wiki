@@ -84,8 +84,9 @@ literal) are built on both backends by `kelpc/tests/scaling.rs`, and a step over
   pattern in `when (a, b)` (which may hold literals and nested tuples), and a
   `const` may be a tuple of constants (`const ORIGIN: (i32, i32) = (1, 2)`).
   A tuple has two or more
-  elements, so there is no one-element tuple: `(T)` is the type `T`, and `()` is
-  refused by name. Bind the whole tuple to a `val` when its positions need to be
+  elements, so there is no one-element tuple: `(T)` is the type `T`, and `()` as a
+  type is refused by name, and `()` as a value is the absent `unit` value, which
+  cannot be an element either (`((), 1)` is refused). Bind the whole tuple to a `val` when its positions need to be
   visible separately. See [Types](/language/types).
 - **A receiver on a generic type writes the type's own parameters, in order**
   (`fun Pair<A, B>.first()`); a method may add type parameters of its own after
@@ -358,8 +359,10 @@ active roadmap item or a named future milestone, not a closed decision:
   `Display`](/language/operator-traits), and
   [`impl Trait` in argument position](/language/const-generics); see
   [Traits and static dispatch](/language/traits). What is still absent: an upcast
-  between trait objects, blanket impls and an impl for one instantiation
-  (`impl<T: A> B for Pair<T>` is supported since 26.10.3, see [Traits](/language/traits)),
+  between trait objects, an impl for one instantiation (`impl Name for Pair<i32, String>`),
+  and blanket impls of a trait with type arguments (blanket impls with no trait
+  arguments shipped in 26.10.4, and `impl<T: A> B for Pair<T>` in 26.10.3, see
+  [Traits](/language/traits)),
   a bound or equality constraint on an associated type in a bound
   (`I: Iterator<Item = i64>`), default or generic associated types and
   associated consts, generic trait methods, `impl Trait` in a return position,
@@ -367,10 +370,10 @@ active roadmap item or a named future milestone, not a closed decision:
   field or a return type when it is a `&dyn`, and the rest of the refusal list
   on those pages. A user `Drop` is a smaller thing that shipped on its own,
   `fun mut T.drop()`, and is not a trait; see [User `Drop`](/language/drop).
-- **Const generics: value parameters only.** `<const N: usize>` shipped
-  ([Const generics](/language/const-generics)); arithmetic on the parameter
-  inside a type (`[T; N + 1]`), a const parameter on a trait and a non-integer,
-  non-`bool` const parameter are refused.
+- **Const generics: value parameters only.** `<const N: usize>`, `bool` and, since
+  26.10.4, `char` shipped ([Const generics](/language/const-generics)); arithmetic
+  on the parameter inside a type (`[T; N + 1]`), a const parameter on a trait and
+  a const parameter of any other type are refused.
 - **Lifetime syntax, and the borrows it would allow in fields.** A-11/A-8.
   Two of A-11's pieces have shipped: a bound borrow ends at its last use rather
   than at the end of its scope, and a reference binding remembers the owner its

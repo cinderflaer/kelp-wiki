@@ -96,7 +96,7 @@ and [Cursors and provenance](/language/ownership#cursors-and-provenance).
 | `element 2 of the tuple is 'unit'` | `unit` is the absent value and cannot be stored | produce a value, or leave the position out |
 | `'Later' is declared after this type` | a tuple element is a by-value field, so it may only name a type declared earlier | declare the element type first, or hold it behind a `Box` or a `List` |
 | `cannot pass a value of type '(i32, i32)' to 'print'` | a tuple is a record, and `print` takes a scalar, a `str` or a `String` | print each position |
-| `'()' is not a type` / `'()' is not a value` | a tuple has two or more elements, and the absent value's type is `unit` | write `unit`, or two or more elements |
+| `'()' is not a type` | a tuple has two or more elements, and the absent value's type is `unit` (the value `()` itself is valid) | write `unit`, or two or more elements |
 
 ## Arrays and constants
 

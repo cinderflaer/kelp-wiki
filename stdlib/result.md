@@ -20,6 +20,26 @@ enum Result<T, E> {
 `Ok`/`Err` is the other shape the `?` operator understands, so a function that
 can fail returns `Result<T, E>` and its caller writes `val v = f(...)?`.
 
+## `Result<unit, E>`
+
+A function that only succeeds or fails has `Result<unit, E>`. Since 26.10.4 its
+success value is written `()`, the absent value, so `Ok(value = ())` constructs
+and matches like any other `Ok`:
+
+```kelp
+impl "std/result"
+
+fun check_positive(x: i32).return: result.Result<unit, String> {
+    if x > 0 {
+        return result.Result.Ok(value = ())
+    }
+    return result.Result.Err(error = "not positive")
+}
+```
+
+The `Ok` arm of a `unit` payload occupies no storage. `unit` still cannot be a
+tuple element, a `datac` field or a container element ([Types](/language/types)).
+
 ## Functions
 
 | Function | Returns | Notes |

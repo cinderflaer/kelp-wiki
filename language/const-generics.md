@@ -1,6 +1,6 @@
 ---
 title: "Const generics and `impl Trait` arguments"
-description: "A datac, enum or fun may take `const N: usize` (or another integer or bool) as a type parameter, inferred from an array argument, and `fun f(x: impl Shape)` is sugar for a bounded type parameter. No arithmetic on N in a type, no impl Trait returns."
+description: "A datac, enum or fun may take `const N: usize` (or another integer, bool or char) as a type parameter, inferred from an array argument; `fun f(x: impl Shape)` is sugar for a bounded type parameter. No arithmetic on N in a type, no impl Trait returns."
 isPublished: true
 tags: "language"
 ---
@@ -110,6 +110,16 @@ false
 - A parameter written `&[i32; N]` is a borrow of the caller's array, the one way
   to say that, because an array is otherwise a by-value type.
 - A `bool` parameter (`datac Flag<const ON: bool>`) reads as a bool in the body.
+- A `char` parameter (since 26.10.4) reads as a character in the body, and each
+  character is its own instantiation:
+
+  ```kelp
+  fun glyph<const C: char>().return: char = C
+
+  fun main() {
+      print(glyph<'x'>())      // x
+  }
+  ```
 
 ### Writing the argument
 
@@ -140,7 +150,10 @@ is read as a type and turned back into the constant where the parameter is a
   and a `bool` parameter given a non-boolean.
 - **A const parameter on a trait**, or a const argument in a trait's argument
   list.
-- **A const parameter that is not an integer or `bool`.**
+- **A `char` parameter used as an array length** (`[i32; C]`), arithmetic on one
+  (`[i32; C + 1]`), or a `char` parameter given a number (and the reverse). These
+  are refused by name.
+- **A const parameter that is not an integer, `bool` or `char`.**
 
 ## `impl Trait` in argument position
 

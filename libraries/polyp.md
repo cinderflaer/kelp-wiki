@@ -653,6 +653,10 @@ v5 is a layout and packaging release. The library's behaviour is the v4 behaviou
   normal program needs no extra grant. The emitter writes column, row, text, button and spacer as their
   HTML elements, and every other node as a `div` with a `data-kind` attribute. The page has no event
   wiring and shows the first frame only. This is in Kelp `main` and ships in 26.10.4.
+  `polyp.emit_html(init, view)` is defined in the facade `polyp/lib.kp` of Kelp's
+  `examples/polyp` copy; the Polyp repository's `main` does not carry it yet, so a
+  project that fetches `fpl/polyp` takes it from that copy until the repository catches up.
+  The HTML is written as `index.html` beside the built binary.
 - **Plan.** The design and open decisions are in the Polyp repository at `docs/plan/polyp-v5.md`. See
   [Polyp v5 plan](/libraries/polyp-v5-plan).
 
