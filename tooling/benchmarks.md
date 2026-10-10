@@ -58,62 +58,99 @@ the top of `bench/run.sh`.
 
 The current results were made on a shared four-core machine, an Intel Core
 i5-6500T at 2.5 GHz with 7.6 GB of memory. Other work was running on it during
-the runs, including a game server, which the harness does not stop. The results
-record gcc 15.3.0, rustc 1.95.0 and `kelpc 26.09.5` (commit `cd7f4fd`).
+the runs, including a game server, which the harness does not stop. The one-minute
+load average was between 1.1 and 2.5 across the blocks of runs.
 
-The runs are short, from 0.08 s to 0.9 s, and a measurement wrapper adds about
+The results record gcc 15.3.0, rustc 1.95.0 and `kelpc 26.10.5` (commit `f3c5a0d`,
+build `f3c5a0de4c6360b1f5a97994ad6b5730ad81292a`). The previous recorded run used
+`kelpc 26.09.5` (commit `cd7f4fd`).
+
+The runs are short, from 0.08 s to 0.8 s, and a measurement wrapper adds about
 7 ms to every wall time. Within one run the seven samples of a cell agree to a few
-per cent. Between runs, benchmarks that the code change could not touch moved by up
-to 9 per cent, so a difference under about 5 per cent is noise on this host.
+per cent. Between runs, the host moves more than the code does. In the current run
+the C binaries were 2 to 16 per cent faster than in the previous run on most rows,
+and the `hashmap` C baseline was 80 per cent slower (see below). Compare ratios,
+not absolute times, across runs.
 
 ## Current results
 
 The summary is the wall time of each variant divided by the time of `c-gcc`, the
 median of seven runs. A ratio of 1.00 is as fast as C, and a lower number is faster.
+The build is `f3c5a0d`, measured on 10 October 2026.
 
 | benchmark | c-gcc | rust | kelp-llvm | kelp-c |
 | --- | ---: | ---: | ---: | ---: |
-| fib | 1.00 | 1.51 | 1.24 | 1.01 |
-| nbody | 1.00 | 0.58 | 0.87 | 1.16 |
-| spectral-norm | 1.00 | 0.97 | 0.98 | 1.71 |
-| mandelbrot | 1.00 | 0.98 | 0.99 | 1.01 |
-| binary-trees | 1.00 | 1.13 | 1.06 | 1.07 |
-| fannkuch-redux | 1.00 | 1.04 | 1.28 | 1.03 |
-| sieve | 1.00 | 1.09 | 1.14 | 1.13 |
-| matmul | 1.00 | 1.28 | 1.08 | 1.06 |
-| strings | 1.00 | 1.25 | 1.84 | 1.89 |
-| hashmap | 1.00 | 2.66 | 1.88 | 2.29 |
-| sort | 1.00 | 1.06 | 1.32 | 1.51 |
-| sort-builtin | 1.00 | 0.18 | 0.35 | 0.42 |
-| json-tokenizer | 1.00 | 0.87 | 1.27 | 1.41 |
+| fib | 1.00 | 1.49 | 1.33 | 1.01 |
+| nbody | 1.00 | 0.57 | 0.89 | 1.13 |
+| spectral-norm | 1.00 | 0.96 | 0.96 | 1.65 |
+| mandelbrot | 1.00 | 0.98 | 0.98 | 1.00 |
+| binary-trees | 1.00 | 1.18 | 1.09 | 1.11 |
+| fannkuch-redux | 1.00 | 1.04 | 1.27 | 1.02 |
+| sieve | 1.00 | 1.05 | 1.09 | 1.07 |
+| matmul | 1.00 | 1.26 | 1.06 | 1.03 |
+| strings | 1.00 | 1.25 | 1.86 | 1.95 |
+| hashmap | 1.00 | 1.57 | 1.11 | 1.39 |
+| sort | 1.00 | 1.07 | 1.32 | 1.49 |
+| sort-builtin | 1.00 | 0.18 | 0.36 | 0.44 |
+| json-tokenizer | 1.00 | 0.88 | 1.24 | 1.37 |
 
 Read the `kelp-llvm` column for the default backend. On these thirteen programs:
 
-- **Kelp ties or beats C** (0.87 to 1.14) on `nbody`, `spectral-norm`, `mandelbrot`,
+- **Kelp ties or beats C** (0.89 to 1.09) on `nbody`, `spectral-norm`, `mandelbrot`,
   `binary-trees`, `sieve` and `matmul`.
-- **Kelp is slower than C by 1.24 to 1.32** on `fib`, `fannkuch-redux`, `sort` and
+- **Kelp is slower than C by 1.24 to 1.33** on `fib`, `fannkuch-redux`, `sort` and
   `json-tokenizer`.
-- **Kelp is slower by more than 1.5** on `strings` and `hashmap`.
-- **Kelp is far faster** on `sort-builtin` (0.35), because C's `qsort` calls its
+- **Kelp is slower by more than 1.5** on `strings`.
+- **Kelp is far faster** on `sort-builtin` (0.36), because C's `qsort` calls its
   comparator through a function pointer.
+- **`hashmap` reads 1.11 on this run, but do not take that as a gain.** The C
+  baseline is the cause, as explained below.
 
 The `kelp-c` column is the oracle backend. It is slower than `kelp-llvm` on most rows,
-and the `spectral-norm` row (1.71) is a defect of that backend: it gives every
+and the `spectral-norm` row (1.65) is a defect of that backend: it gives every
 generated function external linkage, so the matrix helper is never inlined. The
 [Backends](/compiler/backends) page explains why the oracle is kept.
 
+## Changes since the previous recorded run
+
+The previous run is kept in `bench/RESULTS.md` under its own heading. Against it,
+the `kelp-llvm` ratio moved as follows:
+
+| benchmark | previous ratio | current ratio | `kelp-llvm` time change | `c-gcc` time change |
+| --- | ---: | ---: | ---: | ---: |
+| fib | 1.24 | 1.33 | +3% | -4% |
+| binary-trees | 1.06 | 1.09 | -13% | -16% |
+| sieve | 1.14 | 1.09 | -12% | -8% |
+| json-tokenizer | 1.27 | 1.24 | -5% | -2% |
+| matmul | 1.08 | 1.06 | -9% | -7% |
+| hashmap | 1.88 | 1.11 | +6% | +80% |
+| strings | 1.84 | 1.86 | -6% | -7% |
+| sort | 1.32 | 1.32 | -4% | -4% |
+| fannkuch-redux | 1.28 | 1.27 | -7% | -6% |
+
+Only `fib` got slower in its own time, and only by 3 per cent. Its ratio went up
+because the C binary got faster. Every other `kelp-llvm` row got faster in absolute
+terms, and the rest of the ratio changes are within the host noise described above.
+
+The `hashmap` row needs care. The C program ran in 0.31 s in both full harness
+runs of this build, against 0.17 s in the previous run. The C source has not
+changed in that time. When the same binaries were run by hand a few minutes later,
+the C program took 0.19 to 0.21 s and `kelp-llvm` took 0.37 to 0.41 s, a ratio of
+about 1.9. That matches the previous 1.88. The cause of the slow C baseline inside
+the harness is not known, so this run does not show a `hashmap` improvement.
+
 ## Why the ratios above 1.5 are what they are
 
-The full analysis is in `bench/notes.md`. In short:
+The full analysis is in `bench/notes.md`. That file still describes the previous
+run and has not been rewritten for this one. In short:
 
 | Cell | Ratio | Cause, as recorded |
 | --- | ---: | --- |
-| `fib`, rust | 1.51 | Loop code generation for the recursive function. Rust and Kelp both go through LLVM, and gcc compiles this loop-ified recursion best. Not a Kelp cost. |
-| `spectral-norm`, kelp-c | 1.71 | The oracle gives each function external linkage. Making the helper `static` in the emitted C brings it to the C time. |
-| `strings`, kelp-llvm | 1.84 | Building the text, splitting it into owned strings, and a byte-hashing loop. |
-| `hashmap`, kelp-llvm | 1.88 | `Map` keeps a hash index and a dense entry array, so a lookup takes two dependent cache misses, and it grows by rehashing. |
-| `hashmap`, rust | 2.66 | The default SipHash hasher, and a table grown from empty. Not measured separately. |
-| `sort`, kelp-c | 1.51 | Bounds checks on each `List` access and reloads of the list header. Kelp-llvm is at 1.32. |
+| `strings`, kelp-llvm | 1.86 | Building the text, splitting it into owned strings, and a byte-hashing loop. |
+| `strings`, kelp-c | 1.95 | The same causes, on the oracle backend. |
+| `spectral-norm`, kelp-c | 1.65 | The oracle gives each function external linkage, so the matrix helper is not inlined. |
+| `hashmap`, rust | 1.57 | The default SipHash hasher and a table grown from empty. |
+| `sort`, kelp-c | 1.49 | Bounds checks on each `List` access and reloads of the list header. Kelp-llvm is at 1.32. |
 
 ## What the suite found and fixed
 
@@ -126,12 +163,13 @@ one commit (`kelpc/std/str.kp`):
 2. `str.from_i64` and `from_u64` allocated a scratch string for every number. They
    now build the digits in a stack array, so the result is the only allocation.
 
-After the fix, `strings` finishes in about 0.22 s on both Kelp backends, and
-`json-tokenizer` drops from 0.126 s to 0.098 s on `kelp-llvm`.
+After the fix, `strings` finishes in about 0.21 s on the Kelp llvm backend in this
+run, and `json-tokenizer` takes about 0.09 s on `kelp-llvm`.
 
 ## Findings still open
 
-These are recorded in `bench/notes.md` as of the current results:
+These are recorded in `bench/notes.md` as of the previous run, and this run does
+not change them:
 
 - **`str.byte(s, i)` costs O(i).** A `str` stores no length, so each bounds check
   scans up to `i`. A byte loop over a long `str` is quadratic. The fix for a user is
@@ -141,7 +179,9 @@ These are recorded in `bench/notes.md` as of the current results:
 - **No alias information for `List`.** LLVM receives no `noalias` or type-based
   alias information for `List` accesses. That is a likely reason for the 1.3 ratio
   on `sort` and `fannkuch-redux`, where Rust with the same bounds checks is at 1.0
-  to 1.06. This is a hypothesis from the emitted IR, not a measurement.
+  to 1.07. This is a hypothesis from the emitted IR, not a measurement.
+- **The `hashmap` C baseline.** The harness and a hand run disagree by about 50 per
+  cent on the C program, and the cause is not known.
 
 ## See also
 
