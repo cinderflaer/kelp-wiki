@@ -302,6 +302,7 @@ does not know yet.
 | `[unsafe]` | `modules = ["<module id>", ...]` | read by `kelpc`, not Coral: the modules allowed to contain `unsafe`, an `unsafe fun`, a `static mut` access or an `asm`; see [below](#unsafe-modules-that-may-leave-the-checked-language) |
 | `[target]` | `mode`, `triple`, `entry`, `linker_script`, `panic`, `alloc`, `dealloc`, `realloc`, `cpus` | read by `kelpc`, not Coral: a bare-metal build; see [below](#target-a-freestanding-build) |
 | `[tasks]` | `name = "path/to/file.kp"` | each task compiles as its own unit, and `src/tasks/` is where `init` puts them |
+| `[alias]` | `name = "module/path"` | read by `kelpc`, not Coral: text aliases for `%*name*%`; see [Aliases in coral.toml](/getting-started/projects#aliases-in-coraltoml) |
 | `[dependencies]` | `name = "owner/repo[/folder]"` | see [Dependencies](#dependencies) |
 | `[toolchain]` | `kelp = "v26.10.4"` | written by `coral toolchain kelp pin`, a line edit that leaves comments and section order alone |
 

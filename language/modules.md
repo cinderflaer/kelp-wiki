@@ -223,8 +223,9 @@ alias %*db*% = "storage/postgres"
 impl %*db*%
 ```
 
-Aliases also come from `alias.kpconf` at the project root, one
-`name="replacement text"` per line. Substitution has no parameters, no scoping
+Aliases also come from the `[alias]` section of the project's `coral.toml`, one
+`name = "path"` per line. Write the reference inside a string, as in `impl "%*db*%"`,
+because the value is a plain module path. The project-root `alias.kpconf` file is no longer read. Substitution has no parameters, no scoping
 and no hygiene: `%*a*%` defined as `%*b*% * 2` with `%*b*%` defined as `40 + 2`
 prints `84`, because precedence is whatever the expanded text happens to produce.
 

@@ -1,12 +1,12 @@
 ---
 title: "Projects and `coral.toml`"
-description: "A loose .kp file compiles on its own, and is then its own module root. A project is a directory with a coral.toml in it, sources under src/, and optionally an alias.kpconf -"
+description: "A loose .kp file compiles on its own. A project is a directory with a coral.toml in it, sources under src/, and optional aliases in its [alias] section."
 isPublished: true
 tags: "getting-started"
 ---
 A loose `.kp` file compiles on its own, and is then its own module root. A
 **project** is a directory with a `coral.toml` in it, sources under `src/`, and
-optionally an `alias.kpconf`:
+optional aliases in its `[alias]` section:
 
 ```
 myproject/
@@ -15,7 +15,6 @@ myproject/
     src/shapes/circle.kp     # impl "shapes/circle"
     src/deps/json/           # fetched by `coral sync`, gitignored
     src/tasks/report.kp      # a `[tasks]` entry
-    alias.kpconf             # optional, see below
 ```
 
 ```sh
@@ -105,22 +104,28 @@ pin v26.09.0` writes it; `pin --clear` removes it. The store holds **one** versi
 a time, so two projects pinned to different versions cost one reinstall per
 switch.
 
-## `alias.kpconf`
+## Aliases in `coral.toml`
 
 Alias substitution is textual and runs before parsing, so it can rewrite an import
-path:
+path.
+Declare the alias in the `[alias]` section of `coral.toml`, one `name = "path"` per line:
 
-```kelp
-// alias.kpconf, one name="replacement text" per line
-db="storage/postgres"
+```toml
+[alias]
+db = "storage/postgres"
 ```
 
+Use the alias inside a string, because the value is a plain module path:
+
 ```kelp
-impl %*db*%
+impl "%*db*%"
 ```
 
-An inline `alias %*name*% = <raw text to end of line>` works too. There is no
-scoping and no hygiene.
+The path must be relative, with no leading `/` and no `..` component.
+The project-root `alias.kpconf` file is no longer read.
+
+An inline `alias %*name*% = <raw text to end of line>` works too.
+There is no scoping and no hygiene.
 
 ## See also
 

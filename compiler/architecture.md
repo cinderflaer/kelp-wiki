@@ -32,7 +32,7 @@ no hygiene and no scoping. Two definition sites feed one table:
 
 | Source | Form |
 | --- | --- |
-| `alias.kpconf` at the project root | one `name="replacement text"` per line |
+| `[alias]` in `coral.toml` | one `name = "module/path"` per line; reference it inside a string, as `impl "%*name*%"` |
 | an inline declaration in any `.kp` | `alias %*name*% = <raw text to end of line>` |
 
 The right-hand side is macro text, never type-checked, which is why the
