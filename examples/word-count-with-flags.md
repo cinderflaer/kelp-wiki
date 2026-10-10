@@ -1,17 +1,40 @@
-// cli_tool: a small `wc` with flags, an option and a default.
-//
-//   kelpc build cli_tool.kp -o cli_tool && ./cli_tool --lines --words cli_tool.kp
-//   ./cli_tool --help
-//
-// Dependency:
-//
-//   [dependencies]
-//   argparse = "Lilly/fpl/argparse"
-//
-// Demonstrates: flags versus options (`--name` never takes a value,
-// `--name=value` and `--name value` both do), a declared default, positionals,
-// rendered help text, and reporting a parse failure with a non-zero exit code.
+---
+title: "Word count with flags"
+description: "A small wc with flags, an option that has a default, positionals and a help text: the example to read before writing a command-line tool."
+isPublished: true
+tags: "example, cli"
+---
 
+The `word-count-with-flags` program is a small `wc` with flags, an option that has a default, and positional arguments.
+It prints the counts that its flags ask for, and `--help` prints its usage text.
+
+| | |
+| --- | --- |
+| Source | [`src/word-count-with-flags.kp`](https://homelabone.xenoo.dev/gittea/Lilly/kelp-wiki-wikijs/raw/branch/main/examples/src/word-count-with-flags.kp) |
+| Needs | `argparse = "Lilly/fpl/argparse"` |
+| Shows | flags against options, defaults, positionals, `--help`, exit codes, `argv[0]` |
+
+## The dependency
+
+```toml
+[dependencies]
+argparse = "Lilly/fpl/argparse"
+```
+
+## The rules this tool follows
+
+- `--lines` is a **flag**: present or absent, never a value.
+- `--label` is an **option**: `--label=counted` and `--label counted` both work,
+  and it has a declared default.
+- Anything else is a **positional**. There are no short flags and no subcommands.
+- An unknown `--name` is a parse error, and the tool prints the message the parser
+  produced and exits 2.
+- No positionals means help text and exit 2, which is the convention a shell user
+  expects.
+
+## The program
+
+```kelp project
 impl "deps/argparse/lib"
 impl "std/fs"
 impl "std/str"
@@ -19,9 +42,9 @@ impl "std/fmt"
 impl "std/process"
 impl "std/path"
 
-fun is_space(c: u8).R: bool = c == ' ' || c == '\t' || c == '\n' || c == '\r'
+fun is_space(c: u8).return: bool = c == ' ' || c == '\t' || c == '\n' || c == '\r'
 
-fun count_lines(s: &str).R: i64 {
+fun count_lines(s: &str).return: i64 {
     val bytes = str.len(s)
     var lines: i64 = 0
     var i: usize = 0
@@ -37,7 +60,7 @@ fun count_lines(s: &str).R: i64 {
     return lines
 }
 
-fun count_words(s: &str).R: i64 {
+fun count_words(s: &str).return: i64 {
     val bytes = str.len(s)
     var words: i64 = 0
     var in_word = false
@@ -118,7 +141,7 @@ fun run(parser: &argparse.Parser, pa: &argparse.ParsedArgs) {
 // A relative argument is resolved against the working directory, so the tool
 // takes `notes.txt` and the gated call still receives an absolute path: `fs`
 // patterns are absolute, and the capability check normalizes before it matches.
-fun absolute_or_here(name: &str, here: &str).R: String {
+fun absolute_or_here(name: &str, here: &str).return: String {
     if path.is_absolute(name) {
         return String.from_str(name)
     }
@@ -127,8 +150,8 @@ fun absolute_or_here(name: &str, here: &str).R: String {
 
 // `process.args()` includes `argv[0]`, the program's own path, exactly as a C
 // program sees it, so a tool that parses its arguments drops the first entry.
-// Without this, `./cli_tool file.txt` would treat `./cli_tool` as a file to read.
-fun without_program_name(argv: &List<String>).R: List<String> {
+// Without this, `./word-count-with-flags file.txt` would treat `./word-count-with-flags` as a file to read.
+fun without_program_name(argv: &List<String>).return: List<String> {
     var out: List<String> = List.empty()
     var i: usize = 1
     while i < argv.len() {
@@ -157,3 +180,58 @@ fun main() {
         run(&parser, pa)
     }
 }
+```
+
+## Run it
+
+`kelpc run` takes no arguments, so arguments mean building first (or using a
+project, where `coral run -- <args>` forwards them):
+
+```sh
+kelpc build word-count-with-flags.kp -o word-count-with-flags
+./word-count-with-flags --label counted input.txt
+./word-count-with-flags --help
+```
+
+## Output
+
+```
+counted input.txt lines=3 words=11
+```
+
+```
+usage: wc [flags] [options] [args]
+
+flags:
+  --lines	print the line count
+  --words	print the word count
+  --bytes	print the byte count
+  --help	print this help and exit
+
+options:
+  --label=<value> (default: counts)	a label in front of each line
+```
+
+## What to take from it
+
+- **`process.args()` includes `argv[0]`.** Every command line tool here drops it
+  first; forgetting this is a trap that shows up as "it tried to read itself".
+- **A flag and an option are different things,** and the parser does not guess:
+  `--lines` never takes a value, `--label` always does. `--help` had to become a
+  declared flag, because an undeclared `--name` is an error rather than a help
+  request.
+- **`get_option` returns an owned `String`** because the value can come from the
+  arguments or from the declared default, and a borrow-returning function may only
+  derive from its first reference parameter.
+- **`get_option` panics on a name that was never declared.** That is a caller bug,
+  not user input, and the program should not try to catch it.
+- **Flags are additive and free**: `want_lines` starts as the flag's value, and
+  only if none of the three are set does the tool default to lines and words.
+- **Exit codes come from `process.exit`,** and 2 says "you called me wrong" while
+  `panic` says "something is broken". Both are non-zero.
+
+## See also
+
+- [`argparse`](/libraries/argparse) for the full surface and the help format
+- [`std/process`](/stdlib/process) for `args`, `spawn` and `exit`
+- [count-lines-words-bytes](/examples/count-lines-words-bytes), which is this tool without a command line

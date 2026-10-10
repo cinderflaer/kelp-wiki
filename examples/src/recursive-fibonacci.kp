@@ -1,11 +1,11 @@
-// fib: the first twenty Fibonacci numbers, recursively.
+// recursive-fibonacci: the first twenty Fibonacci numbers, recursively.
 //
-//   kelpc run main.kp
+//   kelpc run recursive-fibonacci.kp
 //
 // Demonstrates: recursion, a `while` loop, `print!` against `print`, and integer
-// width conversion (the loop counter is an `i64` because `fib` takes one).
+// width conversion (the loop counter is an `i64` because `recursive-fibonacci` takes one).
 
-fun fib(n: i64).R: i64 {
+fun fib(n: i64).return: i64 {
     if n < 2 {
         return n
     }

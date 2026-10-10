@@ -1,6 +1,6 @@
-// http_headers: the request pieces std/http leaves out, with no network involved.
+// build-http-request-parts: the request pieces std/http leaves out, with no network involved.
 //
-//   kelpc run http_headers.kp
+//   kelpc run build-http-request-parts.kp
 //
 // Dependencies:
 //

@@ -1,6 +1,6 @@
-// glob_tree: walk a directory tree, keep the .kp files, and count their lines.
+// count-lines-in-kelp-tree: walk a directory tree, keep the .kp files, and count their lines.
 //
-//   kelpc build glob_tree.kp -o glob_tree && ./glob_tree <directory>
+//   kelpc build count-lines-in-kelp-tree.kp -o count-lines-in-kelp-tree && ./count-lines-in-kelp-tree <directory>
 //
 // Dependency:
 //
@@ -31,7 +31,7 @@ fun report(file: &str, lines: usize) {
 // A relative argument is resolved against the working directory, so the gated
 // call still receives an absolute path: `fs` patterns are absolute, and the
 // capability check normalizes before it matches.
-fun absolute_or_here(name: &str, here: &str).R: String {
+fun absolute_or_here(name: &str, here: &str).return: String {
     if path.is_absolute(name) {
         return String.from_str(name)
     }

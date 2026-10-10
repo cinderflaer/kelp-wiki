@@ -62,8 +62,8 @@ their output. `bench/speed/run.sh` times a smaller four-workload set.
 - **A line in the pending changelog** for a user-visible change, in the
   repository it landed in: `CHANGELOG.pending.md`, which is gitignored and never
   committed. A wiki changelog page is written only when a version is released:
-  [Changelog](/changelog), [Coral](/tooling/coral-changelog) and
-  [Lighthouse](/tooling/lighthouse-changelog) carry releases only, and the
+  [Changelog](/changelog), [Coral](/changelog/coral) and
+  [Lighthouse](/changelog/lighthouse) carry releases only, and the
   release writes its entry from the pending file, then wipes it.
 - **A commit message that says why**, not which lines moved. The plan documents
   use the same voice.

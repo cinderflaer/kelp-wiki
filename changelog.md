@@ -13,8 +13,8 @@ release notes and binary asset are on the
 A release entry covers **the language and the compiler together**, because in
 this project they ship as one artifact: a new construct is a lexer, a parser, a
 checker and a backend change at once. Tooling releases have their own pages:
-[Coral changelog](/tooling/coral-changelog) and
-[Lighthouse changelog](/tooling/lighthouse-changelog).
+[Coral changelog](/changelog/coral) and
+[Lighthouse changelog](/changelog/lighthouse).
 
 **Numbering.** Releases are numbered `YY.MM.N`: the two-digit year, the
 two-digit month, and the release number *within that month*, starting at `0`.
@@ -1063,5 +1063,5 @@ semicolon or a full stop between clauses, and a plain hyphen in a range.
 
 - [Roadmap](/meta/roadmap): what is planned, and what is in progress
 - [Compiler](/compiler): the pipeline each entry changed
-- [Coral changelog](/tooling/coral-changelog) and
-  [Lighthouse changelog](/tooling/lighthouse-changelog): the other two repositories
+- [Coral changelog](/changelog/coral) and
+  [Lighthouse changelog](/changelog/lighthouse): the other two repositories

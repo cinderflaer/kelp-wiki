@@ -1,0 +1,23 @@
+# Sidebar order for the wiki and the book. One page path per line.
+# Pages not listed here follow in file-name order, under the same parent.
+home.md
+getting-started.md
+getting-started/install.md
+getting-started/editor.md
+getting-started/first-program.md
+getting-started/first-tool.md
+getting-started/projects.md
+getting-started/testing.md
+getting-started/troubleshooting.md
+getting-started/project-ideas.md
+tutorial.md
+language.md
+stdlib.md
+libraries.md
+tooling.md
+compiler.md
+examples.md
+family.md
+reference.md
+changelog.md
+meta.md

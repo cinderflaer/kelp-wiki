@@ -23,7 +23,7 @@ The path of a file is the path of the page.
 | `home.md` | the home page, at `/` |
 | `language.md` | the parent page `language` |
 | `language/types.md` | the child page `language/types`, at `/language/types` |
-| `examples/src/wordcount.kp` | not a page; a downloadable asset |
+| `examples/src/count-lines-words-bytes.kp` | not a page; a downloadable asset |
 
 Adding a file adds a page. Deleting one removes it. Renaming one moves it.
 

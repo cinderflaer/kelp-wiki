@@ -1,7 +1,7 @@
-// json_filter: keep the records whose score reaches a threshold, and print the
+// filter-json-by-score: keep the records whose score reaches a threshold, and print the
 // result canonically.
 //
-//   kelpc run main.kp
+//   kelpc run filter-json-by-score.kp
 //
 // The `json` library is a dependency, not part of the standard library, so a
 // project declares it:
@@ -18,7 +18,7 @@
 impl "deps/json/lib"
 
 // A helper, so the walk owns the list it builds.
-fun keep_high_scores(doc: &json.Json).R: String {
+fun keep_high_scores(doc: &json.Json).return: String {
     var kept: List<json.Json> = List.empty()
     var i: usize = 0
     while i < json.array_len(doc) {

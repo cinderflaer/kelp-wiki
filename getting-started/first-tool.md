@@ -202,5 +202,5 @@ is why most programs in this documentation still do it.
 
 - [Testing what you write](/getting-started/testing): turn `count_from` into something checked
 - [`std/process`](/stdlib/process), [`std/fs`](/stdlib/fs), [`std/str`](/stdlib/str)
-- [wordcount](/examples/wordcount) and [cli_tool](/examples/cli_tool): the same shape at two sizes, the second with `argparse`
+- [count-lines-words-bytes](/examples/count-lines-words-bytes) and [word-count-with-flags](/examples/word-count-with-flags): the same shape at two sizes, the second with `argparse`
 - [When it does not work](/getting-started/troubleshooting)

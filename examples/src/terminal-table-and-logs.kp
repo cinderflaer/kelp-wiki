@@ -1,6 +1,6 @@
-// terminal_report: a coloured table on stdout and log records on stderr.
+// terminal-table-and-logs: a coloured table on stdout and log records on stderr.
 //
-//   kelpc run terminal_report.kp
+//   kelpc run terminal-table-and-logs.kp
 //
 // Dependencies:
 //

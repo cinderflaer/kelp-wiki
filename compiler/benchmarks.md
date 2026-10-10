@@ -1,5 +1,5 @@
 ---
-title: "Benchmarks"
+title: "Benchmarks: what they say about the compiler"
 description: "What the benchmark suite says about the compiler: the default llvm backend against C and Rust, the oracle's gap, and the compiler-side defects the suite found."
 isPublished: true
 tags: "compiler"

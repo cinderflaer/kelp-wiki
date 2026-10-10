@@ -7,7 +7,7 @@
 #
 # Pass page paths to check only those pages (relative to the repository root):
 #
-#     scripts/check-examples.sh tutorial/01-hello.md examples/fib.md
+#     scripts/check-examples.sh tutorial/01-hello.md examples/recursive-fibonacci.md
 #
 # Each ```kelp fence is handled as follows. The fence may carry the attribute
 # refused or norun (or both), or the attribute project alone:

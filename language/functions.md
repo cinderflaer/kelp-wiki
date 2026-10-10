@@ -323,7 +323,7 @@ runs when the block returns, once per call of it.
 
 The same rule is the reason [`Mutex.lock`](/stdlib/sync) and the other block APIs
 can update a local accumulator. Its remaining limits are listed under
-[Scoped blocks](/language/limits#scoped-blocks) in Limits in v1.
+[Scoped blocks](/language/limits) in Limits in v1.
 
 ## `must_use`
 

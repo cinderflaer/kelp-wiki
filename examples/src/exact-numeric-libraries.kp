@@ -1,6 +1,6 @@
-// numbers: the numeric libraries, one line each.
+// exact-numeric-libraries: the numeric libraries, one line each.
 //
-//   kelpc run numbers.kp
+//   kelpc run exact-numeric-libraries.kp
 //
 // Dependencies:
 //
@@ -28,7 +28,7 @@ impl "std/str"
 // Money: a fixed scale, so 0.1 + 0.2 is exactly 0.30.
 //
 // A separate function, so the arithmetic stays out of `main`.
-fun power_of_two(exponent: u32).R: bigint.BigInt {
+fun power_of_two(exponent: u32).return: bigint.BigInt {
     val two = bigint.from_i64(2)
     var result = bigint.from_i64(1)
     var i: u32 = 0

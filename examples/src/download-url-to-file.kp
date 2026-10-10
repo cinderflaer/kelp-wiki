@@ -1,7 +1,7 @@
-// http_fetch: GET a URL and write the body to a file atomically.
+// download-url-to-file: GET a URL and write the body to a file atomically.
 //
 //   python3 -m http.server 8765 --directory /tmp/kelp-http   # then:
-//   kelpc run http_fetch.kp
+//   kelpc run download-url-to-file.kp
 //
 // Two grants are in play, and both are written where the call is:
 //

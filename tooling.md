@@ -16,8 +16,8 @@ The three programs around the language: `kelpc` compiles, Coral owns the project
 - [Release tooling](/tooling/release-tooling): `build/release.sh`, the reproducibility check, the verifying installer and `kelpc version --verbose`.
 - [Coral](/tooling/coral): the manifest key by key, the command surface, the dependency model and the toolchain store.
 - [Lighthouse](/tooling/lighthouse): the two sources of truth, the feature table, editor setup for IntelliJ and the gaps.
-- [Coral changelog](/tooling/coral-changelog): every Coral release, and what it changed.
-- [Lighthouse changelog](/tooling/lighthouse-changelog): every Lighthouse release, and what it changed.
+- [Coral changelog](/changelog/coral): every Coral release, and what it changed.
+- [Lighthouse changelog](/changelog/lighthouse): every Lighthouse release, and what it changed.
 
 | Piece | What it owns | Repository |
 | --- | --- | --- |

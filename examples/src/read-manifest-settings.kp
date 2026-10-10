@@ -1,6 +1,6 @@
-// config_load: read settings from a manifest-shaped text.
+// read-manifest-settings: read settings from a manifest-shaped text.
 //
-//   kelpc run config_load.kp
+//   kelpc run read-manifest-settings.kp
 //
 // Dependency:
 //

@@ -30,7 +30,7 @@ instead of by auditing it.
   `rand`, `ui`) to, plus a native library and an
   allowlisted symbol set, so its own `extern fun` declarations can bind to a
   real C symbol. See [User FFI](/language/externs) and
-  [Coral: the manifest](/tooling/coral#extern-user-modules-that-bind-a-native-symbol).
+  [Coral: the manifest](/tooling/coral#user-modules-that-bind-a-native-symbol-extern).
   `ui` is the display domain: no call argument names the display, so the only
   accepted grant is `ui = ["*"]`. `mmio` is the device-address domain a
   freestanding project uses to let a module name a hardware address; it is the
@@ -406,7 +406,7 @@ failure as a panic from the gated call.
   [`std/env`](/stdlib/env), [`std/time`](/stdlib/time), [`std/rand`](/stdlib/rand),
   [`std/ws`](/stdlib/ws), [`std/tls`](/stdlib/tls), [`std/irq`](/stdlib/irq),
   [`std/frame`](/stdlib/frame)
-- [Coral: the manifest](/tooling/coral#extern-user-modules-that-bind-a-native-symbol):
+- [Coral: the manifest](/tooling/coral#user-modules-that-bind-a-native-symbol-extern):
   assigning a domain to a user FFI module
 - [Kernel 0](/language/kernel): the freestanding examples, each with an `mmio`
   grant

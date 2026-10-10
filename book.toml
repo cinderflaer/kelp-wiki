@@ -1,0 +1,19 @@
+# mdBook config for the Kelp wiki. The page files are the same ones Wiki.js
+# reads; scripts/wiki_book.py stages a copy with the front matter stripped and
+# writes the build outside this repo (see docs/wiki-mdbook-plan.md).
+[book]
+title = "Kelp"
+description = "Documentation for Kelp, a statically typed, compiled systems language with capability-based security."
+authors = ["Lilly"]
+language = "en"
+src = "src"
+
+[build]
+create-missing = false
+
+[output.html]
+default-theme = "navy"
+preferred-dark-theme = "navy"
+additional-css = []
+site-url = "/"
+no-section-label = false

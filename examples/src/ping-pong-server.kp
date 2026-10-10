@@ -1,6 +1,6 @@
-// lines_server: a tiny line protocol: PING becomes PONG, QUIT becomes BYE.
+// ping-pong-server: a tiny line protocol: PING becomes PONG, QUIT becomes BYE.
 //
-//   kelpc build lines_server.kp -o lines_server && ./lines_server 4599
+//   kelpc build ping-pong-server.kp -o ping-pong-server && ./ping-pong-server 4599
 //
 // Dependencies and the grant:
 //
@@ -19,7 +19,7 @@ impl "std/str"
 impl "std/process"
 impl "deps/lineproto/lib" caps(net = ["127.0.0.1:*"])
 
-fun port_from(argv: &List<String>).R: u16 {
+fun port_from(argv: &List<String>).return: u16 {
     if argv.len() >= 2 {
         val parsed = str.parse_i64(argv.get(1).as_str())
         if let Ok(v) = parsed {

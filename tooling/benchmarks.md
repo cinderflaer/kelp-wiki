@@ -1,5 +1,5 @@
 ---
-title: "Benchmarks"
+title: "Benchmark suite"
 description: "Thirteen programs, each written in C, Rust and Kelp, timed with the same optimizer level and checked for identical output. The current results, how to run the suite, and what it found."
 isPublished: true
 tags: "tooling"

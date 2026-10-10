@@ -1,6 +1,6 @@
-// wordcount: lines, words and bytes in a file.
+// count-lines-words-bytes: lines, words and bytes in a file.
 //
-//   kelpc build wordcount.kp -o wordcount && ./wordcount /absolute/path/to/file
+//   kelpc build count-lines-words-bytes.kp -o count-lines-words-bytes && ./count-lines-words-bytes /absolute/path/to/file
 //
 // In a project with a coral.toml: coral run -- <file>
 //
@@ -16,7 +16,7 @@ impl "std/fmt"
 impl "std/process"
 impl "std/path"
 
-fun is_space(c: u8).R: bool = c == ' ' || c == '\t' || c == '\n' || c == '\r'
+fun is_space(c: u8).return: bool = c == ' ' || c == '\t' || c == '\n' || c == '\r'
 
 // A gated call takes an **absolute** path, and v1 has no way to make one:
 // there is no `fs.cwd()` and no `getcwd` behind it, so a relative argument
@@ -41,12 +41,12 @@ fun report(label: &str, n: i64) {
 fun main() {
     val argv = process.args()
     if argv.len() < 2 {
-        print("usage: wordcount <file>")
+        print("usage: count-lines-words-bytes <file>")
         process.exit(2)
     }
 
     val path = argv.get(1)
-    require_absolute("wordcount", path.as_str())
+    require_absolute("count-lines-words-bytes", path.as_str())
     val text = fs.read_text(path.as_str())
     val s = text.as_str()
     val bytes = str.len(s)

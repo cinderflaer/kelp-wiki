@@ -1,6 +1,6 @@
-// lines_client: talk to `lines_server` with PING, then QUIT.
+// ping-pong-client: talk to `ping-pong-server` with PING, then QUIT.
 //
-//   kelpc build lines_client.kp -o lines_client && ./lines_client 4599
+//   kelpc build ping-pong-client.kp -o ping-pong-client && ./ping-pong-client 4599
 //
 // Demonstrates: connecting to a granted host, sending CRLF-terminated lines, and
 // reading one reply at a time from a buffered reader (a client that reads a line
@@ -11,7 +11,7 @@ impl "std/str"
 impl "std/process"
 impl "deps/lineproto/lib" caps(net = ["127.0.0.1:*"])
 
-fun port_from(argv: &List<String>).R: u16 {
+fun port_from(argv: &List<String>).return: u16 {
     if argv.len() >= 2 {
         val parsed = str.parse_i64(argv.get(1).as_str())
         if let Ok(v) = parsed {

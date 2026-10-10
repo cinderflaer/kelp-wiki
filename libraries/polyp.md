@@ -188,7 +188,7 @@ The consumer then does two things by hand.
 
    `header` is one key per section, which is why the queue is its own module: `polyp_queue.h` is a header
    of the library and `gtk/gtk.h` is GTK's, and a section names one. See
-   [Coral: the manifest](/tooling/coral#extern-user-modules-that-bind-a-native-symbol).
+   [Coral: the manifest](/tooling/coral#user-modules-that-bind-a-native-symbol-extern).
 
 ## API
 
@@ -658,8 +658,8 @@ v5 is a layout and packaging release. The library's behaviour is the v4 behaviou
   so a project that fetches Polyp from that repository gets it there.
   The HTML is written as `index.html` beside the built binary.
 - **Plan.** The design and open decisions are in the Polyp repository at `docs/plan/polyp-v5.md`. See
-  [Polyp v5 plan](/libraries/polyp-v5-plan).
-- **Release notes.** Every release is listed in the [Polyp changelog](/libraries/polyp-changelog).
+  [Polyp v5 plan](/meta/polyp-v5-plan).
+- **Release notes.** Every release is listed in the [Polyp changelog](/changelog/polyp).
 
 ## Known limits
 
@@ -693,13 +693,13 @@ v5 is a layout and packaging release. The library's behaviour is the v4 behaviou
 ## See also
 
 - [Polyp repository](https://homelabone.xenoo.dev/gittea/Lilly/polyp): the library source and its README
-- [Polyp v5 plan](/libraries/polyp-v5-plan): where the v5 plan lives
+- [Polyp v5 plan](/meta/polyp-v5-plan): where the v5 plan lives
 - [Polyp on a framebuffer](/libraries/polyp-soft): the software rasterizer, the
   soft backend, the five-function `Platform` contract, the work budgets and the
   benchmark
 - [Polyp on bare metal](/libraries/polyp-freestanding): the two QEMU kernels and
   the framebuffer equivalence proof
-- [Coral: the manifest](/tooling/coral#extern-user-modules-that-bind-a-native-symbol)
+- [Coral: the manifest](/tooling/coral#user-modules-that-bind-a-native-symbol-extern)
 - [User FFI](/language/externs)
 - [Functions](/language/functions#trailing-blocks-and-scoped-parameters)
 - [Capabilities](/language/capabilities)

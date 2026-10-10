@@ -1,6 +1,6 @@
-// text_tools: checksums, encodings and dates over one string.
+// checksums-encodings-dates: checksums, encodings and dates over one string.
 //
-//   kelpc run text_tools.kp
+//   kelpc run checksums-encodings-dates.kp
 //
 // Dependencies:
 //

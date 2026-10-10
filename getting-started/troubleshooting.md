@@ -129,7 +129,7 @@ panic: '/tmp/kelp-sandbox/secret.txt' is outside the fs capability granted to mo
 
 Note what the message contains: the **normalized** path, so `..` does not get
 around the grant, and the patterns that were granted, so you can see which one
-missed. [sandbox_main](/examples/sandbox_main) is this program with the caller
+missed. [sandbox_main](/examples/sandbox-directory-grant) is this program with the caller
 attached.
 
 ## Where to report a bug

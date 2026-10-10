@@ -1,6 +1,6 @@
-// bits_pack: sub-byte fields, a bit set, and a reproducible byte stream.
+// pack-bit-fields: sub-byte fields, a bit set, and a reproducible byte stream.
 //
-//   kelpc run bits_pack.kp
+//   kelpc run pack-bit-fields.kp
 //
 // Dependencies:
 //

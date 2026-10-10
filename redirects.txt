@@ -1,0 +1,46 @@
+# Redirect table for the wiki reorganisation (branch wiki-reorg).
+# Each moved page keeps its old path as a stub tagged redirect, which links to the new page.
+# Columns: old path, new path, kind, note.
+# Example source files have no stub: a stub .kp would be a second program. Their old raw URLs stop resolving.
+
+old	new	kind	note
+examples/bits_pack.md	examples/pack-bit-fields.md	page	example page and source
+examples/cli_tool.md	examples/word-count-with-flags.md	page	example page and source
+examples/collections.md	examples/list-and-set-helpers.md	page	example page and source
+examples/config_load.md	examples/read-manifest-settings.md	page	example page and source
+examples/csv_report.md	examples/total-csv-column.md	page	example page and source
+examples/fib.md	examples/recursive-fibonacci.md	page	example page and source
+examples/glob_tree.md	examples/count-lines-in-kelp-tree.md	page	example page and source
+examples/http_fetch.md	examples/download-url-to-file.md	page	example page and source
+examples/http_headers.md	examples/build-http-request-parts.md	page	example page and source
+examples/json_filter.md	examples/filter-json-by-score.md	page	example page and source
+examples/lines_server.md	examples/ping-pong-server.md	page	example page and source
+examples/numbers.md	examples/exact-numeric-libraries.md	page	example page and source
+examples/sandbox_main.md	examples/sandbox-directory-grant.md	page	example page and source
+examples/terminal_report.md	examples/terminal-table-and-logs.md	page	example page and source
+examples/tests_and_bench.md	examples/self-test-and-timing.md	page	example page and source
+examples/text_tools.md	examples/checksums-encodings-dates.md	page	example page and source
+examples/wordcount.md	examples/count-lines-words-bytes.md	page	example page and source
+tooling/coral-changelog.md	changelog/coral.md	page	changelog moved under changelog/
+tooling/lighthouse-changelog.md	changelog/lighthouse.md	page	changelog moved under changelog/
+libraries/polyp-changelog.md	changelog/polyp.md	page	changelog moved under changelog/
+libraries/polyp-v5-plan.md	meta/polyp-v5-plan.md	page	plan is not a library page
+examples/src/bits_pack.kp	examples/src/pack-bit-fields.kp	source	no stub, see header
+examples/src/cli_tool.kp	examples/src/word-count-with-flags.kp	source	no stub, see header
+examples/src/collections.kp	examples/src/list-and-set-helpers.kp	source	no stub, see header
+examples/src/config_load.kp	examples/src/read-manifest-settings.kp	source	no stub, see header
+examples/src/csv_report.kp	examples/src/total-csv-column.kp	source	no stub, see header
+examples/src/fib.kp	examples/src/recursive-fibonacci.kp	source	no stub, see header
+examples/src/glob_tree.kp	examples/src/count-lines-in-kelp-tree.kp	source	no stub, see header
+examples/src/http_fetch.kp	examples/src/download-url-to-file.kp	source	no stub, see header
+examples/src/http_headers.kp	examples/src/build-http-request-parts.kp	source	no stub, see header
+examples/src/json_filter.kp	examples/src/filter-json-by-score.kp	source	no stub, see header
+examples/src/lines_client.kp	examples/src/ping-pong-client.kp	source	no stub, see header
+examples/src/lines_server.kp	examples/src/ping-pong-server.kp	source	no stub, see header
+examples/src/numbers.kp	examples/src/exact-numeric-libraries.kp	source	no stub, see header
+examples/src/sandbox_main.kp	examples/src/sandbox-directory-grant.kp	source	no stub, see header
+examples/src/sandbox_vault.kp	examples/src/vault.kp	source	no stub, see header
+examples/src/terminal_report.kp	examples/src/terminal-table-and-logs.kp	source	no stub, see header
+examples/src/tests_and_bench.kp	examples/src/self-test-and-timing.kp	source	no stub, see header
+examples/src/text_tools.kp	examples/src/checksums-encodings-dates.kp	source	no stub, see header
+examples/src/wordcount.kp	examples/src/count-lines-words-bytes.kp	source	no stub, see header

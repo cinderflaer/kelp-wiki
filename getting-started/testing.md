@@ -174,5 +174,5 @@ that a sorted list is in order by walking it and comparing neighbours.
 - [`testkit`](/libraries/testkit): the full API, and the output format
 - [`benchkit`](/libraries/benchkit): timing, when "is it correct" becomes "is it fast"
 - [Coral](/tooling/coral): tasks, caching, and where a task's artifact lands
-- [tests_and_bench](/examples/tests_and_bench): a report and a timing line in one program
+- [tests_and_bench](/examples/self-test-and-timing): a report and a timing line in one program
 - [Projects and coral.toml](/getting-started/projects)
