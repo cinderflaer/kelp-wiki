@@ -130,6 +130,31 @@ val ((x, y), z) = corners()     // a nested tuple takes a nested pattern
   refuses an owned one, the same rule a field of a borrow follows. The initializer
   must be a tuple: `val (a, b) = 7` is refused.
 
+## Let-else: bind a variant, or leave
+
+`let` with a variant pattern binds the variant's payload for the rest of the block
+when the value matches. When it does not match, the `else` block runs, and that block
+must leave the enclosing code.
+
+```kelp
+fun user_name(id: i32).return: Result<String, String> {
+    let Some(user) = find(id) else { return Err("missing") }
+    return Ok(user.name)     // `user` is bound from here to the end of the block
+}
+```
+
+- The pattern is an enum variant, written the way `if let` writes one. `_` ignores a
+  payload field.
+- The `else` block must end in `return`, `break`, `continue` or `panic(...)`. Any
+  other ending is refused, and the message names the fix.
+- A plain name, such as `let user = find(id) else { ... }`, is refused because it always
+  matches. A tuple pattern is refused for the same reason. Use `val` with no `else` for
+  either.
+- Without an `else`, a `let` with a variant pattern is refused. Use `if let` when the
+  no-match case needs no exit.
+
+Use [`if let`](/language/control-flow) when the no-match case does nothing.
+
 ## See also
 
 - [Types](/language/types)
