@@ -178,7 +178,7 @@ kelpc build . -o webkelp
 tests/run.sh          # golden tests; set WEBKELP=./webkelp
 ```
 
-`kelpc` finishes a build by calling `cc`, so a C compiler has to be on `PATH`. On NixOS,
+`kelpc` calls `cc` for the `extern fun` bodies a program reaches, so a C compiler has to be on `PATH`. On NixOS,
 where there is none by default:
 
 ```sh

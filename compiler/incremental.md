@@ -22,7 +22,7 @@ page; this page is how it works. The design authority is
 The front end stays **whole-program**. Loading modules, resolving names, type
 checking and borrow checking all still run once over the entire program, and
 they are cheap: 3 to 4 ms over the whole corpus, where a build is dominated by
-LLVM optimization, code generation and the `cc` link. Only the backend is split.
+LLVM optimization, code generation and the `ld.lld` link. Only the backend is split.
 
 There are two kinds of unit:
 
@@ -202,7 +202,7 @@ path and `<cache>` a cache directory:
   is 133 to 136 ms; a cold incremental build is 141 to 156 ms, and the warm and
   one-line-edit builds are within about 10 ms of whole-program (128 to 142 ms,
   which is this host's noise plus or minus a few ms). A build that small is the
-  `cc` link plus a fixed per-unit overhead; there is almost no backend work to
+  `ld.lld` link plus a fixed per-unit overhead; there is almost no backend work to
   save, and splitting one module into a unit plus `_support` adds two pieces of
   work where there was one. The mode is off by default for exactly this shape.
 - **It starts to pay once a program pulls in heavy `std` modules.** A ~100-line

@@ -1,6 +1,6 @@
 ---
 title: "Pipeline"
-description: "The stages kelpc runs, in order: load and resolve, type check, borrow check and drop planning, LLVM code generation, then a cc link. Each stage hands one structure to the next."
+description: "The stages kelpc runs, in order: load and resolve, type check, borrow check and drop planning, LLVM code generation, then an `ld.lld` link. Each stage hands one structure to the next."
 isPublished: true
 tags: "compiler"
 ---
@@ -22,7 +22,7 @@ The checks run once over the whole program, and only then is code generated.
 | Check moves, borrows and build the drop plan | `borrowck::check_program` | `borrowck.rs:2114` |
 | Check the freestanding allowed set | `freestanding::check` | `freestanding.rs` |
 | Generate LLVM IR and an object | `codegen_llvm::compile` | `codegen_llvm.rs:375` |
-| Link with `cc` | `driver::link_llvm_objects` | `driver.rs:273` |
+| Link with `ld.lld` | `driver::link_llvm_objects` | `driver.rs:273` |
 
 The front end entry point is `front_end` in `main.rs:202`.
 `kelpc check` calls it and prints the findings, with no code generation (`main.rs:267`).
@@ -73,7 +73,7 @@ Each pass does the following with it.
 | Type checker | Gives `area` a `Ty::Ref` parameter, because a `datac` parameter is borrowed. At the call site it inserts the `&` the program does not write. Turns the `for` into an index walk over the list. |
 | Borrow checker | `p` is borrowed by `area` and is still owned afterwards. Builds drops for `p` and `xs`. |
 | LLVM codegen | Emits `main`, `area` and the list helpers into one module, then runs the LLVM passes at `-O2`. |
-| Driver | Writes `build/<name>.ll` and `build/<name>.o` and runs `cc`. |
+| Driver | Writes `build/<name>.ll` and `build/<name>.o` and runs `ld.lld`. |
 
 The loop desugaring is in `infer.rs:11537` to `11600`.
 The borrow at the call site is inserted by `check_call_arg` (`infer.rs:15918`).

@@ -1,6 +1,6 @@
 ---
 title: "Compiler"
-description: "kelpc turns .kp sources into a program through a fixed pipeline: front end, module resolution, type checking, ownership, LLVM code generation and a cc link. These pages map each stage."
+description: "kelpc turns .kp sources into a program through a fixed pipeline: front end, module resolution, type checking, ownership, LLVM code generation and an `ld.lld` link. These pages map each stage."
 isPublished: true
 tags: "compiler"
 ---

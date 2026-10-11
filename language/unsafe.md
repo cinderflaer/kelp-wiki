@@ -258,7 +258,7 @@ one is a parse error.
 | `repr(packed)` | every field at alignment 1, no padding anywhere, the whole type's alignment 1 |
 | `repr(align(N))` | the C field layout with the type's own alignment raised to `N`, a power of two literal. The size rounds up to a multiple of `N`, and a type that embeds it places it at an `N`-aligned offset |
 
-Both backends write the same layout byte for byte, and the C compiler is the
+The layout is the one a C compiler gives the same declaration, and the C compiler is the
 judge: `tests/projects/ffi_layout` builds a `repr(packed)` `datac` in Kelp, passes
 its address through a user `extern fun` to a project-local C helper, and prints
 C's `sizeof`/`_Alignof`/`offsetof` beside Kelp's own queries.

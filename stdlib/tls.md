@@ -357,7 +357,7 @@ it passes to the handshake, so connect to `localhost`, not to the address.
 ### Configuration errors are values, with fixed sentences
 
 A bad configuration is a typed error and never a panic, and **the key never
-appears in an error text**: the C code reports a fixed sentence for key
+appears in an error text**: the runtime reports a fixed sentence for key
 problems and clears OpenSSL's error queue after those calls instead of passing
 OpenSSL's own text along. This program feeds `server_config_pem` a good pair, a
 key from a different certificate, a file that is not PEM as the key, a file that
@@ -581,7 +581,7 @@ The server picked `h2`, its own first choice, although the client listed
 
 ## Failures a server sees
 
-These are the outcomes `kelpc/tests/tls_server.rs` pins on both backends (client
+These are the outcomes `kelpc/tests/tls_server.rs` pins (client
 line, then server line):
 
 | Scenario | Client | Server |

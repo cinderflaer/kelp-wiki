@@ -49,7 +49,7 @@ kelpc run .                  # build and run the project in this directory
 kelpc build . -o mytool      # keep the binary
 ```
 
-`kelpc` hands its output to `cc`, so a C compiler must be on `PATH`. If `kelpc` prints
+`kelpc` calls `cc` for the `extern fun` bodies a program reaches, so a C compiler must be on `PATH`. If `kelpc` prints
 `could not invoke 'cc'`, that is the cause; on NixOS use `nix-shell -p gcc openssl --run '…'`.
 
 ## Errors you will meet
