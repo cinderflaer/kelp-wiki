@@ -1,188 +1,46 @@
 ---
 title: "Pipeline"
-description: "Every stage below reads the previous stage's output and hands one structure on - source text, tokens, an untyped AST, a typed IR, a drop plan, and finally C or LLVM IR. The pass boundaries are..."
+description: "The stages kelpc runs, in order: load and resolve, type check, borrow check and drop planning, LLVM code generation, then a cc link. Each stage hands one structure to the next."
 isPublished: true
 tags: "compiler"
 ---
-Every stage below reads the previous stage's output and hands one structure on:
-source text, tokens, an untyped AST, a typed IR, a drop plan, and finally C or
-LLVM IR. The pass boundaries are deliberate: a checker bug is easier to find
-when the pass that owns it is the only one running.
+`kelpc` runs a fixed sequence of passes over the whole program.
+Each pass reads the previous pass's output and hands one structure on: source text, tokens, an AST, a typed IR, a drop plan and LLVM IR.
+The checks run once over the whole program, and only then is code generated.
 
-Authority:
-[`plan/architecture.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/architecture.md),
-"Compiler crate layout" and "Key implementation notes".
+## The order of the passes
 
-## Lexing (`lexer.rs`)
+`build` and `check` share the same front end.
+`build` then generates code, and `check` stops after the checks.
 
-Source text to span-carrying tokens. Every token carries a byte range
-(`Span { start, end }`), which is what makes a diagnostic point at a line and
-column rather than at an offset. Two details matter downstream:
-
-- The lexer is **newline-sensitive**: a newline ends a statement, which is why the
-  language has no semicolons.
-- `tokenize_with_trivia` keeps comments as tokens. `kelpc fmt` is built on that
-  entry point, because the parser's input drops comments and the AST has no node
-  for them.
-
-## Preprocessing (`preprocess.rs`)
-
-`%*alias*%` substitution, a flat, global, purely textual pass with no parameters,
-no hygiene and no scoping. Two definition sites feed one table:
-
-| Source | Form |
-| --- | --- |
-| `[alias]` in `coral.toml` | one `name = "module/path"` per line; reference it inside a string, as `impl "%*name*%"` |
-| an inline declaration in any `.kp` | `alias %*name*% = <raw text to end of line>` |
-
-The right-hand side is macro text, never type-checked, which is why the
-declaration has its own keyword. The pass runs over the token stream before the
-parser and keeps **both** the definition span and the use span, so an
-alias-induced type error still points somewhere useful.
-
-## Parsing (`parser.rs`)
-
-Recursive descent for declarations and statements, with a Pratt parser for
-expression precedence. Three constructs do not survive parsing as themselves:
-
-- `if let` is desugared into a match with a synthesized scrutinee binding
-  (the parser names it under `IF_LET_PREFIX`), which is what lets `if let Ok(v) =
-  f(x)` accept a temporary scrutinee at all.
-- `for x in xs` is kept as a statement of its own by the parser, and `infer.rs`
-  chooses the desugar once the iterable has a type: an index-and-`while` walk for
-  a `List` or array, a `next()` loop for a type that implements
-  `std.iter.Iterator`. Both are ordinary statements by then, so no later pass
-  knows the loop kind exists.
-- A `when` whose scrutinee is not a place is desugared in `infer.rs`
-  (`check_when_scrutinee`, under `WHEN_TEMP_PREFIX`) into the same block a
-  hand-written `val h = ...` would give, because the arms have to read a payload
-  out of a place that outlives them. Both desugarings stage the *root* of a field
-  chain (`ast::temporary_root`), so the whole temporary is freed once.
-
-## Modules and resolution (`resolve.rs`)
-
-Multi-file loading and name resolution:
-
-- `impl "shapes/circle"` loads `src/shapes/circle.kp`, which is reached as `circle`:
-  the last path segment, except that a module whose path ends in `/lib` under `deps/`
-  takes the name of the directory Coral fetched it into
-  (`impl "deps/argparse/lib"` is `argparse`). The `as name` clause that used to
-  choose the name is gone, and the parser refuses it by name; the `with` that
-  used to introduce a capability grant is gone the same way, so the clause is
-  written `caps(...)` on its own.
-- Paths are relative to `src/`, may not contain `..`, and may not reach outside the
-  project.
-- Names are module-qualified across modules: module `m`'s items are reachable
-  elsewhere only as `m.Item` and only when `m` exports them with `pub`, and bare
-  inside `m` itself whether or not they are `pub` (syntax.md 13.4). The gate is
-  decided in `infer.rs` from a key set of exported items built once per program;
-  a compiler-shipped `std/...` module exports everything, transitionally.
-- The same export set backs the **private-in-public** rule (`check_pub_signatures`):
-  an exported declaration's signature may name only types its own module exports,
-  walked through containers, arrays, borrows, generic arguments and function
-  types. It runs once over the merged program before any body is checked, so the
-  order of two declarations in one file does not change the answer, and a private
-  declaration is never inspected.
-- **Capability gating happens here.** Each module has a capability-domain set
-  computed from its incoming `caps(...)` grant; resolving `net.connect` in a
-  module whose set lacks `net` is an undefined-name error, not a runtime check that
-  could be forgotten. See [Capabilities](/language/capabilities).
-
-`std/…` ids go through the same path with their text coming from `stdlib.rs`, so
-the standard library is compiled by the same lexer, parser and checker as user
-code.
-
-## Type checking (`infer.rs`)
-
-The largest pass (~7.6k lines). It owns:
-
-- type inference and checking over the AST, including generics and `Option`/`Result`;
-- **stdlib-only argument-type overloading** for `math.abs`/`min`/`max`/`clamp`;
-- resolving `datac`-typed parameters into `Ty::Ref` and synthesizing the borrow
-  node at call sites: callers never write `&`;
-- the `when`/`if let` pattern rules, including how a payload binds: a copy when
-  it is `Copy`, by value when it is owned and the scrutinee is an owned place,
-  and a shared borrow otherwise;
-- rejecting an `extern` that has no compiler-supplied body;
-- **compile-time evaluation** (A-19), which runs here rather than as a pass of its
-  own: a `const` initializer and an array's `[T; N]` length are folded by a small
-  evaluator over the AST (`ConstEvaluator`), which binds parameters and walks the
-  body of a plain `fun` the constant calls. It carries its own step and call-depth
-  budget, and it runs before any signature is built, so a `const` and the `fun` it
-  calls may reference each other in either order.
-
-The output is `tir.rs`: the same shape, every node annotated with its resolved
-type and span.
-
-## Move and borrow checking (`borrowck.rs`)
-
-Two milestones in one pass, over the typed IR:
-
-| Rule | Detail |
-| --- | --- |
-| Moves | scalars and `&str` are `Copy`; a `datac` is not, so a bare identifier read moves it, while a `.field` read through a borrow consumes nothing. A read by value directly off an owned local is a **partial move**: the field or `enum` payload moves out and its slot is cleared, so the local keeps the projections that stayed |
-| Borrows | a `datac` parameter is a shared borrow unless `mut`-marked; a bound borrow ends at its last use, not at the end of its scope, and a reference-typed binding carries the root set of owners its value may borrow from, so a pointer local is a usable cursor. A borrow taken inside an initializer ends with that statement |
-| Drops | the pass produces a **drop plan** keyed by span, which the code generators consult: no second walk, and no lockstep between two passes |
-
-The drop plan is why `codegen_c.rs` only has to ask "which locals die at the end of
-this block" and "which die before this return" as it writes each one, and
-`codegen_llvm.rs` asks the same two questions at the same points.
-
-## Code generation
-
-| Module | Emits | Notes |
+| Step | Entry point | File |
 | --- | --- | --- |
-| `codegen_c.rs` | C source text | value-position blocks use the GNU statement-expression extension `({ ...; expr; })`, which both `gcc` and `clang` accept; the `Bytes`/`String` runtime (allocation, bounds checks, `free`) is the text of `kelpc/runtime/kelp_rt.c`, emitted into every generated program; the generated C carries a `#line` directive before every statement, so a `cc` failure names the `.kp` file and the line the statement is written on (plan item 20, closed) |
-| `codegen_llvm.rs` | LLVM IR | the MK7 backend: a peer of `codegen_c.rs` over the same `tir`, covering the whole language, so it builds every target the C backend builds and the two agree byte for byte over the corpus. It attaches DWARF line locations, so a fault in the object names the `.kp` file and the line the statement is on. One guard stays in `place_of` for an owned rvalue no staging site claimed. See [Backends](/compiler/backends) and the MK7 record in [`plan/done.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/done.md) |
-| `externs.rs` | the C bodies of `extern fun` | the operations that cannot be written in Kelp at all: `codegen_c.rs` writes them into every generated C program, and the `llvm` path writes the same text to `<out>.externs.c` and links the object it compiles |
-| `kelpc/runtime/kelp_rt.c` | the C runtime text, not a compiler module | the single source for the bytes/string routines, the panic and assert paths, the allocation helpers and `kelp_argc`/`kelp_argv`: `codegen_c.rs` emits it into every generated program, and the `llvm` path links it as an object |
-| `kelpc/build.rs` | the runtime object | compiles `kelp_rt.c` once, at `kelpc`'s own build time, into `kelp_rt.o`; `driver.rs` embeds that object with `include_bytes!` and writes it to a temporary file when the `llvm` path links |
+| Load and resolve the module graph | `resolve::load` | `resolve.rs:528` |
+| Lex, expand aliases, parse each module | `visit_body` and `Parser::parse_program` | `resolve.rs:1659`, `parser.rs:382` |
+| Lower `defer` into ordinary statements | `defer::lower` | `resolve.rs:1709`, `defer.rs:35` |
+| Type check the whole program | `infer::check_program` | `infer.rs:8621` |
+| Check moves, borrows and build the drop plan | `borrowck::check_program` | `borrowck.rs:2114` |
+| Check the freestanding allowed set | `freestanding::check` | `freestanding.rs` |
+| Generate LLVM IR and an object | `codegen_llvm::compile` | `codegen_llvm.rs:375` |
+| Link with `cc` | `driver::link_llvm_objects` | `driver.rs:273` |
 
-Details are in [Backends](/compiler/backends).
+The front end entry point is `front_end` in `main.rs:202`.
+`kelpc check` calls it and prints the findings, with no code generation (`main.rs:267`).
+`kelpc build` (`main.rs:428`) runs the same steps and then generates code.
+A freestanding build runs `freestanding::prune` and type checks the pruned program a second time (`main.rs:459` to `481`).
 
-The two backends are kept in agreement by measurement rather than by inspection:
-`kelpc/tests/backend_coverage.rs` builds every corpus target with both and compares
-stdout and exit status, and `kelpc/tests/differential_fuzz.rs` generates programs
-from seeds and compares both backends the same way.
+## What each pass owns
 
-## Finishing (`driver.rs`)
+- **Lexing and parsing** turn text into an untyped AST. Text aliases are expanded between the two. See [Front end](/compiler/frontend).
+- **Module resolution** loads each `impl` path as a module, flattens the modules into one program and records each module's capability grant. See [Modules and capabilities](/compiler/resolve).
+- **Type checking** gives every expression a concrete type and writes the typed IR (`tir.rs`). Generic functions are checked once per instance. See [Types](/compiler/types).
+- **Borrow checking** rejects moves and borrows that conflict, and returns the drop plan that code generation reads. See [Ownership and drops](/compiler/ownership).
+- **Code generation** lowers the typed IR to LLVM IR and emits an object. The C backend is kept as the differential oracle. See [Backends](/compiler/backends).
+- **The driver** runs the external tools, writes the output files and prints diagnostics. See [Driver](/compiler/driver).
 
-The only place in the compiler that invokes an external tool, and a backend does
-not share it:
+## Following one program
 
-| Backend | Steps |
-| --- | --- |
-| `c` (the oracle) | write `<out>.c` beside the binary, then `cc -O2 -o <out> <out>.c -fwrapv -lm` at the build's level |
-| `llvm` (the one backend) | write `<out>.ll` and `<out>.o` beside the binary, then `cc -O2 -o <out> <out>.o -lm` at the build's level, with the runtime object and, when the program reaches an `extern fun`, `<out>.externs.o` on the line |
-
-The generated C is deliberately **kept** next to the binary rather than deleted,
-so debugging the generated program is `gdb ./foo` against a file that is actually
-there. An `llvm` binary needs no kept file for that: its object carries DWARF line
-locations, so the same `gdb ./foo` names the `.kp` file and the line the statement
-is on. `-fwrapv` makes signed overflow wrap in C, matching what the language
-promises; `-lm` is for `std/math`'s externs. The extern object is the program's
-own `extern fun` bodies as the C text `externs.rs` holds, compiled with the C
-backend's own includes and prototypes, so it is built per program rather than
-shipped fixed: one body calls a `std/path` function only the resolver injects,
-and another names a per-program container typedef.
-
-### The memory floor
-
-`driver.rs` also starts the watchdog in `guard.rs` for `build` and `run`: it
-reads `MemAvailable` from `/proc/meminfo` every 200 ms and, below
-`KELPC_MIN_AVAILABLE_MB` (default 384; `0` turns it off), kills the external
-children the driver spawned (`cc`, `ld.lld`, `pkg-config`) and leaves with
-`_exit(75)` rather than letting the kernel OOM killer choose a victim. It is
-`_exit` because the main thread is still inside LLVM. `kelpc run` stops the
-guard before the compiled program starts, so a program's own memory is never
-policed by it, and `fmt`/`lint`/`check`/`version` never start it. See [`kelpc`
-CLI](/tooling/kelpc-cli#the-memory-floor).
-
-## Following one program through the passes
-
-This walk names the C oracle's stages; under the default `llvm` backend the code
-generation row is `codegen_llvm.rs` and the finishing writes `<out>.ll` and
-`<out>.o` instead of `<out>.c`.
+This program uses a `datac`, a `List` and a `for` loop:
 
 ```kelp
 impl "std/str"
@@ -193,9 +51,7 @@ fun area(p: Point).return: i32 = p.x * p.y
 
 fun main() {
     val p = Point(x = 3, y = 4)
-    if p.x > 0 {
-        print(area(p))
-    }
+    print(area(p))
 
     var xs: List<i32> = List.empty()
     xs.push(1)
@@ -206,31 +62,37 @@ fun main() {
 }
 ```
 
-| Pass | What it makes of the program above |
-| --- | --- |
-| `lexer.rs` | tokens, each with a byte range; the newlines are tokens too, and they are what ends statements |
-| `preprocess.rs` | unchanged here: there is no `%*alias*%` to substitute |
-| `parser.rs` | the AST, with `for x in xs` already rewritten into an index-and-`while` walk over the list |
-| `resolve.rs` | a module graph with `std/str` next to this file, and the capability set of each module (empty here, since nothing gated is imported) |
-| `infer.rs` | `area(p)`: the parameter is a `datac`, so it becomes a shared borrow and the call site gets a synthesized `&` the author never wrote |
-| `tir.rs` | the same tree, every node carrying `Ty` and `Span` |
-| `borrowck.rs` | `p` is borrowed by `area` and still owned afterwards; a drop plan for the `Point` and for the `List` |
-| `codegen_c.rs` | C, with a `#line` marker before every statement back into the `.kp`, plus the runtime text from `runtime/kelp_rt.c` that the drop plan asked for |
-| `driver.rs` | `<out>.c` written beside the binary, `cc -O2 -fwrapv -lm` invoked |
+Each pass does the following with it.
 
-## What is *not* in the pipeline
-
-| Missing | Consequence |
+| Pass | What it does with this program |
 | --- | --- |
-| A library or object target | "Using a library" means copying or fetching a folder of `.kp` sources: see [Libraries](/libraries) |
-| A module dependency list | `kelpc check --json` answers with diagnostics; which module depends on which is still not askable outside the compiler, which is the other half of the interface a build cache wants |
-| An optimiser | There is no separate hook to add: `-O0`, `-O1`, `-O2`, `-O3` and `-Os` select the LLVM pass pipeline and the target machine's codegen level, and the same `-O` is given to the per-program C object and the final link. `-O2` is the default. |
-| Incremental compilation and a build cache | `kelpc build --incremental` splits the backend into per-module units and caches their objects by a hash of each unit's IR (see [Incremental builds](/compiler/incremental)); the front end is still whole-program, and [Coral](/tooling/coral) owns the project-level up-to-date check |
+| Lexer | Produces tokens with byte spans. Newlines are tokens and end statements. |
+| Preprocessor | Nothing to expand. There is no `%*name*%` reference. |
+| Parser | Produces `Stmt::For` for the loop. It is not rewritten yet. |
+| Resolver | Loads `std/str` as a module. Nothing gated is imported, so no grant is needed. |
+| Type checker | Gives `area` a `Ty::Ref` parameter, because a `datac` parameter is borrowed. At the call site it inserts the `&` the program does not write. Turns the `for` into an index walk over the list. |
+| Borrow checker | `p` is borrowed by `area` and is still owned afterwards. Builds drops for `p` and `xs`. |
+| LLVM codegen | Emits `main`, `area` and the list helpers into one module, then runs the LLVM passes at `-O2`. |
+| Driver | Writes `build/<name>.ll` and `build/<name>.o` and runs `cc`. |
+
+The loop desugaring is in `infer.rs:11537` to `11600`.
+The borrow at the call site is inserted by `check_call_arg` (`infer.rs:15918`).
+
+## Known gaps in the pipeline
+
+| Missing | What it means |
+| --- | --- |
+| Libraries as compiled objects | A library is a folder of `.kp` sources that is copied or fetched. See [Libraries](/libraries). |
+| A dependency query | `kelpc check --json` returns diagnostics only. The modules a module depends on are not exposed. |
+| A separate optimizer | `-O0`, `-O1`, `-O2`, `-O3` and `-Os` pick the LLVM pass pipeline and the codegen level. See [Backends](/compiler/backends). |
+| Incremental front end | `--incremental` splits only the backend. Parsing, resolution, type checking and borrow checking run on every build. See [Incremental builds](/compiler/incremental). |
 
 ## See also
 
+- [Front end](/compiler/frontend)
+- [Modules and capabilities](/compiler/resolve)
+- [Types](/compiler/types)
+- [Ownership and drops](/compiler/ownership)
 - [Backends](/compiler/backends)
+- [Driver](/compiler/driver)
 - [Runtime](/compiler/runtime)
-- [Tests](/compiler/tests)
-- [Capabilities](/language/capabilities)
-- [Ownership and borrowing](/language/ownership)
