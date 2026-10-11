@@ -15,6 +15,7 @@ The three programs around the language: `kelpc` compiles, Coral owns the project
 - [Benchmarks](/tooling/benchmarks): the thirteen-program suite, its rules and the current results against C and Rust.
 - [Release tooling](/tooling/release-tooling): `build/release.sh`, the reproducibility check, the verifying installer and `kelpc version --verbose`.
 - [Coral](/tooling/coral): the manifest key by key, the command surface, the dependency model and the toolchain store.
+- [Signing archives](/tooling/coral-signing): make a signing key, sign a package, trust a key, and what each signature line means.
 - [Lighthouse](/tooling/lighthouse): the two sources of truth, the feature table, editor setup for IntelliJ and the gaps.
 - [Coral changelog](/changelog/coral): every Coral release, and what it changed.
 - [Lighthouse changelog](/changelog/lighthouse): every Lighthouse release, and what it changed.
