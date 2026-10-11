@@ -1,126 +1,103 @@
 ---
 title: "Runtime"
-description: "Most of what a program needs at run time is emitted by the code generator, not linked: the heap routines, bounds checks, drop calls and capability plumbing are C text in `kelpc/runtime/kelp_rt.c`."
+description: "The standard library sources compiled into kelpc, the extern fun bodies, the C runtime files and the capability matcher. Notes that kelp-rt is embedded but not linked."
 isPublished: true
 tags: "compiler"
 ---
-Most of what a program needs at run time is emitted by the code generator rather
-than linked: the `Bytes`/`String` heap routines, bounds checks, drop calls and the
-capability plumbing are C text that `codegen_c.rs` splices into the generated
-program. Since MK7 stage S2B that text has **one home**:
-`kelpc/runtime/kelp_rt.c` holds the bytes/string routines,
-`kelp_panic`/`kelp_assert`, the allocation helpers and `kelp_argc`/`kelp_argv`.
-The C backend still emits that file into its output, byte for byte, exactly as it
-did when the text was a string literal in `codegen_c.rs`; the `llvm` path links
-it as an object `kelpc/build.rs` compiles from the same file. One source, so the
-panic text and the `Bytes`/`String` invariants cannot drift between the two
-backends. `kelpc/runtime/` holds the runtime pieces that are not spliced in as
-text: the C that stayed, the C references kept as oracles, and the newest pair,
-a parser written in Kelp with its C reference beside it. The LLVM backend also
-emits the small `Bytes`/`String`/`View` bodies into the module it is compiling,
-with internal linkage, so they inline there instead of crossing into the object;
-the object keeps every definition for the paths that stay out of line, and the C
-backend is unchanged.
+A Kelp program depends on three kinds of code at run time: the standard library, the `extern fun` bodies and the C runtime.
+Most of this code is written as text that the compiler writes into each program or compiles beside it.
+This page covers where each piece comes from and how it is linked.
 
-Since MK7 stage S3A the compiler-supplied `extern fun` bodies are compiled the
-same way: `externs.rs` holds that C text, `codegen_c.rs` writes it into every
-generated program, and the `llvm` path writes the same text to `<out>.externs.c`
-and links the object it compiles, beside the runtime object and before `-lm`. It
-is built per program rather than shipped fixed, because one body calls a
-`std/path` function only the resolver injects and another names a per-program
-container typedef. `std/math`'s `sqrt_raw` is the one body the LLVM backend does
-not call: it declares `llvm.sqrt.f64` in its place, so the C text is written and
-linked and simply unreferenced on that path.
+## The standard library in the binary
 
-| File | Status | Role |
+The standard library is Kelp source under `kelpc/std/`.
+Each file is embedded in `kelpc` with `include_str!` (`stdlib.rs:142` to `196`), so the binary does not depend on files beside it.
+
+- A program may import the 35 modules listed by `stdlib::shipped()` (`stdlib.rs:198`).
+  They are `std/option`, `std/str`, `std/fs`, `std/net` and the rest of the library.
+  See [Standard library](/stdlib) for what each one provides.
+- `std/rt` is also embedded, but no program imports it on purpose.
+  The resolver loads it when a program imports a gated module or `std/path` (`resolve.rs:1766` to `1767`).
+- `std/http` contains a placeholder, `__KELP_HTTP_POOL__`, which the compiler replaces with the connection pool size from the project (`stdlib.rs:126` to `140`).
+
+The library is compiled by the same lexer, parser and checker as user code.
+The resolver reads `std/...` ids from the embedded text before it looks at the project directory (`resolve.rs:1609` to `1620`).
+
+## `extern fun` bodies
+
+An `extern fun` declaration has no body in Kelp.
+The compiler supplies the body as C text, and the checker accepts the declaration only when the compiler has a body for it.
+
+1. The bodies are kept in one table, `EXTERNS` (`externs.rs:19`).
+   Each entry is a module, a name and C statements.
+   `externs::body` (`externs.rs:748`) finds an entry by its module and name.
+2. The checker asks `externs::has_body` (`infer.rs:9699` and `11113`).
+   A project may declare its own extern only with a `[extern."<module>"]` section in `coral.toml`, and the checker checks that allowlist (`infer.rs:11113` to `11125`).
+3. The C text for each body is written by `write_extern` (`cdecl.rs:245`).
+   A user extern that names a native symbol becomes a call to that symbol (`cdecl.rs:293`).
+
+The bodies are compiled for each program, not shipped as one fixed object.
+One body calls a `std/path` function that only the resolver injects, and another names a container type that exists only in the program.
+The C backend writes the bodies into its output.
+The LLVM backend writes them into `<out>.externs.c` and compiles that file into `<out>.externs.o` (`codegen_llvm.rs:477` to `487`).
+
+## The C runtime files
+
+`kelpc/runtime/` holds the C that the compiler uses at run time, and the reference files used by tests.
+
+| File | Used by | What it is |
 | --- | --- | --- |
-| `cap_glue.c` | emitted into every program that contains a gated call | the non-matching half of the capability check |
-| `kelp_rt.c` | emitted into every generated program by `codegen_c.rs`; linked as an object into every `llvm`-built binary | the C runtime text: the `Bytes`/`String` routines, `kelp_panic`/`kelp_assert`, the allocation helpers and `kelp_argc`/`kelp_argv` |
-| `cap_matcher_ref.c` | not emitted | the C capability matcher, kept as the differential oracle |
-| `path_normalize_ref.c` | not emitted | the C path normalizer, kept as the differential oracle |
-| `dns_parse.kp` | not emitted, not a std module | the stub resolver's DNS message parser, in Kelp |
-| `dns_parse_ref.c` | not emitted | the same parser in C, kept as the differential oracle |
+| `kelp_rt.c` | Written into every C program. Compiled by `build.rs` into `kelp_rt.o` and linked into every LLVM program. | The `Bytes` and `String` routines, `kelp_panic` and `kelp_assert`, the allocation helpers, `kelp_argc` and `kelp_argv`, the thread and lock records. |
+| `cap_glue.c` | Written into a program that has a gated call. | The capability deny path and the buffer code around the matcher. See [The capability runtime](#the-capability-runtime). |
+| `cap_matcher_ref.c` | Not written into programs. | The C capability matcher, kept as the oracle for `std/rt.kp`. |
+| `path_normalize_ref.c` | Not written into programs. | The C path normalizer, kept as the oracle for `std/rt.kp`. |
+| `dns_parse.kp`, `dns_parse_ref.c` | Not a standard library module. | A DNS message parser in Kelp, and its C reference. |
+| `resolver_conf.kp`, `resolver_conf_ref.c` | Not a standard library module. | A resolver configuration parser in Kelp, and its C reference. |
+| `abi_aggregate.c` | Not traced. | C helper in the runtime folder. This page did not confirm where it is used. |
 
-## `cap_glue.c`: what the capability runtime still is in C
+`kelp_rt.c` is 1620 lines.
+`driver.rs:12` embeds the object compiled from it, and `codegen_c.rs:39` includes the source text in the C backend.
 
-Spliced together with prototypes for the `std/rt` functions it calls (see
-`codegen_c.rs`), and deliberately free of any matching logic. Three things stayed:
+The LLVM backend also emits small `Bytes`, `String` and `View` bodies into each module with internal linkage.
+Those copies can be inlined.
+The runtime object still defines every one of them, and the two definitions never meet at link time.
 
-| Piece | Why it is still C |
-| --- | --- |
-| Buffered plumbing: `host:port` formatting, `PATH_MAX` scratch buffers, cutting a pattern's host part | it is the same code the C reference used, so moving it cannot change a verdict; a buffer is declared one byte longer than `PATH_MAX` where a Kelp function writes into it, because `Bytes` keeps its NUL in the slot *at* `len` |
-| The deny path: `fprintf` to stderr plus `exit(1)` | it is I/O, and belongs with the rest of the runtime's I/O |
-| The allowlist loop: "any pattern that admits the resource admits the call" | three lines per check kind with no matching in it |
+## The capability runtime
 
-`kelp_resolve_path` is also still C: it resolves symlinks before matching, which
-is the step that makes a symlink inside a grant pointing outside it a denial. It
-needs `realpath` and a buffer, so it moves to Kelp with the filesystem half of the
-runtime.
+The matching logic of the capability check is Kelp code in `std/rt.kp`.
+`glob_match`, `host_glob`, `host_match` and `path_normalize` are the functions the checks call.
 
-## Why the matcher exists twice
+C remains for three things:
 
-The retired hand-written track planned to move the runtime from C text into Kelp
-one piece at a time. It is happening anyway, for its own reasons. The
-matcher and the normalizer have now moved, and **the C versions were kept rather
-than deleted**, because a port of a security check has no other oracle:
+- buffers, `host:port` formatting and the cut of a pattern's host part (`cap_glue.c`);
+- the deny path, which prints the message to stderr and exits with status 1 (`kelp_cap_deny`, `cap_glue.c:148`);
+- the allowlist loop, which accepts a call when a pattern admits the resource.
 
-- the fixtures prove the grants still *work*;
-- only a differential corpus proves the *verdicts* are identical, including for the
-  shapes nobody wrote a fixture for.
+`kelp_resolve_path` is also C.
+It resolves symbolic links before matching, which keeps a link inside a grant from reaching outside it.
 
-That is the specific failure the plan's risk register names: *a lenient port widens
-every grant*. So:
+The C backend writes `cap_glue.c` into a program that has a gated call (`codegen_c.rs:175`).
+The LLVM backend compiles it into the program's C object when `program.gated` is not empty (`program_c_source`, `codegen_llvm.rs:15202`).
 
-| Corpus | Compares | Test |
-| --- | --- | --- |
-| capability matching | `cap_matcher_ref.c` against `std/rt.kp`'s matcher, one verdict per case, both drivers generated from the same case list | `kelpc/tests/cap_matcher.rs` |
-| path normalization | `path_normalize_ref.c` against `std/rt.kp`'s `path_normalize`, compared as the bytes left in the buffer *and* the verdict | `kelpc/tests/path_normalize.rs` |
+The C matcher and normalizer are kept because a port of a security check needs an independent check.
+The tests `cap_matcher.rs` and `path_normalize.rs` compare the verdicts of the two versions on generated cases.
 
-Two details the C reference had to be reproduced exactly, because a port that
-rounded them differently would change a boundary:
+## The Rust port (`kelp-rt`)
 
-- the host part of `host:port` is cut at `PATH_MAX` in C, so the Kelp version
-  bounds the match at the same index instead of copying, and the corpus covers
-  lengths either side of that number;
-- the *cut* of a pattern's host part lives in the glue, which is still C, so the
-  port could not drift there.
+`kelp-rt/` is a Rust port of part of the runtime, in progress.
+It exports the same six `kelp_cap_*` functions as `cap_glue.c`, in `src/cap.rs`.
+`build.rs` builds it into `libkelp_rt.a` (`kelpc/build.rs:139` to `245`).
 
-Comparing bytes and not only verdicts is deliberate for the normalizer: a path
-that normalizes to something *inside* the grant while resolving outside it is
-exactly the escape being rejected.
+`driver.rs:16` embeds that archive, with `#[allow(dead_code)]`.
+No code path reads it, and the linker uses the C runtime object.
+The comment on the constant says the link will switch to the archive in a later stage.
 
-The same discipline covers the stub resolver's message parser, which is not a
-security check: `dns_parse.kp` and
-`dns_parse_ref.c` are fed the same 1990-case corpus by `kelpc/tests/dns_parse.rs`,
-one printed verdict per case, and the two have to agree line for line. A parser
-that agrees only on a well-formed reply is the one that comes apart on a
-compressed name, a truncated message or a count the message cannot hold, which is
-what the corpus is made of. Neither file is emitted and neither is a std module,
-so no program reaches the parser yet.
-
-## What is still C in the runtime, and what that costs
-
-| Item | State |
-| --- | --- |
-| Capability matcher | Kelp (`std/rt.kp`), with the C oracle kept |
-| Path normalizer | Kelp (`std/rt.kp`), with the C oracle kept |
-| DNS message parser | Kelp (`dns_parse.kp`), not shipped yet, with the C oracle kept |
-| Symlink resolution (`kelp_resolve_path`) | still C |
-| The allocator | still C; blocked on raw pointers, which the language does not expose |
-| The `Bytes`/`String` heap routines and drop calls | the text of `kelp_rt.c`: emitted by `codegen_c.rs` into every generated program, and linked as an object by the `llvm` path |
-| The compiler-supplied `extern fun` bodies | the C text of `externs.rs`: emitted by `codegen_c.rs` into every generated program, and linked as a per-program object by the `llvm` path |
-
-`std/rt` is the compiler's own runtime module. Its source ships inside the
-binary like a stdlib module's, and `impl "std/rt"` resolves, but it is not part
-of the stdlib surface: `stdlib.rs::shipped()` does not list it, and the resolver
-injects it for a program that imports a gated module or `std/path`. The one
-program that imports it on purpose is the differential corpus itself
-(`kelpc/tests/cap_matcher.rs`, `kelpc/tests/path_normalize.rs`), which calls the
-matcher and the normalizer directly to compare them with their C references.
+Open question: the code does not say whether the Rust port will replace the C runtime or sit beside it.
 
 ## See also
 
+- [Modules and capabilities](/compiler/resolve)
 - [Backends](/compiler/backends)
-- [Tests](/compiler/tests)
+- [Driver](/compiler/driver#linking)
+- [Standard library](/stdlib)
 - [Capabilities](/language/capabilities)
-- [Capability patterns](/reference/capability-patterns)
