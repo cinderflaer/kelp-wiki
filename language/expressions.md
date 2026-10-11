@@ -106,7 +106,7 @@ fun main() {
 }
 ```
 
-Both the default backend and `KELPC_ORACLE=c` print the same output. The panic
+The panic
 goes to standard error. On a terminal the `print` line appears first, as below.
 When standard output is a pipe or a file, the `print` output is buffered until
 the program exits, so the panic line comes first there:

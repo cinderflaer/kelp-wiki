@@ -402,7 +402,7 @@ fun main() {
 
 I ran this program with the directory replaced by a scratch directory holding the
 files above (`other.key` being a second key, `junk.pem` the text `this is not a
-PEM file`), on the LLVM backend and under `KELPC_ORACLE=c`. Both print:
+PEM file`), on the LLVM backend. It prints:
 
 ```text
 config ok

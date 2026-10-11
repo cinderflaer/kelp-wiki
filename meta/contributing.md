@@ -130,8 +130,7 @@ A useful defect report has:
 2. the exact command and the exact error, including the file `cc` named if the
    failure came from `cc`;
 3. what you expected instead, in one sentence;
-4. whether it is `llvm`-only or backend-independent (a build compared against the
-   `c` oracle is the test).
+4. whether it is `llvm`-only or backend-independent (the `llvm` backend is the only one).
 
 ## Working on this site
 

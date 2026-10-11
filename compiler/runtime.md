@@ -1,10 +1,10 @@
 ---
 title: "Runtime"
-description: "The standard library sources compiled into kelpc, the extern fun bodies, the C runtime files and the capability matcher. Notes that kelp-rt is embedded but not linked."
+description: "The standard library sources compiled into kelpc, the extern fun bodies, the kelp-rt runtime crate and the capability matcher. Covers what each runtime file does and how it is linked."
 isPublished: true
 tags: "compiler"
 ---
-A Kelp program depends on three kinds of code at run time: the standard library, the `extern fun` bodies and the C runtime.
+A Kelp program depends on three kinds of code at run time: the standard library, the `extern fun` bodies and the runtime.
 Most of this code is written as text that the compiler writes into each program or compiles beside it.
 This page covers where each piece comes from and how it is linked.
 
@@ -38,25 +38,27 @@ The compiler supplies the body as C text, and the checker accepts the declaratio
 
 The bodies are compiled for each program, not shipped as one fixed object.
 One body calls a `std/path` function that only the resolver injects, and another names a container type that exists only in the program.
-The C backend writes the bodies into its output.
-The LLVM backend writes them into `<out>.externs.c` and compiles that file into `<out>.externs.o` (`codegen_llvm.rs:477` to `487`).
+The compiler writes them into `<out>.externs.c` and compiles that file into `<out>.externs.o` (`codegen_llvm.rs:477` to `487`).
 
-## The C runtime files
+## The runtime files
 
-`kelpc/runtime/` holds the C that the compiler uses at run time, and the reference files used by tests.
+The runtime is the `kelp-rt` crate, a Rust crate with `no_std` (`kelp-rt/src/lib.rs`).
+It replaced the C runtime `kelp_rt.c`, which is not in the tree.
 
-| File | Used by | What it is |
-| --- | --- | --- |
-| `kelp_rt.c` | Written into every C program. Compiled by `build.rs` into `kelp_rt.o` and linked into every LLVM program. | The `Bytes` and `String` routines, `kelp_panic` and `kelp_assert`, the allocation helpers, `kelp_argc` and `kelp_argv`, the thread and lock records. |
-| `cap_glue.c` | Written into a program that has a gated call. | The capability deny path and the buffer code around the matcher. See [The capability runtime](#the-capability-runtime). |
-| `cap_matcher_ref.c` | Not written into programs. | The C capability matcher, kept as the oracle for `std/rt.kp`. |
-| `path_normalize_ref.c` | Not written into programs. | The C path normalizer, kept as the oracle for `std/rt.kp`. |
-| `dns_parse.kp`, `dns_parse_ref.c` | Not a standard library module. | A DNS message parser in Kelp, and its C reference. |
-| `resolver_conf.kp`, `resolver_conf_ref.c` | Not a standard library module. | A resolver configuration parser in Kelp, and its C reference. |
-| `abi_aggregate.c` | Not traced. | C helper in the runtime folder. This page did not confirm where it is used. |
+| File or folder | What it is |
+| --- | --- |
+| `kelp-rt/src/*.rs` | The runtime: text and buffers, threads, mutexes and condition variables, panics, the environment cache, the child process table, the capability checks, and the exported functions. |
+| `kelpc/gc/` | The collector crate `kelp_gc`. Only managed builds use it. |
+| `kelpc/runtime/` | `abi_aggregate.c`, `dns_parse.kp` and `resolver_conf.kp`. The compiler does not embed the two `.kp` files. |
 
-`kelp_rt.c` is 1620 lines.
-`driver.rs:12` embeds the object compiled from it, and `codegen_c.rs:39` includes the source text in the C backend.
+`kelp-rt` is built twice from one source folder.
+The hosted build gives `libkelp_rt.a`, and the managed build gives `kelp_rt_managed.o`.
+`kelpc/build.rs` builds both, and `driver.rs` embeds them with `include_bytes!`.
+The hosted link uses the archive. The managed link uses the object.
+
+The exported functions are listed in the `PROTOTYPES` table of `kelp-rt/src/abi.rs`, which has 99 rows.
+The compiler does not read that table. It writes its own C prelude, with 22 declarations for the helpers it calls.
+Nothing checks that the two agree, and the compiler does not check the ABI version.
 
 The LLVM backend also emits small `Bytes`, `String` and `View` bodies into each module with internal linkage.
 Those copies can be inlined.
@@ -66,33 +68,21 @@ The runtime object still defines every one of them, and the two definitions neve
 
 The matching logic of the capability check is Kelp code in `std/rt.kp`.
 `glob_match`, `host_glob`, `host_match` and `path_normalize` are the functions the checks call.
+`kelp-rt/src/cap.rs` declares them as weak imports.
 
-C remains for three things:
+The runtime owns the other capability pieces:
 
-- buffers, `host:port` formatting and the cut of a pattern's host part (`cap_glue.c`);
-- the deny path, which prints the message to stderr and exits with status 1 (`kelp_cap_deny`, `cap_glue.c:148`);
-- the allowlist loop, which accepts a call when a pattern admits the resource.
+- the checks `kelp_cap_check_host`, `kelp_cap_check_hostport`, `kelp_cap_check_name`, `kelp_cap_check_path` and `kelp_cap_check_port`;
+- the deny path, `kelp_cap_deny`;
+- the per-thread loopback flag for listening sockets.
 
-`kelp_resolve_path` is also C.
-It resolves symbolic links before matching, which keeps a link inside a grant from reaching outside it.
+The compiler emits a check call before each gated call.
+See [Resolve](/compiler/resolve) for how the checks are placed.
 
-The C backend writes `cap_glue.c` into a program that has a gated call (`codegen_c.rs:175`).
-The LLVM backend compiles it into the program's C object when `program.gated` is not empty (`program_c_source`, `codegen_llvm.rs:15202`).
+## Standard library runtime text
 
-The C matcher and normalizer are kept because a port of a security check needs an independent check.
-The tests `cap_matcher.rs` and `path_normalize.rs` compare the verdicts of the two versions on generated cases.
-
-## The Rust port (`kelp-rt`)
-
-`kelp-rt/` is a Rust port of part of the runtime, in progress.
-It exports the same six `kelp_cap_*` functions as `cap_glue.c`, in `src/cap.rs`.
-`build.rs` builds it into `libkelp_rt.a` (`kelpc/build.rs:139` to `245`).
-
-`driver.rs:16` embeds that archive, with `#[allow(dead_code)]`.
-No code path reads it, and the linker uses the C runtime object.
-The comment on the constant says the link will switch to the archive in a later stage.
-
-Open question: the code does not say whether the Rust port will replace the C runtime or sit beside it.
+`std/rt` is the only Kelp module that holds the capability matcher, and no program imports it on purpose.
+The resolver loads it when a program imports a gated module or `std/path`.
 
 ## See also
 

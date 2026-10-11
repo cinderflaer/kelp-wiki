@@ -228,5 +228,5 @@ link, which on this host is a program that reaches the heavy `std` modules.
 
 - [`kelpc` CLI](/tooling/kelpc-cli#incremental-builds-and-the-object-cache): the flags, environment variables and cache commands
 - [Pipeline](/compiler/architecture): the stages the front end still runs whole-program
-- [Backends](/compiler/backends): the `llvm` backend and the C oracle
+- [Backends](/compiler/backends): the `llvm` backend, the only code generator
 - [Compiler](/compiler): the chapter index

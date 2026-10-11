@@ -13,7 +13,7 @@ and memory.
 
 ## Why manual memory
 
-Kelp has no garbage collector. A value lives exactly as long as its one owner,
+The default build has no garbage collector. A value lives exactly as long as its one owner,
 and the owner's scope end frees it on every exit path, so there is no collector
 pausing the program, no tracing pass, and no moment at which a dead value
 lingers until the collector gets to it. A destructor runs at a known point in
@@ -34,8 +34,7 @@ In reading order:
   mistakes everyone makes first, each with its fix.
 - [Performance](/memory/performance): the measured numbers for the hosted build
   on four benchmarks, with their spread and the C reference, and what they show.
-- [Managed comparison](/memory/managed): a placeholder. The managed build is not
-  finished, so there are no numbers for it yet.
+- [Tidepool](/memory/tidepool): the planned block design. It is in design, and its pages are empty placeholders.
 
 Every program in this section was compiled with the 26.10.5 release compiler and
 run. The output shown is the output of that run.

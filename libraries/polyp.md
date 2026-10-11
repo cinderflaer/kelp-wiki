@@ -544,9 +544,6 @@ not guesses:
 - a final `end` marker, so the empty draft line is not lost to a shell that
   strips trailing newlines.
 
-**Both** smoke runs build the todo again with `KELPC_ORACLE=c` and check the same
-output, so the C backend and the default one behave identically.
-
 ```sh
 examples/polyp-counter/smoke.sh
 examples/polyp-counter-v0/smoke.sh

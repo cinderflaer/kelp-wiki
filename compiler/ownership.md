@@ -112,7 +112,7 @@ The plan records, for each block, return, `?`, `break`, `continue` and assignmen
 
 The plan is keyed by span (`borrowck.rs:268` to `277`).
 The code generators ask it at each point, through `drops_at_block_end`, `at_return`, `at_assign`, `at_try`, `at_break`, `at_continue` and `moves_at`.
-The C backend reads it in `codegen_c.rs` and the LLVM backend in `codegen_llvm.rs`.
+The LLVM backend reads it in `codegen_llvm.rs`.
 
 ### Open question: span keys and copied defers
 
@@ -124,7 +124,6 @@ This page has not confirmed that the copies always get the same drops.
 
 - `tests/compile_and_run.rs` covers moves, borrows and defer. Its fixtures are under `tests/fixtures/` with the names `borrow_*`, `nll_*`, `cursor_*`, `defer_*`, `drop_*`, `owned_*` and `move_*`.
 - `tests/memory_gate.rs` runs valgrind over the drop fixtures. It is ignored by default.
-- `tests/run-sanitizers.sh` runs the drop fixtures under the sanitizers.
 
 ## See also
 

@@ -10,7 +10,7 @@ The three programs around the language: `kelpc` compiles, Coral owns the project
 
 - [`kelpc` CLI](/tooling/kelpc-cli): every subcommand and flag, where artifacts land, the backend, `fmt`'s rules and environment variables.
 - [`kelpc doc`](/tooling/kelpc-doc): the documentation generator: `///` and `//!` comments, its options and `--check`.
-- [Sanitizer builds](/tooling/sanitizers): `--sanitize=address|undefined|thread` and `[build] sanitize`, and what each one catches.
+- [Sanitizer builds](/tooling/sanitizers): removed. `--sanitize` and `[build] sanitize` are refused by name.
 - [Front-end fuzzing and parser limits](/tooling/fuzzing): the fuzzer, and the 200-level nesting and 800-link chain limits with their errors.
 - [Benchmarks](/tooling/benchmarks): the thirteen-program suite, its rules and the current results against C and Rust.
 - [Release tooling](/tooling/release-tooling): `build/release.sh`, the reproducibility check, the verifying installer and `kelpc version --verbose`.

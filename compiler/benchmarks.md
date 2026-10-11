@@ -11,13 +11,13 @@ and `bench/notes.md` on Kelp's `main` branch.
 
 ## What the compiler is measured as
 
-The suite builds each Kelp program two ways, and the two differ only in the
-backend:
+The suite builds each Kelp program with the LLVM backend. Older runs also
+have a column for the C oracle, which has since been removed:
 
 | Column | Backend | What the number tells you |
 | --- | --- | --- |
 | `kelp-llvm` | `llvm`, the one backend `kelpc` uses for every program | the speed of the code a user gets |
-| `kelp-c` | the C oracle, selected with `KELPC_ORACLE=c` | the speed of the reference backend, which is not a user surface |
+| `kelp-c` | the C oracle, removed on 2026-10-10 and refused by name since then | the speed of the reference backend in older runs, which was never a user surface |
 
 For the `llvm` column, the suite is close to C. Four of the thirteen programs are at
 or faster than C (`nbody`, `spectral-norm`, `mandelbrot` and `sort-builtin`). Five
@@ -54,5 +54,5 @@ The details are on [the tooling page](/tooling/benchmarks#what-the-suite-found-a
 ## See also
 
 - [Benchmarks](/tooling/benchmarks): the suite, the current table and the method
-- [Backends](/compiler/backends): the `llvm` backend and the C oracle
+- [Backends](/compiler/backends): the `llvm` backend, the only code generator
 - [Incremental builds](/compiler/incremental): how the compile itself is sped up

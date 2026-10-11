@@ -303,8 +303,7 @@ would need a retained view model; see the limits below.
 ## The work-budget test and the benchmark
 
 `examples/polyp-budget-test/` drives the backend directly and prints one number
-per line. The Rust test `polyp_soft_work_budgets_hold` pins the whole output, so
-the numbers are the same on the LLVM backend and on the C oracle. It is the
+per line. The Rust test `polyp_soft_work_budgets_hold` pins the whole output. It is the
 program behind the table above.
 
 `examples/polyp-bench/` runs five scenarios (200-row scroll, type 100 characters,
@@ -332,8 +331,7 @@ On the development host (7.8 GiB, LLVM backend, release `kelpc`), a full run of
 Those are the design note's numbers on one host at one moment, not a portable
 guarantee: the frame counts, pixels, rectangles and allocations are exact and
 machine-independent, the microseconds are not. The note records that the debug
-`kelpc` build gives the same counts and times within a few percent, and that the C
-oracle's generated code is roughly three times slower, so the test suite sets
+`kelpc` build gives the same counts and times within a few percent. The test suite sets
 `POLYP_BENCH_QUICK`, which shortens every scenario to one frame per run and keeps
 the same counts per frame; the table above is a full run.
 

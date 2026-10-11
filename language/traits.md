@@ -198,8 +198,7 @@ fun describe<T: Shape + Named>(s: &T).return: f64 = s.area() + s.name_length()
 
 ## Static dispatch, end to end
 
-This program compiles and runs with the output shown, on the `llvm` backend and
-the `KELPC_ORACLE=c` C oracle:
+This program compiles and runs with the output shown:
 
 ```kelp
 trait Shape {

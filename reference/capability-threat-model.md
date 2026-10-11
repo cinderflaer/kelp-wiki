@@ -4,6 +4,8 @@ description: "What the capability system protects, who it assumes the attacker i
 isPublished: true
 tags: "reference, capability"
 ---
+> **Note:** The C oracle that some runs below compare against, and the `KELPC_ORACLE=c` switch, were removed on 2026-10-10. Every `KELPC_ORACLE` setting is now refused by name. Read the runs marked with that switch as a record of the time they were made.
+
 [Capabilities](/language/capabilities) say what a module may do. This page says
 what that promise is worth: what is being protected, against whom, what the
 compiler and runtime actually check, and where the promise stops. The design

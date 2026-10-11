@@ -144,8 +144,7 @@ domain gate alone, and it is what a GTK binding asks for (see
 
 ## Where the patterns are enforced
 
-The matcher exists twice on purpose: in Kelp (the compiler's own runtime module,
-`std/rt`) and in C in `kelpc/runtime/`. A grant is checked statically and
+The matcher is written in Kelp, in the compiler's own runtime module, `std/rt`. A grant is checked statically and
 enforced at runtime against the same pattern list, at the call sites that name a
 resource (a wrapper, the primitive behind it, a receiver method, a closure body,
 a `pd` initializer), and the two implementations are

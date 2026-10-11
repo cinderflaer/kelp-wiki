@@ -311,8 +311,7 @@ fun kp_panic(msg: str) {
 `[target] panic = "kp_panic"` is what routes every compiler-inserted check to
 that handler. `kernel0` and `kernel0-panic` declare the one-argument shape; the
 three-argument shape that also carries the source location is the section below.
-The message is the check's own text, byte-identical to the
-C backend's, which is why `kernel0-panic` can assert that the line contains
+The message is the check's own text, which is why `kernel0-panic` can assert that the line contains
 `index out of bounds` (the line the compiler writes, not one the example chose).
 
 ## Panic location and the double panic
@@ -850,9 +849,6 @@ The remaining gaps, from
   there is no `fork`, no `exec`/`wait`, no priorities or blocking, no TLB
   shootdown, no SMP and no preemption of user mode; x86-64 has an IDT and a
   PIC+PIT timer, but no APIC, SMP, ACPI or user mode.
-- **No C-oracle coverage.** Freestanding is LLVM-only by design, so the usual
-  "both backends, same behaviour" rule does not apply to these images. It still
-  holds everywhere else.
 
 ## See also
 

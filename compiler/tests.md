@@ -1,12 +1,12 @@
 ---
 title: "Tests"
-description: "The compiler test suite compiles programs, runs them and compares their output. Covers the fixture harness, the backend gates, the differential sweeps and the fuzzers, and which tests are ignored by default."
+description: "The compiler test suite compiles programs, runs them and compares their output. Covers the fixture harness, the backend gates, the fuzzers, and which tests are ignored by default."
 isPublished: true
 tags: "compiler, testing"
 ---
 Most compiler tests compile a program, run it and compare what it printed.
 A test therefore states what the language does, not how a backend does it.
-The same tests run under each backend, which is how the LLVM output is checked against the C oracle.
+The tests run against the LLVM backend, the only code generator.
 
 ```sh
 cargo test                                   # unit tests and the fixture suite
@@ -38,9 +38,6 @@ The projects cover the capability cases: a granted path, a path outside the gran
 
 Two checks run inside this file:
 
-- **AddressSanitizer.** A test rebuilds the fixtures that own memory with `-fsanitize=address` and runs them.
-  A double free, a use after free or a leak fails the test.
-  It skips itself when `cc` has no AddressSanitizer.
 - **A loopback HTTP server.** The HTTP tests bind a server on port 0 in the harness and pass the port to the program.
   The server counts the accepted connections, so a test can check that a pool reused a socket.
 
@@ -53,24 +50,17 @@ The scripts are `run-llvm-scalar-subset.sh`, `run-llvm-datac-subset.sh`, `run-ll
 `llvm_debug_info.rs` builds `tests/llvm-debug/fault.kp`, which divides by a run-time zero.
 It reads the line table of the binary and checks that the fault is reported at the `.kp` line.
 
-## The differential sweep (`backend_coverage.rs`)
+## The backend coverage sweep (`backend_coverage.rs`)
 
-`backend_coverage.rs` builds every fixture that the C backend can build, with both backends, and runs both.
-It fails when the stdout or the exit status differs.
-A target the LLVM backend cannot build is recorded with its message and does not fail the test.
-The test is ignored by default because it compiles the whole corpus twice:
-
-```sh
-cargo test --release --test backend_coverage -- --ignored --nocapture
-```
-
-It found a silent miscompile in `borrow_returned.kp`, where a borrow returned through an `if` was wrong.
+`backend_coverage.rs` was written to build every fixture with two backends and compare them.
+The C backend has been removed, so the test no longer has a second side to compare against.
+The golden outputs in `kelpc/tests/golden/` are the record that remains.
 
 ## Fuzzing (`differential_fuzz.rs`, `frontend_fuzz.rs`)
 
 `differential_fuzz.rs` generates a Kelp program from a seed.
 The generator uses a fixed pseudo-random number generator, so the same seed always gives the same program.
-Each program is written to a file, built with both backends and compared.
+Each program is written to a file and built. There is no second backend to compare it with.
 `FUZZ_SEED_START` and `FUZZ_SEED_COUNT` choose the seeds.
 The default run uses one seed, and the larger runs are ignored.
 `tests/fuzz-corpus/` holds frozen seeds that are run the same way.
@@ -85,24 +75,14 @@ It checks that nothing panics, aborts or hangs.
 
 `memory_gate.rs` runs valgrind over the built binaries and checks the log for findings.
 It is ignored by default.
-The AddressSanitizer test cannot cover the LLVM backend, because it instruments the C source, and the LLVM backend writes its own object.
 Valgrind runs on any binary.
 
-## Sanitizer runs (`sanitizers.rs`, `run-sanitizers.sh`)
+## Runtime reference tests
 
-`sanitizers.rs` tests the `--sanitize` flag and its refusal on the LLVM backend.
-`run-sanitizers.sh` runs the drop fixtures under the sanitizers.
-
-## Runtime differential tests
-
-Four tests compare a C reference with its Kelp port, using the same generated cases on both sides.
-
-| Test | Compares |
-| --- | --- |
-| `cap_matcher.rs` | `runtime/cap_matcher_ref.c` with the matcher in `std/rt.kp`. |
-| `path_normalize.rs` | `runtime/path_normalize_ref.c` with `path_normalize` in `std/rt.kp`. The bytes in the buffer and the verdict must both match. |
-| `dns_parse.rs` | `runtime/dns_parse_ref.c` with `runtime/dns_parse.kp`. |
-| `resolver_conf.rs` | `runtime/resolver_conf_ref.c` with `runtime/resolver_conf.kp`. |
+Older tests compared a Kelp port with a C reference file, using the same generated cases on both sides.
+The C reference files are not in the tree, and `kelpc/runtime/` holds no `*_ref.c` file.
+So these comparisons have no second side now.
+The `kelpc/runtime/` folder keeps `dns_parse.kp` and `resolver_conf.kp`.
 
 ## The formatter and the linter
 

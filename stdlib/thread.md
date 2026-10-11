@@ -31,7 +31,7 @@ call site. Neither call, and not the fence either, can be written in Kelp, so
 declares none of them: its header documents the surface, exactly as
 `std/atomic` documents the atomic methods it declares nowhere. The compiler
 lowers `spawn` and `join` through the pthread machinery of
-`kelpc/runtime/kelp_rt.c` and one generated worker body per call signature.
+`kelp-rt` and one generated worker body per call signature.
 
 `ThreadErr` is the module's **only `.kp` declaration**: a plain `datac` with one
 owned `String` field, built by the worker's panic and read by whoever joins it.
@@ -193,8 +193,7 @@ A fence orders **no location**: it joins the total order without naming an
 atomic, so there is no cell for it to read or write. That is why it is
 `thread.fence(order)`, free, rather than an `Atomic<T>` method: a method would
 say the fence is an operation on that one cell. It also means the fence emits one
-instruction and holds no cell of its own, `__atomic_thread_fence(__ATOMIC_SEQ_CST)`
-on the C backend and `fence seq_cst` on the LLVM one, and a single-threaded
+instruction and holds no cell of its own, `fence seq_cst` on the LLVM backend, and a single-threaded
 program cannot observe it at all.
 
 The fence lives in this module rather than beside the atomic cell so that the

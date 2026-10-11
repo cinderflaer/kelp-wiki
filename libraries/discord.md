@@ -70,8 +70,8 @@ with **no configuration at all**: [`std/http`](/stdlib/http) has TLS
 (`MISSING-XkcSp`, resolved), so `DEFAULT_API_BASE` and every
 webhook/interaction call reach the real `discord.com`, and
 [`std/ws`](/stdlib/ws) has TLS (`MISSING-wV4tg`, resolved), so the gateway loop
-dials `DEFAULT_GATEWAY_URL` (`wss://`) with the URL-aware `ws.try_connect_url`,
-following the URL's scheme. Point the gateway URL at a plain `ws://` endpoint (a
+is meant to dial `DEFAULT_GATEWAY_URL` (`wss://`) with the URL-aware `ws.try_connect_url`,
+following the URL's scheme. The `fpl` source does not do that yet (see the status note above). Point the gateway URL at a plain `ws://` endpoint (a
 local mock) and nothing else changes:
 
 ```kelp
@@ -83,6 +83,13 @@ bot.set_gateway_url("ws://127.0.0.1:8098/?v=10&encoding=json")
 `discord.gateway_endpoint(bot)` parses the gateway URL and panics only on one it
 cannot parse; a `wss://` URL is dialed over TLS, and a certificate the system
 trust store does not vouch for panics inside `std/tls`.
+
+> **Status against current `main`:** This page describes the `discord` library in the `fpl` repository on `unreleased`.
+> That source does not build against `kelp` `main` as it stands.
+> `one_connection` calls `ws.try_connect_secure`, which `std/ws` on `main` does not export.
+> `dial_outcome` matches `Dial` and `Handshake` but not `WsErr.Tls`, so its `match` is not exhaustive.
+> The gateway path therefore does not work against current `main` until both points are fixed.
+> The fix is to call `ws.try_connect_url` and to add the `WsErr.Tls` arm. Neither change is in the `fpl` source yet.
 
 ## The constants
 
@@ -130,8 +137,7 @@ fun main() {
 That is the whole bot: the loop dials, reads HELLO, identifies with the intents,
 answers heartbeats with the last dispatch's sequence, resumes after a reconnect
 the server asked for, backs off between attempts, and closes for good on a code
-that says retrying cannot work. With Discord's defaults it dials the gateway's
-`wss://` URL over TLS; with a local `ws://` gateway it runs unchanged.
+that says retrying cannot work. With Discord's defaults it is meant to dial the gateway's `wss://` URL over TLS. With a local `ws://` gateway it runs unchanged. Both need the fix in the status note first.
 
 Every handler is optional and the default does nothing:
 
@@ -440,8 +446,8 @@ verified; the pieces above are what the proxy and the bot have to agree on.
 
 ## Rate limits
 
-`std/http` has no 429 handling and no `Retry-After` handling, and that is an open
-item. **This library does not retry either.** It parses the headers and hands
+`std/http` on `main` reads `Retry-After` and the `X-RateLimit-*` headers, and `Response` has `retry_after()` and `rate_limit()`.
+Retrying is still the caller's choice. **This library does not retry either.** It parses the headers and hands
 them back:
 
 | Item | Returns |
@@ -607,27 +613,21 @@ Content-Type
 
 ## Notes
 
-- **The gateway loop does connect, and it is tested against a loopback gateway:**
-  the WebSocket handshake, HELLO, IDENTIFY, READY, two heartbeats carrying the
-  sequence from the last dispatch, an INTERACTION_CREATE answered over REST,
-  CLOSE 4000, a reconnect, and an op 6 RESUME carrying the session id and the
-  sequence. The REST half is tested the same way, against a loopback endpoint
-  that answers with Discord's rate-limit headers.
+- **No test fixture.** The `fpl` repository has no test for this library, so nothing checked in runs the gateway loop or the REST helpers.
 - **TLS is here for both halves.** `DEFAULT_API_BASE` (`https://`) and
   `DEFAULT_GATEWAY_URL` (`wss://`) are reachable as written
-  ([`std/http`](/stdlib/http) and [`std/ws`](/stdlib/ws) have TLS); the gateway
-  code is the same against a local `ws://` endpoint. Nothing shells out to
+  ([`std/http`](/stdlib/http) and [`std/ws`](/stdlib/ws) have TLS). The gateway dial needs the fix in the status note. Nothing shells out to
   `curl` and nothing pretends.
 - **Ed25519 verification is not here.** The raw signature, the timestamp and the
   body are handed over, `verify_with` is the seam, and a reverse proxy is the
   honest deployment until `std/crypto` exists.
 - **No retries and no rate-limit waiting.** `rate_limit(resp)` is a value; the
   decision and the sleep are the caller's.
-- **The URL-aware `ws.try_connect_url` is the dial that does not end the loop**:
-  where `ws.connect` panics when the dial fails, it returns `WsErr.Dial`
+- **The URL-aware dial is `ws.try_connect_url`.** Where `ws.connect` panics when the dial fails, it returns `WsErr.Dial`
   with the refused connection's reason (or `WsErr.Tls` when the `wss` handshake
   or certificate check is what failed), so a redial after a dial that fails
   (a wrong host, a refused connection) can survive instead of ending the process.
+  The `fpl` source does not call this function yet.
 - **A resume lands on the configured gateway URL**, not on the
   `resume_gateway_url` Discord sends in READY: a resume against a local endpoint
   has to go where the caller pointed the library.

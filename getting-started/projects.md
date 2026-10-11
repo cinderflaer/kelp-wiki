@@ -87,9 +87,9 @@ neither fetched nor importable.
 `--offline` refuses instead of fetching, and `--dry-run` prints the plan.
 `coral build --offline` after a sync is the assertion "this build did no I/O".
 
-There is **no version, no lockfile and no registry index**: a dependency is a git
-remote, and what makes a build reproducible is that `src/deps/<name>/` *is* the
-tree it built with until something refreshes it.
+There is **no dependency version and no registry index**: a dependency is a git
+remote. `coral sync` refreshes each dependency to its remote tip and records the
+commit it checked out in `coral.lock`.
 
 ## Pinning the compiler
 

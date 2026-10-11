@@ -728,8 +728,8 @@ than a path git is asked to check out.
 
 - **A library has no version, on purpose.** There is no version constraint, no
   registry index, and no lockfile that pins a version. A dependency is a git
-  remote, and what makes a build reproducible is that `src/deps/<name>/` **is** the
-  tree it built with and stays that way until something refreshes it.
+  remote. `coral sync` records each dependency's commit and caps in `coral.lock`,
+  and `src/deps/<name>/` **is** the tree the build used until something refreshes it.
 - **Only `coral sync` moves a dependency forward.** `coral build` fetches a
   dependency that is missing and leaves one that is present alone, which is why a
   warm tree builds offline and identically.

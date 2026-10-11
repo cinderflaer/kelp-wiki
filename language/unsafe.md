@@ -232,8 +232,7 @@ reaches for: a bump region the caller owns, no allocator and no libc.
 
 ### Volatile access
 
-A volatile access is emitted as one: the C backend writes a `volatile`-qualified
-access and the LLVM backend sets the instruction's volatile flag
+A volatile access is emitted as one: the LLVM backend sets the instruction's volatile flag
 (`LLVMSetVolatile`). The compiler never merges two volatile accesses, never
 reorders one against another, and never elides one. That is what a device
 register needs, and it is the whole promise: volatile says nothing about the
@@ -369,9 +368,7 @@ plus the two static forms written on the type name, `u32.from_be(x)` and
 Kelp type.
 
 The direction is a property of the *target*, asked rather than assumed: the LLVM
-backend reads the target's byte order from its data layout, and the C backend
-compiles the direction through `__BYTE_ORDER__`. On a big-endian target
-`to_le` swaps and `to_be` does not, on both backends, with no source change.
+backend reads the target's byte order from its data layout. On a big-endian target `to_le` swaps and `to_be` does not, with no source change.
 
 ```kelp
 impl "std/fmt"

@@ -1,29 +1,29 @@
 ---
 title: "Backends"
-description: "kelpc builds every program with the LLVM backend. The C backend is kept only as the differential oracle, selected by KELPC_ORACLE=c. Covers the LLVM lowering steps, the value layouts and the optimisation levels."
+description: "kelpc builds every program with the LLVM backend, the only code generator. The retired C backend and its selectors are refused by name. Covers the LLVM lowering steps, the value layouts and the optimisation levels."
 isPublished: true
 tags: "compiler"
 ---
 `kelpc` builds every program with one backend, `llvm`.
-The C backend still exists, but it is reached only through `KELPC_ORACLE=c`, and it exists to be compared against the LLVM output.
+The C backend has been removed. Its golden outputs remain in the tree, and the selectors that reached it are refused by name.
 
 ## Choosing a backend
 
-`Backend::DEFAULT` is `Llvm` (`backend.rs:82`).
-`backend::resolve` (`backend.rs:104`) returns the default unless `KELPC_ORACLE` is set.
+The LLVM backend is the only code generator. There is no choice to make.
+The retired selectors are refused by name:
 
-- `KELPC_ORACLE=c` selects the C backend.
-- Any other value of `KELPC_ORACLE` is an error, because the variable accepts only `c`.
-- `KELPC_BACKEND` is refused by name (`backend.rs:50`), and so is `--backend`.
-  The refusal says the backend is no longer a user choice.
+- `--backend` and `--backend=...`;
+- `KELPC_BACKEND`, when it is set;
+- `KELPC_ORACLE`, when it is set, for any value.
 
-`main.rs` calls one generator at its single call site: `codegen_llvm::compile` (`main.rs:616`) or `codegen_c::generate` (`main.rs:573`).
+The refusal says the backend is no longer a user choice.
+`backend.rs` is the only module that mentions the retired selectors, and it only refuses them.
+`main.rs` calls `codegen_llvm::compile` at its single call site.
 
-Some features are refused by name on a backend that does not support them:
+Some features are refused by name on the LLVM backend:
 
-- sanitizers are refused on the LLVM backend, because it links no sanitizer passes (`main.rs:516` to `522`);
-- a freestanding project is refused on the C backend, because the C runtime needs libc (`main.rs` build checks);
-- `--incremental` is refused for a freestanding project.
+- sanitizers, because the LLVM backend has no sanitizer passes;
+- `--incremental` for a freestanding or managed project.
 
 ## The LLVM backend
 
@@ -43,7 +43,7 @@ It wraps `llvm-sys` 211, which is LLVM 21.1, and links it dynamically.
 8. Link. See [Driver](/compiler/driver#linking).
 
 The per-program C source is built by `program_c_source` (`codegen_llvm.rs:15202`).
-It includes the extern bodies, and `cap_glue.c` when the program has a gated call.
+It holds the extern bodies and the capability glue, and it is only written when the program has an `extern fun` or a gated call.
 
 ### Value layouts
 
@@ -91,21 +91,17 @@ Each statement gets a location, and no variables are described.
 `OptLevel` (`opt.rs:31`) has the values `-O0`, `-O1`, `-O2`, `-O3` and `-Os`.
 The default is `-O2` (`opt.rs:45`).
 The level selects the LLVM pass pipeline and the target machine's codegen level.
-It is also passed to `cc` at link time.
-`-Oz` is refused, because it is a clang-only spelling and the linker `cc` may be gcc (`main.rs:101`).
+It is also passed to `cc` when `cc` compiles the extern object, and `ld.lld` ignores it.
+`-Oz` is refused.
 
-## The C backend (the oracle)
+## The retired C backend
 
-`codegen_c.rs` emits C source text from the same typed IR.
-`codegen_c::generate` runs when `KELPC_ORACLE=c` is set.
+The C backend was removed on 2026-10-10.
+Its golden outputs remain in `kelpc/tests/golden/`.
+The C-versus-LLVM differential test is gone with it.
 
-- Each statement carries a `#line` directive that maps the C back to the `.kp` line (`codegen_c.rs:2489`).
-- The runtime text `runtime/kelp_rt.c` and the extern bodies from `externs.rs` are written into every generated program.
-- The program is compiled with `cc -O<level> -fwrapv -pthread -lm`.
-
-The C backend is kept so that the LLVM output can be checked against it.
-The tests compare stdout and the exit status of both backends on the same programs (see [Tests](/compiler/tests)).
-A construct that one backend cannot lower must be refused by name, not miscompiled.
+The C text that remains in the tree is the per-program object described in step 7 above, and the extern bodies it holds.
+Some comments in `codegen_llvm.rs` still describe the removed backend and a `runtime/kelp_rt.c` file. Those comments are stale.
 
 ## See also
 

@@ -152,8 +152,7 @@ fun RwLock<T>.into_inner().return: T
 | `try_read(block)` / `try_write(block)` | `Option<R>` | the block runs only if the lock was free; `None` means it was busy and the block did not run |
 | `into_inner()` | `T` | consumes the lock |
 
-This program shares one lock between the main thread and a worker. It prints, on
-the LLVM backend and under `KELPC_ORACLE=c` alike:
+This program shares one lock between the main thread and a worker. It prints:
 
 ```kelp
 impl "std/thread"
@@ -383,8 +382,7 @@ fun main() {
 ```
 
 `bump` takes a handle by `move` and drops it on return; the other two handles
-still see the value. It prints, on the LLVM backend and under `KELPC_ORACLE=c`
-alike:
+still see the value. It prints:
 
 ```
 6
@@ -615,7 +613,7 @@ back
   error: the module 'std/sync' is unavailable in a freestanding build: it needs a hosted runtime (libc or the 'kelp_rt' helpers); the std modules a freestanding project may implement are std/arena, std/atomic, std/convert, std/frame, std/irq, std/iter, std/list, std/math, std/ops, std/option, std/regex, std/result, std/str
   ```
 
-  The same program passes on the LLVM backend and under `KELPC_ORACLE=c`; the
+  The same program passes on the LLVM backend; the
   tests are `chan_bounded_mpsc` (four producers, one consumer, sum 124500),
   `chan_close`, `chan_recv_timeout`, `chan_zero_capacity`, `chan_non_sendable`
   and `chan_send_a_lock`.

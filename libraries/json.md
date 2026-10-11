@@ -375,5 +375,5 @@ true
 - `Json` cannot be pushed to in place. Build children first, then wrap.
 - `write`/`write_pretty` never emit `NaN`/`Infinity`: a non-finite float is
   `null`.
-- `sort_keys` keeps duplicate keys: the sort picks the smallest untaken key each
-  step, so equal keys keep their relative order instead of collapsing.
+- `sort_keys` keeps duplicate keys: it is a stable merge sort of the member indices,
+  so equal keys keep their relative order instead of collapsing.

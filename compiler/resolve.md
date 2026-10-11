@@ -104,7 +104,7 @@ Patterns that depend on a value, such as a path or a host, are checked when the 
 - `cap_checked_call` in `codegen_c.rs` emits a `kelp_cap_check_*` call before the gated call.
   The kinds are `path`, `name`, `host`, `hostport` and `port`.
 - The LLVM backend emits the same checks in `emit_cap_checks` (`codegen_llvm.rs:6547`).
-- A failed check calls `kelp_cap_deny` in `runtime/cap_glue.c:148`.
+- A failed check calls `kelp_cap_deny`, which `kelp-rt` exports (`kelp-rt/src/cap.rs`).
   The message names the path and the module and exits with status 1:
 
 ```text

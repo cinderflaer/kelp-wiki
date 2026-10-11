@@ -92,15 +92,10 @@ the whole language today, so it refuses no corpus construct; one guard remains i
 the lowering for an owned temporary at a place it did not stage, and its message
 says the shortfall is the compiler's rather than sending you to a backend you
 cannot choose. There is no `--backend=` flag: `kelpc build --backend=c` is refused
-with the message that names the one backend and the C oracle.
+with a message that says the choice is gone.
 
 `error: cc failed:` is different: the C compiler refused something `kelpc` handed
-it, which is a `kelpc` bug. On the `c` oracle path that is the generated C, which
-carries a `#line` directive before every statement, so the `cc` message already
-names the `.kp` file and line the failing C came from; the generated file itself
-is in `build/` (`build/<name>.c`) when you need to see it. Under the default
-`llvm` backend the `cc` step is the link and the per-program objects, and the
-message names the file it refused. That file, the source, and the command are
+it, which is a `kelpc` bug. The `cc` step compiles the extern object of a program that has an `extern fun` or a capability-gated call, and the message names the file it refused. That file, the source, and the command are
 exactly what a report needs.
 
 ## Make a refusal happen on purpose

@@ -1,6 +1,6 @@
 ---
 title: "Driver"
-description: "The kelpc command dispatch, the steps of a build, how the final binary is linked with cc or ld.lld, and the exact shape of diagnostics. Diagnostics have no source excerpt and no caret."
+description: "The kelpc command dispatch, the steps of a build, how the final binary is linked with ld.lld, and the exact shape of diagnostics. Diagnostics have no source excerpt and no caret."
 isPublished: true
 tags: "compiler"
 ---
@@ -23,33 +23,33 @@ This page covers the command dispatch, the build steps, linking and the diagnost
 | `cache` | Shows or clears the incremental object cache. |
 | `version` | Prints the release. `--verbose` adds the commit, the build date and the tool versions. |
 
-There is no `stdlib` subcommand.
-`stdlib.rs` is used only by `doc --std`.
+`stdlib --json --dir <dir>` writes the std sources and a JSON listing.
+`doc --std` documents the shipped std modules.
 The full flag list is on the [kelpc CLI](/tooling/kelpc-cli) page.
 
 ## The steps of a build
 
-`build` (`main.rs:428`) runs these steps in order:
+`build` runs these steps in order:
 
 1. Read the flags. `-o` sets the output path, and the default is `build/<stem>`.
    `-O` sets the optimisation level. `-O2` is the default.
-2. Choose the backend (`backend::resolve`). See [Backends](/compiler/backends).
+2. Refuse the retired code generator selectors. `--backend`, `KELPC_BACKEND` and `KELPC_ORACLE` are refused by name.
+   The LLVM backend is the only code generator. See [Backends](/compiler/backends).
 3. Load the modules (`resolve::load`). See [Modules and capabilities](/compiler/resolve).
    Deprecation findings are reported here.
 4. Type check (`infer::check_program`).
 5. For a freestanding target, check the allowed set, prune the program and type check it again.
 6. Check borrows and build the drop plan (`borrowck::check_program`).
-7. Refuse the combinations that have no codegen path, such as freestanding with the C backend.
+7. Refuse the flags that have no code path, such as `--sanitize`. There are no sanitizer passes.
 8. Run `pkg-config` once for all `[extern.*]` packages (`driver::pkg_config_flags`).
-9. Generate code and link. The LLVM path is `codegen_llvm::compile` (`main.rs:616`).
+9. Generate code and link. The LLVM path is `codegen_llvm::compile`.
 
 The LLVM path writes `<out>.ll`, verifies the module, optimises it, writes `<out>.o`, and links.
-The C path writes `<out>.c` and compiles it with `cc`.
 
 Beside the binary, a build may write these files:
 
-- `<out>.ll` and `<out>.o` for the LLVM backend, or `<out>.c` for the C backend;
-- `<out>.externs.c` and `<out>.externs.o` when the program has `extern fun` bodies;
+- `<out>.ll` and `<out>.o` for the LLVM backend;
+- `<out>.externs.c` and `<out>.externs.o` when the program has `extern fun` bodies or a capability-gated call;
 - `<out>.units/` with `--incremental`;
 - `index.html` when `coral.toml` sets `[build] emit = "html"`.
 
@@ -58,37 +58,30 @@ With `emit = "html"` it writes `index.html` and does not start the program as an
 
 ## Linking
 
-The hosted LLVM link is `link_llvm_objects` (`driver.rs:273` to `348`).
-It runs `cc` with this argument order:
+The hosted link runs `ld.lld` directly. The link does not run `cc`.
+`driver::link_llvm_objects_with_archive` writes the embedded runtime archive `libkelp_rt.a` to a temporary file.
+It then runs `ld.lld` with the argument list from `sysroot::hosted_link_argv`, and removes the temporary file.
 
-```text
-cc -O<level> -o <out> <unit or program .o> <runtime .o> -pthread [<externs .o>] -lm -L<dirs> <pkg-config flags> [-lssl -lcrypto] -l<lib>...
-```
+The argument list uses `-m elf_x86_64`, `-pie`, the glibc dynamic loader and the glibc start files.
+It adds the program object, the runtime archive, the optional externs object, the library directories, `-lm -lpthread`, and `-lssl -lcrypto` when TLS is used.
+It ends with `-lgcc -lgcc_s -lc`, with `--as-needed`.
+The x86_64 ELF layout and glibc are fixed in this list. A hosted build for another target is not covered.
 
-- The runtime object is `kelp_rt.o`, compiled by `build.rs` from `runtime/kelp_rt.c` and embedded in `kelpc` (`driver.rs:12`).
-  The driver writes it to a temporary file named `kelp_rt_<pid>_<n>.o` in the system temp directory and removes it after the link.
-  If `cc` cannot be started, the file is left behind, because the removal comes after that step.
-- `-lssl -lcrypto` is added when the program uses TLS.
-- `-fwrapv` is not passed on this link. A comment in `driver.rs` says the LLVM IR already wraps on overflow.
+`cc` still runs for one object. When the program has an `extern fun` or a capability-gated call, kelpc writes `<out>.externs.c` and compiles it with `cc -O<level> -fwrapv`.
+That object holds the `extern fun` bodies and the capability glue.
+So a program that uses `fs`, `net`, `process`, `env`, `time` or `rand`, or any `extern` in std, needs a C compiler.
 
-The C backend links with `cc -O<level> -o <out> <out>.c -fwrapv -pthread -lm` (`driver.rs:70` to `154`), with extra flags for sanitizers, include paths and libraries.
+`pkg-config` runs for each `[extern."<id>"]` package that names one.
+
+The managed link (`[target] mode = "managed"`) links the runtime object `kelp_rt_managed.o` in place of the archive.
+It adds the collector archive named by `KELP_GC_LIB` after the program's objects.
 
 The freestanding link is different.
-`link_freestanding_object` (`driver.rs:361` to `388`) runs `ld.lld` with the manifest's linker script and `--static`.
-It does not run `cc`, and it does not link libc or the runtime object.
-`ld.lld` is found on `PATH`.
+`link_freestanding_object` runs `ld.lld` with the manifest's linker script and `--static`.
+It does not run `cc`, and it does not link libc or a runtime archive.
 A missing `ld.lld` is an error, and the driver does not fall back to `cc`.
 
-`cc` also finds the C runtime start files and libc on the hosted path.
-kelpc does not search for them.
-
-`src/sysroot.rs` has code that would find `ld.lld`, the crt files, libc and the dynamic loader, and build a hosted `ld.lld` line.
-Nothing calls it.
-The file has `#![allow(dead_code)]`, so it is not on the build's path.
-
-`driver.rs:16` also embeds `libkelp_rt.a`, the archive built from the Rust port in `kelp-rt/`.
-The archive is embedded but not linked.
-See [Runtime](/compiler/runtime#the-rust-port-kelp-rt).
+`ld.lld` is found through `KELPC_LLD`, then `PATH`.
 
 ## The memory guard
 

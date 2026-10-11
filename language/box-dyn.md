@@ -75,7 +75,7 @@ fun main() {
 }
 ```
 
-It prints, on the LLVM backend and under `KELPC_ORACLE=c` alike:
+It prints:
 
 ```
 19

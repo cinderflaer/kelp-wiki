@@ -10,8 +10,8 @@ The output blocks are quoted from earlier runs on a release build, so the
 wording of a message may differ slightly from the current binary.
 
 ```text
-usage: kelpc build <file.kp> [-o <out>] [-O0|-O1|-O2|-O3|-Os] [--deny-outdated] [--incremental] [--timings] [--sanitize=address|undefined|thread]
-       kelpc run <file.kp> [-O0|-O1|-O2|-O3|-Os] [--deny-outdated] [--incremental] [--timings] [--sanitize=address|undefined|thread]
+usage: kelpc build <file.kp> [-o <out>] [-O0|-O1|-O2|-O3|-Os] [--deny-outdated] [--incremental] [--timings]
+       kelpc run <file.kp> [-O0|-O1|-O2|-O3|-Os] [--deny-outdated] [--incremental] [--timings]
        kelpc check <file.kp> [--json] [--deny-outdated] [--text]
        kelpc fmt <file.kp>
        kelpc fmt -w <path>...
@@ -41,7 +41,7 @@ above, and `kelpc version` is the version query.
 | `kelpc fmt -w <path>...` | rewrites files in place | 1 if any input fails to parse |
 | `kelpc fmt --check <path>...` | writes nothing, exits 1 if anything is not already formatted | 0 or 1 |
 | `kelpc lint <path>...` | writes warnings to stderr for the style rules a formatter cannot enforce, and writes no file | 0 even when it warns; 1 only for a path it cannot read or a file it cannot lex |
-| `kelpc build <file.kp> --sanitize=<kind>` | builds with `address`, `undefined` or `thread` sanitizing; the C backend only, so the default backend refuses it ([Sanitizer builds](/tooling/sanitizers)) | 0, or 1 on a diagnostic or the refusal |
+| `kelpc build <file.kp> --sanitize=<kind>` | refused by name: kelpc has no sanitizer builds ([Sanitizer builds](/tooling/sanitizers)) | 1 |
 | `kelpc doc <file.kp\|project dir>...` | writes one documentation page per module plus an index from the `///` and `//!` comments, to `doc/` or `-o <dir>`, as Markdown or HTML ([`kelpc doc`](/tooling/kelpc-doc)) | 0, or 1 for a path it cannot read; with `--check`, 1 when a listed item has no doc |
 | `kelpc doc --std` | the same for the shipped standard library | as above |
 | `kelpc cache stats` | prints the per-unit object cache's entry count and total size | 0 |
@@ -160,12 +160,7 @@ disk.
 | `kelpc build .` | `build/a.out` | `build/a.ll` and `build/a.o` |
 
 The generated files are `<out>.ll` (textual IR) and `<out>.o` (the object),
-written beside the binary, and the object is linked with
-`cc -o <out> <out>.o -lm` at the build's optimization level. A program that
-reaches an `extern fun` also gets `<out>.externs.c`, the C source of its extern
-object. Every `kelpc` links `libLLVM-21.so` and needs it at runtime. The `c`
-oracle writes `<out>.c` where these land, and is one of the ways the `llvm`
-artifact is checked.
+written beside the binary. The object is linked with `ld.lld`. A program that reaches an `extern fun` or a capability-gated call also gets `<out>.externs.c` and `<out>.externs.o`, the extern object compiled with `cc`. Every `kelpc` links `libLLVM-21.so` and needs it at runtime.
 
 - `build/` is relative to the **current working directory**, and the compiler
   creates it if it is missing.
@@ -207,8 +202,7 @@ Turn it on one of three ways:
 - `[build]` `incremental = true` in the project's `coral.toml`;
 - leave it off, which is the default.
 
-The C oracle (`KELPC_ORACLE=c`) ignores the flag and keeps its one translation
-unit. A freestanding project is refused by name:
+A freestanding project is refused by name:
 
 ```text
 $ kelpc build examples/kernel0 --incremental
@@ -267,25 +261,12 @@ kelpc cache: removed 4 files from cache
 
 `kelpc` builds every program with one backend, **`llvm`**. It lowers the typed IR
 to LLVM IR, runs LLVM's own pass pipeline over the module at the build's
-optimization level, emits an object and links it with `cc`.
+optimization level, emits an object and links it with `ld.lld`.
 
 There is no backend to choose. Whatever `--backend=` carries is refused with
 
-```text
-$ kelpc build src/main.kp --backend=asm2
-error: --backend is gone: kelpc builds every program with the llvm backend, and the C backend is kept as the project's own oracle rather than as a user choice
-```
-
-and a set `KELPC_BACKEND` earns the same refusal, worded for the variable: the
-choice is gone rather than the spelling changed, so a shell that still exports
-one is told rather than silently ignored.
-
-**The `c` backend is the project's own oracle**, kept in the tree, in the suite
-and in CI. It transpiles to C and hands the file to `cc -fwrapv -lm` at the same
-optimization level, and the fixture suite, the differential sweep and the fuzzer
-measure every `llvm` build against its output. It is the reference backend rather
-than a second opinion, and it is not a user surface: the project's own internal
-switch is the only way to reach it.
+The `--backend=` flag and a set `KELPC_BACKEND` are refused by name, and a set `KELPC_ORACLE` is refused too.
+The refusal says the choice is gone, so a shell that still exports one is told rather than silently ignored.
 
 The hand-written `asm` backend, which emitted x86-64 assembly itself and finished
 with `as` and `ld`, was retired on 2026-09-20 and removed on 2026-09-21. Its plans,
@@ -300,12 +281,7 @@ The **`llvm`** backend lowers the whole language the [Language](/language) pages
 describe to LLVM IR and an object. That covers the scalar types, `datac` records,
 `enum` and `when`, `Bytes`/`String` and the drop plan, `List`/`Map`/`Box`/`[T; N]`,
 references, closures and function values, the `extern fun` bodies, the `pd`
-globals and the capability check. The corpus sweep requires the LLVM backend to
-build every target the C oracle builds, with the same stdout and exit status. The
-number of targets it builds is recorded by the ratchet constant
-`LLVM_BUILT_BASELINE` in `kelpc/tests/backend_coverage.rs`, which may only rise.
-
-The gates that carry the slices are the `kelpc/tests/run-llvm-*.sh` scripts, one
+globals and the capability check. The gates that carry the slices are the `kelpc/tests/run-llvm-*.sh` scripts, one
 per area: scalars, `datac`, strings and drops, enums, containers, references,
 closures, externs, `pd` globals and capabilities, and ABI aggregates. One guard
 remains in the lowering, for an owned temporary at a place it did not stage, and
@@ -313,9 +289,7 @@ nothing in the corpus reaches it. The object carries DWARF line locations, so a
 fault in an `llvm`-built binary names the `.kp` file and line. It is a line table,
 so there are no variables and no types. One optimization level is one level for
 the whole build: it selects the LLVM pass pipeline and the target machine's
-codegen level, and it is the `-O` flag the per-program C object and the final link
-are given. No performance parity with the C backend is claimed. See the MK7
-record in
+codegen level, and it is the `-O` flag given to the extern object's `cc` compile. See the MK7 record in
 [`plan/done.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/done.md).
 
 ## `fmt`
@@ -566,8 +540,7 @@ file changes three things:
    | Key | Value | Effect |
    | --- | --- | --- |
    | `incremental` | `true` | the per-unit split, as `--incremental` |
-   | `sanitize` | `"address"`, `"undefined"` or `"thread"` | a [sanitizer build](/tooling/sanitizers), as `--sanitize=` |
-   | `emit` | `"binary"` (the default) or `"html"` | with `"html"`, `kelpc build` compiles `emit_entry` instead of `entry`, runs it once to print its first view, and does not start it as an application |
+      | `emit` | `"binary"` (the default) or `"html"` | with `"html"`, `kelpc build` compiles `emit_entry` instead of `entry`, runs it once to print its first view, and does not start it as an application |
    | `emit_entry` | a file under `src/` | the entry point that `emit = "html"` builds |
 
    Every other section (`[tasks]`, `[dependencies]`, `[toolchain]`) is Coral's

@@ -10,7 +10,7 @@ host exactly as every project before this stage did; that is the whole
 compatibility promise. The design is
 [`plan/freestanding.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/freestanding.md).
 
-There is no libc and no `kelp_rt.c` behind a freestanding image, so everything
+There is no libc and no runtime archive behind a freestanding image, so everything
 that would reach either is a compile error rather than an undefined symbol the
 linker reports. `kelpc check` enforces the same set `kelpc build` does, because
 the check lives in the front end.
@@ -53,13 +53,8 @@ is refused the same way by name (for example the 32-bit `i686-unknown-none`,
 which loads the X86 backend but has neither an x86-64 `_start` nor an x86-64
 wait instruction).
 
-A freestanding project is **LLVM-only**. `KELPC_ORACLE=c` refuses with a message
-naming the mode and the backend, because the C backend's runtime preamble is
-libc:
-
-```text
-error: 'examples/kernel0' sets '[target] mode = "freestanding"', which only the llvm backend can build: the C backend's runtime preamble is libc (the KELPC_ORACLE switch cannot build a freestanding project)
-```
+A freestanding project is **LLVM-only**, as every project is now.
+`KELPC_ORACLE` is refused by name like the other retired selectors, so no environment variable reaches a C path for a freestanding build.
 
 `kelpc run` refuses one too: the artifact is a bare-metal ELF to be loaded by a
 boot loader or an emulator, not a host process.

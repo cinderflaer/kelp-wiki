@@ -6,8 +6,8 @@ tags: "performance, memory, benchmarks"
 ---
 These are the measured numbers for Kelp's hosted build, which is the build with
 manual memory: no collector, every value freed by its owner. The managed build is
-not finished, so these are the only numbers in this section. The comparison is on
-[Managed comparison](/memory/managed).
+not finished, so these are the only numbers in this section. The planned design
+is on [Tidepool](/memory/tidepool).
 
 ## Conditions
 

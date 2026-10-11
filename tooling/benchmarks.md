@@ -20,7 +20,7 @@ Every program is built three ways, and one of them is measured twice:
 | `c-gcc` | the C program, built with `cc -O2`. The baseline for every ratio |
 | `rust` | the Rust program, built with `rustc -C opt-level=3` (no cargo, no LTO) |
 | `kelp-llvm` | the Kelp program with `kelpc build -O2`, which is the default backend |
-| `kelp-c` | the same Kelp program through the C oracle, `KELPC_ORACLE=c` |
+| `kelp-c` | the same Kelp program through the C oracle, which has been removed; older recorded runs have this column |
 
 The programs are `fib`, `nbody`, `spectral-norm`, `mandelbrot`, `binary-trees`,
 `fannkuch-redux`, `sieve`, `matmul`, `strings`, `hashmap`, `sort`, `sort-builtin`
@@ -106,10 +106,9 @@ Read the `kelp-llvm` column for the default backend. On these thirteen programs:
 - **`hashmap` reads 1.11 on this run, but do not take that as a gain.** The C
   baseline is the cause, as explained below.
 
-The `kelp-c` column is the oracle backend. It is slower than `kelp-llvm` on most rows,
-and the `spectral-norm` row (1.65) is a defect of that backend: it gives every
+The `kelp-c` column comes from runs made before the C oracle was removed. In those runs it was slower than `kelp-llvm` on most rows, and the `spectral-norm` row (1.65) is a defect of that backend: it gives every
 generated function external linkage, so the matrix helper is never inlined. The
-[Backends](/compiler/backends) page explains why the oracle is kept.
+[Backends](/compiler/backends) page records the removal.
 
 ## Changes since the previous recorded run
 
@@ -186,6 +185,6 @@ not change them:
 ## See also
 
 - [Compiler benchmarks](/compiler/benchmarks): what the suite says about the compiler
-- [Backends](/compiler/backends): the `llvm` backend and the C oracle
+- [Backends](/compiler/backends): the `llvm` backend, the only code generator
 - [`kelpc` CLI](/tooling/kelpc-cli): the `-O` levels the suite builds with
 - [Tooling](/tooling)

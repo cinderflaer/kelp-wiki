@@ -35,7 +35,7 @@ A freestanding build runs `freestanding::prune` and type checks the pruned progr
 - **Module resolution** loads each `impl` path as a module, flattens the modules into one program and records each module's capability grant. See [Modules and capabilities](/compiler/resolve).
 - **Type checking** gives every expression a concrete type and writes the typed IR (`tir.rs`). Generic functions are checked once per instance. See [Types](/compiler/types).
 - **Borrow checking** rejects moves and borrows that conflict, and returns the drop plan that code generation reads. See [Ownership and drops](/compiler/ownership).
-- **Code generation** lowers the typed IR to LLVM IR and emits an object. The C backend is kept as the differential oracle. See [Backends](/compiler/backends).
+- **Code generation** lowers the typed IR to LLVM IR and emits an object. See [Backends](/compiler/backends).
 - **The driver** runs the external tools, writes the output files and prints diagnostics. See [Driver](/compiler/driver).
 
 ## Following one program

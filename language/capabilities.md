@@ -230,8 +230,7 @@ pointer is **born** at, so an offset applied afterwards (`p.byte_offset(n)`,
 `p.offset(n)`, `p.cast<U>()`) is not revisited, and a granted range admits any
 address reachable from it by arithmetic; there is no runtime check and no
 provenance model; and `mmio` says nothing about what is at the address (a fault
-taken on a probe page is granted like a device register). Freestanding is
-LLVM-only by design, so the C oracle never sees the check. See
+taken on a probe page is granted like a device register). Freestanding is LLVM-only by design. See
 [Kernel 0](/language/kernel) for the grants the examples carry and
 [`plan/device-caps.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/device-caps.md)
 for the design.
@@ -357,9 +356,7 @@ the one to change.
 
 ## Why this is checkable
 
-The capability matcher exists twice on purpose: in Kelp (the compiler's own
-runtime module, `std/rt`) and in C in `kelpc/runtime/`, with differential tests
-comparing the two on a corpus. A grant is checked statically *and* enforced at
+The capability matcher is written in Kelp, in the compiler's own runtime module, `std/rt`. The runtime crate `kelp-rt` declares its entry points as weak imports. A grant is checked statically *and* enforced at
 runtime against the pattern list, at every call site that names a resource: a
 wrapper, the primitive behind it, a receiver method, a closure body and a `pd`
 initializer are each checked against the grant of the module they are written
