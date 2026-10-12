@@ -86,7 +86,7 @@ fun main() {
 }
 ```
 
-It prints, on both backends:
+It prints:
 
 ```
 20

@@ -151,7 +151,7 @@ the trait's module or the type's.
 
 Because a trait impl's methods *are* the type's methods, nothing else changes:
 an impl method is reached through a value exactly as an inherent one is, it is
-emitted by both backends through the same per-type function, and a trait method
+emitted through the same per-type function, and a trait method
 on a type that also declares its own `drop` still drops through the same
 generated `kelp_drop_<T>`.
 
@@ -515,7 +515,7 @@ like a `&T`, and the value it points at is still owned by whoever lent it.
 
 - **One vtable per `(Trait, Type)` pair actually used in a coercion.** A pair
   that is never coerced to has no vtable. Each vtable is emitted once per
-  program, as `static const` data on both backends.
+  program, as `static const` data.
 - **One slot per method, in one fixed order**: the trait's supertraits first,
   recursively in declaration order, then the trait's own methods in source
   order. A supertrait method is callable on a `&dyn` of the subtrait.

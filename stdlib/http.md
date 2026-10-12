@@ -583,7 +583,7 @@ fun main() {
 }
 ```
 
-Both backends print:
+It prints:
 
 ```text
 200
@@ -594,7 +594,7 @@ hello over tls
 I also ran `http.serve_tls_n(36010, &cfg, handler, 2)` as a stand-alone server
 and fetched it with `curl --cacert ca.pem https://localhost:36010/hello`, which
 answered `hello over tls`, and a path the handler does not know, which answered
-`404`; the server then returned and printed `2`, on both backends.
+`404`; the server then returned and printed `2`.
 
 ## Notes
 

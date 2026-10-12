@@ -262,7 +262,7 @@ that wants a CA from a file needs `std/tlsfile`, which needs an `fs` grant; a
 module with no `fs` grant is refused at compile time ("needs the 'fs'
 capability"), and a path outside the grant is the ordinary `fs` denial and is
 never opened. A directory of CAs (`ca_dir`) has no bytes form; read the
-certificates you want and concatenate the PEM text. The old spellings are compile errors on both backends (checked on 2026-10-04):
+certificates you want and concatenate the PEM text. The old spellings are compile errors (checked on 2026-10-04):
 
 ```text
 error: datac 'std.tls.TlsClientOptions' has no method 'with_ca_file'
@@ -558,7 +558,7 @@ fun main() {
 }
 ```
 
-I ran it on both backends with `/etc/myapp/certs` replaced by the scratch
+I ran it with `/etc/myapp/certs` replaced by the scratch
 directory (the real `caps(fs = [...])` pattern must be an absolute path, so the
 grant carries the same directory). With a certificate (`./prog cert`) both
 backends print:

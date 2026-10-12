@@ -222,7 +222,7 @@ allowed set. None is a compiler change:
   real `hash`/`eq` pair, which makes the compiler skip the derived one, and
   `soft_backend.find_text` writes into a caller's `String` instead of returning
   an `Option<String>`. The pairs are hand-written with `str.len`/`str.byte`, so
-  `Map` still works on both backends. The freestanding compiler half (emit a body
+  `Map` still works. The freestanding compiler half (emit a body
   for `kelp_map_key_eq`, or emit the derived pair only for a type a `Map` really
   keys) is recorded as a gap, not fixed here.
 - **Two language shapes the code works around**, both already in the gap list: a

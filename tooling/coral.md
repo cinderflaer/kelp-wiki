@@ -444,7 +444,7 @@ fun main() {
 - **`domain`** must be one of the seven existing names; an unknown one is the
   same error an unknown domain gives on a `caps(...)` clause. `ui` is the
   display domain, and it accepts only the wildcard.
-- **`library`** is linked (`-l<library>`) on both backends' link lines, the same
+- **`library`** is linked (`-l<library>`) on the link line, the same
   "an unused library is free to link" reasoning `-lm`/`-lssl` already use.
 - **`symbols`** is the allowlist: an `extern fun` in that module typechecks only
   if its bare name is in the list. An entry may rename it,
@@ -456,8 +456,7 @@ fun main() {
   signature.
 - **`include_dirs`** and **`library_dirs`** add `-I`/`-L`, resolved against the
   directory holding `coral.toml`. **`pkg_config`** names a package whose
-  `pkg-config --cflags --libs` output reaches the compile and the link line of
-  both backends; a package `pkg-config` cannot resolve fails the build.
+  `pkg-config --cflags --libs` output reaches the compile and the link line; a package `pkg-config` cannot resolve fails the build.
 - **A module gets at most one `[extern.*]` entry**, and it must appear before
   any other section that isn't `[caps]` (the same manifest-ordering rule
   `[caps]` follows).

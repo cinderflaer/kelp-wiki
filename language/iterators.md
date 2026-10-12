@@ -92,7 +92,7 @@ fun main() {
 }
 ```
 
-It prints, identically on both backends:
+It prints:
 
 ```
 0 1 2 3 4 
@@ -331,7 +331,7 @@ fun main() {
 }
 ```
 
-Output, on both backends:
+Output:
 
 ```
 0 1 2 3 4 

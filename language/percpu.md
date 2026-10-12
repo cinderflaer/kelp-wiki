@@ -62,7 +62,7 @@ error: coral.toml value for '[target] cpus' must be between 1 and 64, found 0
 ```
 
 `cpu_count() -> usize` is the manifest's `cpus` folded to a `usize` literal at
-check time, so it is the same constant to both backends and costs nothing at run
+check time, so it is the same constant to the backend and costs nothing at run
 time.
 
 `cpu_index() -> usize` is the running CPU's index, read from the register the

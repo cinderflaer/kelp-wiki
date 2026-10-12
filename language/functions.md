@@ -191,8 +191,7 @@ only reads.
 
 A needs-exclusive capture is accepted when the enclosing binding is an owned
 `var` (a `datac`, a collection, a `String`, or a `Copy` scalar) or a `mut`
-parameter, which the block reborrows for the call only. This program runs on
-both backends:
+parameter, which the block reborrows for the call only. This program runs:
 
 ```kelp
 impl "std/sync"
@@ -250,8 +249,7 @@ pointer and the new values are visible after the call. `tally` reborrows its
 Inside the block an exclusive capture behaves like a `mut` parameter, so it can be
 passed on to a function that takes `mut`, which is what lets an Elm-style drain
 loop write the model without threading it through the callback (this is the body
-of `pump` in the `excl_capture_drain` fixture, which prints `1`, `6`, `8`, `8` on
-both backends):
+of `pump` in the `excl_capture_drain` fixture, which prints `1`, `6`, `8`, `8`):
 
 ```text
 q.drain { msg ->

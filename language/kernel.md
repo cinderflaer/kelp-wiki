@@ -170,8 +170,7 @@ owns (`#DE` 0, `#UD` 6, `#GP` 13, `#PF` 14 and the timer's 32) from
 `Ptr.from_fn(gate).addr()`. The other 251 gates stay absent: an absent gate is a
 `#GP`, which has a handler, so nothing points at zero. `lidt` reads a separate
 `repr(packed)` ten-byte descriptor (a 16-bit limit and a 64-bit base), so the
-gate cannot double as one. Both layouts are pinned by
-`tests/projects/x86_idt_layout` on both backends and re-checked at boot by
+gate cannot double as one. Both layouts are pinned by `tests/projects/x86_idt_layout` and re-checked at boot by
 `trap.layout_ok`, because the gates' `asm` hardcodes the offsets and the
 compiler checks neither end.
 
@@ -630,7 +629,7 @@ register file, the scheduler address the entry calls, a state, an id and its
 own 4096-byte stack, so the whole table is one object in `.bss`. An array
 static's element may now be a `datac` or another array, recursively, which is
 the one compiler change this example forced; `tests/projects/static_datac_array`
-pins it on both backends.
+pins it.
 
 A timer tick is handled by a naked `trap_entry`. `mscratch` holds the address of
 the *current* task's frame while that task runs, so the entry saves all 31

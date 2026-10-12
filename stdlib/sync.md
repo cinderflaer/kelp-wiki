@@ -244,7 +244,7 @@ fun main() {
 ```
 
 Standard output carries the worker's panic text, standard error carries the
-second panic, and the exit status is 1, on both backends:
+second panic, and the exit status is 1:
 
 ```
 writer exploded
@@ -305,7 +305,7 @@ fun main() {
 }
 ```
 
-It prints `42` on both backends:
+It prints `42`:
 
 ```
 42
@@ -466,7 +466,7 @@ fun main() {
 
 The loop ends by itself: `main`'s own `tx` was moved into the second job, so
 the channel closes when both workers have returned and dropped their senders.
-Both backends print:
+It prints:
 
 ```
 6

@@ -124,7 +124,7 @@ fun main() {
 }
 ```
 
-That program prints `alpha` then `2`, on both backends. The order is what
+That program prints `alpha` then `2`. The order is what
 matters: move the `push` before the `print` and the borrow is still used after
 the mutation, so it is refused:
 
@@ -184,7 +184,7 @@ fun main() {
 }
 ```
 
-That prints `6`, on both backends. The same shape works over a `List` by index:
+That prints `6`. The same shape works over a `List` by index:
 `var cur = xs.get(0)`, then `cur = xs.get(i)` in a loop, keeps `xs` pinned for as
 long as `cur` is used. Re-pointing a cursor from one owner to another releases
 the first at the assignment, so the first owner is mutable again.

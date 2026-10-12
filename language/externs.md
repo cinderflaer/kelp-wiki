@@ -52,7 +52,7 @@ The section header names the module by the path it is imported under, quoted:
 `"sys"` for `src/sys.kp`. A bare `[extern.sys]` is refused. A module gets at most
 one `[extern.*]` entry, which appears before any other section except `[caps]`.
 
-`library` is linked as `-l<library>` on both backends. `header` names a C header
+`library` is linked as `-l<library>`. `header` names a C header
 that is `#include`d after the runtime preamble; `include_dirs` and `library_dirs`
 add `-I`/`-L`; `pkg_config` runs one `pkg-config --cflags --libs` and puts the
 flags on both the compile and the link line.
@@ -326,8 +326,7 @@ destructor still frees the box.
 A `fun(P0, P1, ...).return: T` parameter or return in a user `extern fun` is a typed
 plain C function pointer. Use it when the native function borrows the callback
 for the call. For example, `fun(i32).return: i32` maps to `int (*)(int)`: the
-`ffi_fn_pointer` regression passes one to a C helper and receives one back on
-both backends.
+`ffi_fn_pointer` regression passes one to a C helper and receives one back.
 
 The pointer carries no captured environment and the native side must not retain
 it beyond the call. Use `move closure(...)` instead when the native API needs a

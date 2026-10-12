@@ -144,7 +144,7 @@ binding ('val p: Ptr<i32> = Ptr.null()')
 | `p.read_unaligned()` | a `Copy` element at any alignment |
 | `p.write_unaligned(v)` | a store at any alignment |
 | `Ptr.alloc<T>(count)` | hosted `malloc`; unavailable in a freestanding build |
-| `Ptr.try_alloc<T>(count)` | the same allocation without the panic: the null `Ptr<T>` on failure, the byte count checked for wrap on both backends; freestanding it needs an `[target] alloc`/`dealloc` pair |
+| `Ptr.try_alloc<T>(count)` | the same allocation without the panic: the null `Ptr<T>` on failure, the byte count checked for wrap; freestanding it needs an `[target] alloc`/`dealloc` pair |
 | `p.free()` | hosted `free`; unavailable in a freestanding build |
 
 ```kelp project
@@ -215,7 +215,7 @@ true
 false
 ```
 
-Hosted it is libc's `malloc` on both backends. Freestanding it is the project's
+Hosted it is libc's `malloc`. Freestanding it is the project's
 own `[target] alloc`, admitted only when the manifest names `alloc`/`dealloc`;
 without the pair the refusal is the same one `List` gets and names both keys:
 
@@ -223,7 +223,7 @@ without the pair the refusal is the same one `List` gets and names both keys:
 error: 'Ptr#try_alloc' is unavailable in a freestanding build: it needs an allocator: set '[target] alloc' and '[target] dealloc' to the project's own functions
 ```
 
-On both backends the byte count `count * size_of::<T>()` is checked for wrap
+The byte count `count * size_of::<T>()` is checked for wrap
 before the call, so a request whose product would overflow `usize` answers the
 null pointer instead of asking the allocator for a small block. That is the one
 place `try_alloc` is deliberately stricter than `Ptr.alloc`, whose product can

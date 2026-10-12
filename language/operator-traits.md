@@ -10,7 +10,7 @@ A `datac` or `enum` can have the arithmetic operators, the order operators and
 string interpolation by implementing a trait. `std/ops` declares
 one trait per operator and [`std/fmt`](/stdlib/fmt) gains `Display`. Each
 operator is a **desugar in the front end** into an ordinary method call, so the
-borrow checker and both backends see a plain call and a freestanding image may
+borrow checker and the backend sees a plain call and a freestanding image may
 use one. This replaces the old rule that there is "no operator overloading": a
 user type is overloaded by implementing the trait, and the builtin types are
 unchanged.
@@ -107,7 +107,7 @@ fun main() {
 }
 ```
 
-It prints, identically on both backends:
+It prints:
 
 ```
 (10, 21)

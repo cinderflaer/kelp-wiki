@@ -121,7 +121,7 @@ See [Front-end fuzzing and parser limits](/tooling/fuzzing) for the parser limit
 
 ## Compile time
 
-The compiler's scaling tests build large generated programs on both backends:
+The compiler's scaling tests build large generated programs:
 long method chains, deeply nested calls, 300-arm `elif` ladders, 200-field
 `datac`s and 5,000-element list literals. A step that takes over 20 seconds fails
 the test.

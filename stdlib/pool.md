@@ -73,7 +73,7 @@ fun main() {
 }
 ```
 
-Both backends print:
+It prints:
 
 ```
 51

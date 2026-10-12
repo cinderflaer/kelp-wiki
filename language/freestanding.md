@@ -220,8 +220,7 @@ ends with) and the 1-based *line* of the statement the check was inserted into.
 That is the same per-statement span the hosted backends' line tables and
 `#line` directives are built from, so a freestanding panic names the same line a
 hosted one would. The line is the statement the check belongs to, not the exact
-sub-expression: one `locate` per statement is the granularity both backends
-carry.
+sub-expression: one `locate` per statement is the granularity the backend carries.
 
 A check never calls the handler directly. Every check calls one compiler-emitted
 entry, `kelp_panic_entry(msg, file, line)`, which:

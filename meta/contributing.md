@@ -52,7 +52,7 @@ their output. `bench/speed/run.sh` times a smaller four-workload set.
   lists.
 - **A green differential run** for a backend change: `kelpc/tests/backend_coverage.rs`
   compares the whole corpus and `kelpc/tests/differential_fuzz.rs` generates
-  programs from seeds and compares both backends byte for byte on each. A
+  programs from seeds and checks the `llvm` backend on each. A
   mismatch is a defect to diagnose in a backend, never a shape removed from the
   generator or a fixture removed from the corpus.
 - **A test in the corpus** for a capability-matcher or path-normalizer change:
