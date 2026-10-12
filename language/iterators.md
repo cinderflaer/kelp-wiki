@@ -202,7 +202,7 @@ done 7
   on any exit from its block, which is why `done 1`, `done 3`, `done 5` and
   `done 7` print once per odd pass. The passes that `continue` before reaching
   the `defer` print nothing.
-- A `break` or `continue` frees every owned local declared inside the loop it
+- A `break` or `continue` drops every owned local declared inside the loop it
   leaves, and only those.
 - Outside every loop they are refused, naming the statement:
 
@@ -264,7 +264,7 @@ with `break` or `return`. A label is written before a loop, as `'name:`, and
   function, a `fun` literal or a block passed to a call.
 - `loop` is read as the keyword only at the start of a statement and only when a
   `{` follows, so a function called `loop` is still a name everywhere else.
-- Every owned local of every loop an exit leaves is freed, as for a plain `break`.
+- Every owned local of every loop an exit leaves is dropped, as for a plain `break`.
   The compiler writes a labelled exit as a hidden flag and ordinary `break`s, so
   nothing else about loops changed.
 

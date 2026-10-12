@@ -19,7 +19,7 @@ These are design decisions. None of them is planned.
 | Missing | Use instead |
 | --- | --- |
 | Exceptions and `try`/`catch` | `Option`, `Result`, `?`, and `panic` for failures with no way to recover ([Errors](/language/errors)) |
-| A garbage collector | Ownership, with each value freed at the end of its owner's scope ([Ownership](/language/ownership)) |
+| A tracing collector for every value | Owners and drops for resources, and a collector only for memory values in a hosted build ([Ownership](/language/ownership), [Memory](/memory)) |
 | Macros | Text substitution with `alias` ([Modules](/language/modules#aliases)) |
 | `goto` | `break`, `continue`, labels and `return` ([Control flow](/language/control-flow)) |
 | `derive` | Write the impl by hand ([Operator traits](/language/operator-traits)) |

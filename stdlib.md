@@ -24,14 +24,14 @@ One page per `std/*` module, the capability domain each one needs, and the compi
 - [`std/net`](/stdlib/net): TCP connect, listen, accept, send and receive (gated on `net`).
 - [`std/option`](/stdlib/option): `Option<T>` and its free-function combinators.
 - [`std/path`](/stdlib/path): lexical path handling.
-- [`std/pool`](/stdlib/pool): a fixed thread pool (hosted builds only).
+- [`std/pool`](/stdlib/pool): a fixed thread pool (hosted builds only; refused on current `main`).
 - [`std/process`](/stdlib/process): `args`, `spawn`, `run` and `exit` (gated on `process`).
 - [`std/rand`](/stdlib/rand): unseeded `u64`, `below` and `bytes` (gated on `rand`).
 - [`std/regex`](/stdlib/regex): a linear-time regular expression engine.
 - [`std/result`](/stdlib/result): `Result<T, E>` and its free-function combinators.
 - [`std/source`](/stdlib/source): the `file` and `line` of the Kelp call site.
 - [`std/str`](/stdlib/str): text search, slicing, splitting, parsing and formatting.
-- [`std/sync`](/stdlib/sync): `Mutex`, `RwLock`, `Condvar` and channels (hosted builds only).
+- [`std/sync`](/stdlib/sync): `Mutex`, `RwLock`, `Condvar` and channels (hosted builds only; channels are refused on current `main`).
 - [`std/sys`](/stdlib/sys): `os()` and `arch()`, the build target's names.
 - [`std/thread`](/stdlib/thread): `spawn`, `join`, `fence`, `sleep_ms` and `current_id`.
 - [`std/time`](/stdlib/time): `now_unix`, `now_mono_ns` and `sleep_ms` (gated on `time`).
@@ -91,8 +91,8 @@ The domain each module needs comes from the compiler's own table
 | `std/frame` | `frames` | a physical frame as a capability: `frame.claim(addr)` is the only constructor, checked against the calling module's `frames` grant and 4 KiB-aligned |
 | `std/atomic` | - | `Atomic<T>` and the one ordering v1 has |
 | `std/thread` | - | `spawn`, `join`, `fence(order)`, `sleep_ms`, `current_id` and the `ThreadErr` a join hands back |
-| `std/sync` | - | `Mutex<T>`, `RwLock<T>` and `Condvar` through scoped blocks, plus channels (`sync.bounded`, `sync.unbounded`, `Sender`, `Receiver`) and `Mutex.share`/`swap`; hosted only |
-| `std/pool` | - | a fixed thread pool: `pool.new`, `Pool.spawn`, `join`, `panicked`; hosted only |
+| `std/sync` | - | `Mutex<T>`, `RwLock<T>` and `Condvar` through scoped blocks, plus channels (`sync.bounded`, `sync.unbounded`, `Sender`, `Receiver`) and `Mutex.share`/`swap`; hosted only; channels are refused on current `main` (see the page) |
+| `std/pool` | - | a fixed thread pool: `pool.new`, `Pool.spawn`, `join`, `panicked`; hosted only; refused on current `main` (see the page) |
 | `std/iter` | - | the `Iterator` trait `for` walks, `Range`, and `count`/`sum_i64`/`collect_list` |
 | `std/ops` | - | the operator traits `Add`, `Sub`, `Mul`, `Div`, `Rem`, `Neg` and `Ord` |
 | `std/convert` | - | the `From<T>` and `Into<T>` traits; `?` converts a failure through `From` |

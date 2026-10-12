@@ -142,6 +142,10 @@ machine runs low, running no destructors on any worker.
 - **No shared cache.** The key names the triple, CPU, features, relocation, code
   model and compiler and LLVM versions, so a directory copied to another machine
   or used by another `kelpc` build simply misses and rebuilds.
+- **No hosted support.** A hosted build is whole-program, because the collector's
+  descriptors and init are one module's. `--incremental` on a hosted build is refused
+  by name, and a hosted manifest with `[build] incremental = true` is built
+  whole-program with a warning.
 - **No freestanding support.** `--incremental` with
   `[target] mode = "freestanding"` is refused by name: the bare-metal path emits
   the entry stub, the panic state and the `probe-stack`/`noredzone` sweep at

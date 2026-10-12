@@ -72,7 +72,7 @@ Assigning to an owned binding moves the new value in and drops the old one:
 
 ```kelp
 var name = String.from_str(s = "first")
-name = String.from_str(s = "second")   // the first String is freed here
+name = String.from_str(s = "second")   // the first String is dropped here
 ```
 
 That is how a recursive structure is rebuilt in a loop, and it is why the left
@@ -108,7 +108,7 @@ val ((x, y), z) = corners()     // a nested tuple takes a nested pattern
 - The pattern must name as many positions as the tuple has. A pattern written for
   another arity is refused, and the message gives both counts.
 - `_` ignores a position instead of binding it. The ignored value stays in the
-  tuple that was destructured, so an owned element that `_` ignores is freed by
+  tuple that was destructured, so an owned element that `_` ignores is dropped by
   that tuple's own drop.
 - `val` and `var` apply to every position: `var (a, b) = ...` makes both `a` and
   `b` assignable.

@@ -15,19 +15,19 @@ The checks run once over the whole program, and only then is code generated.
 
 | Step | Entry point | File |
 | --- | --- | --- |
-| Load and resolve the module graph | `resolve::load` | `resolve.rs:528` |
-| Lex, expand aliases, parse each module | `visit_body` and `Parser::parse_program` | `resolve.rs:1659`, `parser.rs:382` |
-| Lower `defer` into ordinary statements | `defer::lower` | `resolve.rs:1709`, `defer.rs:35` |
-| Type check the whole program | `infer::check_program` | `infer.rs:8621` |
-| Check moves, borrows and build the drop plan | `borrowck::check_program` | `borrowck.rs:2114` |
+| Load and resolve the module graph | `resolve::load` | `resolve.rs` |
+| Lex, expand aliases, parse each module | `visit_body` and `Parser::parse_program` | `resolve.rs`, `parser.rs` |
+| Lower `defer` into ordinary statements | `defer::lower` | `resolve.rs`, `defer.rs` |
+| Type check the whole program | `infer::check_program` | `infer.rs` |
+| Check moves, borrows and build the drop plan | `borrowck::check_program` | `borrowck.rs` |
 | Check the freestanding allowed set | `freestanding::check` | `freestanding.rs` |
-| Generate LLVM IR and an object | `codegen_llvm::compile` | `codegen_llvm.rs:375` |
-| Link with `ld.lld` | `driver::link_llvm_objects` | `driver.rs:273` |
+| Generate LLVM IR and an object | `codegen_llvm::compile` | `codegen_llvm.rs` |
+| Link with `ld.lld` | `driver::link_llvm_objects` | `driver.rs` |
 
-The front end entry point is `front_end` in `main.rs:202`.
-`kelpc check` calls it and prints the findings, with no code generation (`main.rs:267`).
-`kelpc build` (`main.rs:428`) runs the same steps and then generates code.
-A freestanding build runs `freestanding::prune` and type checks the pruned program a second time (`main.rs:459` to `481`).
+The front end entry point is `front_end` in `main.rs`.
+`kelpc check` calls it and prints the findings, with no code generation (`main.rs`).
+`kelpc build` (`main.rs`) runs the same steps and then generates code.
+A freestanding build runs `freestanding::prune` and type checks the pruned program a second time (`main.rs`).
 
 ## What each pass owns
 
@@ -75,8 +75,8 @@ Each pass does the following with it.
 | LLVM codegen | Emits `main`, `area` and the list helpers into one module, then runs the LLVM passes at `-O2`. |
 | Driver | Writes `build/<name>.ll` and `build/<name>.o` and runs `ld.lld`. |
 
-The loop desugaring is in `infer.rs:11537` to `11600`.
-The borrow at the call site is inserted by `check_call_arg` (`infer.rs:15918`).
+The loop desugaring is in `infer.rs`.
+The borrow at the call site is inserted by `check_call_arg` (`infer.rs`).
 
 ## Known gaps in the pipeline
 

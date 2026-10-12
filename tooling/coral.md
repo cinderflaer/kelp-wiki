@@ -450,18 +450,19 @@ fun main() {
   if its bare name is in the list. An entry may rename it,
   `"kelp_name=c_symbol"`, so the Kelp function and the C symbol can differ and
   two libraries that share a symbol name are both bindable.
-- **`header`** names one C header, emitted as `#include <header>` after the
-  runtime preamble (deduplicated and sorted across sections). The generated C
-  does not invent a prototype: the header is what gives the symbol its real
-  signature.
-- **`include_dirs`** and **`library_dirs`** add `-I`/`-L`, resolved against the
-  directory holding `coral.toml`. **`pkg_config`** names a package whose
-  `pkg-config --cflags --libs` output reaches the compile and the link line; a package `pkg-config` cannot resolve fails the build.
+- **`header`** is checked for its form (a quoted name with no quote, angle bracket,
+  newline or `..`), and then nothing reads it: kelpc compiles no C, so no header is
+  included.
+- **`include_dirs`** is checked and then not used. **`library_dirs`** adds `-L`,
+  resolved against the directory holding `coral.toml`. **`pkg_config`** names a
+  package whose `pkg-config --cflags --libs` output reaches the link line; a package
+  `pkg-config` cannot resolve fails the build.
 - **A module gets at most one `[extern.*]` entry**, and it must appear before
   any other section that isn't `[caps]` (the same manifest-ordering rule
   `[caps]` follows).
 - **What's not here yet**: `extern "C"` block syntax, import/export linkage
-  attributes, and a `repr(C)` struct crossing by value. A typed plain
+  attributes, and by-value struct, `Bytes`, `String` or `List` arguments and results,
+  which are refused by name for now. A typed plain
   `fun(...)` parameter or return is a C function pointer for a callback the
   native side borrows for one call. `extern type` handles (with parents,
   `null()` and `cast()`), `...` variadics and `move closure(...)` callbacks all

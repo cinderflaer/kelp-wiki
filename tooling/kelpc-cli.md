@@ -160,7 +160,7 @@ disk.
 | `kelpc build .` | `build/a.out` | `build/a.ll` and `build/a.o` |
 
 The generated files are `<out>.ll` (textual IR) and `<out>.o` (the object),
-written beside the binary. The object is linked with `ld.lld`. A program that reaches an `extern fun` or a capability-gated call also gets `<out>.externs.c` and `<out>.externs.o`, the extern object compiled with `cc`. Every `kelpc` links `libLLVM-21.so` and needs it at runtime.
+written beside the binary. The object is linked with `ld.lld`. A program that reaches an `extern fun` or a capability-gated call also gets `<out>.externs.o`, an LLVM IR object with the trampolines, the callback glue and the allowlists. No `.c` file is written. Every `kelpc` links `libLLVM-21.so` and needs it at runtime.
 
 - `build/` is relative to the **current working directory**, and the compiler
   creates it if it is missing.
@@ -202,7 +202,10 @@ Turn it on one of three ways:
 - `[build]` `incremental = true` in the project's `coral.toml`;
 - leave it off, which is the default.
 
-A freestanding project is refused by name:
+A hosted build named with `--incremental` on the command line is refused by name:
+the collector's descriptors and init are whole-program, so the unit split cannot
+share them. A hosted manifest that sets `[build] incremental = true` is built
+whole-program, with a warning. A freestanding project is refused by name:
 
 ```text
 $ kelpc build examples/kernel0 --incremental
@@ -283,13 +286,15 @@ describe to LLVM IR and an object. That covers the scalar types, `datac` records
 references, closures and function values, the `extern fun` bodies, the `pd`
 globals and the capability check. The gates that carry the slices are the `kelpc/tests/run-llvm-*.sh` scripts, one
 per area: scalars, `datac`, strings and drops, enums, containers, references,
-closures, externs, `pd` globals and capabilities, and ABI aggregates. One guard
+closures, externs, `pd` globals and capabilities. The ABI aggregates have their own
+Rust witness, `kelpc/tests/abi_aggregate.rs`. One guard
 remains in the lowering, for an owned temporary at a place it did not stage, and
 nothing in the corpus reaches it. The object carries DWARF line locations, so a
 fault in an `llvm`-built binary names the `.kp` file and line. It is a line table,
 so there are no variables and no types. One optimization level is one level for
 the whole build: it selects the LLVM pass pipeline and the target machine's
-codegen level, and it is the `-O` flag given to the extern object's `cc` compile. See the MK7 record in
+codegen level, and the extern object is written at the same level. `ld.lld` takes no
+`-O` flag. See the MK7 record in
 [`plan/done.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/done.md).
 
 ## `fmt`
@@ -481,7 +486,7 @@ kernel's OOM killer to choose a victim (on a small host the victim is often not
 the compiler, and can be a whole login session).
 
 A watchdog thread reads `MemAvailable` from `/proc/meminfo` every 200 ms. Below
-the floor it kills the `cc`/`ld.lld`/`pkg-config` children the driver spawned
+the floor it kills the `ld.lld`/`pkg-config` children the driver spawned
 (they are the largest consumers and would outlive `kelpc`), prints the message
 below and leaves with `_exit(75)` (`EX_TEMPFAIL`: the same input can succeed once
 memory is free). The main thread is still inside LLVM at that point, so the exit

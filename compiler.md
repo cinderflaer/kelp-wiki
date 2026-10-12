@@ -15,7 +15,7 @@ How `kelpc` turns `.kp` sources into a program: the stages, the files that imple
 - [Ownership and drops](/compiler/ownership): `defer`, moves, borrows and the drop plan.
 - [Backends](/compiler/backends): the LLVM backend, the only code generator.
 - [Driver](/compiler/driver): the commands, the build steps, linking and diagnostics.
-- [Runtime](/compiler/runtime): the standard library sources, `extern fun` bodies and the C runtime files.
+- [Runtime](/compiler/runtime): the standard library sources, `extern fun` bodies and the Rust runtime crate `kelp-rt`.
 - [Incremental builds](/compiler/incremental): per-module units, the object cache and parallel workers.
 - [Tests](/compiler/tests): the fixture suite, the backend gates and the fuzzers.
 - [Benchmarks](/compiler/benchmarks): what the speed and write benchmarks measure.

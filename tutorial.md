@@ -16,7 +16,7 @@ ideas into a real tool.
 ## What you need
 
 - The `kelpc` compiler, version 26.10.4 or later. [Install](/getting-started/install)
-  explains the routes and the C compiler that some programs need for their `extern fun` bodies.
+  explains the routes to get it.
 - A text editor. [Editor setup](/getting-started/editor) lists the options.
 
 ## How the examples were checked

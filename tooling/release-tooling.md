@@ -40,7 +40,8 @@ from the environment: it uses the commit time.
 ## `build/release.sh`
 
 Run it inside the development shell (it needs `cargo`, `rustc`, `llvm-config`,
-`cc` and `git`):
+`cc` and `git`). `cc` is the linker driver that `cargo` and `rustc` use for the Rust
+binaries. kelpc does not run it:
 
 ```sh
 nix-shell shell.nix --run 'sh build/release.sh'
@@ -60,8 +61,7 @@ and `strip=debuginfo` for the release profile, and `RUSTFLAGS` that remap the
 checkout, the cargo home and the Rust sysroot to fixed names
 (`/kelp-src`, `/cargo-home`, `/rust-sysroot`) and drop the build id. The build
 timestamp is the last commit's time (override with `RELEASE_SOURCE_DATE_EPOCH`),
-and the commit baked in is `HEAD` (override with `KELPC_COMMIT`). The C runtime
-object compiled by `build.rs` gets `-ffile-prefix-map` for its two directories.
+and the commit baked in is `HEAD` (override with `KELPC_COMMIT`).
 `CARGO_TARGET_DIR` defaults to `target-release` in the checkout.
 
 ## `build/verify-reproducible.sh`
@@ -118,7 +118,8 @@ The default prefix is `~/.local`: the binary goes to `<prefix>/bin/kelpc`, and a
 manifest of what was installed goes to `<prefix>/share/kelpc/manifest`, which is
 all `--uninstall` removes. Before installing it checks that the platform is Linux
 x86_64, that `cc` and `libLLVM-21.so` exist (with install hints per distribution
-when not), and after installing it compiles and runs a hello-world program with the
+when not). `kelpc` does not run `cc`, so the `cc` check is a leftover in
+`build/install.sh`, and it still asks for the compiler. After installing it compiles and runs a hello-world program with the
 new binary. Linux x86_64 is the only supported platform.
 
 A session, in a temporary prefix, inside the development `nix-shell` (which

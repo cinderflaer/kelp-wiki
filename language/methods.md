@@ -84,7 +84,7 @@ A *payload bound by a pattern* counts as derived from the scrutinee it came out
 of, which is why the second function above type-checks.
 
 One consequence to know about: **a call that returns a borrow of its receiver
-cannot be made on a temporary**, because the temporary would be freed before the
+cannot be made on a temporary**, because the temporary would be dropped before the
 borrow could be used.
 
 ```kelp

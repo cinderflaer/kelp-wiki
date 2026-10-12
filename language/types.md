@@ -20,8 +20,8 @@ valid inside the scope that lent it.
 | `char` | Copy | one Unicode scalar value, written `'x'`. A code point, **not** an integer |
 | `str` | borrowed | NUL-terminated UTF-8 view into storage owned elsewhere. No length: deriving one costs a `strlen` |
 | `View` | borrowed | a **length-carrying** borrowed text view: pointer *and* length. Slices without allocating, scans without `strlen` |
-| `String` | owned | UTF-8 text, validated on construction, freed at scope exit |
-| `Bytes` | owned | raw byte buffer, freed at scope exit |
+| `String` | owned | UTF-8 text, validated on construction, dropped at scope exit; its memory is reclaimed by the hosted collector |
+| `Bytes` | owned | raw byte buffer, dropped at scope exit; its memory is reclaimed by the hosted collector |
 | `List<T>` | owned | growable sequence, one instantiation per element type |
 | `Map<K, V>` | owned | keyed container, keeps insertion order; `Map<V>` means a `String` key |
 | `Box<T>` | owned | one heap cell holding a `T` or nothing |

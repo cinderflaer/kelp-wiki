@@ -114,7 +114,8 @@ Capture rules:
 - Inside the body a capture is read *through a borrow of the environment*, so an
   owned capture can be used in place (a method called on it, a field read, passed
   to a parameter) but cannot be handed out by value.
-- A closure owns its environment and frees it where the closure dies.
+- A closure owns its environment. A resource in the environment is dropped where the
+  closure dies, and a hosted build's collector reclaims the environment's memory.
 
 In practice, a stdlib or library callback is written `closure(&T).return: U`, and a
 `Copy` element is used **directly** inside the literal: `acc + x`, not

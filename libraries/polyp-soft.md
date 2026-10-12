@@ -298,7 +298,7 @@ would need a retained view model; see the limits below.
   `polyp: frame patch list exceeds MAX_FRAME_PATCHES` rather than growing without
   bound.
 - The retained tree grows by one node and one parent insertion per `Create` and
-  never shrinks; it is freed only when the backend is dropped.
+  never shrinks; it is released only when the backend is dropped.
 
 ## The work-budget test and the benchmark
 

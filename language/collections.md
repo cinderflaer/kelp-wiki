@@ -147,6 +147,10 @@ print(runs.get(key = 7))
 
   The map then calls these two in place of a derived pair. Declare both or neither.
   The key is still cloned into the entry, so the type must also be deep-copyable.
+- On current `main`, an `enum` cannot be a `Map` key or a `Map` value. The collector
+  describes an enum only as a heap object (a `Box` payload or a `List` element), so
+  `Map<Kind, i32>` is refused with `managed mode describes the enum 'Kind' only as a
+  heap object`.
 - A `Bytes`, container, view, borrow, or a `datac`/`enum` with a field outside the
   keyable set is refused. The message names the field, or the missing half of the
   pair.
@@ -247,7 +251,7 @@ print(grid.get(i = 2).get(i = 1))
   or another array. It may not be a borrow or a `List`/`Map`/`Box`.
 - The array is `Copy` when the element is. `[i32; 3]` is a value you can assign
   freely; `[String; 3]` owns its three strings, so assigning it moves it, and
-  `set` frees the element it replaces.
+  `set` drops the element it replaces.
 - `[x; N]` copies `x` into every slot, so `x` has to own nothing: a scalar, or a
   `datac` whose fields are all scalars. A `String` element is refused by name,
   because `[s; 4]` would be four owners of one buffer.

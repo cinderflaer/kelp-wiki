@@ -29,7 +29,7 @@ three are stacked per mutant. Each mutant runs as a subprocess under
 `ulimit -v 2097152; ulimit -t 20` and a 40 s wall clock, half of them with
 `--json`, because the renderer's column arithmetic is a classic panic site.
 
-Not fuzzed: LLVM IR validity beyond the verifier, the linker and `cc`, `kelpc
+Not fuzzed: LLVM IR validity beyond the verifier, the linker (`ld.lld`), `kelpc
 build` option parsing, `coral.toml` parsing, `fmt` and `lint`, and the
 incremental cache. Only survival is checked, not that the diagnostic is a good one.
 

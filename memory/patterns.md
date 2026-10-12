@@ -1,12 +1,12 @@
 ---
-title: "Patterns for manual memory"
+title: "Patterns for owned values"
 description: "Six patterns for writing Kelp with single ownership: a tree of Box, a growing List, a Map of owned values, text and views without copies, returning owned values, and passing borrows. Each is a complete program."
 isPublished: true
 tags: "language, ownership, memory, collections"
 ---
 Each pattern below is a complete program. All of them compiled and printed the
 output shown with the 26.10.5 release compiler. The rules they follow are on
-[The rules of manual memory](/memory/rules).
+[The rules of ownership](/memory/rules).
 
 ## A tree of Box
 
@@ -106,7 +106,7 @@ false
 1
 ```
 
-`gone` owns the removed string, and it is freed at the end of `main`.
+`gone` owns the removed string, and it is dropped at the end of `main`.
 
 ## Text and views without copies
 
@@ -147,7 +147,7 @@ its index, which is quadratic over the loop.
 ## Returning an owned value
 
 A function that builds a value returns it with an owned return type. The caller
-owns the result, and nothing is freed inside the function. Build text in a local
+owns the result, and nothing is dropped inside the function. Build text in a local
 `String` and return that local; do not return a borrow of it.
 
 ```kelp
@@ -176,7 +176,7 @@ user-42
 ```
 
 `digits` is bound to a name before `as_str()` borrows it. Passing the call's result
-straight into `as_str()` is refused, because the temporary would be freed before the
+straight into `as_str()` is refused, because the temporary would be dropped before the
 borrow is used.
 
 ## Passing borrows to a function

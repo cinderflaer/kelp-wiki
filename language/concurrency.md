@@ -52,7 +52,8 @@ keeping on record:
   (a Miri-style checker) that gives evidence about the checker,
   not the enforcement mechanism.
 - **Not channels-only.** A channel is a value type a program may use (it
-  ships, in [`std/sync`](/stdlib/sync#channels)), but it cannot be *the*
+  is in [`std/sync`](/stdlib/sync#channels), and it is refused on current `main`
+  for now), but it cannot be *the*
   mechanism: a
   channel-only model still lets two threads hold a `&mut T` to one location if
   nothing refuses it. The rule above is what makes the race unwritable; a
@@ -66,7 +67,9 @@ keeping on record:
 one scalar takes one. It also holds the channels, which move owned values
 between threads instead of sharing a location, and [`std/pool`](/stdlib/pool)
 is a fixed pool of workers over one queue. The limits of both are on their pages:
-hosted only, an owned element, one thread created per pool job.
+hosted only, an owned element, one thread created per pool job. On current `main`
+both are refused until the step that scans thread and lock values lands, so a
+program that uses them does not build yet.
 
 ## One ordering: `SeqCst`
 
@@ -211,12 +214,12 @@ than decided speculatively; none of them blocks anything above:
   as well as a memory-model one. It waits for the capability design to cover it.
 - **`Relaxed`, `Acquire` and `Release`** are reserved argument values, not
   shipped: see "One ordering" above.
-- **Channels and a pool shipped without changing the rule above.** They are
-  built on it: a channel is a `Mutex`-guarded queue whose two ends share one
-  runtime record through `Mutex.share()`, and a pool is the same queue of
-  closures ([`std/sync`](/stdlib/sync), [`std/pool`](/stdlib/pool)). What is
-  still absent is a `select` over several channels and a rendezvous
-  (capacity 0) channel.
+- **Channels and a pool are built on the rule above.** A channel is a
+  `Mutex`-guarded queue whose two ends share one runtime record through
+  `Mutex.share()`, and a pool is the same queue of closures
+  ([`std/sync`](/stdlib/sync), [`std/pool`](/stdlib/pool)). On current `main` they are
+  refused, with `select` and rendezvous channels, until the step that lets the
+  collector see values that a thread or a lock holds.
 
 ## See also
 

@@ -141,6 +141,13 @@ reassignment of a `var`, a container's element drop). There is no runtime type
 tag: the box carries a method set and the ownership of the storage, not a dynamic
 type.
 
+**Status on current `main`.** A `Box<dyn Name>` is a resource for the collector, so it
+cannot be a `List` element (`'Box<dyn Shape>' cannot be a List element in managed mode`).
+A concrete type with a destructor cannot be the payload of a Box (`'Circle' cannot be
+the payload of a Box in managed mode`), so a `Box<dyn Name>` made from such a type is
+refused too. The examples on this page that put a boxed trait object in a `List`, or
+that box a type with a destructor, do not build on `main`.
+
 ## Threads
 
 A `Box<dyn Name>` is an owned value with no borrow in it, so `thread.spawn` may

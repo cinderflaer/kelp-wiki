@@ -73,7 +73,7 @@ message names the construct.
   `argc`/`argv` globals), `Ptr.alloc`/`Ptr.free` (the hosted `malloc`/`free`),
   passdowns (`pd`, whose initializers run through the generated `kelp_init_pds`
   that only the hosted entry point calls), `Thread` (which always reaches the
-  hosted C runtime), `Box`, `List`, `Map`, `String` and `Bytes` when no
+  hosted runtime), `Box`, `List`, `Map`, `String` and `Bytes` when no
   allocator pair is configured, and any `std/*` module except the admitted ones
   below.
 
@@ -419,7 +419,7 @@ script should place the stub first.
 the `TargetMachine` for the triple, writes the object, and links it with
 `ld.lld -T <script> -o <out> --static <obj>`. A missing `ld.lld` is an error
 naming it; `kelpc` never falls back to `cc`, which would link the hosted startup
-files back in. There is no runtime object, no per-program C object and no `-lm`.
+files back in. There is no runtime object, no C object and no `-lm`.
 
 riscv64 gets the `generic-rv64` CPU, `+m,+a,+c` features and the **medium** code
 model; aarch64 gets the `generic` CPU, no extra features and the **small** code

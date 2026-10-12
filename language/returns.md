@@ -132,7 +132,7 @@ fun as_str(v: &Json).return: &str {
   ```kelp refused
   impl "std/str"
 
-  // error: a temporary would be freed before the borrow is used
+  // error: a temporary would be dropped before the borrow is used
   fun bad().return: str = String.from_str(s = "x").as_str()
 
   fun main() {

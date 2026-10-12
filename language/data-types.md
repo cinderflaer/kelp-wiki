@@ -114,7 +114,7 @@ fun label(s: &Shape).return: &str = when s {
   moved out. A **temporary** is bound to a hidden local first, so the arm has a
   place to read the payload out of, and a non-`Copy` payload borrow has something
   to point at for the length of the arm. A chain over a temporary stages its
-  **root**, so `when mk().t { ... }` binds `mk()` and frees the whole value once.
+  **root**, so `when mk().t { ... }` binds `mk()` and drops the whole value once.
 - A payload binds as a **copy** when it is `Copy`, **by value** when it is owned
   and the scrutinee is an owned place (a `val`/`var` binding or a `move T`
   parameter), and as a **shared borrow** otherwise: `r` above is an `f64`, while a

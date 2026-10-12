@@ -660,21 +660,19 @@ wss
 
 ## Linking
 
-The system OpenSSL (`-lssl -lcrypto`) is linked, and OpenSSL's headers are
-included in the program's extern object, **only when a program reaches
+The system OpenSSL (`-lssl -lcrypto`) is linked, **only when a program reaches
 `std/tls`**. `std/http` and `std/ws` import it, so a program that uses either
 gets it too; a program that never touches TLS does not need either the library
 or the development output.
 
 ```sh
-# a program that reaches std/tls: its <out>.externs.c includes openssl/ssl.h
-# a program that does not: the file carries no openssl include and the link
-# line carries no -lssl
+# a program that reaches std/tls: its link line carries -lssl and -lcrypto
+# a program that does not: its link line carries neither
 ```
 
-When it is needed, the linker has to find `libssl` and `libcrypto`, and the
-OpenSSL headers have to be on the include path. `nix-shell shell.nix` provides
-both; [Install and build](/getting-started/install#requirements) lists them for
+When it is needed, the linker has to find `libssl` and `libcrypto`. No OpenSSL
+header is read, because kelpc compiles no C. `nix-shell shell.nix` provides the
+libraries; [Install and build](/getting-started/install#requirements) lists them for
 every other setup.
 
 ## See also

@@ -11,7 +11,7 @@ authority is part of the source and checked at every call site that uses it. A
 program cannot read a file, open a socket, spawn a process or read the clock unless
 the module making the call was granted that resource, so "what can this code do?"
 is answered by the first few lines of a file. The language itself is small: records
-and tagged unions, ownership without a garbage collector, `Option` and `Result` with
+and tagged unions, ownership with a collector for memory values in hosted builds, `Option` and `Result` with
 `?`, and modules.
 
 ## Current release

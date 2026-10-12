@@ -9,8 +9,8 @@ This page covers the command dispatch, the build steps, linking and the diagnost
 
 ## Subcommands
 
-`real_main` (`main.rs:1531`) dispatches on the first argument.
-`main` runs it on a thread with a 512 MiB stack (`main.rs:1516` to `1518`).
+`real_main` dispatches on the first argument.
+`main` runs it on a thread with a 512 MiB stack, because the compiler's frames for a deeply nested tree need more than the 8 MiB main-thread stack.
 
 | Command | What it does |
 | --- | --- |
@@ -58,23 +58,25 @@ With `emit = "html"` it writes `index.html` and does not start the program as an
 
 ## Linking
 
-The hosted link runs `ld.lld` directly. The link does not run `cc`.
-`driver::link_llvm_objects_with_archive` writes the embedded runtime archive `libkelp_rt.a` to a temporary file.
-It then runs `ld.lld` with the argument list from `sysroot::hosted_link_argv`, and removes the temporary file.
+Every hosted link runs `ld.lld` directly. Nothing runs `cc` to link a program.
+
+A hosted build is the managed link, and every hosted build takes it. `driver::link_managed_object` links, in this order: the program's object, the embedded runtime object `kelp_rt_managed.o`, the program's `extern fun` object when there is one, the collector archive `libkelp_gc.a`, the libraries the manifest names, and `-ldl`. `driver::link_llvm_objects_with_archive` writes the runtime object to a temporary file, runs `ld.lld` with the argument list from `sysroot::hosted_link_argv`, and removes the temporary file.
+
+The collector archive is found by `driver::managed_archive`. `KELP_GC_LIB` names it when it is set. Otherwise it is the archive that `kelpc/build.rs` built. A path that is not a file is an error that names the path and the variable, before any code is written.
 
 The argument list uses `-m elf_x86_64`, `-pie`, the glibc dynamic loader and the glibc start files.
-It adds the program object, the runtime archive, the optional externs object, the library directories, `-lm -lpthread`, and `-lssl -lcrypto` when TLS is used.
+It adds the program object, the runtime object, the optional externs object, the collector archive, the library directories, `-lm -lpthread`, and `-lssl -lcrypto` when TLS is used.
 It ends with `-lgcc -lgcc_s -lc`, with `--as-needed`.
 The x86_64 ELF layout and glibc are fixed in this list. A hosted build for another target is not covered.
 
 No C compiler runs for a hosted build, and no `.c` file is written.
+The embedded archive `libkelp_rt.a` is still in the binary, for a link without a collector. No hosted build takes that path.
 When the program has a user `extern fun` or a capability-gated call, kelpc writes the trampolines, the native-callback glue and the allowlist arrays as LLVM IR into `<out>.externs.o`, with the same target machine as the program's own object (`extern_object.rs`).
 The stdlib's `extern fun` bodies are Rust exports in `kelp-rt`, so a program that uses `fs`, `net`, `process`, `env`, `time` or `rand` needs no C compiler either.
 
 `pkg-config` runs for each `[extern."<id>"]` package that names one.
 
-The managed link (`[target] mode = "managed"`) links the runtime object `kelp_rt_managed.o` in place of the archive.
-It adds the collector archive named by `KELP_GC_LIB` after the program's objects.
+`kelpc` runs `cc -print-file-name` once, when `kelpc` itself is built (`kelpc/build.rs`), to record the glibc, gcc and OpenSSL directories. A program build does not run it.
 
 The freestanding link is different.
 `link_freestanding_object` runs `ld.lld` with the manifest's linker script and `--static`.
@@ -95,7 +97,7 @@ It exits with `_exit` because the main thread may be inside LLVM.
 ## Diagnostics
 
 Each diagnostic is a message, a module id and a byte span.
-`SourceMap::report_as` and `render_at` (`diag.rs:200` to `213`) print it in this form:
+`SourceMap::report_as` and `render_at` print it in this form:
 
 ```text
 error: <message>
@@ -113,7 +115,7 @@ error: <message>
 There is no source excerpt and no caret under the error.
 The line and column are the only location information.
 
-`kelpc check --json` uses `render_json` (`diag.rs:242`).
+`kelpc check --json` uses `render_json`.
 Each finding is an object with `severity`, `message`, `module`, `file`, `line`, `column`, `end_line`, `end_column` and `notes`.
 The end position is exclusive.
 

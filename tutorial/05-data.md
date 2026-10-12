@@ -75,8 +75,10 @@ explains what `mut` means.
 ## Who owns a value
 
 Every value in Kelp has exactly one owner at a time. When the owner goes out of
-scope, the value is freed. That rule is what lets Kelp free memory without a
-garbage collector, and it has two effects you will see in every program.
+scope, the value's life ends: a resource is closed, and a value with a destructor runs
+it. In a hosted build the collector reclaims the memory of a text or a list once no
+path reaches it. The one-owner rule is what lets the compiler say which name a value
+belongs to, and it has two effects you will see in every program.
 
 **Passing a value to a function borrows it.** A parameter declared as a plain
 type, such as `name: String`, is a borrow: the function can read the value, but

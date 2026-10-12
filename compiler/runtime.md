@@ -11,17 +11,17 @@ This page covers where each piece comes from and how it is linked.
 ## The standard library in the binary
 
 The standard library is Kelp source under `kelpc/std/`.
-Each file is embedded in `kelpc` with `include_str!` (`stdlib.rs:142` to `196`), so the binary does not depend on files beside it.
+Each file is embedded in `kelpc` with `include_str!`, so the binary does not depend on files beside it.
 
-- A program may import the 35 modules listed by `stdlib::shipped()` (`stdlib.rs:198`).
+- A program may import the 35 modules listed by `stdlib::shipped()`.
   They are `std/option`, `std/str`, `std/fs`, `std/net` and the rest of the library.
   See [Standard library](/stdlib) for what each one provides.
 - `std/rt` is also embedded, but no program imports it on purpose.
-  The resolver loads it when a program imports a gated module or `std/path` (`resolve.rs:1766` to `1767`).
-- `std/http` contains a placeholder, `__KELP_HTTP_POOL__`, which the compiler replaces with the connection pool size from the project (`stdlib.rs:126` to `140`).
+  The resolver loads it when a program imports a gated module or `std/path`.
+- `std/http` contains a placeholder, `__KELP_HTTP_POOL__`, which the compiler replaces with the connection pool size from the project.
 
 The library is compiled by the same lexer, parser and checker as user code.
-The resolver reads `std/...` ids from the embedded text before it looks at the project directory (`resolve.rs:1609` to `1620`).
+The resolver reads `std/...` ids from the embedded text before it looks at the project directory.
 
 ## `extern fun` bodies
 
@@ -34,33 +34,27 @@ The checker accepts the declaration only when the compiler has a body for it.
    A project may declare its own extern only with a `[extern."<module>"]` section in `coral.toml`, and the checker checks that allowlist.
 3. A user extern that names a native symbol gets a trampoline in the program's externs object (`lower_externs_object`, `extern_object.rs`).
    The trampoline calls the native symbol directly. A `move closure(...)` parameter is boxed and handed over with a thunk and a destructor.
-   A user extern that takes or returns a struct by value is refused for now.
+   A user extern that takes or returns by value a struct, `Bytes`, `String`, `View`, `List`, `Box`, `Map`, an array or a closure is refused by name. The message says the llvm backend cannot pass it to a native symbol yet, and asks for a pointer or a handle instead.
 
-The trampolines are compiled for each program, not shipped as one fixed object, because each names the native symbols that program allowlisted.
+The trampolines are lowered to LLVM IR for each program, not shipped as one fixed object, because each names the native symbols that program allowlisted.
 
 ## The runtime files
 
-The runtime is the `kelp-rt` crate, a Rust crate with `no_std` (`kelp-rt/src/lib.rs`).
-It replaced the C runtime `kelp_rt.c`, which is not in the tree.
+The runtime is the `kelp-rt` crate, a `no_std` Rust crate (`kelp-rt/src/lib.rs`).
+No C runtime and no C source is in the tree.
 
 | File or folder | What it is |
 | --- | --- |
 | `kelp-rt/src/*.rs` | The runtime: text and buffers, threads, mutexes and condition variables, panics, the environment cache, the child process table, the capability checks, and the exported functions. |
-| `kelpc/gc/` | The collector crate `kelp_gc`. Only managed builds use it. |
-| `kelpc/runtime/` | `abi_aggregate.c`, `dns_parse.kp` and `resolver_conf.kp`. The compiler does not embed the two `.kp` files. |
+| `kelpc/gc/` | The collector crate `kelp_gc`. Every hosted build links it. |
+| `kelpc/runtime/` | `dns_parse.kp` and `resolver_conf.kp`. The compiler does not embed these two `.kp` files. |
 
-`kelp-rt` is built twice from one source folder.
-The hosted build gives `libkelp_rt.a`, and the managed build gives `kelp_rt_managed.o`.
+`kelp-rt` is built twice from one source folder: as `libkelp_rt.a`, and as `kelp_rt_managed.o` with the `managed` feature.
 `kelpc/build.rs` builds both, and `driver.rs` embeds them with `include_bytes!`.
-The hosted link uses the archive. The managed link uses the object.
+A hosted build links `kelp_rt_managed.o` with the collector archive. See [Driver](/compiler/driver#linking).
 
-The exported functions are listed in the `PROTOTYPES` table of `kelp-rt/src/abi.rs`, which has 99 rows.
-The compiler does not read that table. It writes its own C prelude, with 22 declarations for the helpers it calls.
-Nothing checks that the two agree, and the compiler does not check the ABI version.
-
-The LLVM backend also emits small `Bytes`, `String` and `View` bodies into each module with internal linkage.
-Those copies can be inlined.
-The runtime object still defines every one of them, and the two definitions never meet at link time.
+The exported functions are listed in the `PROTOTYPES` table of `kelp-rt/src/abi.rs`.
+The LLVM backend declares the runtime functions it calls as LLVM declarations, and the tests in `kelpc/tests/runtime_prototypes.rs` and `kelpc/tests/runtime_exports.rs` check the table against the archive's exports.
 
 ## The capability runtime
 

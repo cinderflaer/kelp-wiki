@@ -168,8 +168,35 @@ fun main() {
 4
 ```
 
+## Refusals of the collector
+
+A hosted build refuses some shapes by name. These are not ownership errors. They come
+from the collector, which has to see every value it may reclaim. The messages on current
+`main` still say "in managed mode", which is the wording the compiler prints today.
+
+- **A resource in a container or a heap slot.** `'Leaf' cannot be a List element in managed
+  mode: 'Leaf' is a resource`. The same refusal applies to a `Map` key or value, an array
+  element, the payload of a `Box`, a field of a `datac` that lives in the heap, and a
+  value captured by a closure. A resource stays in a local, a parameter or a stack field.
+- **Channels and pool values.** `'Job' cannot be a thread's argument`, and
+  `'std.sync.ChanMeta' cannot be the value of a Mutex or RwLock`. Channels and
+  [`std/pool`](/stdlib/pool) are refused on current `main` for this reason, until the step
+  that lets the collector see values a thread or a lock holds.
+- **A `Mutex` or `RwLock` holding a memory value.** `'List<i32>' cannot be the value of a
+  Mutex or RwLock`. A `Mutex` holding a number is accepted.
+- **A `Box<dyn Trait>` in a container.** `'Box<dyn Shape>' cannot be a List element`. A
+  concrete type with a destructor cannot be the payload of a `Box` either. See
+  [Box dyn](/language/box-dyn).
+- **An `enum` as a `Map` key or value.** `managed mode describes the enum 'Kind' only as a
+  heap object (a Box payload or a List element)`. An enum is accepted as a `List` element.
+- **A thread closure that captures values.** `'thread.spawn' cannot take a closure that
+  captures values in managed mode`.
+- **A by-value aggregate in a user `extern fun`.** The message says the llvm backend cannot
+  pass the struct, `String` or `List` to a native symbol yet, and asks for a pointer or a
+  handle. See [User FFI](/language/externs).
+
 ## Where to go next
 
-- [The rules of manual memory](/memory/rules): why each of these is refused
+- [The rules of ownership](/memory/rules): why each of these is refused
 - [Pitfalls](/language/pitfalls): the full table of messages across the language,
   including the ones for tuples, arrays and text

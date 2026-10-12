@@ -59,7 +59,7 @@ kelpc build . -o mytool      # keep the binary
 out.push_str(str.concat("a", "b").as_str())     // error
 ```
 
-`.as_str()` on a value that has no name is refused, because the `String` would be freed
+`.as_str()` on a value that has no name is refused, because the `String` would be dropped
 before the borrow was used. Bind it first:
 
 ```kelp

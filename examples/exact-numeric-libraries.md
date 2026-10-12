@@ -167,7 +167,7 @@ every run, which is the property `std/rand` deliberately does not have.
 
 - **A `BigInt` is a `sign` plus base-2³² limbs, and every operation returns a new
   value.** `result = bigint.mul(&result, &two)` reads like an in-place multiply but
-  allocates; the assignment moves the new value in and frees the old.
+  allocates; the assignment moves the new value in and drops the old.
   There is no division, so `to_string` is the only decimal way out.
 - **Explicit `&` is only allowed on a place.** `bigint.mul(&result, &two)` works
   because both are bindings; `&bigint.from_i64(2)` would be refused, which is why

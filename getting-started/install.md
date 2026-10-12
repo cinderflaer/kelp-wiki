@@ -9,10 +9,11 @@ tags: "getting-started"
 | Component | Needed for |
 | --- | --- |
 | Rust, 2024 edition (rustc 1.85 or newer) | building `kelpc` |
+| `cc` | building `kelpc`: cargo links the Rust binaries with it. `kelpc` does not run it to compile or link a program |
 | LLVM 21 development (`llvm-config`, `include/llvm-c`) | building `kelpc`: it depends on `llvm-sys`, whose build step locates `libLLVM`. The repository's `shell.nix` provides this and sets `LLVM_SYS_211_PREFIX` |
 | `libLLVM-21.so` | running a `kelpc` built this way: the `llvm` backend links it dynamically and the binary does not start without it |
 | OpenSSL libraries (`libssl`, `libcrypto`) | building a program that reaches [`std/tls`](/stdlib/tls), which `std/http` and `std/ws` do: `kelpc` puts `-lssl -lcrypto` on that program's link line |
-| OpenSSL development output (`openssl/ssl.h`) | the same programs: the generated C includes OpenSSL's headers |
+| OpenSSL development output (the `libssl` and `libcrypto` link files) | the same programs: `ld.lld` links `-lssl -lcrypto`, so the development links must exist. No header is read. |
 | glibc | `ld.lld` links the object the `llvm` backend emits, against glibc's start files and libraries. No C compiler is run. |
 | `valgrind` (optional) | the memory gate test |
 | [Coral](/tooling/coral) (recommended) | the build tool and package manager: projects, dependencies, tasks, toolchain pins. One `coral.toml`, and it calls `kelpc` for you |

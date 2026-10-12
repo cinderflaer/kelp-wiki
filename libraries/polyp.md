@@ -132,8 +132,8 @@ allow:
   application state behind.
 - So no callback captures the state at all. A button's handler is a closure
   whose entire environment is one small integer. It posts that integer to the
-  backend's event queue (the GTK backend's is the fixed-size C queue in
-  `include/polyp_queue.h`; the headless and soft backends queue it in Kelp), and
+  backend's event queue (the GTK backend's is a fixed-size ring written in Kelp,
+  `backends/gtk/queue.kp`, as the headless and soft backends' queues are), and
   the loop, which **does** own the state, reads it back, resolves the id to the
   node it names, takes that node's `Msg` from a fresh `view`, calls `update`,
   re-runs `view` and patches the widgets.
@@ -180,14 +180,14 @@ The consumer then does two things by hand.
 
    The facade holds `ui`, and `main` never names a GTK call.
 
-2. **Paste the `[extern.*]` sections into `coral.toml`.** The native symbols, headers and `pkg-config`
-   package live in the consumer's manifest. The section ids are the `impl` paths the library uses:
-   `deps/polyp/backends/gtk/gtk` (GTK, `pkg_config = "gtk4"`) and `deps/polyp/backends/gtk/queue`
-   (the message ring, `include_dirs = ["src/deps/polyp/backends/gtk/include"]`). The complete block is
+2. **Paste the `[extern.*]` sections into `coral.toml`.** The native symbols and the `pkg-config`
+   package live in the consumer's manifest. The section id is the `impl` path the library uses:
+   `deps/polyp/backends/gtk/gtk` (GTK, `pkg_config = "gtk4"`). The complete block is
    in the Polyp README under "Add Polyp to a project", and is kept there so it has one source.
 
-   `header` is one key per section, which is why the queue is its own module: `polyp_queue.h` is a header
-   of the library and `gtk/gtk.h` is GTK's, and a section names one. See
+   The `extern fun` declarations in the binding carry the signatures. The README block
+   still has a `header` key, which is accepted and not read, because kelpc compiles no
+   C. The message queue is plain Kelp, so it has no section. See
    [Coral: the manifest](/tooling/coral#user-modules-that-bind-a-native-symbol-extern).
 
 ## API
@@ -512,6 +512,11 @@ class on each row follows `done`, and the app installs
 
 ## Headless testing with Xvfb
 
+**Status on current `main`.** The GTK backend compiles and links on `main`. Its
+runtime has not been verified on the build host, which has no display, so the smoke
+runs below have not been run on `main` for this page. The smoke scripts are the
+procedure for a host with a display.
+
 Each example is proved by its `smoke.sh`, which re-enters `dev-gtk.nix` (the
 shell beside the compiler repository; override with `POLYP_DEV_GTK`), compiles
 the example with the **default** (`llvm`) backend, and runs the binary under
@@ -678,6 +683,11 @@ v5 is a layout and packaging release. The library's behaviour is the v4 behaviou
   face, no images, no GPU, no stylesheet parser or screen-reader bridge; the full list
   is on
   [Polyp on a framebuffer](/libraries/polyp-soft#what-the-display-free-path-does-not-do).
+- **GTK widgets are found by position.** The GTK backend's records hold no GTK
+  handles: a `gtk.Widget` is a resource, and a `List` of resources is refused. Each
+  widget is found by its position among its parent's children, which GTK keeps in
+  tree order, so a lookup costs one step per sibling at each level. A child appended
+  to a container lands last. A scalar handle table would need a compiler decision.
 - **A display is required to *draw* with GTK.** The GTK smoke tests run a real
   window under Xvfb, and the focus tests read the toplevel's focus widget rather
   than `gtk_widget_has_focus`, which needs a window manager to hand over global

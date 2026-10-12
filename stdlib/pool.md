@@ -8,6 +8,13 @@ A fixed pool of worker threads that run closures from one first-in first-out
 queue. Written in Kelp over [`Mutex`, `Condvar`](/stdlib/sync) and
 [`thread.spawn`](/stdlib/thread). Hosted only.
 
+> **Status on current `main`.** `std/pool` is refused on `main` for now. A pool job is a
+> closure value, and a `Job` cannot be a thread's argument while it holds collected memory,
+> so a program that uses the pool fails to build with a message such as `'std.pool.Job'
+> cannot be a thread's argument in managed mode`. It builds again when the step that scans thread and lock values
+> lands. The rest of this page describes the API that step is meant to keep.
+
+
 ```kelp
 impl "std/pool"
 ```

@@ -87,7 +87,7 @@ if let Rect(w, h) = shape {
   Ok(v) = json.parse(text)` is legal at all, and that hidden local is an owned
   place like any other. A field chain over a temporary stages its **root**:
   `if let Word(w) = mk().t` binds `mk()` and matches its `t`, so the whole `mk()`
-  result is freed when the block ends rather than the field being read out of a
+  result is dropped when the block ends rather than the field being read out of a
   value that has no storage of its own.
 - A payload binds as a **copy** when it is `Copy`, **by value** when it is owned
   and the scrutinee is an owned place (a `val`/`var` binding or a `move T`
@@ -194,9 +194,9 @@ fun area(s: &Shape).return: f64 = when s {
   matched payload is copied, borrowed, or (an owned payload of an owned place)
   moved out. A **temporary** (a call's result, a literal) is bound to a hidden
   local first, because a payload borrow has to outlive the arm it is bound in;
-  the local is freed once the match ends, and it is an owned place like any
+  the local is dropped once the match ends, and it is an owned place like any
   other. A chain over a temporary stages its **root**: `when mk().t { ... }`
-  binds `mk()` and matches its `t`, so the whole temporary is freed exactly once,
+  binds `mk()` and matches its `t`, so the whole temporary is dropped exactly once,
   never the field alone.
 - Matching must be exhaustive: either every variant has an arm, or an `else ->`
   arm is present.

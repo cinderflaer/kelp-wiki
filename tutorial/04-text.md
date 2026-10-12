@@ -71,7 +71,7 @@ Kelp has two text types you will use every day:
 - **`str`** is text that someone else owns. A string literal such as `"Kelp"` is
   a `str`, and so is a parameter declared `&str`. You can read it, but it must be
   built somewhere else.
-- **`String`** is text that your variable owns. It is freed when the variable
+- **`String`** is text that your variable owns. It is dropped when the variable
   goes out of scope. `String.from_str(s = "...")` makes one from a literal.
 
 A `String` becomes a `str` with `.as_str()`, a borrow, so the `String` keeps
@@ -105,7 +105,7 @@ To build text that you keep, use `str.concat`, the `fmt` functions, or a `String
 `fmt.int(42)` turns a number into a `String`. Pass a borrow of it on with
 `.as_str()`, and bind it to a variable first, as the program does. A call that
 returns a borrow of a temporary value is refused, because the temporary would be
-freed before the borrow is used.
+dropped before the borrow is used.
 
 ## Parsing a number
 

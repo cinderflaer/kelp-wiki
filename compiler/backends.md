@@ -23,7 +23,7 @@ The refusal says the backend is no longer a user choice.
 Some features are refused by name on the LLVM backend:
 
 - sanitizers, because the LLVM backend has no sanitizer passes;
-- `--incremental` for a freestanding or managed project.
+- `--incremental` for a freestanding project, and for a hosted project named on the command line. A hosted manifest that sets `[build] incremental = true` is built whole-program, with a warning.
 
 ## The LLVM backend
 
@@ -31,14 +31,14 @@ Some features are refused by name on the LLVM backend:
 `llvm_ffi.rs` is the only code that calls LLVM.
 It wraps `llvm-sys` 211, which is LLVM 21.1, and links it dynamically.
 
-`compile` (`codegen_llvm.rs:375`) and `lower_to_object` (`codegen_llvm.rs:524`) do the work:
+`compile` and `lower_to_object` in `codegen_llvm.rs` do the work:
 
-1. Create the target machine first. Enum sizes come from the data layout, so the layout must be known before any type is built (`codegen_llvm.rs:426` to `429`).
-2. Create the module, set the triple and data layout, and build the generator state (`Gen::new`, `codegen_llvm.rs:2120`).
-3. Declare every type, aggregate, closure environment, capability array, drop, clone and compare function, and function signature (`Gen::declare`, `codegen_llvm.rs:2296`).
-4. Emit the bodies. One `FnGen` (`codegen_llvm.rs:3851`) emits each non-extern function (`emit_all`, `codegen_llvm.rs:3831`).
-5. Verify the module, and write the unoptimised IR to `<out>.ll` before any pass runs (`codegen_llvm.rs:664` to `675`).
-6. Run the pass pipeline for the chosen level, verify again, and write `<out>.o` (`codegen_llvm.rs:715` to `722`).
+1. Create the target machine first. Enum sizes come from the data layout, so the layout must be known before any type is built (in `compile`).
+2. Create the module, set the triple and data layout, and build the generator state (`Gen::new`).
+3. Declare every type, aggregate, closure environment, capability array, drop, clone and compare function, and function signature (`Gen::declare`).
+4. Emit the bodies. One `FnGen` emits each non-extern function (`emit_all`).
+5. Verify the module, and write the unoptimised IR to `<out>.ll` before any pass runs.
+6. Run the pass pipeline for the chosen level, verify again, and write `<out>.o`.
 7. If the program has a user `extern fun` or a gated call, lower its trampolines, callback glue and capability allowlists to LLVM IR and write them to `<out>.externs.o` with the same target machine (`lower_externs_object`, `extern_object.rs`).
 8. Link. See [Driver](/compiler/driver#linking).
 
@@ -48,9 +48,9 @@ It is written only when the program has one of them, and it is LLVM IR like the 
 ### Value layouts
 
 - Scalars: `i32`, `u32` and `char` are `i32`. `i64`, `u64`, `usize` and `isize` are `i64`. `u8` is `i8`, `u16` is `i16` and `bool` is `i1`.
-- `str`, borrows, `Thread`, `Mutex`, handles and raw pointers are one opaque `ptr` (`llvm_type`, `codegen_llvm.rs:15721`).
+- `str`, borrows, `Thread`, `Mutex`, handles and raw pointers are one opaque `ptr` (`llvm_type`).
 - `String` and `Bytes` are `{ ptr, i64 len, i64 cap }`. `View` is `{ ptr, i64 len }`.
-- A `datac` is an identified struct with its fields in declaration order (`declare_aggregates`, `codegen_llvm.rs:3382`).
+- A `datac` is an identified struct with its fields in declaration order (`declare_aggregates`).
 - An `enum` is `{ tag, union }`. The tag width follows the `repr`, and it is `i32` by default.
 - `Option` and `Result` have no special layout. They are ordinary enums.
 - `List<T>` is `{ ptr, i64 len, i64 cap }`. `Box<T>` is `{ ptr }`.
@@ -60,36 +60,36 @@ It is written only when the program has one of them, and it is LLVM IR like the 
 
 ### Calls, traits and closures
 
-`emit_call` (`codegen_llvm.rs:7849`) tries these in order:
+`emit_call` tries these in order:
 
 1. Special names such as `std.source.file`.
 2. User functions. Arguments are evaluated left to right, the capability checks run, and then the call is made.
 3. Runtime helpers, named `kelp_<name>`.
 4. Container methods.
 
-A method call through a `dyn` value loads the vtable from the second word and calls the slot with the data pointer (`DynCall`, `codegen_llvm.rs:4788`).
-A closure call passes the environment pointer first (`emit_indirect_call`, `codegen_llvm.rs:5102`).
+A method call through a `dyn` value loads the vtable from the second word and calls the slot with the data pointer (`DynCall`).
+A closure call passes the environment pointer first (`emit_indirect_call`).
 
 ### Run-time checks
 
-- A panic calls `kelp_panic` with the message and then `unreachable` (`codegen_llvm.rs:9370`).
-- Bounds checks compare the index with the length as unsigned values (`codegen_llvm.rs:9397`).
+- A panic calls `kelp_panic` with the message and then `unreachable` .
+- Bounds checks compare the index with the length as unsigned values .
 - A shift amount that is not known to be in range is checked against the width.
 - A narrowing conversion checks only the bounds that the source type cannot rule out.
 - Integer arithmetic has no overflow check and carries no `nsw` or `nuw` flags, so it wraps.
 - Integer division has no zero check in the generated code.
-  The front end rejects a constant division by zero (`infer.rs:7887`).
+  The front end rejects a constant division by zero .
 
 ### Debug information
 
-The object carries DWARF line information for each module (`codegen_llvm.rs:294`).
+The object carries DWARF line information for each module.
 A fault at run time therefore names a `.kp` file and line.
 Each statement gets a location, and no variables are described.
 
 ## Optimisation levels
 
-`OptLevel` (`opt.rs:31`) has the values `-O0`, `-O1`, `-O2`, `-O3` and `-Os`.
-The default is `-O2` (`opt.rs:45`).
+`OptLevel` has the values `-O0`, `-O1`, `-O2`, `-O3` and `-Os`.
+The default is `-O2`.
 The level selects the LLVM pass pipeline and the target machine's codegen level.
 It is also the codegen level of the externs object, and `ld.lld` ignores it.
 `-Oz` is refused.
@@ -101,7 +101,7 @@ Its golden outputs remain in `kelpc/tests/golden/`.
 The C-versus-LLVM differential test is gone with it.
 
 No C text remains in the tree. The stdlib's extern bodies are Rust exports in `kelp-rt`, and the per-program object of step 7 is LLVM IR.
-Some comments in `codegen_llvm.rs` still describe the removed backend and a `runtime/kelp_rt.c` file. Those comments are stale.
+A few comments in `codegen_llvm.rs` still name the removed backend. They describe no behaviour.
 
 ## See also
 

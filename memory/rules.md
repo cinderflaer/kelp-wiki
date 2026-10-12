@@ -1,6 +1,6 @@
 ---
-title: "The rules of manual memory"
-description: "The four rules behind Kelp's manual memory: one owner, borrows that end at their last use, moves, and drops at scope end, each with a program that compiles and prints the shown output."
+title: "The rules of ownership"
+description: "The four rules behind Kelp's ownership: one owner, borrows that end at their last use, moves, and drops at scope end, each with a program that compiles and prints the shown output."
 isPublished: true
 tags: "language, ownership, memory"
 ---
@@ -15,9 +15,11 @@ Owned values are `String`, `Bytes`, `List`, `Map`, `Box`, and any `datac` or
 ## 1. Every owned value has one owner
 
 A value's owner is the binding, field, element or temporary that holds it. When
-the owner's scope ends, the value is freed. A `datac` with a `drop` method runs
+the owner's scope ends, the value is dropped. A `datac` with a `drop` method runs
 that method at the same point, and locals drop in the reverse of the order they
-were declared.
+were declared. A resource is closed at that point. A memory value in a hosted build
+is not freed there: the collector reclaims its memory later (see
+[Working with Kelp memory](/memory)).
 
 ```kelp
 datac Leaf(val tag: i32)
@@ -81,7 +83,7 @@ fun main() {
 4
 ```
 
-`consume` now owns the string, and it is freed when `consume` returns. The caller
+`consume` now owns the string, and it is dropped when `consume` returns. The caller
 cannot print `a` after the call, and a return value moves out the same way.
 
 ## 4. A borrow ends at its last use
@@ -142,7 +144,7 @@ outer
 drop 1
 ```
 
-Assigning to a `var` frees the old value first, and a `return` frees the frame's
+Assigning to a `var` drops the old value first, and a `return` drops the frame's
 other live locals after the returned value is read. A `panic` runs no destructor
 at all; see [Drop](/language/drop).
 

@@ -31,7 +31,7 @@ impl "std/path"
 same lexical normalization, and `fs` patterns are matched against a normalized,
 symlink-resolved path. It is documented in
 [`syntax.md` §15.2](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md)
-and implemented twice (in Kelp here and in C in the runtime) with the
+and implemented twice (in Kelp here and in Rust in `kelp-rt`) with the
 differential tests comparing the two.
 
 `absolute(base, p)` is the pair `normalize` needs: `p` alone when `p` is already

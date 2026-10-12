@@ -46,7 +46,7 @@ and externs, and the manifest validators.
 
 **Out of scope**, and so not something a grant can promise:
 
-- The C compiler, the linker, the operating system and other processes.
+- The LLVM toolchain, the linker (`ld.lld`), the operating system and other processes.
 - Native code reached through a granted FFI section or a granted program. A
   `process` grant for a shell is a grant of everything the shell can run.
 - Races with another process that changes the filesystem between the check and
@@ -207,7 +207,7 @@ error: 'std.io.File' wraps an operating-system descriptor, so building one from 
   --> .../e/util.kp:4:13
 ```
 
-It is a compile error, and the C oracle prints the identical message. For
+It is a compile error. The removed C oracle printed the identical message in the runs made before 2026-10-10. For
 `net.Socket` and `net.Listener` the message names the `net` capability.
 
 ### 6. `unsafe` in a trait default method is audited

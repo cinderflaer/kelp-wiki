@@ -6,21 +6,21 @@ tags: "compiler"
 ---
 The front end turns one module's text into an AST.
 It runs three steps in order: the lexer, the text alias pass and the parser.
-The resolver calls all three for each module (`resolve.rs:1649` to `1696`).
+The resolver calls all three for each module (`resolve.rs`).
 
 ## Lexing (`lexer.rs`)
 
-`Lexer::tokenize` (`lexer.rs:435`) returns a token vector with a byte span on every token.
-`Lexer::tokenize_with_trivia` (`lexer.rs:446`) also keeps comments, and `kelpc fmt` uses it.
+`Lexer::tokenize` (`lexer.rs`) returns a token vector with a byte span on every token.
+`Lexer::tokenize_with_trivia` (`lexer.rs`) also keeps comments, and `kelpc fmt` uses it.
 
-- **Newlines end statements.** A newline is a token only at parenthesis depth 0, or inside a `{` block opened inside parentheses (`lexer.rs:513` to `530`).
-  A newline after a line-continuing token such as `+`, `,` or `.` is dropped (`lexer.rs:263`, `461`).
+- **Newlines end statements.** A newline is a token only at parenthesis depth 0, or inside a `{` block opened inside parentheses (`lexer.rs`).
+  A newline after a line-continuing token such as `+`, `,` or `.` is dropped (`lexer.rs`).
   That is why Kelp has no semicolons.
-- **Comments** are skipped unless trivia is requested (`lexer.rs:422`).
-- **Strings** are decoded in `lex_string` (`lexer.rs:1184`).
+- **Comments** are skipped unless trivia is requested (`lexer.rs`).
+- **Strings** are decoded in `lex_string` (`lexer.rs`).
   A string with `$name` or `${expr}` becomes a flat run of template tokens: `TemplateStart`, `StrChunk`, `TemplateExprStart`, `TemplateExprEnd` and `TemplateEnd`.
-- **Labels** are `'name` with no closing quote (`lexer.rs:727`).
-- **Keywords** are matched by text (`lexer.rs:895` to `927`).
+- **Labels** are `'name` with no closing quote (`lexer.rs`).
+- **Keywords** are matched by text (`lexer.rs`).
   `in`, `alias`, `loop`, `percpu` and `type` are not keywords. The parser or the alias pass matches them as identifiers.
 - **Other bytes** are an error: `unexpected character 'X'`.
   The lexer has no `#` arm, so `#` takes this path.
@@ -34,32 +34,32 @@ It is a flat, global text substitution with no parameters, no scoping and no con
 
 Two sources feed one table:
 
-- `[alias]` entries in `coral.toml`, loaded by `load_manifest_aliases` (`resolve.rs:1581`).
-- Inline lines of the form `alias %*name*% = <text to end of line>`, found by `alias_decl_shape` (`preprocess.rs:429`).
+- `[alias]` entries in `coral.toml`, loaded by `load_manifest_aliases` (`resolve.rs`).
+- Inline lines of the form `alias %*name*% = <text to end of line>`, found by `alias_decl_shape` (`preprocess.rs`).
   The line must start after a newline, `{`, `}` or at the start of the file.
 
-A reference is the five tokens `%`, `*`, name, `*`, `%` (`preprocess.rs:370`).
-The replacement is lexed again, and every token it produces takes the span of the use site (`preprocess.rs:199`, `261`).
+A reference is the five tokens `%`, `*`, name, `*`, `%` (`preprocess.rs`).
+The replacement is lexed again, and every token it produces takes the span of the use site (`preprocess.rs`).
 
 Errors:
 
-- a duplicate definition (`AliasTable::define`, `preprocess.rs:97`);
-- an unknown name, `unknown alias '%*x*%'` (`preprocess.rs:342`);
-- a cycle, found during expansion and by `check_cycles` (`preprocess.rs:135`, `246`);
-- replacement text that does not lex (`preprocess.rs:261`).
+- a duplicate definition (`AliasTable::define`, `preprocess.rs`);
+- an unknown name, `unknown alias '%*x*%'` (`preprocess.rs`);
+- a cycle, found during expansion and by `check_cycles` (`preprocess.rs`);
+- replacement text that does not lex (`preprocess.rs`).
 
-Up to `MAX_ALIAS_ROUNDS` (8, `resolve.rs:1506`) discovery rounds run.
+Up to `MAX_ALIAS_ROUNDS` (8, `resolve.rs`) discovery rounds run.
 A failure in a discovery round is skipped, so a file loaded later can supply an alias that an earlier file used.
 
 ## Parsing (`parser.rs`)
 
-`Parser::parse_program` (`parser.rs:382`) reads top-level items and dispatches on the leading keyword.
-Statements are parsed by `parse_stmt` (`parser.rs:2889`).
-Expressions use precedence climbing in `parse_binary` (`parser.rs:3537`).
-Types are parsed by `parse_type_inner` (`parser.rs:2226`), and string templates by `parse_template` (`parser.rs:4114`).
+`Parser::parse_program` (`parser.rs`) reads top-level items and dispatches on the leading keyword.
+Statements are parsed by `parse_stmt` (`parser.rs`).
+Expressions use precedence climbing in `parse_binary` (`parser.rs`).
+Types are parsed by `parse_type_inner` (`parser.rs`), and string templates by `parse_template` (`parser.rs`).
 
 The parser returns its first error and does not recover.
-Expressions nest up to 200 levels (`MAX_NESTING`, `parser.rs:38`).
+Expressions nest up to 200 levels (`MAX_NESTING`, `parser.rs`).
 
 ### Operator precedence
 
@@ -79,15 +79,15 @@ From loosest to tightest:
 | 10 | `*` `/` `%` |
 
 The bitwise operators bind tighter than comparisons, which is unlike C.
-All binary operators are left associative (`parser.rs:3480`).
+All binary operators are left associative (`parser.rs`).
 
 ### Constructs the parser rewrites
 
-- **`if let`** is rewritten into a `when` expression (`parser.rs:4282`).
-  When the scrutinee is a temporary, its root is first bound to a synthesized name with the prefix `#iflet` (`IF_LET_PREFIX`, `parser.rs:93`).
-  A field chain over a temporary therefore frees the temporary once, at the end of the block.
-- **`impl Trait` parameters** become a fresh bounded type parameter (`desugar_impl_trait_params`, `parser.rs:138`).
-- **`for`** is not rewritten here. The parser produces `Stmt::For` (`parser.rs:3385`).
+- **`if let`** is rewritten into a `when` expression (`parser.rs`).
+  When the scrutinee is a temporary, its root is first bound to a synthesized name with the prefix `#iflet` (`IF_LET_PREFIX`, `parser.rs`).
+  A field chain over a temporary therefore drops the temporary once, at the end of the block.
+- **`impl Trait` parameters** become a fresh bounded type parameter (`desugar_impl_trait_params`, `parser.rs`).
+- **`for`** is not rewritten here. The parser produces `Stmt::For` (`parser.rs`).
   The type checker picks the loop form, as described in [Types](/compiler/types).
 
 A `lexer.rs` comment says the parser desugars `for` into `while`.

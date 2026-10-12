@@ -11,10 +11,9 @@ The tests run against the LLVM backend, the only code generator.
 ```sh
 cargo test                                   # unit tests and the fixture suite
 cargo test --test fmt                        # the formatter's corpus and properties
-./kelpc/tests/run-all-backends.sh            # the fixture suite once per backend
 ```
 
-`run-all-backends.sh` reads `BACKENDS`, which defaults to `c llvm`.
+There is one backend, so there is no script that runs the suite once per backend.
 
 ## The fixture suite (`tests/compile_and_run.rs`)
 
@@ -45,16 +44,19 @@ Two checks run inside this file:
 
 Each `run-llvm-*.sh` script runs one slice of the fixtures on the LLVM backend, and compares stdout with the expected output.
 Some of them also read the generated `.ll` file to check an instruction or a layout.
-The scripts are `run-llvm-scalar-subset.sh`, `run-llvm-datac-subset.sh`, `run-llvm-strings-drops.sh`, `run-llvm-enum-subset.sh`, `run-llvm-containers.sh`, `run-llvm-references.sh`, `run-llvm-closures.sh`, `run-llvm-externs.sh`, `run-llvm-pd-caps.sh` and `run-llvm-abi.sh`.
+The scripts are `run-llvm-scalar-subset.sh`, `run-llvm-datac-subset.sh`, `run-llvm-strings-drops.sh`, `run-llvm-enum-subset.sh`, `run-llvm-containers.sh`, `run-llvm-references.sh`, `run-llvm-closures.sh`, `run-llvm-externs.sh` and `run-llvm-pd-caps.sh`.
+`run-llvm-levels.sh` builds each corpus target at `-O0` and at each higher level, and requires the same output at every level. Its full sweep is an ignored test in `level_differential.rs`.
+
+The ABI check for by-value aggregates is a Rust witness, `abi_aggregate.rs`. It links a Rust caller and callee with `repr(C)` structs against the Kelp object. It replaces the C fixture that was compiled before.
 
 `llvm_debug_info.rs` builds `tests/llvm-debug/fault.kp`, which divides by a run-time zero.
 It reads the line table of the binary and checks that the fault is reported at the `.kp` line.
 
 ## The backend coverage sweep (`backend_coverage.rs`)
 
-`backend_coverage.rs` was written to build every fixture with two backends and compare them.
-The C backend has been removed, so the test no longer has a second side to compare against.
-The golden outputs in `kelpc/tests/golden/` are the record that remains.
+`backend_coverage.rs` covers the `llvm` backend alone: the coverage of the fixtures, the refusal ranking and the crash check.
+It was written to compare two backends. The C backend that was the second side was removed on 2026-10-10, so the comparison is gone.
+The frozen golden set in `kelpc/tests/golden/` is the reference for the corpus that remains (`golden_corpus.rs`).
 
 ## Fuzzing (`differential_fuzz.rs`, `frontend_fuzz.rs`)
 
@@ -79,9 +81,7 @@ Valgrind runs on any binary.
 
 ## Runtime reference tests
 
-Older tests compared a Kelp port with a C reference file, using the same generated cases on both sides.
-The C reference files are not in the tree, and `kelpc/runtime/` holds no `*_ref.c` file.
-So these comparisons have no second side now.
+Older runtime tests compared a Kelp port with a C reference file. No C file is in the tree, so those comparisons have no second side now.
 The `kelpc/runtime/` folder keeps `dns_parse.kp` and `resolver_conf.kp`.
 
 ## The formatter and the linter

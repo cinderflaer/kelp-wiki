@@ -36,7 +36,7 @@ they are comments like any other, so nothing about them changes what a program
 does:
 
 ```kelp
-//! The buffer owns its bytes and frees them once, at the end of the owning
+//! The buffer owns its bytes and drops them once, at the end of the owning
 //! scope. Nothing here is a view: every getter copies.
 datac Buffer(val bytes: Bytes)
 

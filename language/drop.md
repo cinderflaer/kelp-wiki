@@ -4,8 +4,9 @@ description: "fun mut T.drop() gives a user datac or enum a destructor. It runs 
 isPublished: true
 tags: "language, ownership, kernel"
 ---
-Owned values are already freed at the end of their scope, on every exit path
-([Ownership and borrowing](/language/ownership)). A user **`Drop`** lets a type
+Owned values are already dropped at the end of their scope, on every exit path
+([Ownership and borrowing](/language/ownership)). A memory value in a hosted build
+has no drop to run: the collector reclaims it. A user **`Drop`** lets a type
 run its own code at each of those drop points, so a lock flag can be coupled to
 the value that holds it. The design is
 [`plan/drop.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/drop.md).
@@ -43,7 +44,7 @@ The drop points are the ones the plan already had:
 - the end of the owning block,
 - before a `return`,
 - reassignment of an owned `var`,
-- an element a container frees,
+- an element a container drops,
 - the drop of a containing `datac`/`enum`,
 - the `atexit` drop of an owned `pd`.
 
@@ -112,7 +113,7 @@ leaf
 1
 ```
 
-Reassigning an owned `var` frees the value it replaces first:
+Reassigning an owned `var` drops the value it replaces first:
 
 ```kelp
 datac Leaf(val tag: i32)
@@ -140,7 +141,7 @@ leaf
 An `enum` runs its own body for every variant before the live variant's payload
 drops (a payload-less variant still runs the body; only the field drop is
 skipped). `drop_enum` prints `body`, then `maybe` twice, then `leaf 1`. A loop
-body frees one value per iteration, and a `return` frees the frame's live locals
+body drops one value per iteration, and a `return` drops the frame's live locals
 after the returned value is read (`drop_control_flow` prints `leaf 1`, the
 returned `9`, `leaf 2`, `leaf 1`, the returned `0`, then `loop`, `leaf 10`,
 `loop`, `leaf 11`).
@@ -188,7 +189,7 @@ error: cannot move field 'leaf' out of 'h' by value: it is a type with a destruc
 ```
 
 - **An explicit destructor call.** `g.drop()` is refused, because the value's
-  drop already runs when the value dies and a second run would free a live
+  drop already runs when the value dies and a second run would close a live
   resource twice.
 
 ```text
@@ -201,7 +202,7 @@ error: 'Leaf.drop' cannot be called: an explicit destructor call is an error, be
   fail. This avoids two owners of one resource.
 
 ```text
-error: List<Leaf>.clone is not defined: 'Leaf' declares 'fun mut Leaf.drop()', and a type with a destructor is not `Copy`, so a second owner of the same resource would be freed twice
+error: List<Leaf>.clone is not defined: 'Leaf' declares 'fun mut Leaf.drop()', and a type with a destructor is not `Copy`, so a second owner of the same resource would be dropped twice
 ```
 
 - **A declaration that is not the right shape.** A shared receiver, a parameter,

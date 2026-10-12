@@ -25,7 +25,6 @@ the language, the stdlib and the libraries is then one `rg` from the parent fold
 ```sh
 cargo build --release -p kelpc
 cargo test                                   # unit tests + the fixture suite
-./kelpc/tests/run-all-backends.sh            # the suite once per implemented backend
 ```
 
 The fixture suite compiles a fixture, runs the result and compares stdout, so it
@@ -34,11 +33,10 @@ default run stays fast:
 
 ```sh
 cargo test --test memory_gate      -- --ignored               # valgrind over the binaries
-cargo test --test cap_matcher      -- --ignored               # the matcher vs its C reference
 ```
 
-`bench/run.sh` times the thirteen-program suite in C, Rust and Kelp and checks
-their output. `bench/speed/run.sh` times a smaller four-workload set.
+`bench/run.sh` times the thirteen-program suite in Rust and Kelp and checks
+their output against the Rust output. `bench/speed/run.sh` times a smaller four-workload set.
 
 ## What a change should carry
 

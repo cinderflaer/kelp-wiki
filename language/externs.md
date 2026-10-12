@@ -13,8 +13,12 @@ this page is the language side.
 
 A raw `extern fun` would bypass `caps(...)` by construction, so nothing gates what
 it reaches. The `[extern.*]` section is what restores the gate: it names the
-domain, the native library, the header and the exact `symbols` the module's
-declarations may bind to.
+domain, the native library and the exact `symbols` the module's declarations may
+bind to.
+
+kelpc compiles no C. Every native symbol a project binds must already exist in a
+library the section names (or in libc, which every hosted program links). A
+`header` key is validated but nothing reads it.
 
 ## `extern fun`
 
@@ -52,10 +56,9 @@ The section header names the module by the path it is imported under, quoted:
 `"sys"` for `src/sys.kp`. A bare `[extern.sys]` is refused. A module gets at most
 one `[extern.*]` entry, which appears before any other section except `[caps]`.
 
-`library` is linked as `-l<library>`. `header` names a C header
-that is `#include`d after the runtime preamble; `include_dirs` and `library_dirs`
-add `-I`/`-L`; `pkg_config` runs one `pkg-config --cflags --libs` and puts the
-flags on both the compile and the link line.
+`library` is linked as `-l<library>`. `library_dirs` adds `-L`. `pkg_config` runs
+one `pkg-config --cflags --libs` and puts the flags on the link line. `header` and
+`include_dirs` are checked for their form and then not used.
 
 The rename form is how two libraries that share a symbol name are both bound:
 
@@ -181,142 +184,31 @@ number of extra arguments after the fixed ones, each of an integer, `bool`,
 `f32`, `f64`, `str` or opaque-handle type. Anything else is a compile error
 naming the argument.
 
-The type checker mints one fixed-arity C wrapper per distinct list of extra types
-and the call goes through it, so the C compiler applies the default argument
-promotions and neither backend emits a variadic call itself. The compiler applies
-no conversions of its own.
+The type checker mints one fixed-arity wrapper per distinct list of extra argument
+types, and the call goes through that wrapper. The wrapper is part of the program's
+IR. The compiler applies no conversions of its own. A variadic extern cannot be
+generic: nothing would specialize the wrapper's signature per instantiation.
 
-```toml
-[extern."helper"]
-domain = "env"
-library = "c"
-symbols = ["kelp_va_sum", "kelp_va_mix"]
-header = "kelp_va_helper.h"
-include_dirs = ["include"]
-```
-
-```c
-/* include/kelp_va_helper.h */
-#include <stdarg.h>
-#include <string.h>
-
-static inline int kelp_va_sum(int count, ...) {
-    va_list ap;
-    va_start(ap, count);
-    int total = 0;
-    for (int i = 0; i < count; i++) {
-        total += va_arg(ap, int);
-    }
-    va_end(ap);
-    return total;
-}
-
-static inline int kelp_va_mix(int count, ...) {
-    va_list ap;
-    va_start(ap, count);
-    double d = va_arg(ap, double);
-    const char* text = va_arg(ap, const char*);
-    va_end(ap);
-    return (int)(d * count) + (int)strlen(text);
-}
-```
-
-```kelp
-// src/helper.kp
-pub extern fun kelp_va_sum(count: i32, ...).return: i32
-pub extern fun kelp_va_mix(count: i32, ...).return: i32
-```
-
-```kelp project
-// src/main.kp
-impl "helper" caps(env = ["*"])
-
-fun main() {
-    print(helper.kelp_va_sum(0))
-    print(helper.kelp_va_sum(1, 7))
-    print(helper.kelp_va_sum(3, 1, 2, 3))
-    val scale: f32 = 3.5
-    print(helper.kelp_va_mix(2, scale, "abcd"))
-}
-```
-
-```text
-0
-7
-6
-11
-```
-
-A variadic extern cannot be generic: nothing would specialize the wrapper's
-signature per instantiation.
+The examples in this section used a C helper header to define the native symbols.
+They were removed with the C compiler. A variadic extern needs its native symbol in
+a linked library.
 
 ## Callbacks: `move closure(...)`
 
 A user `extern fun` parameter written `move closure(P0, P1, ...).return: T` expands in
-place to three C arguments `(thunk, env, destroy)`, the shape GLib's
-`(func, user_data, destroy_notify)` uses. `thunk` is a generated C function that
-reorders the native `(args..., user_data)` into the closure's own
-`(env, args...)`; `env` is a heap box holding the closure value; `destroy` runs
-the closure's drop on that environment and frees the box.
+place to three C-ABI arguments `(thunk, env, destroy)`, the shape GLib's
+`(func, user_data, destroy_notify)` uses. `thunk` is a generated function in the
+program's externs object that reorders the native `(args..., user_data)` into the
+closure's own `(env, args...)`; `env` is a heap box holding the closure value;
+`destroy` runs the closure's drop on that environment and frees the box.
 
 The closure is **moved** into the native side, so `destroy` is the only thing that
 frees the environment. A native side that never calls it leaks. The closure's
 parameters and return must be a scalar, `bool`, `str`, an opaque handle or
 `unit`, with no `move`/`mut` parameter, and an extern takes at most one.
 
-```toml
-[extern."helper"]
-domain = "env"
-library = "c"
-symbols = ["kelp_call_twice"]
-header = "kelp_cb_helper.h"
-include_dirs = ["include"]
-```
-
-```c
-/* include/kelp_cb_helper.h */
-static inline int kelp_call_twice(void (*fn)(int, void*), void* data, void (*destroy)(void*), int x) {
-    fn(x, data);
-    fn(x + 1, data);
-    if (destroy) destroy(data);
-    return 2;
-}
-```
-
-```kelp
-// src/helper.kp
-pub extern fun kelp_call_twice(f: move closure(i32), x: i32).return: i32
-```
-
-```kelp project
-// src/main.kp
-impl "helper" caps(env = ["*"])
-
-fun plain(x: i32) {
-    print(x)
-}
-
-fun main() {
-    val tag = String.from_str("cb")
-    val f = fun(x: i32) {
-        print(tag.len())
-        print(x)
-    }
-    print(helper.kelp_call_twice(f, 3))
-    print(helper.kelp_call_twice(plain, 8))
-}
-```
-
-```text
-2
-3
-2
-4
-2
-8
-9
-2
-```
+The native function that takes such a callback must come from a linked library.
+The example that used a C helper header was removed with the C compiler.
 
 A plain function value widens to a closure with no environment, and the
 destructor still frees the box.
@@ -336,10 +228,13 @@ destructor make that ownership explicit.
 ## What is not here yet
 
 - **`extern "C"` block syntax.** Each symbol is one `extern fun` declaration.
-- **Generated prototypes.** A `header` makes the real C declaration visible, so
-  the compiler does not generate a second one.
-- **`repr(C)` layout.** An opaque handle crosses as a pointer, but a C struct by
-  value has no spelling yet.
+- **Generated prototypes.** A declaration is the only prototype the compiler knows.
+  A `header` key is not read, so no C declaration is included.
+- **By-value aggregates.** A user `extern fun` that takes or returns by value a
+  struct, `Bytes`, `String`, `View`, `List`, `Box`, `Map`, an array or a closure is
+  refused by name. The message says the llvm backend cannot pass it to a native
+  symbol yet, and asks for a pointer or a handle instead. An opaque handle crosses
+  as a pointer.
 
 ## See also
 

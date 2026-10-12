@@ -11,6 +11,16 @@ releases the lock around the sleep. On top of them sit channels
 small operations they are built from, `share` and `swap`. A thread pool is
 [`std/pool`](/stdlib/pool). Hosted only.
 
+> **Status on current `main`.** Channels are refused on `main` for now, including
+> `sync.bounded`, `sync.unbounded`, `sync.rendezvous` and `select`. A channel program
+> fails to build with a message such as `'Job' cannot be a thread's argument in managed
+> mode` or `'std.sync.ChanMeta' cannot be the value of a Mutex or RwLock in managed
+> mode`. The collector does not yet scan the values a thread or a lock holds outside the
+> heap. The step that adds that scan is planned (Tidepool step 1), and it is the step that
+> lets channels and the pool build. A `Mutex` or `RwLock` that holds a number builds. One
+> that holds a memory value such as a `List` is refused, for example with
+> `'List<i32>' cannot be the value of a Mutex or RwLock in managed mode`.
+
 ```kelp
 impl "std/sync"
 ```
@@ -355,7 +365,7 @@ fun Mutex<T>.swap(value: move T).return: T
 ```
 
 - `share()` returns **another owned handle to the same runtime record**. The
-  record has a reference count, and the last handle's drop frees it. It is how
+  record has a reference count, and the last handle's drop releases it. It is how
   two threads each own a mutex without a `pd`. `into_inner` on a mutex whose
   record is still shared panics, because the value is still reachable through
   the other handle.

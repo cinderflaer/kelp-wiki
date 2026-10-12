@@ -1,19 +1,20 @@
 ---
-title: "Performance of manual memory"
-description: "Measured wall time and peak memory of the hosted Kelp build (manual memory, -O2) against gcc -O2 C on four benchmarks, with spreads, load conditions, and what the numbers do and do not show."
+title: "Performance of the 26.10.5 hosted build"
+description: "Recorded wall time and peak memory of the 26.10.5 hosted Kelp build (manual memory, -O2) against gcc -O2 C on four benchmarks, with spreads, load conditions, and what the numbers do and do not show."
 isPublished: true
 tags: "performance, memory, benchmarks"
 ---
-These are the measured numbers for Kelp's hosted build, which is the build with
-manual memory: no collector, every value freed by its owner. The managed build is
-not finished, so these are the only numbers in this section. The planned design
-is on [Tidepool](/memory/tidepool).
+These are the recorded numbers for Kelp's 26.10.5 hosted build, which had manual
+memory: no collector, every value freed by its owner. Current `main` links the
+collector into every hosted build, and that build has not been measured on this
+page. The C programs were removed from the tree, so the C figures cannot be rerun.
+The planned design is on [Tidepool](/memory/tidepool).
 
 ## Conditions
 
 - **Build.** `kelpc build -O2` on the default LLVM backend, hosted mode. The C
-  reference is the Rust version of each benchmark, not C. Both sides run the full default size of each
-  benchmark.
+  reference is the gcc -O2 build of each benchmark's C program, which was in the tree
+  when these runs were made. Both sides run the full default size of each benchmark.
 - **Compiler.** The 26.10.5 release asset, for the baseline table. The second table
   uses the 26.09.5 compiler from the run recorded in `bench/RESULTS.md`, so the two
   tables are not the same build.
@@ -27,7 +28,7 @@ is on [Tidepool](/memory/tidepool).
 - **Bounds checks.** Kelp checks array and list bounds in both its builds. The C
   reference does not. That favours C by construction.
 
-## Baseline: 26.10.5 hosted, depth 16
+## Baseline: 26.10.5 hosted, depth 16 (recorded)
 
 Source: `bench/managed/baseline-hosted-d16.md`, produced by `bench/managed/gate.sh`
 with `BT_DEPTH=16`, 7 runs and 1 warm-up. Times in seconds.
@@ -46,7 +47,7 @@ with `BT_DEPTH=16`, 7 runs and 1 warm-up. Times in seconds.
 The ratio is the hosted median divided by the C median. The checksum of every
 hosted run matched the C output.
 
-## Older run: 26.09.5, the full suite
+## Older run: 26.09.5, the full suite (recorded)
 
 Source: `bench/RESULTS.md`, the second run, kelp-llvm column, 7 runs each, on the
 same machine under heavier load. Times in seconds.

@@ -1,25 +1,45 @@
 ---
-title: "Working without the garbage collector"
-description: "Writing Kelp with manual memory: ownership, borrows, moves and drops, the patterns they make, the refusals you will meet, and the measured cost of the hosted build."
+title: "Working with Kelp memory"
+description: "How a hosted Kelp program manages memory: owned values, borrows, moves and drops, the collector that reclaims memory values, the patterns and refusals you will meet, and the recorded cost of the 26.10.5 build."
 isPublished: true
 tags: "language, ownership, memory, performance"
 ---
 This section is for a programmer who has read the [tutorial](/tutorial) or the
-[ownership page](/language/ownership) and wants to write real programs with
-Kelp's manual memory: every value has one owner, and its owner frees it. It
-covers the rules, the patterns that follow from them, the compiler messages you
-will see when a program breaks a rule, and what the hosted build costs in time
-and memory.
+[ownership page](/language/ownership) and wants to write real programs. It covers
+the rules, the patterns that follow from them, the compiler messages you will see
+when a program breaks a rule, how memory is reclaimed, and what the hosted build
+costs in time and memory.
 
-## Why manual memory
+## Owners, resources and memory
 
-The default build has no garbage collector. A value lives exactly as long as its one owner,
-and the owner's scope end frees it on every exit path, so there is no collector
-pausing the program, no tracing pass, and no moment at which a dead value
-lingers until the collector gets to it. A destructor runs at a known point in
-the code. The price is that the compiler refuses a program that would need two
-owners of one value, so the program is shaped around single ownership up front,
-where a garbage-collected language would let the shared value stay shared.
+Every value has one owner, and the compiler refuses a program that would need two
+owners of one value. The owner decides when a resource ends. A file, a socket, a
+thread, a lock, or a value with a destructor is closed or dropped at the end of its
+owner's scope, on every exit path, at a point the code shows. A destructor runs at
+that point.
+
+Memory values are handled differently in a hosted build, which is the default. On
+current `main`, every hosted build links the collector, `kelp_gc`. It reclaims the
+memory of a `String`, `Bytes`, `List`, `Map`, `Box` or closure environment once no
+path reaches it. The owner's scope end does not free that memory, so the bytes of a
+dead value can stay in the heap until the next collection.
+
+- The collector is a non-moving mark-region tracing collector. It starts a collection
+  when the bytes allocated since the last one reach a trigger. The trigger starts at
+  8 MiB, and after each collection it is the larger of 8 MiB and the live size.
+- The heap is capped by `[target] heap_max`, in MiB. The default is 256, and the
+  range is 1 to 65536. When a collection cannot make room under the cap, the program
+  stops with a fatal `out of memory` message.
+- A value that a thread or a lock holds outside the heap is refused where the
+  collector cannot see it yet. See [Common refusals](/memory/refusals).
+
+A freestanding build has no collector and no shared heap. See
+[Freestanding](/language/freestanding).
+
+The measured numbers on [Performance](/memory/performance) are for the 26.10.5
+release, which had no collector. Current `main` has not been measured on that page.
+The planned Tidepool design, with blocks and a measured trigger, is not on `main`.
+See [Tidepool](/memory/tidepool).
 
 ## Pages
 
@@ -32,12 +52,14 @@ In reading order:
   passing borrows to functions.
 - [Common refusals](/memory/refusals): the exact compiler messages for the
   mistakes everyone makes first, each with its fix.
-- [Performance](/memory/performance): the measured numbers for the hosted build
-  on four benchmarks, with their spread and the C reference, and what they show.
-- [Tidepool](/memory/tidepool): the planned block design. It is in design, and its pages are empty placeholders.
+- [Performance](/memory/performance): the recorded numbers for the 26.10.5 hosted
+  build on four benchmarks, with their spread and the C reference, and what they show.
+- [Tidepool](/memory/tidepool): the planned block design. It is not on `main`, and most
+  of its pages are placeholders.
 
-Every program in this section was compiled with the 26.10.5 release compiler and
-run. The output shown is the output of that run.
+The programs in this section were compiled with the 26.10.5 release compiler and
+run, and the output shown is the output of that run. They have not been rerun on
+current `main` for this section.
 
 ## See also
 
