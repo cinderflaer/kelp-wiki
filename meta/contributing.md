@@ -127,8 +127,7 @@ removed once their deadline passed. The steps for an entry:
 A useful defect report has:
 
 1. the smallest program that shows it: three lines beats a paragraph;
-2. the exact command and the exact error, including the file `cc` named if the
-   failure came from `cc`;
+2. the exact command and the exact error;
 3. what you expected instead, in one sentence;
 4. whether it is `llvm`-only or backend-independent (the `llvm` backend is the only one).
 

@@ -10,7 +10,6 @@ Four things can stop you, and the prefix tells you which one spoke.
 | --- | --- | --- |
 | `coral: ...` | Coral, the project tool | progress, `up to date`, or a manifest problem |
 | `error: ...` with a `--> file:line:col` below | `kelpc`, the compiler | a problem in your source, at that span |
-| `error: cc failed:` | the C compiler, on `kelpc`'s output | a compiler bug, not your program |
 | `panic: ...` | your program, at run time | it ran and aborted |
 
 Errors go to stderr and the process exits non-zero, so a shell script and a
@@ -94,10 +93,6 @@ says the shortfall is the compiler's rather than sending you to a backend you
 cannot choose. There is no `--backend=` flag: `kelpc build --backend=c` is refused
 with a message that says the choice is gone.
 
-`error: cc failed:` is different: the C compiler refused something `kelpc` handed
-it, which is a `kelpc` bug. The `cc` step compiles the extern object of a program that has an `extern fun` or a capability-gated call, and the message names the file it refused. That file, the source, and the command are
-exactly what a report needs.
-
 ## Make a refusal happen on purpose
 
 The capability model is easier to trust after watching it refuse something. Two
@@ -133,7 +128,7 @@ attached.
   which is the language authority. A construct that is refused by design belongs
   on [Limits in v1](/language/limits), not in a report.
 - Include `kelpc version`, the optimization level, the source, the command, and
-  the output verbatim. For a `cc failed:`, include the file it named.
+  the output verbatim.
 - [Contributing](/meta/contributing) has the workflow.
 
 ## See also

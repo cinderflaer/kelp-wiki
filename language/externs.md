@@ -326,7 +326,7 @@ destructor still frees the box.
 A `fun(P0, P1, ...).return: T` parameter or return in a user `extern fun` is a typed
 plain C function pointer. Use it when the native function borrows the callback
 for the call. For example, `fun(i32).return: i32` maps to `int (*)(int)`: the
-`ffi_fn_pointer` regression passes one to a C helper and receives one back.
+`ffi_fn_pointer` regression passes one to a native function and receives one back.
 
 The pointer carries no captured environment and the native side must not retain
 it beyond the call. Use `move closure(...)` instead when the native API needs a

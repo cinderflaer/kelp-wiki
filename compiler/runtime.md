@@ -26,19 +26,17 @@ The resolver reads `std/...` ids from the embedded text before it looks at the p
 ## `extern fun` bodies
 
 An `extern fun` declaration has no body in Kelp.
-The compiler supplies the body as C text, and the checker accepts the declaration only when the compiler has a body for it.
+The checker accepts the declaration only when the compiler has a body for it.
 
-1. The bodies are kept in one table, `EXTERNS` (`externs.rs:19`).
-   Each entry is a module, a name and C statements.
-   `externs::body` (`externs.rs:748`) finds an entry by its module and name.
-2. The checker asks `externs::has_body` (`infer.rs:9699` and `11113`).
-   A project may declare its own extern only with a `[extern."<module>"]` section in `coral.toml`, and the checker checks that allowlist (`infer.rs:11113` to `11125`).
-3. The C text for each body is written by `write_extern` (`cdecl.rs:245`).
-   A user extern that names a native symbol becomes a call to that symbol (`cdecl.rs:293`).
+1. A stdlib body is a Rust export in `kelp-rt`, listed in `RUST_PORTED` (`externs.rs`).
+   The LLVM call resolves against the runtime archive under the mangled qualified name.
+2. The checker asks `externs::has_body` (`infer.rs`).
+   A project may declare its own extern only with a `[extern."<module>"]` section in `coral.toml`, and the checker checks that allowlist.
+3. A user extern that names a native symbol gets a trampoline in the program's externs object (`lower_externs_object`, `extern_object.rs`).
+   The trampoline calls the native symbol directly. A `move closure(...)` parameter is boxed and handed over with a thunk and a destructor.
+   A user extern that takes or returns a struct by value is refused for now.
 
-The bodies are compiled for each program, not shipped as one fixed object.
-One body calls a `std/path` function that only the resolver injects, and another names a container type that exists only in the program.
-The compiler writes them into `<out>.externs.c` and compiles that file into `<out>.externs.o` (`codegen_llvm.rs:477` to `487`).
+The trampolines are compiled for each program, not shipped as one fixed object, because each names the native symbols that program allowlisted.
 
 ## The runtime files
 

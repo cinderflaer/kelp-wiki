@@ -259,9 +259,9 @@ one is a parse error.
 | `repr(align(N))` | the C field layout with the type's own alignment raised to `N`, a power of two literal. The size rounds up to a multiple of `N`, and a type that embeds it places it at an `N`-aligned offset |
 
 The layout is the one a C compiler gives the same declaration, and the C compiler is the
-judge: `tests/projects/ffi_layout` builds a `repr(packed)` `datac` in Kelp, passes
-its address through a user `extern fun` to a project-local C helper, and prints
-C's `sizeof`/`_Alignof`/`offsetof` beside Kelp's own queries.
+judge: `tests/projects/ffi_layout` builds a `repr(packed)` `datac` in Kelp and checks
+its size, alignment and field offsets against literal values written in `main.kp`.
+No C compiler is involved.
 
 `repr(packed)` and `repr(align(N))` are refused **on an enum**: an enum's only
 layout knob here is the tag's storage type.

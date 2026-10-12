@@ -39,11 +39,11 @@ It wraps `llvm-sys` 211, which is LLVM 21.1, and links it dynamically.
 4. Emit the bodies. One `FnGen` (`codegen_llvm.rs:3851`) emits each non-extern function (`emit_all`, `codegen_llvm.rs:3831`).
 5. Verify the module, and write the unoptimised IR to `<out>.ll` before any pass runs (`codegen_llvm.rs:664` to `675`).
 6. Run the pass pipeline for the chosen level, verify again, and write `<out>.o` (`codegen_llvm.rs:715` to `722`).
-7. If the program has `extern fun` bodies or a gated call, compile the C source for them into `<out>.externs.o` with `cc` (`codegen_llvm.rs:477` to `487`).
+7. If the program has a user `extern fun` or a gated call, lower its trampolines, callback glue and capability allowlists to LLVM IR and write them to `<out>.externs.o` with the same target machine (`lower_externs_object`, `extern_object.rs`).
 8. Link. See [Driver](/compiler/driver#linking).
 
-The per-program C source is built by `program_c_source` (`codegen_llvm.rs:15202`).
-It holds the extern bodies and the capability glue, and it is only written when the program has an `extern fun` or a gated call.
+The per-program externs object holds the user `extern fun` trampolines, the native-callback glue and the capability allowlists.
+It is written only when the program has one of them, and it is LLVM IR like the rest of the program: no C source is written and no C compiler runs.
 
 ### Value layouts
 
@@ -91,7 +91,7 @@ Each statement gets a location, and no variables are described.
 `OptLevel` (`opt.rs:31`) has the values `-O0`, `-O1`, `-O2`, `-O3` and `-Os`.
 The default is `-O2` (`opt.rs:45`).
 The level selects the LLVM pass pipeline and the target machine's codegen level.
-It is also passed to `cc` when `cc` compiles the extern object, and `ld.lld` ignores it.
+It is also the codegen level of the externs object, and `ld.lld` ignores it.
 `-Oz` is refused.
 
 ## The retired C backend
@@ -100,7 +100,7 @@ The C backend was removed on 2026-10-10.
 Its golden outputs remain in `kelpc/tests/golden/`.
 The C-versus-LLVM differential test is gone with it.
 
-The C text that remains in the tree is the per-program object described in step 7 above, and the extern bodies it holds.
+No C text remains in the tree. The stdlib's extern bodies are Rust exports in `kelp-rt`, and the per-program object of step 7 is LLVM IR.
 Some comments in `codegen_llvm.rs` still describe the removed backend and a `runtime/kelp_rt.c` file. Those comments are stale.
 
 ## See also

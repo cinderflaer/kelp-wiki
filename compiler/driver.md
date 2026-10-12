@@ -49,7 +49,7 @@ The LLVM path writes `<out>.ll`, verifies the module, optimises it, writes `<out
 Beside the binary, a build may write these files:
 
 - `<out>.ll` and `<out>.o` for the LLVM backend;
-- `<out>.externs.c` and `<out>.externs.o` when the program has `extern fun` bodies or a capability-gated call;
+- `<out>.externs.o` when the program has a user `extern fun` or a capability-gated call;
 - `<out>.units/` with `--incremental`;
 - `index.html` when `coral.toml` sets `[build] emit = "html"`.
 
@@ -67,9 +67,9 @@ It adds the program object, the runtime archive, the optional externs object, th
 It ends with `-lgcc -lgcc_s -lc`, with `--as-needed`.
 The x86_64 ELF layout and glibc are fixed in this list. A hosted build for another target is not covered.
 
-`cc` still runs for one object. When the program has an `extern fun` or a capability-gated call, kelpc writes `<out>.externs.c` and compiles it with `cc -O<level> -fwrapv`.
-That object holds the `extern fun` bodies and the capability glue.
-So a program that uses `fs`, `net`, `process`, `env`, `time` or `rand`, or any `extern` in std, needs a C compiler.
+No C compiler runs for a hosted build, and no `.c` file is written.
+When the program has a user `extern fun` or a capability-gated call, kelpc writes the trampolines, the native-callback glue and the allowlist arrays as LLVM IR into `<out>.externs.o`, with the same target machine as the program's own object (`extern_object.rs`).
+The stdlib's `extern fun` bodies are Rust exports in `kelp-rt`, so a program that uses `fs`, `net`, `process`, `env`, `time` or `rand` needs no C compiler either.
 
 `pkg-config` runs for each `[extern."<id>"]` package that names one.
 

@@ -108,7 +108,7 @@ The service also restarts by itself if it ever crashes, so a bug is a brief blip
 ```
 
 The page posts to a relative `api/compile`, so for a local run serve `dist/` with anything that also
-forwards `/api/` to port 8094. `kelpc` needs `cc` on `PATH` (see [Build it](#build-it)).
+forwards `/api/` to port 8094. `kelpc` needs `ld.lld` on `PATH` (see [Build it](#build-it)).
 
 ## A first page
 
@@ -178,11 +178,10 @@ kelpc build . -o webkelp
 tests/run.sh          # golden tests; set WEBKELP=./webkelp
 ```
 
-`kelpc` calls `cc` for the `extern fun` bodies a program reaches, so a C compiler has to be on `PATH`. On NixOS,
-where there is none by default:
+`kelpc` needs `ld.lld` and the OpenSSL libraries for a program that reaches `std/tls`. On NixOS:
 
 ```sh
-nix-shell -p gcc openssl --run 'kelpc build . -o webkelp'
+nix-shell -p lld openssl --run 'kelpc build . -o webkelp'
 ```
 
 ## Default theme

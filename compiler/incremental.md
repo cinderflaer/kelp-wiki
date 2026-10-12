@@ -43,11 +43,10 @@ Every unit **declares** every function, static and `pd` global of the program
 (a declaration costs no symbol in the object) and **defines** only what it owns.
 A symbol another unit references is external in its owner and a declaration in
 its users; a symbol only its own unit uses stays `internal`. The reference set is
-computed from the typed IR before any module is built, plus a scan of the
-per-program C object, because an `extern fun` body or a capability shim can call
-a Kelp function across the object boundary in C. An over-approximation is
-harmless; a missed reference is a link error, never a silent miscompile, which is
-why every equivalence test links the real binary.
+computed from the typed IR before any module is built. The per-program externs
+object defines no Kelp function and calls none directly, so it adds no reference.
+An over-approximation is harmless; a missed reference is a link error, never a
+silent miscompile, which is why every equivalence test links the real binary.
 
 The artifact is `<out>.units/<unit>.ll` and `<out>.units/<unit>.o`; a `/` in a
 module id becomes `+`, so `shapes/circle` is `shapes+circle.o`. The objects are

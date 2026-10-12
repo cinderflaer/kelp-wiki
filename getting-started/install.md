@@ -13,7 +13,7 @@ tags: "getting-started"
 | `libLLVM-21.so` | running a `kelpc` built this way: the `llvm` backend links it dynamically and the binary does not start without it |
 | OpenSSL libraries (`libssl`, `libcrypto`) | building a program that reaches [`std/tls`](/stdlib/tls), which `std/http` and `std/ws` do: `kelpc` puts `-lssl -lcrypto` on that program's link line |
 | OpenSSL development output (`openssl/ssl.h`) | the same programs: the generated C includes OpenSSL's headers |
-| a C compiler and glibc | `ld.lld` links the object the `llvm` backend emits. `cc` compiles the extern object for a program with `extern fun` or a capability-gated call. |
+| glibc | `ld.lld` links the object the `llvm` backend emits, against glibc's start files and libraries. No C compiler is run. |
 | `valgrind` (optional) | the memory gate test |
 | [Coral](/tooling/coral) (recommended) | the build tool and package manager: projects, dependencies, tasks, toolchain pins. One `coral.toml`, and it calls `kelpc` for you |
 
@@ -104,7 +104,7 @@ compiler from source with the steps above, or let Coral fetch a release asset
 `kelpc` builds every program with one backend, **`llvm`**.
 It lowers the typed IR to LLVM IR, runs LLVM's pass pipeline over the module at the build's optimization level, and writes an object.
 `kelpc` then links that object with `ld.lld`.
-`cc` is used only for the extern object that a program needs when it has an `extern fun` or a capability-gated call.
+No C compiler is used. The extern object a program needs for an `extern fun` or a capability-gated call is LLVM IR, written by the same target machine as the program.
 
 There is no backend to choose.
 The `--backend=` flag, `KELPC_BACKEND` and `KELPC_ORACLE` are refused by name, with a diagnostic that says the choice is gone.
@@ -113,7 +113,7 @@ The `llvm` backend lowers the whole language the [Language](/language) pages des
 One guard remains in the lowering, for an owned temporary at a place it did not stage, and nothing in the corpus reaches it.
 
 `build` and `run` take an optimization level: `-O0`, `-O1`, `-O2`, `-O3` or `-Os`, with `-O2` the default.
-One level is one level for the whole build: it selects the LLVM pass pipeline and the target machine's codegen level, and it is the `-O` flag given to the extern object's `cc` compile.
+One level is one level for the whole build: it selects the LLVM pass pipeline and the target machine's codegen level, and it is the codegen level of the extern object as well.
 `-Oz` is refused. `-Os` is the size level.
 
 Every `kelpc` links `libLLVM-21.so` and needs it at runtime.

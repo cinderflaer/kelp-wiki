@@ -12,7 +12,7 @@ is on [Tidepool](/memory/tidepool).
 ## Conditions
 
 - **Build.** `kelpc build -O2` on the default LLVM backend, hosted mode. The C
-  reference is built with `cc -O2`. Both sides run the full default size of each
+  reference is the Rust version of each benchmark, not C. Both sides run the full default size of each
   benchmark.
 - **Compiler.** The 26.10.5 release asset, for the baseline table. The second table
   uses the 26.09.5 compiler from the run recorded in `bench/RESULTS.md`, so the two

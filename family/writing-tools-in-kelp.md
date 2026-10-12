@@ -49,8 +49,7 @@ kelpc run .                  # build and run the project in this directory
 kelpc build . -o mytool      # keep the binary
 ```
 
-`kelpc` calls `cc` for the `extern fun` bodies a program reaches, so a C compiler must be on `PATH`. If `kelpc` prints
-`could not invoke 'cc'`, that is the cause; on NixOS use `nix-shell -p gcc openssl --run '…'`.
+`kelpc` links with `ld.lld` and needs no C compiler. On NixOS, where `ld.lld` is not on `PATH` by default, use `nix-shell -p lld openssl --run '…'`.
 
 ## Errors you will meet
 
