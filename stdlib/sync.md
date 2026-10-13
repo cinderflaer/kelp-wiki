@@ -11,14 +11,15 @@ releases the lock around the sleep. On top of them sit channels
 small operations they are built from, `share` and `swap`. A thread pool is
 [`std/pool`](/stdlib/pool). Hosted only.
 
-> **Status on current `main`.** The collector roots the values a thread or a lock holds.
-> A `Mutex` or `RwLock` may hold a `List`, a `String` or any other memory value, and a
-> thread may take a memory value as its argument. The channel constructors
-> `sync.bounded`, `sync.unbounded` and `sync.rendezvous` are defined in `std/sync`. A
-> channel end (`SendEnd`, `RecvEnd`, `Sender` and `Receiver`) is a resource, so it is
-> refused by name as a thread's argument, a container element or a closure capture. The
-> message has the form `'<type>' cannot be a thread's argument in a hosted build: '<type>'
-> is a resource, ...`.
+> **Status on current `main`.** The collector roots the values a thread or a lock holds,
+> so a `Mutex` or `RwLock` may hold a `List` or a `String`. Channels build on `main`. A
+> channel used inside one thread builds and runs, for example `var (tx, rx) =
+> sync.bounded<i64>(2)` with two sends and a `try_recv` in `main`. A channel end
+> (`SendEnd`, `RecvEnd`, `Sender` and `Receiver`) is a resource, so a channel cannot cross
+> to a worker thread: `'std.sync.Sender<i64>' cannot be a thread's argument in a hosted
+> build: 'std.sync.Sender<i64>' is a resource, ...`. The same holds for a `List` element, a
+> `Mutex` value and a closure capture. A `Mutex` or `RwLock` holding a `List` or a `String`
+> builds. The `sync.rendezvous` and `select` forms were not built on this status line.
 
 ```kelp
 impl "std/sync"
@@ -429,8 +430,9 @@ for v in rx { ... }
 
 The pair is a tuple, so it is taken apart with a destructuring binding. Write
 `var (tx, rx) = ...` when a `for` over `rx` needs a mutable place, and `val`
-otherwise. `thread.spawn` takes one argument, so a worker that needs a sender
-gets it inside a `datac`. Two producers and one consumer, the producers
+otherwise. `thread.spawn` takes one argument, and a `datac` that holds a sender is not an
+allowed argument, so the program below cannot hand a sender to a worker. It is
+shown as the form the checker refuses. Two producers and one consumer, the producers
 `send`ing three values each through a channel of capacity 2:
 
 ```kelp
@@ -473,17 +475,10 @@ fun main() {
 }
 ```
 
-The loop ends by itself: `main`'s own `tx` was moved into the second job, so
-the channel closes when both workers have returned and dropped their senders.
-It prints:
-
-```
-6
-96
-```
-
-The six values sum to 10 + 11 + 12 + 20 + 21 + 22 = 96; their order depends on
-the threads, so the program prints only the count and the sum.
+This program is refused on `main`: `'Job' cannot be a thread's argument in a hosted
+build: 'Job' is a resource, and a resource never enters the collected heap, ...`.
+`Job` holds a `sync.Sender`, which is a resource. Use the channel inside one thread
+until a channel end may cross to a worker.
 
 ### `try_recv` and `recv_timeout`
 
