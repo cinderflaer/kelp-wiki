@@ -8,9 +8,11 @@ A fixed pool of worker threads that run closures from one first-in first-out
 queue. Written in Kelp over [`Mutex`, `Condvar`](/stdlib/sync) and
 [`thread.spawn`](/stdlib/thread). Hosted only.
 
-> **Status on current `main`.** `std/pool` is still refused. Its `PoolShared` record holds a
-> `Mutex` and a `Condvar`, which are runtime resources, so `PoolShared` is a resource. The
-> pool passes a `PoolShared` to each worker thread, and the checker refuses that by name.
+> **Status on current `main`.** `std/pool` is refused on `main`. A program that uses
+> `pool.new` is refused with `'std.pool.PoolShared' cannot be a thread's argument in a
+> hosted build: 'std.pool.PoolShared' is a resource, ...`, because its `PoolShared` record
+> holds a `Mutex` and a `Condvar`, which are runtime resources. The pool passes a
+> `PoolShared` to each worker thread, and the checker refuses that by name.
 > The job type `Job` holds a closure, which is memory, so it is not the blocker. The rest
 > of this page describes the API.
 
