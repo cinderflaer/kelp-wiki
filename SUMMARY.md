@@ -184,6 +184,7 @@
   - [Documentation audit, October 2026](meta/audit-2026-10.md)
   - [Contributing](meta/contributing.md)
   - [Milestone record](meta/milestones.md)
+  - [Open issues](meta/open-issues.md)
   - [Polyp v5 plan](meta/polyp-v5-plan.md)
   - [Roadmap](meta/roadmap.md)
   - [Source documents](meta/source-documents.md)

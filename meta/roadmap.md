@@ -822,7 +822,7 @@ down so the plan can say no to a concrete thing instead of re-arguing an idea.*
 
 #### H. The documentation's workaround list, worked off
 
-*Sources: the open issues list (`plan/ISSUES.md` in the kelp repository) and [Pitfalls](/language/pitfalls)
+*Sources: the [open issues list](/meta/open-issues) and [Pitfalls](/language/pitfalls)
 pages, which are derived from `syntax.md` §17 (limits in v1), §18 (errors you will hit) and §22
 (the rules that explain most errors). One item per row that carries a workaround. The invariant
 this block exists for: when H is worked off, the Pitfalls page is rules rather than workarounds,
