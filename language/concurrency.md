@@ -52,8 +52,8 @@ keeping on record:
   (a Miri-style checker) that gives evidence about the checker,
   not the enforcement mechanism.
 - **Not channels-only.** A channel is a value type a program may use (it
-  is in [`std/sync`](/stdlib/sync#channels), and it is refused on current `main`
-  for now), but it cannot be *the*
+  is in [`std/sync`](/stdlib/sync#channels), and it builds on current `main` inside
+  one thread), but it cannot be *the*
   mechanism: a
   channel-only model still lets two threads hold a `&mut T` to one location if
   nothing refuses it. The rule above is what makes the race unwritable; a
@@ -217,9 +217,10 @@ than decided speculatively; none of them blocks anything above:
 - **Channels and a pool are built on the rule above.** A channel is a
   `Mutex`-guarded queue whose two ends share one runtime record through
   `Mutex.share()`, and a pool is the same queue of closures
-  ([`std/sync`](/stdlib/sync), [`std/pool`](/stdlib/pool)). On current `main` they are
-  refused, with `select` and rendezvous channels, until the step that lets the
-  collector see values that a thread or a lock holds.
+  ([`std/sync`](/stdlib/sync), [`std/pool`](/stdlib/pool)). On current `main` a channel
+  builds inside one thread, a channel end and a pool are refused, and `select` and
+  rendezvous channels are not built, until the step that lets the collector see values
+  that a thread or a lock holds.
 
 ## See also
 
