@@ -14,7 +14,7 @@ impl "std/regex"
 
 The pattern is data, not syntax: the language itself still has no regular
 expression literal, so a pattern is a `&str` handed to `regex.compile`. The
-engine was specified in `plan/regex.md`.
+engine was specified in `stdlib/regex.md`.
 
 ## Engine
 

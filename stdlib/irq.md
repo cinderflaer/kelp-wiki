@@ -14,7 +14,7 @@ impl "std/irq"
 The module is gated on the `irq` domain (`kelpc/src/stdlib.rs::domain_of`), so
 importing it is not enough: the `impl` line, or the importing module's `[caps]`
 section, has to delegate `irq` with a pattern list. The design is
-[`plan/irq-frame-caps.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/irq-frame-caps.md).
+[`stdlib/irq.md`](/stdlib/irq).
 
 ## Types
 

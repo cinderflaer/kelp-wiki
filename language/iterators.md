@@ -4,7 +4,7 @@ description: "for x in it walks any type that implements std/iter's Iterator. A 
 isPublished: true
 tags: "language"
 ---
-Source: [`plan/iterators.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/iterators.md) and [`plan/iterators-status.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/iterators-status.md).
+Source: [`language/iterators.md`](/language/iterators) and [`language/iterators.md`](/language/iterators).
 
 `for` has two meanings, chosen by the type of what it walks:
 

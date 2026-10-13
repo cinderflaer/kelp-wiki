@@ -15,7 +15,7 @@ same program either way.
 
 The command surface is on the [`kelpc` CLI](/tooling/kelpc-cli#incremental-builds-and-the-object-cache)
 page; this page is how it works. The design authority is
-[`plan/incremental-compilation.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/incremental-compilation.md).
+[`compiler/incremental.md`](/compiler/incremental).
 
 ## The split
 

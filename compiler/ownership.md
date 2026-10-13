@@ -41,7 +41,7 @@ A `break` uses only the actions of its own block, which is empty for the nested 
 
 This follows from reading the code.
 No fixture pairs a `defer` with a `break` or `continue`, so it has not been confirmed by a test.
-`plan/defer.md` says `break` and `continue` are not statements yet, which is out of date.
+`language/statics-and-defer.md` says `break` and `continue` are not statements yet, which is out of date.
 
 ## Moves (`borrowck.rs`)
 

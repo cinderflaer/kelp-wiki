@@ -7,9 +7,9 @@ tags: "language, memory"
 Two things a kernel needs before anything else runs: storage with a stable
 address, and cleanup on the way out of a block. `static` is the first;
 `defer` is the second. The designs are
-[`plan/statics.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/statics.md)
+[`language/statics-and-defer.md`](/language/statics-and-defer)
 and
-[`plan/defer.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/defer.md).
+[`language/statics-and-defer.md`](/language/statics-and-defer).
 
 ## `static`
 

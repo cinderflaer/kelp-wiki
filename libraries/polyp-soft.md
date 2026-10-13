@@ -11,7 +11,7 @@ and no libc. It is the half a custom operating system, a test harness or a
 bare-metal image uses, and it is what makes a whole Polyp program testable with no
 display at all. The original design is
 [`plan/polyp-v3.md`](https://homelabone.xenoo.dev/gitea/Lilly/kelp/src/branch/main/plan/polyp-v3.md),
-stages 2, 3 and 5; [`plan/polyp-v4.md`](https://homelabone.xenoo.dev/gitea/Lilly/kelp/src/branch/main/plan/polyp-v4.md)
+stages 2, 3 and 5; [`libraries/polyp.md`](/libraries/polyp)
 adds clocks, animation, UTF-8, accessibility and memoisation.
 
 The layering, from the application down:

@@ -232,7 +232,7 @@ address reachable from it by arithmetic; there is no runtime check and no
 provenance model; and `mmio` says nothing about what is at the address (a fault
 taken on a probe page is granted like a device register). Freestanding is LLVM-only by design. See
 [Kernel 0](/language/kernel) for the grants the examples carry and
-[`plan/device-caps.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/device-caps.md)
+[`language/capabilities.md`](/language/capabilities)
 for the design.
 
 ### `irq` and `frames`: interrupt lines and physical frames

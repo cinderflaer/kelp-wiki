@@ -15,7 +15,7 @@ impl "std/tz" caps(fs = ["/nix/store/**/share/zoneinfo/**"], env = ["TZDIR"])
 ```
 
 The design is
-[`plan/tz.md`](https://homelabone.xenoo.dev/gitea/Lilly/kelp/src/branch/main/plan/tz.md).
+[`stdlib/tz.md`](/stdlib/tz).
 It needs no clock of its own: every call takes the instant or the wall clock the
 caller already has, the way [`datetime`](/libraries/datetime) does.
 
@@ -83,7 +83,7 @@ file was wanted) is `NotFound`; a file that is not a well-formed TZif file is
 reachable and the `env` grant must name `TZDIR` itself, because the environment
 check is a name check. A grant too narrow for a path is the compiler's own
 call-site **panic** rather than a returned `Denied` (open item 73,
-[`plan/roadmap.md`](https://homelabone.xenoo.dev/gitea/Lilly/kelp/src/branch/main/plan/roadmap.md)).
+[`meta/roadmap.md`](/meta/roadmap)).
 `zoneinfo` on NixOS is a symlink into the store twice over (`/etc/zoneinfo` to
 `/etc/static/zoneinfo`, which is itself a link to
 `/nix/store/<hash>-tzdata-<version>/share/zoneinfo`). The capability check

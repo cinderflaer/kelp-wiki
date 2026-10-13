@@ -13,10 +13,10 @@ print a checksum per frame. The claim is narrow and total: they draw the **same
 pixels** as the hosted run. The original design is
 [`plan/polyp-v3.md`](https://homelabone.xenoo.dev/gitea/Lilly/kelp/src/branch/main/plan/polyp-v3.md),
 stage 4, with the display stretch in
-[`plan/polyp-ramfb-status.md`](https://homelabone.xenoo.dev/gitea/Lilly/kelp/src/branch/main/plan/polyp-ramfb-status.md).
+[`libraries/polyp-freestanding.md`](/libraries/polyp-freestanding).
 The v4 hosted demo is also checked against both freestanding kernels when the
 corresponding QEMU and linker are available; see
-[`plan/polyp-v4.md`](https://homelabone.xenoo.dev/gitea/Lilly/kelp/src/branch/main/plan/polyp-v4.md).
+[`libraries/polyp.md`](/libraries/polyp).
 Freestanding mode itself is [its own language page](/language/freestanding); this
 stage is LLVM-only, as every freestanding build is.
 

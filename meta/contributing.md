@@ -188,9 +188,8 @@ to be updated when that source moves:
 | --- | --- |
 | [Standard library index](/reference/stdlib-index) | `kelpc/std/*.kp` |
 
-The [roadmap page](/meta/roadmap) names `plan/roadmap.md` in the `kelp` repository as the
-authority. It carries one status table, copied by hand from that file, and it says when the copy was
-taken, so a reader can tell when it has gone stale.
+The [roadmap page](/meta/roadmap) is the authority for the marks, the open items and the
+backlog. Its status table sits at the top of the page, and a reader should check that table first.
 
 Mermaid diagrams are not checked by any build: Wiki.js copies a diagram's text
 without judging it, so an invalid one shows up in the browser as an error box.

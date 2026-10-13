@@ -10,7 +10,7 @@ tags: "reference, capability"
 what that promise is worth: what is being protected, against whom, what the
 compiler and runtime actually check, and where the promise stops. The design
 notes are
-[`plan/threat-model.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/threat-model.md)
+[`reference/capability-threat-model.md`](/reference/capability-threat-model)
 and the attacks are
 [`kelpc/tests/threat_model.rs`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/kelpc/tests/threat_model.rs):
 75 tests, most of them one per numbered attack, each playing an author who holds

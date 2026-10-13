@@ -8,7 +8,7 @@ A kernel keeps per-CPU state: a current-task pointer, a run queue, a scratch
 area that must not be shared. **Per-CPU storage** is the storage class for one
 copy of a value per CPU, plus the two intrinsics that say which copy the running
 CPU is looking at. The design is
-[`plan/percpu.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/percpu.md);
+[`language/percpu.md`](/language/percpu);
 the bare-metal build around it is [Freestanding mode](/language/freestanding).
 
 ## The scalar names

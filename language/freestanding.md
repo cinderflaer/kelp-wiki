@@ -8,7 +8,7 @@ A project opts into bare metal with a `[target]` section in `coral.toml`. A
 project with no `[target]` section, or with `mode = "hosted"`, builds for the
 host exactly as every project before this stage did; that is the whole
 compatibility promise. The design is
-[`plan/freestanding.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/freestanding.md).
+[`language/freestanding.md`](/language/freestanding).
 
 There is no libc and no runtime archive behind a freestanding image, so everything
 that would reach either is a compile error rather than an undefined symbol the

@@ -8,7 +8,7 @@ Four small pieces turn a commit into a binary somebody else can check and instal
 `build/release.sh` builds it, `build/verify-reproducible.sh` proves the build is
 repeatable, `build/install.sh` installs a downloaded one only after it verifies,
 and `kelpc version --verbose` says what a binary was built from. The design is
-[`plan/reproducible-builds.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/reproducible-builds.md);
+[`tooling/release-tooling.md`](/tooling/release-tooling);
 the installer and the version output are tested by `kelpc/tests/release_tooling.rs`.
 They are scripts in the compiler repository, not subcommands of `kelpc`.
 

@@ -209,7 +209,7 @@ whole-program, with a warning. A freestanding project is refused by name:
 
 ```text
 $ kelpc build examples/kernel0 --incremental
-error: '--incremental' is not implemented for a freestanding project yet: its image is one ELF with a single entry stub and one panic state, so the per-unit split is its own slice (plan/incremental-compilation.md)
+error: '--incremental' is not implemented for a freestanding project yet: its image is one ELF with a single entry stub and one panic state, so the per-unit split is its own slice (compiler/incremental.md)
 ```
 
 One unit is written per source module id, plus one `_support` unit for the
@@ -295,7 +295,7 @@ so there are no variables and no types. One optimization level is one level for
 the whole build: it selects the LLVM pass pipeline and the target machine's
 codegen level, and the extern object is written at the same level. `ld.lld` takes no
 `-O` flag. See the MK7 record in
-[`plan/done.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/done.md).
+[`meta/milestones.md`](/meta/milestones).
 
 ## `fmt`
 

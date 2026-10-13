@@ -8,9 +8,9 @@ A raw pointer is a machine address, and the language cannot check what is at
 one. `unsafe` is how a program says it will do that checking itself. It is
 opt-in twice: a module may contain `unsafe` only if `coral.toml` lists that
 module under `[unsafe] modules`, and the program author has to write the clause.
-The design is [`plan/unsafe-and-pointers.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/unsafe-and-pointers.md),
+The design is [`language/unsafe.md`](/language/unsafe),
 and the catalogue of behaviour it does not check is
-[`plan/kernel-ub-notes.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/kernel-ub-notes.md).
+[`language/unsafe-ub-catalogue.md`](/language/unsafe-ub-catalogue).
 
 ## The `[unsafe] modules` gate
 
@@ -456,7 +456,7 @@ release, so a pointer is a plain integer-shaped address and `from_addr` can name
 any of them. `AtomicPtr`, `transmute` and non-`Copy` reads are not here either.
 `Ptr.try_alloc`'s null check, the `base`/`cap` an arena is handed, and whether a
 `free` is ever called are the caller's promises too.
-[`plan/kernel-ub-notes.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/kernel-ub-notes.md)
+[`language/unsafe-ub-catalogue.md`](/language/unsafe-ub-catalogue)
 is the growing catalogue of what that leaves to the program.
 
 ## See also

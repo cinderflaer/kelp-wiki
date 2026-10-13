@@ -10,7 +10,7 @@ trivia, so it never changes how a program compiles, and it does not need the
 program to compile: it scans tokens, not the checked program. Everything on this
 page was run against the prebuilt compiler of the `main` branch on the machine
 that wrote it; the plan behind it is
-[`plan/doc-tool.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/doc-tool.md).
+[`tooling/kelpc-doc.md`](/tooling/kelpc-doc).
 
 ```text
 usage: kelpc doc <file.kp|project dir>... [-o <dir>] [--format md|html] [--private] [--check]

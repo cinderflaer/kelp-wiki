@@ -8,9 +8,9 @@ tags: "language, freestanding, kernel"
 image QEMU's RISC-V `virt` machine starts, which sets up a stack, writes a line
 to the NS16550 UART at `0x10000000`, and halts, written in Kelp with no C and no
 libc. The order of work that reached it is
-[`plan/kernel-path.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/kernel-path.md);
+[`language/kernel.md`](/language/kernel);
 what could not be done is
-[`plan/kernel0-status.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/kernel0-status.md).
+[`language/kernel.md`](/language/kernel).
 The build side is [Freestanding mode](/language/freestanding).
 
 ## Running one
@@ -158,7 +158,7 @@ greeting and `long mode on` whole.
 8254/8259 timer interrupt, with the same shape as the riscv64 trap examples (a
 naked vector, a frame the compiler does not know about, a Kelp dispatcher, and a
 resuming `iretq`). The design is
-[`plan/x86-idt.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/x86-idt.md).
+[`language/kernel.md`](/language/kernel).
 
 An `IdtEntry` is a `repr(c)` 16-byte gate: the target's low 16 bits, the code
 selector `0x08` (the boot GDT's 64-bit code segment, read out of the x86-64
@@ -422,7 +422,7 @@ written in the language the earlier examples build. The one construct it leans
 on is `asm`: a linker-script symbol has no Kelp spelling, so the
 frame region arrives through `asm("la {0}, __frames_start", out("r") _)`, the
 same way the compiler's own `_start` reaches `__stack_top`. The design is
-[`plan/address-spaces.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/address-spaces.md).
+[`language/kernel.md`](/language/kernel).
 
 The module carries the PTE bit constants (`V R W X U G A D`), the three-level
 VPN split, the PTE and `satp` encoders and decoders, a bump frame allocator
@@ -499,7 +499,7 @@ never freed once a table holds them.
 section, copied into its program's code page at boot), `src/vm.kp` (the walker
 plus `user_page_pa`, the walk that demands the U and R bits), and a `kernel.ld`
 with the hart's trap stack and the enlarged frame region. The design is
-[`plan/syscall-abi.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syscall-abi.md).
+[`language/kernel.md`](/language/kernel).
 
 The trap frame is a convention the compiler cannot see, so both ends pin it:
 
@@ -607,7 +607,7 @@ The timer-driven scheduler in the next section is a separate image,
 `examples/kernel0-sched` shows the machine timer and a
 preemptive round-robin scheduler, still in machine mode with no paging. It is
 the process-model half the user-mode example above leaves out. The design is
-[`plan/scheduler.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/scheduler.md).
+[`language/kernel.md`](/language/kernel).
 
 The timer is the CLINT. A hart's compare register is at `0x02004000 + 8 * hart`
 and the shared free-running counter is at `0x0200BFF8`; on this machine the
@@ -789,7 +789,7 @@ What this is not: the guard page is the linker script's, not the compiler's
 unmapped page is the script's business), the probe does not compare `sp` against
 a bound and does not run on a `naked` function, and nothing maps a page to grow
 the stack. See
-[`plan/stack-guard.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/stack-guard.md).
+[`language/kernel.md`](/language/kernel).
 
 ## The `.bss` clear
 
@@ -814,7 +814,7 @@ loads into `sp`. These two facts are the only ones a script could get wrong sile
 ## What is still missing
 
 The remaining gaps, from
-[`plan/kernel0-status.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/kernel0-status.md):
+[`language/kernel.md`](/language/kernel):
 
 - **The interrupt path exists, but not as a language construct.** A riscv64
   machine timer interrupt and a preemptive round-robin scheduler are

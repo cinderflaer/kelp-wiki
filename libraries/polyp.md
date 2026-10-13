@@ -29,7 +29,7 @@ type, which is `core.Node<M>` now that it lives in the core. The design is
 [`plan/polyp-v3.md`](https://homelabone.xenoo.dev/gitea/Lilly/kelp/src/branch/main/plan/polyp-v3.md).
 **v4** adds timers and integer animation, UTF-8 text in the soft backend, an
 on-demand accessibility tree, and memoised pure subtrees. Its implementation
-record is [`plan/polyp-v4.md`](https://homelabone.xenoo.dev/gitea/Lilly/kelp/src/branch/main/plan/polyp-v4.md).
+record is [`libraries/polyp.md`](/libraries/polyp).
 
 ## The layering
 

@@ -1,6 +1,6 @@
 ---
 title: "Changelog"
-description: "Every release of Kelp, newest first: what the language gained and what the compiler that implements it gained with it. Entries are short; plan/done.md keeps the full milestone record."
+description: "Every release of Kelp, newest first: what the language gained and what the compiler that implements it gained with it. Entries are short; meta/milestones.md keeps the full milestone record."
 isPublished: true
 tags: "language, compiler"
 ---
@@ -33,7 +33,7 @@ later release build their own asset from their own tag.
 
 These entries are deliberately short. The authority for what a milestone
 actually contained is
-[`plan/done.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/done.md);
+[`meta/milestones.md`](/meta/milestones);
 this page is the index to it.
 
 | Version | Date | Headline |
@@ -1005,7 +1005,7 @@ apart from a deleted `rebrand.md`. No Gitea release was attached to it.
 
 Everything up to that point, in the older milestone numbering the repository used
 at the time (the `M0` to `M9`, `C1`, `S1` to `S8` scheme; the current scheme's
-mapping is in `plan/roadmap.md`):
+mapping is in `meta/roadmap.md`):
 
 - **Core language** (`M0` to `M4.5`): scaffold and lexer/parser for the full
   surface syntax; types and the C backend; `datac` with real per-field
@@ -1054,7 +1054,7 @@ the way `0.1.5` above is cut: the version and date, a link to the Gitea release,
 the numbers (unit tests, end-to-end tests per backend), then what changed,
 grouped so a reader can skip what they do not care about.
 
-Keep it short. Link to `plan/done.md` for the full story rather than copying it.
+Keep it short. Link to `meta/milestones.md` for the full story rather than copying it.
 
 Write the page without em dashes. Use a colon or a comma for an aside, a
 semicolon or a full stop between clauses, and a plain hyphen in a range.
