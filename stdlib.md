@@ -31,7 +31,7 @@ One page per `std/*` module, the capability domain each one needs, and the compi
 - [`std/result`](/stdlib/result): `Result<T, E>` and its free-function combinators.
 - [`std/source`](/stdlib/source): the `file` and `line` of the Kelp call site.
 - [`std/str`](/stdlib/str): text search, slicing, splitting, parsing and formatting.
-- [`std/sync`](/stdlib/sync): `Mutex`, `RwLock`, `Condvar` and channels (hosted builds only; channels are refused on current `main`).
+- [`std/sync`](/stdlib/sync): `Mutex`, `RwLock`, `Condvar` and channels (hosted builds only; channels build on current `main` inside one thread).
 - [`std/sys`](/stdlib/sys): `os()` and `arch()`, the build target's names.
 - [`std/thread`](/stdlib/thread): `spawn`, `join`, `fence`, `sleep_ms` and `current_id`.
 - [`std/time`](/stdlib/time): `now_unix`, `now_mono_ns` and `sleep_ms` (gated on `time`).
@@ -91,7 +91,7 @@ The domain each module needs comes from the compiler's own table
 | `std/frame` | `frames` | a physical frame as a capability: `frame.claim(addr)` is the only constructor, checked against the calling module's `frames` grant and 4 KiB-aligned |
 | `std/atomic` | - | `Atomic<T>` and the one ordering v1 has |
 | `std/thread` | - | `spawn`, `join`, `fence(order)`, `sleep_ms`, `current_id` and the `ThreadErr` a join hands back |
-| `std/sync` | - | `Mutex<T>`, `RwLock<T>` and `Condvar` through scoped blocks, plus channels (`sync.bounded`, `sync.unbounded`, `Sender`, `Receiver`) and `Mutex.share`/`swap`; hosted only; channels are refused on current `main` (see the page) |
+| `std/sync` | - | `Mutex<T>`, `RwLock<T>` and `Condvar` through scoped blocks, plus channels (`sync.bounded`, `sync.unbounded`, `Sender`, `Receiver`) and `Mutex.share`/`swap`; hosted only; channels build on current `main` inside one thread (see the page) |
 | `std/pool` | - | a fixed thread pool: `pool.new`, `Pool.spawn`, `join`, `panicked`; hosted only; refused on current `main` (see the page) |
 | `std/iter` | - | the `Iterator` trait `for` walks, `Range`, and `count`/`sum_i64`/`collect_list` |
 | `std/ops` | - | the operator traits `Add`, `Sub`, `Mul`, `Div`, `Rem`, `Neg` and `Ord` |
