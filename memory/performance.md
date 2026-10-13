@@ -8,7 +8,7 @@ These are the recorded numbers for Kelp's 26.10.5 hosted build, which had manual
 memory: no collector, every value freed by its owner. Current `main` links the
 collector into every hosted build, and that build has not been measured on this
 page. The C programs were removed from the tree, so the C figures cannot be rerun.
-The planned design is on [Tidepool](/memory/tidepool).
+Tidepool steps 1 and 2 are on `main`. Its design is on [Tidepool](/memory/tidepool).
 
 ## Conditions
 
