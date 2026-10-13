@@ -147,11 +147,13 @@ print(runs.get(key = 7))
 
   The map then calls these two in place of a derived pair. Declare both or neither.
   The key is still cloned into the entry, so the type must also be deep-copyable.
-- On current `main`, a `Map` with an enum key or value does not build in a hosted build.
-  The collector's entry layout asks for the pointer slots of the key and the value, and
-  for an enum it stops with `a hosted build describes the enum 'Kind' only as a heap
-  object (a Box payload or a List element); an enum stored inside a datac is not
-  described yet`.
+- On current `main`, an enum cannot be a `Map` key or a `Map` value. The checker refuses an
+  enum value: `'Status' cannot be a 'Map' value: a hosted build cannot describe an 'enum'
+  inside a map's entry yet, and a 'datac' that holds the enum is refused the same way. Keep
+  the values in a `List<Status>` and store each value's index in the map instead`. A
+  `Map<Kind, i32>` key was refused in a build before that check, with `a hosted build
+  describes the enum 'Kind' only as a heap object (a Box payload or a List element); an enum
+  stored inside a datac is not described yet`.
 - A `Bytes`, container, view, borrow, or a `datac`/`enum` with a field outside the
   keyable set is refused. The message names the field, or the missing half of the
   pair.
