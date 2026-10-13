@@ -10,9 +10,13 @@ shared borrow that may cross one, and the per-thread panic policy. Ungated.
 > **Status on current `main`.** A `thread.spawn` closure may capture values, and a thread's
 > argument and result may hold collected memory. The runtime registers the closure
 > environment, the argument and the result as collector roots, so numbers and memory
-> values cross. A resource (a file, socket, process, thread handle, lock, condition
-> variable or channel end) does not cross. The checker refuses it by name, in the form
-> `'X' cannot be a thread's argument in a hosted build: 'X' is a resource, ...`.
+> values cross. A thread's argument may be a number or a `List`: an `i64` argument and a
+> `List<i32>` argument both run. A resource (a file, socket, process, thread handle, lock,
+> condition variable or channel end) does not cross. The checker refuses it by name, for
+> example `'Mutex<i64>' cannot be a thread's argument in a hosted build: 'Mutex<i64>' is a
+> resource, ...`. A `Box<dyn Trait>` does not cross either: `'Box<dyn Shape>' cannot be a
+> thread's argument in a hosted build: its declaration was not found, so it cannot be
+> classified as memory`.
 
 
 ```kelp
@@ -324,8 +328,9 @@ fun main() {
   module cannot call its own builtins by name, so it is not part of
   `std/thread`. A program that wants a handle to each worker still spawns and
   joins them itself, as `examples/download_pool.kp` does. `spawn` takes one
-  argument, so a worker that needs several values (a channel's `Sender` and a
-  number, say) is handed a `datac` that holds them.
+  argument, so a worker that needs several values is handed a `datac` that holds
+  them. A `datac` that holds a channel's `Sender` is refused as a thread argument,
+  so a worker cannot receive a sender this way.
 - **`current_id` names a thread, not a pool slot.** v1 hands out no sequential
   worker numbers; a program that wants "worker 3 of 8" has to track that itself,
   keyed by the id if it needs a stable key.
