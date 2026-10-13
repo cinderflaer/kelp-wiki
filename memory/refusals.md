@@ -201,7 +201,7 @@ from the collector, which has to see every value it may reclaim. The messages on
   Shape>' cannot be a List element in a hosted build: its declaration was not found, so it
   cannot be classified as memory`. A concrete type with a destructor is a resource, so it
   cannot be the payload of a `Box` either. See [Box dyn](/language/box-dyn).
-- **An enum as a `Map` key or value.** The checker refuses an enum as a `Map` value: `'Status'
+- **An enum as a `Map` value.** The checker refuses an enum as a `Map` value: `'Status'
   cannot be a 'Map' value: a hosted build cannot describe an 'enum' inside a map's entry
   yet, and a 'datac' that holds the enum is refused the same way. Keep the values in a
   'List<Status>' and store each value's index in the map instead`. As a key, `Map<Kind, i32>`
