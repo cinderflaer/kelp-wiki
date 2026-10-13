@@ -172,25 +172,37 @@ fun main() {
 
 A hosted build refuses some shapes by name. These are not ownership errors. They come
 from the collector, which has to see every value it may reclaim. The messages on current
-`main` still say "in managed mode", which is the wording the compiler prints today.
+`main` say "in a hosted build" and name the reason, for example `'Leaf' cannot be a List
+  element in a hosted build: 'Leaf' is a resource, ...`. The text "in managed mode" is
+  retired.
 
-- **A resource in a container or a heap slot.** `'Leaf' cannot be a List element in managed
-  mode: 'Leaf' is a resource`. The same refusal applies to a `Map` key or value, an array
-  element, the payload of a `Box`, a field of a `datac` that lives in the heap, and a
-  value captured by a closure. A resource stays in a local, a parameter or a stack field.
-- **Channels and pool values.** `'Job' cannot be a thread's argument`, and
-  `'std.sync.ChanMeta' cannot be the value of a Mutex or RwLock`. Channels and
-  [`std/pool`](/stdlib/pool) are refused on current `main` for this reason, until the step
-  that lets the collector see values a thread or a lock holds.
-- **A `Mutex` or `RwLock` holding a memory value.** `'List<i32>' cannot be the value of a
-  Mutex or RwLock`. A `Mutex` holding a number is accepted.
-- **A `Box<dyn Trait>` in a container.** `'Box<dyn Shape>' cannot be a List element`. A
-  concrete type with a destructor cannot be the payload of a `Box` either. See
-  [Box dyn](/language/box-dyn).
-- **An `enum` as a `Map` key or value.** `managed mode describes the enum 'Kind' only as a
-  heap object (a Box payload or a List element)`. An enum is accepted as a `List` element.
-- **A thread closure that captures values.** `'thread.spawn' cannot take a closure that
-  captures values in managed mode`.
+- **A resource in a container or a heap slot.** `'Leaf' cannot be a List element in a hosted
+  build: 'Leaf' is a resource, and a resource never enters the collected heap ...`. The
+  same refusal applies to a `Map` key or value, an array element, the payload of a `Box`,
+  and a value captured by a closure environment. A resource stays in a local, a parameter
+  or a field of a stack value.
+- **Channel ends and pool values.** A channel end (`SendEnd`, `RecvEnd`, `Sender`,
+  `Receiver`) is a resource by the stdlib table, so it is refused as a thread argument, a
+  container element or a closure capture. `std.sync.ChanMeta` is memory and is accepted.
+  [`std/pool`](/stdlib/pool) is refused because its shared record holds a `Mutex` and a
+  `Condvar`.
+- **A `Mutex` or `RwLock` holding a resource.** The form is `'X' cannot be the value of a
+  Mutex or RwLock in a hosted build: 'X' is a resource, ...`. A `Mutex` or `RwLock` holding
+  a `List`, a `String`, a number or a `datac` made only of memory values is accepted,
+  because the runtime roots the lock's value.
+- **A `Box<dyn Trait>` in a container or as a thread argument.** The form is `'Box<dyn
+  Shape>' cannot be a List element in a hosted build: its declaration was not found, so it
+  cannot be classified as memory`. A concrete type with a destructor is a resource, so it
+  cannot be the payload of a `Box` either. See [Box dyn](/language/box-dyn).
+- **An enum as a `Map` key or value.** A `Map` with an enum key or value does not build in
+  a hosted build. The build stops with `a hosted build describes the enum 'Kind' only as a
+  heap object (a Box payload or a List element); an enum stored inside a datac is not
+  described yet`. An enum with no destructor is accepted as a `List` element and as a `Box`
+  payload.
+- **A closure that captures a resource.** A closure that captures memory values is
+  accepted. One that captures a resource is refused as `'X' cannot be a value captured by a
+  closure environment in a hosted build: 'X' is a resource, ...`. A scoped closure that
+  borrows its captures is not checked, because its environment stays on the stack.
 - **A by-value aggregate in a user `extern fun`.** The message says the llvm backend cannot
   pass the struct, `String` or `List` to a native symbol yet, and asks for a pointer or a
   handle. See [User FFI](/language/externs).
