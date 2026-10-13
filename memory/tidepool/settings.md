@@ -6,13 +6,24 @@ tags: "memory, tidepool"
 ---
 # Tidepool: settings in `[tidepool]`
 
-Not on `main`. `kelpc` reads no `[tidepool]` section on `main`. An unknown manifest section
-is ignored without a message, so a `[tidepool]` section has no effect on `main` and is not
-reported.
+On `main`, `kelpc` reads a `[tidepool]` section in `coral.toml`. Each line in it must be
+`key = <whole number>`, except `trigger_rule`, which takes a double-quoted name. An unknown
+key is refused by name. `heap_max` under `[tidepool]` is refused with a pointer to
+`[target]`. A section header that starts with `tid` in any case, or is `[gc]`, is refused
+by name with a 'did you mean [tidepool]' message. Other unknown section headers are still
+skipped without a message.
 
-The only memory key on `main` is `[target] heap_max`, in MiB, from 1 to 65536, with a
-default of 256. It caps the collector's heap in a hosted build.
+The memory keys on `main` are `[target] heap_max`, a whole number of MiB from 1 to 65536
+with a default of 256, which caps the collector's heap in a hosted build, and the
+`[tidepool]` keys below. A zero cap is refused.
 
-The design plans three keys in `[tidepool]`: `headroom_pct`, `heap_min` and `trigger_rule`.
-The candidate rules for `trigger_rule` are `two-size`, `last-size` and `gogc-style`. The
-defaults are still being measured on the Tidepool branch, and none of these keys is final.
+`[tidepool]` has four keys on `main`:
+
+- `start_low_mib`: a whole number of MiB, at least 1. Default 1.
+- `start_high_mib`: a whole number of MiB, at least 1 and no more than `[target] heap_max`.
+  Default 4.
+- `headroom_pct`: a whole number from 0 to 1000. Default 10.
+- `trigger_rule`: a double-quoted name, one of `"two-size"` (default), `"last-size"` or
+  `"gogc-style"`.
+
+There is no `heap_min` key. The 8 MiB floor is fixed. Any other key is refused by name.
