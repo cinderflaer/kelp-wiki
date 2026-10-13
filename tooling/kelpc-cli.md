@@ -445,13 +445,12 @@ project's `src/deps/` gets no case rule at all.
 ## Outdated syntax
 
 A spelling that is on its way out still compiles, and the compiler keeps a
-register of them (`kelpc/src/deprecated.rs`, and `syntax.md` 23). **The register
-holds one entry today**, the return marker `.R:` (id `return-r`), which is
-`.return:` since 26.10.3. The two it carried before, the `as name` clause on an
-`impl` line and the `with` in front of a capability grant, were removed once
-their deadline passed. `kelpc build` and `kelpc run` print one `outdated:`
-finding per `.R:` a program writes, each naming `.return:`, and `--deny-outdated`
-makes them errors.
+register of them (`kelpc/src/deprecated.rs`, and `syntax.md` 23). **The register is empty
+today.** Its last entry, the `.R:` return marker, was removed with the `=>`
+return arrow. The two entries before it, the `as name` clause on an `impl` line
+and the `with` in front of a capability grant, were removed once their deadline
+passed. When a new entry is added, `kelpc build` and `kelpc run` print one
+`outdated:` finding per use, and `--deny-outdated` makes them errors.
 
 - The label is **`outdated: `**, which is neither `error:` nor `warning: `. A
   lint's `warning: ` is a style opinion; this is a promise about a later version.

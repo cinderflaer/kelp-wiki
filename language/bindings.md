@@ -137,7 +137,7 @@ when the value matches. When it does not match, the `else` block runs, and that 
 must leave the enclosing code.
 
 ```kelp
-fun user_name(id: i32).return: Result<String, String> {
+fun user_name(id: i32) => Result<String, String> {
     let Some(user) = find(id) else { return Err("missing") }
     return Ok(user.name)     // `user` is bound from here to the end of the block
 }

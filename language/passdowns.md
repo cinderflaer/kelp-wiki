@@ -21,7 +21,7 @@ const PAGE_SIZE: usize = 4096
 const ENTRY_SIZE: usize = 8
 const TABLE_ENTRIES: usize = entries_for(pages = 64)
 
-fun entries_for(pages: usize).return: usize {
+fun entries_for(pages: usize) => usize {
     var total: usize = 0
     var i: usize = 0
     while i < pages {

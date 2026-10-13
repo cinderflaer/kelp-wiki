@@ -161,7 +161,7 @@ the worked example (about two hundred lines of project code;
    platform's clock or a fake one, and `poll_event` returns `None` or the next
    queued event.
 3. **`[target] alloc` and `dealloc`** with the fixed signatures
-   (`fun alloc(size: usize, align: usize).return: Ptr<u8>`,
+   (`fun alloc(size: usize, align: usize) => Ptr<u8>`,
    `fun dealloc(p: Ptr<u8>, size: usize, align: usize)`). The bump arena is the
    smallest one that works; a real allocator implements a better bump or a free
    list against the same two names.

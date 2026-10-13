@@ -60,7 +60,7 @@ pub enum Sign {
 }
 
 /// Adds up the `cents` of every `Entry` in `entries`.
-pub fun total(entries: &List<Entry>).return: i64 {
+pub fun total(entries: &List<Entry>) => i64 {
     var sum: i64 = 0
     for e in entries {
         sum = sum + e.cents
@@ -69,7 +69,7 @@ pub fun total(entries: &List<Entry>).return: i64 {
 }
 
 /// Says whether an `Entry` is money in or money out.
-fun Entry.sign().return: Sign {
+fun Entry.sign() => Sign {
     if self.cents < 0 {
         return Sign.Debit
     }
@@ -138,7 +138,7 @@ One line in a ledger.
 #### `Entry.sign`
 
 ```kelp
-fun Entry.sign().return: Sign
+fun Entry.sign() => Sign
 ```
 
 Says whether an [`Entry`](#entry) is money in or money out.
@@ -161,7 +161,7 @@ How a ledger reads an amount.
 ### `total`
 
 ```kelp
-pub fun total(entries: &List<Entry>).return: i64
+pub fun total(entries: &List<Entry>) => i64
 ```
 
 Adds up the `cents` of every [`Entry`](#entry) in `entries`.
@@ -288,7 +288,7 @@ Those last two, from the compiler's own test module `kelpc/tests/docs/shapes.kp`
 ### `load`
 
 ```kelp
-pub fun load(path: &str).return: String
+pub fun load(path: &str) => String
 ```
 
 *requires capability `fs`*
@@ -298,7 +298,7 @@ Reads a file named by `path`.
 ### `make`
 
 ```kelp
-pub unsafe fun make(r: f64).return: Circle
+pub unsafe fun make(r: f64) => Circle
 ```
 
 *unsafe*

@@ -222,7 +222,7 @@ decimal index; the empty pointer names the whole document.
 | Function | Returns |
 | --- | --- |
 | `each_value(v, f: closure(&Json))` | visits every node in document order, `v` included |
-| `filter_array(v, pred: closure(&Json).return: bool)` | new `Json.Array` of cloned elements the predicate accepts; panics if `v` is not an array |
+| `filter_array(v, pred: closure(&Json) => bool)` | new `Json.Array` of cloned elements the predicate accepts; panics if `v` is not an array |
 | `count_nodes(v)` | node count of the subtree, `v` included |
 | `depth_of(v)` | 1 for a scalar, 2 for an array of scalars, ... |
 | `count_of_kind(v, want: &str)` | how many nodes report that `kind` |
@@ -237,7 +237,7 @@ closure parameter emits. `each_value` is for looking at every node;
 
 ```kelp
 val ints = json.filter_array(json.get(doc, "items"),
-    fun(x: &json.Json).return: bool = json.is_int(x))
+    fun(x: &json.Json) => bool = json.is_int(x))
 json.each_value(doc, fun(x: &json.Json) = print(json.kind(x)))
 ```
 

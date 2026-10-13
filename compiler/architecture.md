@@ -47,7 +47,7 @@ impl "std/str"
 
 datac Point(val x: i32, val y: i32)
 
-fun area(p: Point).return: i32 = p.x * p.y
+fun area(p: Point) => i32 = p.x * p.y
 
 fun main() {
     val p = Point(x = 3, y = 4)

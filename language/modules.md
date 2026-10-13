@@ -55,8 +55,8 @@ another reaches only the items that module exports with `pub`:
 pub const LIMIT: i32 = 10
 pub datac Point(val x: i32, val y: i32)
 pub enum Shape { Circle(val r: f64) Empty }
-pub fun scale(v: f64, k: f64).return: f64 = v * k
-pub extern fun clock_ticks().return: u64
+pub fun scale(v: f64, k: f64) => f64 = v * k
+pub extern fun clock_ticks() => u64
 ```
 
 - `pub` is accepted only on a top-level `fun`, `extern fun`, `extern type`,
@@ -93,7 +93,7 @@ pub extern fun clock_ticks().return: u64
   datac`'s field types, a `pub enum`'s variant payload types and a `pub const`'s
   written type must all be names a consumer can reach. The check walks a written
   type to the bottom, so it recurses through `List<T>`, `Box<T>`, `Map<K, V>`,
-  `[T; N]`, generic arguments, borrows and function types. `pub fun make().return:
+  `[T; N]`, generic arguments, borrows and function types. `pub fun make() =>
   Hidden` is refused when `Hidden` is private, even though a caller could still
   read `make().x` without naming the type. A private declaration may name
   anything, because nothing outside its module can name it either, and a type

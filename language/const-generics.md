@@ -18,8 +18,8 @@ A parameter of a `datac`, an `enum` or a `fun` may be a value instead of a type:
 
 ```kelp
 datac Ring<const N: usize>(var items: [i32; N], var len: usize)
-fun sum<const N: usize>(a: &[i32; N]).return: i32
-fun mut Ring<const N: usize>.push(v: i32).return: bool
+fun sum<const N: usize>(a: &[i32; N]) => i32
+fun mut Ring<const N: usize>.push(v: i32) => bool
 ```
 
 The declared type is one of `usize`, `u8`, `u16`, `u32`, `u64`, `i32`, `i64` or
@@ -31,7 +31,7 @@ const CAP: usize = 4
 
 datac Ring<const N: usize>(var items: [i32; N], var len: usize)
 
-fun mut Ring<const N: usize>.push(v: i32).return: bool {
+fun mut Ring<const N: usize>.push(v: i32) => bool {
     if self.len >= N {
         return false
     }
@@ -40,9 +40,9 @@ fun mut Ring<const N: usize>.push(v: i32).return: bool {
     return true
 }
 
-fun Ring<const N: usize>.capacity().return: usize = N
+fun Ring<const N: usize>.capacity() => usize = N
 
-fun sum<const N: usize>(a: &[i32; N]).return: i32 {
+fun sum<const N: usize>(a: &[i32; N]) => i32 {
     var total: i32 = 0
     var i: usize = 0
     while i < N {
@@ -53,21 +53,21 @@ fun sum<const N: usize>(a: &[i32; N]).return: i32 {
 }
 
 trait Shape {
-    fun Self.area().return: i64
+    fun Self.area() => i64
 }
 
 datac Square(val side: i64)
 datac Rect(val w: i64, val h: i64)
 
 impl Shape for Square {
-    fun Self.area().return: i64 = self.side * self.side
+    fun Self.area() => i64 = self.side * self.side
 }
 
 impl Shape for Rect {
-    fun Self.area().return: i64 = self.w * self.h
+    fun Self.area() => i64 = self.w * self.h
 }
 
-fun bigger(a: impl Shape, b: &impl Shape).return: bool = a.area() > b.area()
+fun bigger(a: impl Shape, b: &impl Shape) => bool = a.area() > b.area()
 
 fun main() {
     var small = Ring(items = [0; 2], len = 0)
@@ -113,7 +113,7 @@ false
   character is its own instantiation:
 
   ```kelp
-  fun glyph<const C: char>().return: char = C
+  fun glyph<const C: char>() => char = C
 
   fun main() {
       print(glyph<'x'>())      // x
@@ -164,11 +164,11 @@ checked and the body is instantiated per concrete type.
 
 It is legal as a whole parameter type, bare or behind `&`. It is refused in:
 
-- a **return type**: write `fun f<T: Trait>(...).return: T` when the caller picks the
+- a **return type**: write `fun f<T: Trait>(...) => T` when the caller picks the
   type, or return a `Box<dyn Trait>` ([Owned trait objects](/language/box-dyn)):
 
   ```
-  error: 'impl Trait' is not allowed in return position: write a named type parameter and bound it ('fun f<T: Trait>(...).return: T') when the caller needs a concrete type, or return the owning value ('Box<dyn Trait>')
+  error: 'impl Trait' is not allowed in return position: write a named type parameter and bound it ('fun f<T: Trait>(...) => T') when the caller needs a concrete type, or return the owning value ('Box<dyn Trait>')
   ```
 
 - a `val`/`var` type, a field, an enum payload, a container element and any

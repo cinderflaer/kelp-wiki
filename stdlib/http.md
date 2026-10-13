@@ -399,7 +399,7 @@ discarded for at most 250 ms and 1 MiB, then `close`.
 | `serve_threaded_on(&Server, handler, &Limits, workers, idle_ms)` | returns `u64`; each worker stops after `idle_ms` with no client (`0` never stops) |
 | `default_limits()` / `Limits.with_timeouts(head, body, idle)` / `Limits.dup()` | |
 
-`handler` is a plain `fun(&ServerRequest).return: ServerResponse` function value, so
+`handler` is a plain `fun(&ServerRequest) => ServerResponse` function value, so
 nothing borrowed crosses a thread. `serve_on` and `serve_threaded_on` exist
 because `serve_n(port, ...)` cannot tell a program which port the kernel gave
 for port `0`: bind first, print `Server.port()`, then serve. A panic in a
@@ -414,14 +414,14 @@ impl "std/net"
 impl "std/thread"
 impl "std/str"
 
-fun handle(req: &http.ServerRequest).return: http.ServerResponse {
+fun handle(req: &http.ServerRequest) => http.ServerResponse {
     if str.eq(req.path.as_str(), "/ping") {
         return http.ok_text("pong\n")
     }
     return http.not_found()
 }
 
-fun client(port: u16).return: String {
+fun client(port: u16) => String {
     var out = String.empty()
 
     val a = net.connect("127.0.0.1", port)
@@ -523,11 +523,11 @@ impl "std/thread"
 impl "std/result"
 impl "std/fmt"
 
-fun hello(req: &http.ServerRequest).return: http.ServerResponse {
+fun hello(req: &http.ServerRequest) => http.ServerResponse {
     return http.ok_text("hello over tls")
 }
 
-fun serve(fd: i32).return: u64 {
+fun serve(fd: i32) => u64 {
     val cert = tlsfile.read_pem("/etc/myapp/certs/server.pem", "certificate chain")
     val key = tlsfile.read_pem("/etc/myapp/certs/server.key", "private key")
     return when cert {
@@ -539,7 +539,7 @@ fun serve(fd: i32).return: u64 {
     }
 }
 
-fun serve_with(cert: move Bytes, key: move Bytes, fd: i32).return: u64 {
+fun serve_with(cert: move Bytes, key: move Bytes, fd: i32) => u64 {
     return when tls.server_config_pem(cert, key) {
         Ok(cfg) -> {
             val server = http.Server(fd = fd)

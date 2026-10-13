@@ -23,7 +23,7 @@ impl "std/str"
 impl "std/fmt"
 impl "std/process"
 
-fun is_space(c: u8).return: bool = c == ' ' || c == '\t' || c == '\n' || c == '\r'
+fun is_space(c: u8) => bool = c == ' ' || c == '\t' || c == '\n' || c == '\r'
 
 fun report(label: &str, n: i64) {
     val padded = fmt.pad_right(label, 8, ' ')

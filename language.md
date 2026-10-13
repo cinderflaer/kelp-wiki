@@ -17,8 +17,8 @@ In reading order:
 - [Bindings and assignment](/language/bindings): `val` and `var`, type inference, assignment and mutable paths.
 - [Operators and expressions](/language/expressions): precedence, arithmetic, bitwise operators, `?`, borrows and dereference.
 - [Control flow](/language/control-flow): `if`, `if let`, `for`, `while`, `when`, `return`, `break` and `continue`.
-- [Functions](/language/functions): declaration, `.return: T`, named arguments, function values and closures.
-- [Return types and `return`](/language/returns): the `.return: T` clause, bodies, the divergence rule and borrowed returns.
+- [Functions](/language/functions): declaration, `=> T`, named arguments, function values and closures.
+- [Return types and `return`](/language/returns): the `=> T` clause, bodies, the divergence rule and borrowed returns.
 - [Methods and receivers](/language/methods): `Type.name`, `mut` receivers and generic receivers.
 - [`datac` and `enum`](/language/data-types): records, tagged unions, generics, construction and matching.
 - [Generics and type parameters](/language/generics): type parameters, instantiation, generic receivers and generic functions.
@@ -77,14 +77,14 @@ impl "std/str"
 
 datac Point(var x: i32, var y: i32)
 
-fun area(p: &Point).return: i32 = p.x * p.y
+fun area(p: &Point) => i32 = p.x * p.y
 
 enum Shape {
     Circle(val r: f64)
     Empty
 }
 
-fun describe(s: &Shape).return: &str = when s {
+fun describe(s: &Shape) => &str = when s {
     Circle(_) -> "circle"
     Empty -> "empty"
 }

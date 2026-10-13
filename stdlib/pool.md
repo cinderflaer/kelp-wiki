@@ -27,10 +27,10 @@ call its own builtins (`thread.spawn`) by name.
 ## Surface
 
 ```
-fun pool.new(workers: i32).return: Pool
+fun pool.new(workers: i32) => Pool
 fun Pool.spawn(job: move closure())
 fun Pool.join()
-fun Pool.panicked().return: i32
+fun Pool.panicked() => i32
 ```
 
 | Call | Returns | Notes |

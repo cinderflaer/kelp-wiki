@@ -18,9 +18,9 @@ a borrow, so the caller keeps the tree.
 ```kelp
 datac Tree(val value: i32, val left: Box<Tree>, val right: Box<Tree>)
 
-fun leaf(v: i32).return: Tree = Tree(value = v, left = Box.empty(), right = Box.empty())
+fun leaf(v: i32) => Tree = Tree(value = v, left = Box.empty(), right = Box.empty())
 
-fun sum(t: &Tree).return: i32 {
+fun sum(t: &Tree) => i32 {
     var total = t.value
     if !t.left.is_empty() {
         total += sum(t.left.get())
@@ -53,7 +53,7 @@ yields `i64`.
 ```kelp
 impl "std/iter"
 
-fun total(xs: &List<i64>).return: i64 {
+fun total(xs: &List<i64>) => i64 {
     var sum: i64 = 0
     for x in xs {
         sum += x
@@ -116,7 +116,7 @@ the piece has to outlive the input. This function returns a view of its
 parameter, which is allowed because the return is derived from that parameter.
 
 ```kelp
-fun first_word(line: &str).return: View {
+fun first_word(line: &str) => View {
     val v = line.view()
     var end: usize = 0
     while end < v.len() && v.get(end) != 32 {
@@ -153,7 +153,7 @@ owns the result, and nothing is dropped inside the function. Build text in a loc
 ```kelp
 impl "std/str"
 
-fun make_name(id: i32).return: String {
+fun make_name(id: i32) => String {
     var s = String.from_str("user-")
     val digits = str.from_i64(id.to_i64())
     s.push_str(digits.as_str())
@@ -196,7 +196,7 @@ fun add_to(n: mut i32, by: i32) {
     *n += by
 }
 
-fun peek(c: Counter).return: i32 = c.count
+fun peek(c: Counter) => i32 = c.count
 
 fun main() {
     var c = Counter(count = 0)

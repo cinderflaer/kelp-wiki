@@ -93,13 +93,13 @@ enum Shape {
 `when` with a scrutinee is the only pattern match, and it must be exhaustive:
 
 ```kelp
-fun area(s: &Shape).return: f64 = when s {
+fun area(s: &Shape) => f64 = when s {
     Circle(r) -> 3.14159 * r * r
     Rect(w, h) -> w * h
     Empty -> 0.0
 }
 
-fun label(s: &Shape).return: &str = when s {
+fun label(s: &Shape) => &str = when s {
     Circle(_) -> "circle"
     Rect(_, _) -> "rect"
     Empty -> "empty"
@@ -165,7 +165,7 @@ enum Shape {
     Empty
 }
 
-fun Shape.label().return: str = "shape"
+fun Shape.label() => str = "shape"
 
 fun main() {
     val s = Shape.Empty

@@ -131,7 +131,7 @@ be borrowed: it has no name for the borrow to point at.
 ```kelp
 datac Name(val text: String)
 
-fun mk().return: Name = Name(text = String.from_str("kelp"))
+fun mk() => Name = Name(text = String.from_str("kelp"))
 
 fun show(n: &Name) {
     print(n.text.len())
@@ -152,7 +152,7 @@ Bind the value to a name first, then borrow the name.
 ```kelp
 datac Name(val text: String)
 
-fun mk().return: Name = Name(text = String.from_str("kelp"))
+fun mk() => Name = Name(text = String.from_str("kelp"))
 
 fun show(n: &Name) {
     print(n.text.len())

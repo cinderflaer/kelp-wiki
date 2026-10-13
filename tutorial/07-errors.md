@@ -17,7 +17,7 @@ impl "std/option"
 impl "std/result"
 impl "std/str"
 
-fun find(xs: &List<i32>, want: i32).return: option.Option<usize> {
+fun find(xs: &List<i32>, want: i32) => option.Option<usize> {
     var i: usize = 0
     while i < xs.len() {
         if xs.get(i) == want {
@@ -28,19 +28,19 @@ fun find(xs: &List<i32>, want: i32).return: option.Option<usize> {
     return option.Option.None
 }
 
-fun half(n: i64).return: result.Result<i64, String> {
+fun half(n: i64) => result.Result<i64, String> {
     if n % 2 == 1 {
         return result.Result.Err(error = String.from_str(s = "odd number"))
     }
     return result.Result.Ok(value = n / 2)
 }
 
-fun quarter(n: i64).return: result.Result<i64, String> {
+fun quarter(n: i64) => result.Result<i64, String> {
     val h = half(n = n)?
     return half(n = h)
 }
 
-fun parse_half(text: &str).return: result.Result<i64, String> {
+fun parse_half(text: &str) => result.Result<i64, String> {
     val n = str.parse_i64(s = text)
     if let Ok(v) = n {
         return half(n = v)
@@ -172,7 +172,7 @@ converts between error types.
 
 1. Change `quarter` so that its second `half` call is replaced by `result.Result.Ok(value = h)`.
    Which output line changes?
-2. Write `fun first_even(xs: &List<i32>).return: option.Option<i32>` that returns
+2. Write `fun first_even(xs: &List<i32>) => option.Option<i32>` that returns
    the first even element, or `None`.
 
 Next: [Collections](/tutorial/08-collections).

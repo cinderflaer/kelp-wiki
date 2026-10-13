@@ -175,7 +175,7 @@ every attempt dials something nothing owns:
 impl "std/net"
 impl "std/result"
 
-fun dead_port().return: u16 {
+fun dead_port() => u16 {
     val l = net.listen(0)
     val port = l.port()
     l.close()

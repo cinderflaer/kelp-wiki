@@ -53,11 +53,11 @@ enclosing function. Otherwise the expression's value is the success payload.
 impl "std/result"
 impl "std/str"
 
-fun half(n: i64).return: result.Result<i64, str.ParseErr> {
+fun half(n: i64) => result.Result<i64, str.ParseErr> {
     return result.Result.Ok(value = n / 2)
 }
 
-fun quarter(n: i64).return: result.Result<i64, str.ParseErr> {
+fun quarter(n: i64) => result.Result<i64, str.ParseErr> {
     val h = half(n = n)?
     return half(n = h)
 }
@@ -79,7 +79,7 @@ fun quarter(n: i64).return: result.Result<i64, str.ParseErr> {
 - `?` moves the payload out of its operand, so **a borrow cannot be the operand**.
 - `?` applies to the expression it is written on. When the success payload is a
   tuple, `?` works on the `Result` and hands the tuple back. With
-  `fun mk(n: i32).return: result.Result<(i32, i32), String>`, the line
+  `fun mk(n: i32) => result.Result<(i32, i32), String>`, the line
   `val (a, b) = mk(n)?` binds the tuple and takes it apart. Writing `?` on the tuple
   itself is an error, because a tuple is not an `enum` ([Types](/language/types)).
 
@@ -131,7 +131,7 @@ is how a "this cannot happen" accessor is written:
 ```kelp
 impl "std/option"
 
-fun unwrap<T>(o: &option.Option<T>).return: T {
+fun unwrap<T>(o: &option.Option<T>) => T {
     if let Some(v) = o {
         return v
     }

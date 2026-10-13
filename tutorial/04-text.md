@@ -13,7 +13,7 @@ how to read a number out of text.
 impl "std/fmt"
 impl "std/str"
 
-fun shout(s: &str).return: String {
+fun shout(s: &str) => String {
     var out = String.empty()
     out.push_str(s)
     out.push_str("!")
@@ -90,7 +90,7 @@ type you have.
 a value you can store, return or pass on:
 
 ```kelp
-fun label(n: i32).return: String {
+fun label(n: i32) => String {
     return "n is ${n}"
 }
 ```
@@ -116,7 +116,7 @@ read the success case with `if let Ok(v) = n`, and the failure case with
 
 ## Try it
 
-1. Write a function `fun twice(s: &str).return: String` that returns `s` joined
+1. Write a function `fun twice(s: &str) => String` that returns `s` joined
    with itself, using `String.empty()`, `push_str` twice, and `return`.
 2. Split `"red,green,blue"` with `str.split` and print the second item.
 

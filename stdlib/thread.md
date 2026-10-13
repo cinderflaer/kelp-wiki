@@ -27,11 +27,11 @@ impl "std/thread"
 functions, and one `datac`.
 
 ```kelp
-fun spawn(entry: <a declared `fun`, a `fun` literal, or a capturing closure, taking one parameter>, arg: move A).return: Thread<T>
-fun join(handle: move Thread<T>).return: Result<T, ThreadErr>
+fun spawn(entry: <a declared `fun`, a `fun` literal, or a capturing closure, taking one parameter>, arg: move A) => Thread<T>
+fun join(handle: move Thread<T>) => Result<T, ThreadErr>
 fun fence(order: Ordering)
 fun sleep_ms(ms: u64)
-fun current_id().return: u64
+fun current_id() => u64
 
 datac ThreadErr(val message: String)
 ```
@@ -77,7 +77,7 @@ impl "std/result"
 
 pd val counter: AtomicI64 = AtomicI64.new(0)
 
-fun bump(c: &AtomicI64).return: i64 {
+fun bump(c: &AtomicI64) => i64 {
     c.fetch_add(value = 1, order = atomic.Ordering.SeqCst)
     0
 }
@@ -272,7 +272,7 @@ impl "std/thread"
 impl "std/atomic"
 impl "std/result"
 
-fun work(x: move i64).return: i64 = x + 1
+fun work(x: move i64) => i64 = x + 1
 
 // A fence is the one operation that joins the total order without naming a
 // location, so it has no receiver, takes nothing but the ordering, and returns

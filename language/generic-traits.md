@@ -16,7 +16,7 @@ neither backend learned a new lowering.
 
 ```kelp
 trait Scale<T> {
-    fun Self.scaled(by: T).return: Self
+    fun Self.scaled(by: T) => Self
 }
 ```
 
@@ -37,25 +37,25 @@ implementing type:
 
 ```kelp
 trait Scale<T> {
-    fun Self.scaled(by: T).return: Self
+    fun Self.scaled(by: T) => Self
 }
 
 datac Meters(val v: i64)
 
 impl Scale<i64> for Meters {
-    fun Self.scaled(by: i64).return: Meters = Meters(v = self.v * by)
+    fun Self.scaled(by: i64) => Meters = Meters(v = self.v * by)
 }
 
 trait Make<T> {
-    fun make(seed: T).return: Self
+    fun make(seed: T) => Self
 }
 
 impl Make<i64> for Meters {
-    fun make(seed: i64).return: Meters = Meters(v = seed)
+    fun make(seed: i64) => Meters = Meters(v = seed)
 }
 
 impl Make<bool> for Meters {
-    fun make(seed: bool).return: Meters {
+    fun make(seed: bool) => Meters {
         if seed {
             return Meters(v = 1)
         }
@@ -63,11 +63,11 @@ impl Make<bool> for Meters {
     }
 }
 
-fun build<X: Make<i64>>(n: i64).return: X {
+fun build<X: Make<i64>>(n: i64) => X {
     return X.make(seed = n)
 }
 
-fun grow<S: Scale<i64>>(s: S).return: S {
+fun grow<S: Scale<i64>>(s: S) => S {
     return s.scaled(by = 3)
 }
 
@@ -138,11 +138,11 @@ else:
 
 ```kelp
 pub trait From<T> {
-    fun from(value: T).return: Self
+    fun from(value: T) => Self
 }
 
 pub trait Into<T> {
-    fun Self.into().return: T
+    fun Self.into() => T
 }
 ```
 
@@ -174,20 +174,20 @@ enum AppErr {
 }
 
 impl convert.From<str.ParseErr> for AppErr {
-    fun from(value: str.ParseErr).return: AppErr {
+    fun from(value: str.ParseErr) => AppErr {
         return AppErr.Parse(text = "not a number")
     }
 }
 
 impl convert.From<i64> for AppErr {
-    fun from(value: i64).return: AppErr = AppErr.Range(value = value)
+    fun from(value: i64) => AppErr = AppErr.Range(value = value)
 }
 
-fun parse(s: &str).return: result.Result<i64, str.ParseErr> {
+fun parse(s: &str) => result.Result<i64, str.ParseErr> {
     return str.parse_i64(s = s)
 }
 
-fun small(s: &str).return: result.Result<i64, AppErr> {
+fun small(s: &str) => result.Result<i64, AppErr> {
     val n = parse(s = s)?
     if n > 100 {
         return result.Result.Err(error = AppErr.from(value = n))

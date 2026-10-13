@@ -141,8 +141,8 @@ print(runs.get(key = 7))
   that the derivation refuses needs both of these, with exactly these signatures:
 
   ```kelp
-  fun T.hash().return: u64
-  fun T.eq(other: &T).return: bool
+  fun T.hash() => u64
+  fun T.eq(other: &T) => bool
   ```
 
   The map then calls these two in place of a derived pair. Declare both or neither.

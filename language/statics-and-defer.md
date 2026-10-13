@@ -122,7 +122,7 @@ a named text section:
 ```kelp
 section(".kelp.data") const STEPS: [i32; 4] = [1, 2, 3, 4]
 
-section(".kelp.text") fun add(a: i32, b: i32).return: i32 = a + b
+section(".kelp.text") fun add(a: i32, b: i32) => i32 = a + b
 
 fun main() {
     print(add(STEPS.get(i = 0), 40))
@@ -148,7 +148,7 @@ sequences the access. Two threads that touch the same `static mut` without an
 ## `defer`
 
 ```kelp
-fun with_lock().return: bool {
+fun with_lock() => bool {
     defer LOCK.store(value = false, order = atomic.Ordering.SeqCst)
     LOCK.store(value = true, order = atomic.Ordering.SeqCst)
     ...

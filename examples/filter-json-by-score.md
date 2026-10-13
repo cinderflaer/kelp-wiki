@@ -42,7 +42,7 @@ impl "deps/json/lib"
 impl "deps/json/lib"
 
 // A helper, so the walk owns the list it builds.
-fun keep_high_scores(doc: &json.Json).return: String {
+fun keep_high_scores(doc: &json.Json) => String {
     var kept: List<json.Json> = List.empty()
     var i: usize = 0
     while i < json.array_len(doc) {

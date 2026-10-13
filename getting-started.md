@@ -33,7 +33,7 @@ Values are owned (`String`, `Bytes`, `List`, `Map`, `Box`, `datac`, `enum`) or
 borrowed (`str`, `View`, `&T`). A resource closes at the end of its owner's scope, and
 a hosted build's collector reclaims memory values. `unsafe` is opt-in per module
 through `coral.toml`.
-Functions are declared with `fun`, return types with `.return: T`, errors are
+Functions are declared with `fun`, return types with `=> T`, errors are
 `Option`/`Result` values, and pattern matching is `when`. A module states what it
 may touch on its `impl` lines, and that is the only thing that grants authority.
 

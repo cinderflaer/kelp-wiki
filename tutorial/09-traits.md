@@ -14,8 +14,8 @@ impl "std/fmt"
 impl "std/str"
 
 trait Shape {
-    fun Self.area().return: f64
-    fun Self.describe().return: String {
+    fun Self.area() => f64
+    fun Self.describe() => String {
         val text = fmt.float(self.area(), 1)
         return str.concat("a shape with area ", text.as_str())
     }
@@ -26,15 +26,15 @@ datac Square(val side: f64)
 datac Circle(val r: f64)
 
 impl Shape for Square {
-    fun Self.area().return: f64 = self.side * self.side
+    fun Self.area() => f64 = self.side * self.side
 }
 
 impl Shape for Circle {
-    fun Self.area().return: f64 = 3.0 * self.r * self.r
-    fun Self.describe().return: String = "a circle"
+    fun Self.area() => f64 = 3.0 * self.r * self.r
+    fun Self.describe() => String = "a circle"
 }
 
-fun total_area<T: Shape>(items: &List<T>).return: f64 {
+fun total_area<T: Shape>(items: &List<T>) => f64 {
     var sum = 0.0
     var i: usize = 0
     while i < items.len() {

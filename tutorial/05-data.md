@@ -20,9 +20,9 @@ enum Shape {
     Empty
 }
 
-fun Point.shifted(dx: i32).return: Point = Point(x = self.x + dx, y = self.y)
+fun Point.shifted(dx: i32) => Point = Point(x = self.x + dx, y = self.y)
 
-fun area(s: &Shape).return: f64 = when s {
+fun area(s: &Shape) => f64 = when s {
     Circle(r) -> 3.0 * r * r
     Rect(w, h) -> w * h
     Empty -> 0.0
@@ -107,7 +107,7 @@ the value, give it the value with a `move` parameter. A `move` parameter takes
 ownership at the call:
 
 ```kelp
-fun keep(name: move String).return: i32 = 1
+fun keep(name: move String) => i32 = 1
 ```
 
 Use a plain parameter when the function only reads the value, and `move` when it

@@ -16,7 +16,7 @@ impl "std/fmt"
 impl "std/process"
 impl "std/path"
 
-fun is_space(c: u8).return: bool = c == ' ' || c == '\t' || c == '\n' || c == '\r'
+fun is_space(c: u8) => bool = c == ' ' || c == '\t' || c == '\n' || c == '\r'
 
 // A gated call takes an **absolute** path, and v1 has no way to make one:
 // there is no `fs.cwd()` and no `getcwd` behind it, so a relative argument

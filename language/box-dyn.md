@@ -16,8 +16,8 @@ Source: [`plan/traits.md` §12](https://homelabone.xenoo.dev/gittea/Lilly/kelp/s
 
 ```kelp
 trait Shape {
-    fun Self.area().return: i64
-    fun Self.name().return: str
+    fun Self.area() => i64
+    fun Self.name() => str
     fun mut Self.grow(by: i64)
 }
 
@@ -25,16 +25,16 @@ datac Square(var side: i64)
 datac Rect(var w: i64, var h: i64)
 
 impl Shape for Square {
-    fun Self.area().return: i64 = self.side * self.side
-    fun Self.name().return: str = "square"
+    fun Self.area() => i64 = self.side * self.side
+    fun Self.name() => str = "square"
     fun mut Self.grow(by: i64) {
         self.side += by
     }
 }
 
 impl Shape for Rect {
-    fun Self.area().return: i64 = self.w * self.h
-    fun Self.name().return: str = "rect"
+    fun Self.area() => i64 = self.w * self.h
+    fun Self.name() => str = "rect"
     fun mut Self.grow(by: i64) {
         self.w += by
         self.h += by
@@ -45,7 +45,7 @@ fun mut Rect.drop() {
     print("drop rect")
 }
 
-fun make(square: bool).return: Box<dyn Shape> {
+fun make(square: bool) => Box<dyn Shape> {
     if square {
         return Box.of(Square(side = 3))
     }

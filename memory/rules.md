@@ -71,7 +71,7 @@ Assigning an owned value to another name moves it, and so does a `move T`
 parameter. After a move the old name is empty, and using it is an error.
 
 ```kelp
-fun consume(s: move String).return: usize = s.len()
+fun consume(s: move String) => usize = s.len()
 
 fun main() {
     val a = String.from_str("kelp")

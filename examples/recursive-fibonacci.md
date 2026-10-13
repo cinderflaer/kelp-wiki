@@ -13,12 +13,12 @@ It is the smallest example with a function, a loop and two kinds of output.
 | --- | --- |
 | Source | [`src/recursive-fibonacci.kp`](https://homelabone.xenoo.dev/gittea/Lilly/kelp-wiki-wikijs/raw/branch/main/examples/src/recursive-fibonacci.kp) |
 | Needs | nothing, not even the standard library |
-| Shows | recursion, `while`, `.return: i64`, `print` versus `print!` |
+| Shows | recursion, `while`, `=> i64`, `print` versus `print!` |
 
 ## The program
 
 ```kelp
-fun fib(n: i64).return: i64 {
+fun fib(n: i64) => i64 {
     if n < 2 {
         return n
     }
@@ -52,7 +52,7 @@ kelpc run recursive-fibonacci.kp
 
 ## What to take from it
 
-- **The return type is written `.return: i64`** after the parameter list. There is no
+- **The return type is written `=> i64`** after the parameter list. There is no
   `->`, and no inferred return type for a block body.
 - **`print!` does not add a newline, `print` does.** The final `print("")` is what
   ends the line; a program that leaves the last line unterminated is a program

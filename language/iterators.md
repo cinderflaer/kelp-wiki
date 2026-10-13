@@ -23,7 +23,7 @@ control in both forms and in a written `while`.
 ```kelp
 pub trait Iterator {
     type Item
-    fun mut Self.next().return: option.Option<Self::Item>
+    fun mut Self.next() => option.Option<Self::Item>
 }
 ```
 
@@ -44,7 +44,7 @@ datac Fib(var a: i64, var b: i64)
 
 impl iter.Iterator for Fib {
     type Item = i64
-    fun mut Self.next().return: option.Option<i64> {
+    fun mut Self.next() => option.Option<i64> {
         val v = self.a
         self.a = self.b
         self.b = v + self.b
@@ -137,7 +137,7 @@ Reading it line by line:
 - **Anything else** is refused, and the message names the trait:
 
   ```
-  error: 'for' walks a 'List<T>' or a type that implements 'Iterator', and 'i32' is neither: implement 'std.iter.Iterator' for it ('type Item' and 'fun mut Self.next().return: option.Option<Self::Item>'), or walk a 'List' by index
+  error: 'for' walks a 'List<T>' or a type that implements 'Iterator', and 'i32' is neither: implement 'std.iter.Iterator' for it ('type Item' and 'fun mut Self.next() => option.Option<Self::Item>'), or walk a 'List' by index
   ```
 
   A `Map` is walked with a pattern instead: see below.
@@ -286,16 +286,16 @@ costs no libc: `Range.next` is an ordinary method and the loop is an ordinary
 ```kelp
 pub trait Iterator {
     type Item
-    fun mut Self.next().return: option.Option<Self::Item>
+    fun mut Self.next() => option.Option<Self::Item>
 }
 
 pub datac Range(var lo: i64, val hi: i64, val step: i64)
-pub fun range(a: i64, b: i64).return: Range
-pub fun range_step(a: i64, b: i64, step: i64).return: Range
+pub fun range(a: i64, b: i64) => Range
+pub fun range_step(a: i64, b: i64, step: i64) => Range
 
-pub fun count<I: Iterator>(it: move I).return: usize
-pub fun sum_i64<I: Iterator>(it: move I).return: i64
-pub fun collect_list<I: Iterator>(it: move I).return: List<I::Item>
+pub fun count<I: Iterator>(it: move I) => usize
+pub fun sum_i64<I: Iterator>(it: move I) => i64
+pub fun collect_list<I: Iterator>(it: move I) => List<I::Item>
 ```
 
 | Item | Notes |
@@ -397,7 +397,7 @@ The shipped half is the protocol itself, and every fixture and test named in
 [`language/iterators.md`](/language/iterators) 8 passes on both backends:
 
 - `std/iter` declares `pub trait Iterator { type Item  fun mut
-  Self.next().return: option.Option<Self::Item> }`, ships `Range` with `range`/
+  Self.next() => option.Option<Self::Item> }`, ships `Range` with `range`/
   `range_step`, and the drain helpers `count`/`sum_i64`/`collect_list`;
 - `for x in <expr>` keeps the index walk for a `List`/`[T; N]` and becomes a
   `next()` loop for an `Iterator`; anything else is refused naming the trait;
@@ -421,7 +421,7 @@ datac Take<I>(val inner: I, val remaining: usize)
 
 impl<I: Iterator> Iterator for Take<I> {
     type Item = I::Item
-    fun mut Self.next().return: option.Option<I::Item> { ... }
+    fun mut Self.next() => option.Option<I::Item> { ... }
 }
 ```
 

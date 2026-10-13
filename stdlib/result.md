@@ -29,7 +29,7 @@ and matches like any other `Ok`:
 ```kelp
 impl "std/result"
 
-fun check_positive(x: i32).return: result.Result<unit, String> {
+fun check_positive(x: i32) => result.Result<unit, String> {
     if x > 0 {
         return result.Result.Ok(value = ())
     }
@@ -50,10 +50,10 @@ tuple element, a `datac` field or a container element ([Types](/language/types))
 | `unwrap_err<T, E>(r)` | `E` | **`E` must be `Copy`**; panics on `Ok` |
 | `expect<T, E>(r, message: &str)` | `T` | **`T` must be `Copy`**; panics with the message on `Err` |
 | `expect_err<T, E>(r, message: &str)` | `E` | **`E` must be `Copy`**; panics with the message on `Ok` |
-| `map<T, U, E>(r: move Result<T, E>, f: closure(&T).return: U)` | `Result<U, E>` | the result is consumed; the rebuilt side may be owned |
-| `map_err<T, E, F>(r: move Result<T, E>, f: closure(&E).return: F)` | `Result<T, F>` | the result is consumed; the rebuilt side may be owned |
-| `and_then<T, U, E>(r, f: closure(&T).return: Result<U, E>)` | `Result<U, E>` | **`E` must be `Copy`**: the receiver is a borrow |
-| `or_else<T, E, F>(r, f: closure(&E).return: Result<T, F>)` | `Result<T, F>` | **`T` must be `Copy`**: the receiver is a borrow |
+| `map<T, U, E>(r: move Result<T, E>, f: closure(&T) => U)` | `Result<U, E>` | the result is consumed; the rebuilt side may be owned |
+| `map_err<T, E, F>(r: move Result<T, E>, f: closure(&E) => F)` | `Result<T, F>` | the result is consumed; the rebuilt side may be owned |
+| `and_then<T, U, E>(r, f: closure(&T) => Result<U, E>)` | `Result<U, E>` | **`E` must be `Copy`**: the receiver is a borrow |
+| `or_else<T, E, F>(r, f: closure(&E) => Result<T, F>)` | `Result<T, F>` | **`T` must be `Copy`**: the receiver is a borrow |
 | `each<T, E>(r, f: closure(&T))` | `Unit` | |
 
 These are free functions. Since 26.10.3 the ones that only borrow the result are
@@ -80,18 +80,18 @@ fun main() {
 
     print(result.unwrap_or(r = bad, fallback = 0))   // 0
 
-    val doubled = result.map(r = ok, f = fun(v: &i64).return: i64 = v * 2)
+    val doubled = result.map(r = ok, f = fun(v: &i64) => i64 = v * 2)
     if let Ok(v) = doubled {
         print(v)                             // 82
     }
 
-    val described = result.map_err(r = bad, f = fun(e: &str.ParseErr).return: String = describe(e))
+    val described = result.map_err(r = bad, f = fun(e: &str.ParseErr) => String = describe(e))
     if let Err(msg) = described {
         print(msg)
     }
 }
 
-fun describe(e: &str.ParseErr).return: String = when e {
+fun describe(e: &str.ParseErr) => String = when e {
     Empty -> "the text had no digits"
     Invalid -> "the text had digits then junk"
 }

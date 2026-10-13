@@ -16,9 +16,9 @@ is the module:
 ```kelp
 pub datac Rect(val w: i32, val h: i32)
 
-pub fun area(r: &Rect).return: i32 = r.w * r.h
+pub fun area(r: &Rect) => i32 = r.w * r.h
 
-fun secret().return: i32 = 42
+fun secret() => i32 = 42
 ```
 
 `main.kp` imports it with `impl "geometry"`:
@@ -71,7 +71,7 @@ file:
 ```kelp
 impl "std/fs"
 
-pub fun count_lines(path: &str).return: i64 {
+pub fun count_lines(path: &str) => i64 {
     val lines = fs.read_lines(path)
     return lines.len().to_i64()
 }
@@ -144,7 +144,7 @@ The [capabilities reference](/language/capabilities) lists them all.
 
 ## Try it
 
-1. Add a `pub fun shout(s: &str).return: String` to `geometry.kp` that returns
+1. Add a `pub fun shout(s: &str) => String` to `geometry.kp` that returns
    `String.from_str(s = s)`. Import it from `main.kp` and print the result.
 2. In `reader.kp`, change the pattern to `/tmp/other/**` and run it. Read the
    panic. What does the module need in order to read the file?

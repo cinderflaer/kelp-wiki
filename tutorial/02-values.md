@@ -1,6 +1,6 @@
 ---
 title: "Values, types and functions"
-description: "Integer and float types, val and var, explicit conversions, functions with a .return type, named arguments and function values, with real compiler errors."
+description: "Integer and float types, val and var, explicit conversions, functions with a => type, named arguments and function values, with real compiler errors."
 isPublished: true
 tags: "tutorial, language"
 ---
@@ -14,18 +14,18 @@ impl "std/option"
 
 const LIMIT: i32 = 10
 
-fun add(a: i32, b: i32).return: i32 = a + b
+fun add(a: i32, b: i32) => i32 = a + b
 
-fun abs_diff(a: i32, b: i32).return: i32 {
+fun abs_diff(a: i32, b: i32) => i32 {
     if a > b {
         return a - b
     }
     return b - a
 }
 
-fun double(x: i32).return: i32 = x * 2
+fun double(x: i32) => i32 = x * 2
 
-fun apply(f: fun(i32).return: i32, x: i32).return: i32 = f(x)
+fun apply(f: fun(i32) => i32, x: i32) => i32 = f(x)
 
 fun main() {
     val n = 7
@@ -121,21 +121,21 @@ for `total = total + 7`. `const` names a value fixed at compile time, like
 ## Functions
 
 ```kelp
-fun add(a: i32, b: i32).return: i32 = a + b
+fun add(a: i32, b: i32) => i32 = a + b
 ```
 
 - The parameters are `name: type`.
-- The return type comes after the parameter list, written `.return: type`. Kelp has
+- The return type comes after the parameter list, written `=> type`. Kelp has
   no `->`.
 - A function with an `=` body returns that expression. A function with a block
   body uses `return`.
-- A function with no `.return` returns nothing.
+- A function with no return type returns nothing.
 
 A call may name its arguments: `add(a = 2, b = 3)`. Naming them is useful when
 the meaning of a number is not obvious. Positional calls work too.
 
 A function name is a value. The parameter `f` in `apply` has the type
-`fun(i32).return: i32`, which means "a function that takes an `i32` and returns an
+`fun(i32) => i32`, which means "a function that takes an `i32` and returns an
 `i32`", so `apply(double, 21)` passes `double` itself. Kelp does not allow two
 functions with the same name, so one name means one function.
 
@@ -145,7 +145,7 @@ ownership or change a value through a parameter.
 
 ## Try it
 
-1. Write `fun fahrenheit(c: f64).return: f64 = c * 9.0 / 5.0 + 32.0`, then print
+1. Write `fun fahrenheit(c: f64) => f64 = c * 9.0 / 5.0 + 32.0`, then print
    it for `0.0` and for `100.0`, once with a positional argument and once with a
    named one.
 2. The line `val half: f64 = 7 / 2` does not compile. Why? Fix it in two ways:

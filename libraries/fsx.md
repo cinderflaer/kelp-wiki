@@ -32,7 +32,7 @@ needs the module holding the `impl` to have been granted it.
 | `copy_dir(from: &str, to: &str)` | `Unit` | recursively copies `from` onto `to`, creating directories as needed. `from` should not have a trailing `/`. **Panics** under the same conditions `fs.list`/`fs.mkdir_all`/`fs.copy` do |
 | `tail(path: &str, n: usize)` | `List<String>` | the last `n` lines of a text file |
 | `files_equal(a: &str, b: &str)` | `bool` | byte-for-byte; **panics** if either file cannot be read |
-| `survey(root: &str, max_depth: usize, keep: closure(&PathInfo).return: bool)` | `Survey` | walks `root` depth-first to `max_depth` levels, keeping the files `keep` accepts. `keep` is a callback, so this module needs no glob: the caller writes the match |
+| `survey(root: &str, max_depth: usize, keep: closure(&PathInfo) => bool)` | `Survey` | walks `root` depth-first to `max_depth` levels, keeping the files `keep` accepts. `keep` is a callback, so this module needs no glob: the caller writes the match |
 | `walk_files(root: &str, max_depth: usize)` | `List<String>` | the paths of every readable file under `root`, and nothing else about them |
 | `any_path(p: &PathInfo)` | `bool` | always true, for a walk with no filter |
 | `file_readable(mode: u32)` / `dir_listable(mode: u32)` | `bool` | the mode-bit tests `survey` uses |

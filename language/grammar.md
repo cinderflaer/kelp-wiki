@@ -28,13 +28,13 @@ grant        := ident "=" "[" string ("," string)* "]"
 trait        := [ "pub" ] "trait" ident [ typeparams ] [ ":" bound ("+" bound)* ] "{" ( assoctype | traitmethod )* "}"
 assoctype    := "type" ident [ ":" bound ("+" bound)* ]   // `type Item`, bound by each impl
 traitmethod  := "fun" [ "mut" ] ( "Self" "." )? ident "(" [ param ("," param)* ] ")"
-                [ ".return" ":" type ] ( body | )        // no body: a signature; no `Self.`: a static method
+                [ "=>" type ] ( body | )        // no body: a signature; no `Self.`: a static method
 traitimpl    := "impl" traitname [ typeargs ] "for" typename "{" ( bindtype | method )* "}"
 bindtype     := "type" ident "=" type
 traitname    := ident [ "." ident ]                    // `Shape` or `shape.Shape`
 typename     := ident [ "." ident ]
 method       := "fun" [ "mut" ] "Self" "." ident "(" [ param ("," param)* ] ")"
-                [ ".return" ":" type ] body
+                [ "=>" type ] body
 const        := [ "pub" ] "const" ident ":" type "=" expr
 pd           := "pd" ("val" | "var") ident [ ":" type ] "=" expr
 datac        := [ "pub" ] "datac" ident [ typeparams ] "(" [ field ("," field)* ] ")"
@@ -46,7 +46,7 @@ typeparam    := ident [ ":" bound ("+" bound)* ]
 bound        := traitname [ typeargs ]                // `Shape`, `From<i32>`
 typeargs     := "<" type ("," type)* ">"   // in an expression: adjacent to the name and to "("
 fun          := [ "pub" ] [ "extern" ] "fun" [ "mut" ] ( ident [ typeparams ] "." )? ident [ typeparams ]
-                "(" [ param ("," param)* ] ")" [ ".return" ":" type ] body
+                "(" [ param ("," param)* ] ")" [ "=>" type ] body
                 // `[typeparams]` after the function's own name bounds its type
                 // parameters (9.5); on a receiver it names the receiver's type
                 // arguments and takes no bounds.
@@ -57,7 +57,7 @@ type         := [ "&" [ "mut" ] "dyn" ident ]  // a borrowed trait object: `&dyn
               | "Box" "<" "dyn" ident ">"       // an owned trait object
               | ident "::" ident                // an associated type: `I::Item`, `Self::Item`
               | [ "&" ] ( ident [ "<" type ("," type)* ">" ] [ "." ident ]
-                       | "fun" "(" [ fparam ("," fparam)* ] ")" [ ".return" ":" type ]
+                       | "fun" "(" [ fparam ("," fparam)* ] ")" [ "=>" type ]
                        | "[" type ";" expr "]"        // a fixed-size array: [T; N]
                        | "(" type "," type ("," type)* ")" )  // a tuple: (A, B)
 fparam       := [ "mut" | "move" ] type
@@ -84,7 +84,7 @@ binop        := "||" | "&&" | "==" | "!=" | "<" | "<=" | ">" | ">="
 unary        := ( "-" | "!" | "~" | "&" [ "mut" ] | "*" ) unary | postfix
 postfix      := primary ( "?" | "." ident [ typeargs ] [ "(" args ")" ] )*
 primary      := int | float | string | char | template | "true" | "false"
-              | "fun" "(" [ param ("," param)* ] ")" [ ".return" ":" type ]
+              | "fun" "(" [ param ("," param)* ] ")" [ "=>" type ]
                 ( "=" expr | block )
               | "[" expr ("," expr)* "]"       // an array literal: length is the count
               | "[" expr ";" expr "]"          // a repeat: [0; 4096]
