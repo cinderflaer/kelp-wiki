@@ -189,9 +189,7 @@ types, and the call goes through that wrapper. The wrapper is part of the progra
 IR. The compiler applies no conversions of its own. A variadic extern cannot be
 generic: nothing would specialize the wrapper's signature per instantiation.
 
-The examples in this section used a C helper header to define the native symbols.
-They were removed with the C compiler. A variadic extern needs its native symbol in
-a linked library.
+A variadic extern needs its native symbol in a linked library.
 
 ## Callbacks: `move closure(...)`
 
