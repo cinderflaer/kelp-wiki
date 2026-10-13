@@ -14,8 +14,9 @@ collector, and caps its heap with `[target] heap_max`. Steps 1 and 2 are on `mai
 runtime registers thread arguments and results, closure environments and lock values as
 collector roots, the root table grows in chunks of 1024 slots that double, and
 `[tidepool]` in `coral.toml` sets the start guesses, the headroom and the trigger rule.
-Block regions are not on `main`. Channel ends and the pool are still refused, because
-they are resources (see [Common refusals](/memory/refusals)).
+Block regions are not on `main`. Channels build on `main` when a channel stays in one
+thread. A channel end and the pool do not cross to a worker thread, because a channel end
+is a resource (see [Common refusals](/memory/refusals)).
 
 ## Pages
 
