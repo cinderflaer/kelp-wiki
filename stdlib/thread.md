@@ -7,11 +7,12 @@ tags: "stdlib, concurrency"
 `spawn`, `join`, `fence(order)`, `sleep_ms` and `current_id`: real threads, the
 shared borrow that may cross one, and the per-thread panic policy. Ungated.
 
-> **Status on current `main`.** A `thread.spawn` closure that captures values is refused:
-> `'thread.spawn' cannot take a closure that captures values in managed mode`. A thread's
-> argument or result that holds collected memory is refused too, for example
-> `'Job' cannot be a thread's argument in managed mode`. Numbers and resources cross. The
-> collector does not yet scan a thread's environment, and the step that does is planned.
+> **Status on current `main`.** A `thread.spawn` closure may capture values, and a thread's
+> argument and result may hold collected memory. The runtime registers the closure
+> environment, the argument and the result as collector roots, so numbers and memory
+> values cross. A resource (a file, socket, process, thread handle, lock, condition
+> variable or channel end) does not cross. The checker refuses it by name, in the form
+> `'X' cannot be a thread's argument in a hosted build: 'X' is a resource, ...`.
 
 
 ```kelp
