@@ -9,8 +9,9 @@ tags: "memory, tidepool"
 On `main`, `kelpc` reads a `[tidepool]` section in `coral.toml`. Each line in it must be
 `key = <whole number>`, except `trigger_rule`, which takes a double-quoted name. An unknown
 key is refused by name. `heap_max` under `[tidepool]` is refused with a pointer to
-`[target]`. A section header that starts with `tid` in any case, or is `[gc]`, is refused
-by name with a 'did you mean [tidepool]' message. Other unknown section headers are still
+`[target]`. A section header whose name contains `tidepool` in any case, starts with `tid`,
+or is `[gc]` or `[[tidepool]]` is refused by name with a 'did you mean [tidepool]' message.
+That covers `[target.tidepool]` and `[tidepool.x]`. Other unknown section headers are still
 skipped without a message.
 
 The memory keys on `main` are `[target] heap_max`, a whole number of MiB from 1 to 65536
