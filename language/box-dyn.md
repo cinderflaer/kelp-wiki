@@ -141,17 +141,20 @@ reassignment of a `var`, a container's element drop). There is no runtime type
 tag: the box carries a method set and the ownership of the storage, not a dynamic
 type.
 
-**Status on current `main`.** A `Box<dyn Name>` is a resource for the collector, so it
-cannot be a `List` element (`'Box<dyn Shape>' cannot be a List element in managed mode`).
-A concrete type with a destructor cannot be the payload of a Box (`'Circle' cannot be
-the payload of a Box in managed mode`), so a `Box<dyn Name>` made from such a type is
-refused too. The examples on this page that put a boxed trait object in a `List`, or
-that box a type with a destructor, do not build on `main`.
+**Status on current `main`.** The checker classifies a `Box<dyn Name>` as declared, not as
+memory, so a `Box<dyn Name>` is refused in a `List` element, a `Map` key or value, and a
+thread argument or result. The message has the form `'Box<dyn Shape>' cannot be a List
+element in a hosted build: its declaration was not found, so it cannot be classified as
+memory`. A concrete type with a destructor is a resource, so it is refused as the payload
+of a `Box`, in the form `'Circle' cannot be the payload of a Box in a hosted build:
+'Circle' is a resource, ...`. The examples on this page that put a boxed trait object in a
+`List`, or that box a type with a destructor, do not build on `main`.
 
 ## Threads
 
-A `Box<dyn Name>` is an owned value with no borrow in it, so `thread.spawn` may
-move one into a worker. A `&dyn Name` is a borrow of a frame local and is
+A `Box<dyn Name>` is an owned value with no borrow in it. On current `main`, however,
+the checker refuses it as a thread argument (see the status note above), so a worker
+cannot receive one yet. A `&dyn Name` is a borrow of a frame local and is
 refused:
 
 ```
