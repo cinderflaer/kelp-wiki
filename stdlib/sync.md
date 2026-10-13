@@ -11,15 +11,14 @@ releases the lock around the sleep. On top of them sit channels
 small operations they are built from, `share` and `swap`. A thread pool is
 [`std/pool`](/stdlib/pool). Hosted only.
 
-> **Status on current `main`.** Channels are refused on `main` for now, including
-> `sync.bounded`, `sync.unbounded`, `sync.rendezvous` and `select`. A channel program
-> fails to build with a message such as `'Job' cannot be a thread's argument in managed
-> mode` or `'std.sync.ChanMeta' cannot be the value of a Mutex or RwLock in managed
-> mode`. The collector does not yet scan the values a thread or a lock holds outside the
-> heap. The step that adds that scan is planned (Tidepool step 1), and it is the step that
-> lets channels and the pool build. A `Mutex` or `RwLock` that holds a number builds. One
-> that holds a memory value such as a `List` is refused, for example with
-> `'List<i32>' cannot be the value of a Mutex or RwLock in managed mode`.
+> **Status on current `main`.** The collector roots the values a thread or a lock holds.
+> A `Mutex` or `RwLock` may hold a `List`, a `String` or any other memory value, and a
+> thread may take a memory value as its argument. The channel constructors
+> `sync.bounded`, `sync.unbounded` and `sync.rendezvous` are defined in `std/sync`. A
+> channel end (`SendEnd`, `RecvEnd`, `Sender` and `Receiver`) is a resource, so it is
+> refused by name as a thread's argument, a container element or a closure capture. The
+> message has the form `'<type>' cannot be a thread's argument in a hosted build: '<type>'
+> is a resource, ...`.
 
 ```kelp
 impl "std/sync"
