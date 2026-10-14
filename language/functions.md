@@ -26,8 +26,8 @@ fun abs_diff(a: i32, b: i32) => i32 {         // block body
 - The keyword is `fun`; the return type is written `=> T` **after** the
   parameter list. `->` is accepted as an alias of `=>`. There is no trailing type,
   and no inferred return type for a block body. No return type means `unit`.
-- **The `.return:` spelling is retired.** It still compiles and means the same
-  thing, but new code writes `=>`, and a later release refuses `.return:` by name.
+- **The `.return:` spelling is refused.** The compiler stops with an error that names
+  `=>`, as in `fun f(a: i32) => i32`. The `.R:` spelling was removed before it.
   `=>` and `->` are both accepted on a declaration, a `fun` literal and a function
   type.
 - An expression body (`= expr`) requires `=> T`; a block body ends with
