@@ -1,7 +1,7 @@
 ---
 title: "Tidepool: failure and recovery"
 description: "Empty placeholder for a Tidepool design area. Tidepool is in design."
-isPublished: true
+isPublished: false
 tags: "memory, tidepool"
 ---
 # Tidepool: failure and recovery

@@ -1,7 +1,7 @@
 ---
 title: "Tidepool: tooling and release"
 description: "Empty placeholder for a Tidepool design area. Tidepool is in design."
-isPublished: true
+isPublished: false
 tags: "memory, tidepool"
 ---
 # Tidepool: tooling and release

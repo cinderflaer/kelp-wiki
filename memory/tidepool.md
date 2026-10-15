@@ -21,19 +21,20 @@ is a resource (see [Common refusals](/memory/refusals)).
 ## Pages
 
 - [The idea](/memory/tidepool/idea)
-- [The boundary](/memory/tidepool/boundary)
-- [Blocks at runtime](/memory/tidepool/blocks)
-- [The budget](/memory/tidepool/budget)
+- The boundary (not written yet)
+- Blocks at runtime (not written yet)
+- The budget (not written yet)
 - [Settings in `[tidepool]`](/memory/tidepool/settings)
-- [Safety rules](/memory/tidepool/safety-rules)
-- [The allocation path](/memory/tidepool/allocation-path)
-- [Safety tests](/memory/tidepool/safety-tests)
-- [Build order](/memory/tidepool/build-order)
-- [Performance claims and how they are measured](/memory/tidepool/performance-claims)
-- [What the programmer writes, reads and sees](/memory/tidepool/programmer-view)
-- [Test plan](/memory/tidepool/test-plan)
-- [Tooling and release](/memory/tidepool/tooling-release)
-- [Failure and recovery](/memory/tidepool/failure-recovery)
+- Safety rules (not written yet)
+- The allocation path (not written yet)
+- Safety tests (not written yet)
+- Build order (not written yet)
+- Performance claims and how they are measured (not written yet)
+- What the programmer writes, reads and sees (not written yet)
+- Test plan (not written yet)
+- Tooling and release (not written yet)
+- Failure and recovery (not written yet)
 
-Most of these pages are placeholders until the design is settled. The settings page
-describes the `[tidepool]` keys on `main`, and the idea page describes the later parts.
+Most of these pages are placeholders until the design is settled, so they are listed
+without a link and are not published. The settings page describes the `[tidepool]` keys
+on `main`, and the idea page describes the later parts.
