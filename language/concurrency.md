@@ -67,9 +67,9 @@ keeping on record:
 one scalar takes one. It also holds the channels, which move owned values
 between threads instead of sharing a location, and [`std/pool`](/stdlib/pool)
 is a fixed pool of workers over one queue. The limits of both are on their pages:
-hosted only, an owned element, one thread created per pool job. On current `main`
-both are refused until the step that scans thread and lock values lands, so a
-program that uses them does not build yet.
+hosted only, an owned element, one thread created per pool job. On current `main`,
+a channel builds when it stays in one thread. A channel end is a resource and does not
+cross to a worker thread, and a program that uses the pool is refused for the same reason.
 
 ## One ordering: `SeqCst`
 
