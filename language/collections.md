@@ -147,7 +147,7 @@ print(runs.get(key = 7))
 
   The map then calls these two in place of a derived pair. Declare both or neither.
   The key is still cloned into the entry, so the type must also be deep-copyable.
-- An enum can be a `Map` key: a `Map<Kind, i32>` with `Kind` an enum builds and runs. An enum
+- An enum can be a `Map` key: a `Map<Kind, i32>` with `Kind` an enum is checked by the compiler. An enum
   cannot be a `Map` value. The checker refuses an enum value: `'Status' cannot be a 'Map' value: a hosted build cannot describe an 'enum'
   inside a map's entry yet, and a 'datac' that holds the enum is refused the same way. Keep
   the values in a `List<Status>` and store each value's index in the map instead`. A
