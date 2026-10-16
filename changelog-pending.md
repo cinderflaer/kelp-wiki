@@ -42,6 +42,8 @@ empty on release.
 
 ## changed
 
+- Text aliases are written with a leading underscore: a reference is `_name` and a declaration is `alias _name = <text>`, and a `[alias]` key in `coral.toml` is `_name = "path"`. The old `%*name*%` form is refused as a syntax error. A `_name` that no alias declares is an ordinary identifier.
+
 - The checked program has a node for a manual block region (`tir::ExprKind::Region`). No checked program holds one yet: the surface form is still refused, and the lowering comes later.
 - The collector's tests cover the shared pool's refusal of a run past `heap_max` while live blocks hold the budget (R12).
 - The collector's block runtime (not reachable from source yet) charges each block's chunk against `heap_max`, the shared pool refills only within what the live blocks leave, and a block creation past the budget runs one clearing before it fails.

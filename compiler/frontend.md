@@ -1,6 +1,6 @@
 ---
 title: "Front end"
-description: "The lexer, the %*alias*% text pass and the parser. Covers the token kinds, the newline rule, the operator precedence and the few constructs the parser rewrites."
+description: "The lexer, the _alias text pass and the parser. Covers the token kinds, the newline rule, the operator precedence and the few constructs the parser rewrites."
 isPublished: true
 tags: "compiler"
 ---
@@ -29,22 +29,24 @@ The lexer stops at its first error.
 
 ## Text aliases (`preprocess.rs`)
 
-The alias pass replaces `%*name*%` references with text before parsing.
+The alias pass replaces `_name` references with text before parsing.
 It is a flat, global text substitution with no parameters, no scoping and no conditional compilation.
 
 Two sources feed one table:
 
 - `[alias]` entries in `coral.toml`, loaded by `load_manifest_aliases` (`resolve.rs`).
-- Inline lines of the form `alias %*name*% = <text to end of line>`, found by `alias_decl_shape` (`preprocess.rs`).
+- Inline lines of the form `alias _name = <text to end of line>`, found by `alias_decl_shape` (`preprocess.rs`).
   The line must start after a newline, `{`, `}` or at the start of the file.
+  An alias name starts with `_` and has at least one more character after it.
 
-A reference is the five tokens `%`, `*`, name, `*`, `%` (`preprocess.rs`).
+A reference is one identifier token, `_name`, that a declared alias names (`preprocess.rs`).
+Inside a string literal, `_name` at the start of a word is replaced too, so `my_name` is left alone.
+A `_name` that no alias declares is an ordinary identifier and is never rewritten.
 The replacement is lexed again, and every token it produces takes the span of the use site (`preprocess.rs`).
 
 Errors:
 
 - a duplicate definition (`AliasTable::define`, `preprocess.rs`);
-- an unknown name, `unknown alias '%*x*%'` (`preprocess.rs`);
 - a cycle, found during expansion and by `check_cycles` (`preprocess.rs`);
 - replacement text that does not lex (`preprocess.rs`).
 

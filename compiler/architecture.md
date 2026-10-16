@@ -67,7 +67,7 @@ Each pass does the following with it.
 | Pass | What it does with this program |
 | --- | --- |
 | Lexer | Produces tokens with byte spans. Newlines are tokens and end statements. |
-| Preprocessor | Nothing to expand. There is no `%*name*%` reference. |
+| Preprocessor | Nothing to expand. There is no `_name` reference. |
 | Parser | Produces `Stmt::For` for the loop. It is not rewritten yet. |
 | Resolver | Loads `std/str` as a module. Nothing gated is imported, so no grant is needed. |
 | Type checker | Gives `area` a `Ty::Ref` parameter, because a `datac` parameter is borrowed. At the call site it inserts the `&` the program does not write. Turns the `for` into an index walk over the list. |

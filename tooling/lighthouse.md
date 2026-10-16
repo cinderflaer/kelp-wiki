@@ -82,7 +82,7 @@ file's own `fun` declarations plus the free-standing builtins (`print`, `print!`
 | References and rename | workspace-wide and token-aware: a name inside a comment or a string is not a reference, and a rename will not touch one |
 | Inlay hints | the inferred type of a `val`/`var` whose initializer is a call or a field access |
 | Organize imports | sort, de-duplicate and drop unused `impl` lines (`source.organizeImports`) |
-| Its own warnings | an `impl` whose namespace is never used, which `kelpc` does not report; suppressed in a file that uses `alias %*x*%` substitution, where the answer is unknowable |
+| Its own warnings | an `impl` whose namespace is never used, which `kelpc` does not report; suppressed in a file that uses `alias _x` substitution, where the answer is unknowable |
 
 ## The standard library is a snapshot
 

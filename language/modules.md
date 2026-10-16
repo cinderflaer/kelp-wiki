@@ -119,7 +119,7 @@ pub extern fun clock_ticks() => u64
 
 ```kelp
 impl "std/fs"          // 1. imports
-alias %*debug*% = true // 2. aliases, anywhere a statement can start
+alias _debug = true // 2. aliases, anywhere a statement can start
 const LIMIT: i32 = 10  // 3. constants and passdowns, in any mix
 pd val app = "demo"
 datac Point(val x: i32, val y: i32)   // 4. types and functions, in any mix
@@ -215,18 +215,18 @@ anywhere in the tree. See [Projects and coral.toml](/getting-started/projects).
 
 ## Aliases
 
-`alias %*name*% = <raw text to end of line>` is textual substitution, and it runs
+`alias _name = <raw text to end of line>` is textual substitution, and it runs
 before parsing. It can rewrite an import path:
 
 ```kelp
-alias %*db*% = "storage/postgres"
-impl %*db*%
+alias _db = "storage/postgres"
+impl _db
 ```
 
 Aliases also come from the `[alias]` section of the project's `coral.toml`, one
-`name = "path"` per line. Write the reference inside a string, as in `impl "%*db*%"`,
+`_name = "path"` per line. Write the reference inside a string, as in `impl "_db"`,
 because the value is a plain module path. The project-root `alias.kpconf` file is no longer read. Substitution has no parameters, no scoping
-and no hygiene: `%*a*%` defined as `%*b*% * 2` with `%*b*%` defined as `40 + 2`
+and no hygiene: `_a` defined as `_b * 2` with `_b` defined as `40 + 2`
 prints `84`, because precedence is whatever the expanded text happens to produce.
 
 ## See also
