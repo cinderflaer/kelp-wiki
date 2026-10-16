@@ -40,6 +40,9 @@ empty on release.
 - `[build] obfuscate = "names"` ("off" by default) keeps a hosted build's IR and objects in a temporary directory and links the binary with `ld.lld -s`, which drops its symbol table and debug sections. Names mode is not security: a backtrace shows no function names and the binary has no line information. A freestanding project that sets it is refused by name.
 - `kelpc repl` reads one expression or single-line statement per line from stdin or `--script FILE`, checks and runs each line as its own program, and prints Int, Float, Bool and String values. Lines do not share state yet; a failed line makes the exit status nonzero.
 
+- `tl var NAME: T = LITERAL` gives each thread its own scalar copy, starting from the literal on first access. A borrow of a `tl` cannot cross to a worker. A heap-owning or `Drop` type, and an initializer that is not a literal, are refused by name.
+- A panicking worker runs the user `Drop` of each owned local and each user `Drop` thread argument, newest first, before its joiner sees the panic.
+
 ## changed
 
 - Text aliases are written with a leading underscore: a reference is `_name` and a declaration is `alias _name = <text>`, and a `[alias]` key in `coral.toml` is `_name = "path"`. The old `%*name*%` form is refused as a syntax error. A `_name` that no alias declares is an ordinary identifier.
@@ -155,3 +158,4 @@ empty on release.
 - Manual block regions are out of scope for this release; the design is held until its open questions are answered.
 - A-11 (full borrow checking) is not finished.
 - Adds the collector's C entry points for a manual block (`kelp_gc_block_alloc`, `kelp_gc_block_free`), and a hosted program with a block region links the collector and releases each region's block when the region ends. No program can write a region yet: the checker still refuses the surface form.
+- A panicking worker does not drop the temporaries it holds when it panics.

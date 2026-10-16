@@ -73,9 +73,9 @@ See [Traits](/language/traits), [Generic traits](/language/generic-traits),
 ### Concurrency
 
 - Select over several channels, and rendezvous channels with zero capacity.
-- Thread-local storage.
-- A panic does not unwind. A panicking worker's owned values are not dropped, and
-  a thread handle that nobody joins leaks its result slot.
+- A panic does not unwind. A panicking worker drops its owned locals and its user
+  `Drop` thread arguments, newest first, but not the temporaries it holds, and a
+  thread handle that nobody joins leaks its result slot.
 - Memory orders other than `SeqCst`. `Relaxed`, `Acquire` and `Release` are reserved.
 
 See [Concurrency](/language/concurrency).

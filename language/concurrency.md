@@ -168,15 +168,33 @@ program that spawns nothing: a panic in `main`, or in a worker nothing joins
 before the process ends, still ends the process with `exit(1)`.
 
 **v1 has no unwinding, and the consequence is admitted rather than hidden.**
-Kelp has no exceptions and no `catch`, so a panicking worker's frame is
-abandoned: the owned values it held are never dropped. That
-is a deliberate trade against the two alternatives, both worse here: real
-unwinding needs a `Drop` story the language does not have, and aborting the
-whole process is exactly what this policy removes. A handle nobody joins is
+Kelp has no exceptions and no `catch`, so a panicking worker does not unwind.
+Its frames still drop what they own: each owned local and each user `Drop`
+thread argument runs its destructor, newest first, as on a normal return. A
+temporary the worker holds at the moment of the panic is not dropped. That is a
+deliberate trade against the two alternatives, both worse here: full unwinding
+needs a landing pad on every call, and aborting the whole process is exactly
+what this policy removes. A handle nobody joins is
 the same shape: dropping it detaches the worker, which keeps running, and its
 result slot is leaked rather than freed out from under it. Until a panic can
 unwind, a program that spawns threads accepts these leaks as the cost of
 surviving a single worker's failure.
+
+## Thread-local storage
+
+A `tl` declaration gives each thread its own copy of a scalar. Each copy starts
+from the literal in the declaration on first access, so a worker that reads
+`tl var hits: i64 = 0` sees `0` whatever the main thread has stored:
+
+```kelp
+tl var hits: i64 = 0
+```
+
+Each worker counts into its own `hits` with no lock, and each join returns that
+worker's count. A borrow of a `tl` never crosses to a worker, because it names
+the spawning thread's copy. In this release a `tl` holds a scalar: a heap-owning
+type, a `Drop` type, or an initializer that is not a literal is refused by name.
+Thread-local values do not run destructors at thread exit.
 
 ## A worked example: concurrent downloads
 
