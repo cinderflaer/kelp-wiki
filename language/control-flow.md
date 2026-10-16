@@ -4,7 +4,7 @@ description: "How Kelp branches and loops: if, elif, if let, while, for, when wi
 isPublished: true
 tags: "language"
 ---
-Source: [`syntax.md` §6](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §6](/design/syntax).
 
 Kelp has `if`/`else` (with `if let`), `for`, `while`, `when` and `return`. Inside
 a loop, `break` leaves it and `continue` starts its next pass. `loop { ... }` is

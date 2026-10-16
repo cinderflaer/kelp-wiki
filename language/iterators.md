@@ -461,7 +461,7 @@ one feature is likely enough for both.
 
 ### The follow-up slice
 
-Generic trait impls, in the shape `plan/traits.md` 10 already sketches:
+Generic trait impls, in the shape `design/traits` 10 already sketches:
 
 1. `parser.rs`: parse `impl<TypeParams> Trait for Type<Args>` and record the
    parameters, their bounds, and the `for` type's arguments.

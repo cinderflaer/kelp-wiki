@@ -4,7 +4,7 @@ description: "A program cannot read a file, open a socket, spawn a process or re
 isPublished: true
 tags: "language, capability"
 ---
-Source: [`syntax.md` §15](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §15](/design/syntax).
 
 Kelp's headline feature: **a program cannot read a file, open a socket, spawn a
 process or read the clock unless the module making the call was granted that

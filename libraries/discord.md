@@ -28,7 +28,7 @@ deny every call at runtime.
 | --- | --- |
 | `net` | `std/http` for the REST API, `std/ws` for the gateway socket |
 | `rand` | `std/ws` needs it for the handshake key and the masking key of every frame (RFC 6455 requires both to be unpredictable) |
-| `time` | the heartbeat interval op 10 HELLO carries is a duration, and the reconnect backoff is a wait: `time.now_mono_ns` and `time.sleep_ms` are v1's only clock, and `plan/mk9-memory-model.md` names `wait_readable` plus a sleep as the single-threaded loop's timer |
+| `time` | the heartbeat interval op 10 HELLO carries is a duration, and the reconnect backoff is a wait: `time.now_mono_ns` and `time.sleep_ms` are v1's only clock, and `kelp issue #245` names `wait_readable` plus a sleep as the single-threaded loop's timer |
 
 This library's own `impl` lines grant each shipped module the wildcard,
 `net = ["*"]` for `std/http` and `std/ws` and `time = []` for `std/time`, because

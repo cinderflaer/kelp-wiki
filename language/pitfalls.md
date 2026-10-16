@@ -5,7 +5,7 @@ isPublished: true
 tags: "language"
 ---
 The rules that explain most compile errors, with the message each one produces and
-the fix. Source: [`syntax.md` §18 and §22](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
+the fix. Source: [`syntax.md` §18 and §22](/design/syntax).
 
 ## Ownership
 

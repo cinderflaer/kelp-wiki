@@ -4,7 +4,7 @@ description: "datac is a record where every field exists in every value. enum is
 isPublished: true
 tags: "language"
 ---
-Source: [`syntax.md` §9](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §9](/design/syntax).
 
 Kelp has two ways to declare a type: a **record** (`datac`), where every field
 exists in every value, and a **tagged union** (`enum`), where exactly one variant

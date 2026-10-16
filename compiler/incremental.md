@@ -237,7 +237,7 @@ link, which on this host is a program that reaches the heavy `std` modules.
 
 ## Incremental compilation: compilation units and front-end interfaces
 
-Moved here from the retired `plan/incremental-compilation.md`. The text is kept as the record it was.
+Moved here from the retired `design/incremental-compilation`. The text is kept as the record it was.
 
 *Roadmap A-14. Slices 1 to 3 are separate compilation, the content-addressed
 object cache over its units, and parallel unit compilation. Slice 4 is the
@@ -268,7 +268,7 @@ produce the same stdout and exit status either way.
 ### Slice 4: generated front-end interfaces
 
 The next slice changes that boundary. Its design is in
-`plan/front-end-incremental.md`: an interface is compiler-generated from a
+`kelp issue #244`: an interface is compiler-generated from a
 module's checked public surface, never checked in or edited by a user; an import
 depends on that interface hash, not on another module's private implementation;
 and `std/internal/...` is a compiler-reserved root that user `impl` lines cannot

@@ -4,7 +4,7 @@ description: "The builtin containers: List<T>, Map<K, V>, Box<T> and the fixed-s
 isPublished: true
 tags: "language"
 ---
-Source: [`syntax.md` §12](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §12](/design/syntax).
 
 Three containers are compiler builtins: `List<T>`, `Map<K, V>` and `Box<T>`. They
 are owned values with the same move and drop rules as everything else, and each

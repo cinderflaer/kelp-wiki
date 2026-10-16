@@ -1015,7 +1015,7 @@ it unchanged; a destructor type is excluded from every derived-copy fixpoint, so
 reassignment, container removal, a moved-out value, an `enum` variant, a closure capture and
 the RAII atomic lock guard, and a freestanding riscv64 project releases a lock flag through a
 destructor with no undefined symbol. Both `defer` and `Drop` still have no panic-path cleanup:
-there is no unwinding (`plan/mk9-memory-model.md` §2), so a panic leaks the frame.
+there is no unwinding (`kelp issue #245` §2), so a panic leaks the frame.
 
 **Row 7's hook half is done** (MK9-S5-M1, [`language/freestanding.md`](/language/freestanding)): a freestanding
 manifest may name `alloc`, `dealloc` and an optional `realloc` in `[target]`, and
@@ -1269,7 +1269,7 @@ sees. The gates read the dispatcher's address through the GS base rather than an
 operand, because an operand is materialised into a register before the gate has saved
 anything. Not in this stage: the APIC, SMP, ACPI, a TSS/IST stack and x86 user mode.
 
-**Polyp's renderer is proved freestanding** (Polyp v3 stage 4, `plan/polyp-v3.md`): `examples/polyp-fb-riscv64`
+**Polyp's renderer is proved freestanding** (Polyp v3 stage 4, `design/polyp-v3`): `examples/polyp-fb-riscv64`
 and `examples/polyp-fb-x86_64` boot the v3 core, the software raster and the soft backend on both targets and
 draw the hosted run's exact pixels with no libc, which is the "custom operating system with a framebuffer"
 case the kernel path wanted and `examples/polyp/PLATFORM.md` is the contract it hands an OS.

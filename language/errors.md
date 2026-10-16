@@ -8,7 +8,7 @@ Kelp has **no exceptions and no `try`**. A failure is a value. Use `Option<T>` w
 the failure carries nothing, and `Result<T, E>` when it carries a reason. A
 condition that cannot be handled becomes a `panic`, which ends the process.
 
-Source: [`syntax.md` §18](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §18](/design/syntax).
 
 ## `Option` and `Result`
 

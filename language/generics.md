@@ -4,7 +4,7 @@ description: "Type parameters on datac, enum and fun, how each use site instanti
 isPublished: true
 tags: "language, collections"
 ---
-Source: [`syntax.md` §3 and §9.3](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §3 and §9.3](/design/syntax).
 
 `datac`, `enum` and `fun` may take type parameters. Each use site instantiates them
 into a concrete type, and two instantiations of one template are two different

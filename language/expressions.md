@@ -4,7 +4,7 @@ description: "Operator precedence and arithmetic, bitwise operators and shifts, 
 isPublished: true
 tags: "language"
 ---
-Source: [`syntax.md` §5](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §5](/design/syntax).
 
 ## Precedence
 

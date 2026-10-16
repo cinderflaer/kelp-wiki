@@ -26,7 +26,7 @@ There is no published version number. **v2** added the keyed patch, `scrolled`,
 **v3** split the library into a core and one module per backend, and added the
 display-free path; the application surface is unchanged apart from the tree's
 type, which is `core.Node<M>` now that it lives in the core. The design is
-[`plan/polyp-v3.md`](https://homelabone.xenoo.dev/gitea/Lilly/kelp/src/branch/main/plan/polyp-v3.md).
+[`design/polyp-v3`](/design/polyp-v3).
 **v4** adds timers and integer animation, UTF-8 text in the soft backend, an
 on-demand accessibility tree, and memoised pure subtrees. Its implementation
 record is [`libraries/polyp.md`](/libraries/polyp).
@@ -710,5 +710,5 @@ v5 is a layout and packaging release. The library's behaviour is the v4 behaviou
 - [User FFI](/language/externs)
 - [Functions](/language/functions#trailing-blocks-and-scoped-parameters)
 - [Capabilities](/language/capabilities)
-- [`plan/polyp-v3.md`](https://homelabone.xenoo.dev/gitea/Lilly/kelp/src/branch/main/plan/polyp-v3.md):
+- [`design/polyp-v3`](/design/polyp-v3):
   the design record

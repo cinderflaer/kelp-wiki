@@ -301,7 +301,7 @@ codegen level, and the extern object is written at the same level. `ld.lld` take
 
 `kelpc fmt` owns whitespace and nothing else. The rules it applies are the style
 section of the plan
-([syntax.md §19](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md)),
+([syntax.md §19](/design/syntax)),
 and the code that applies them is `kelpc/src/fmt.rs`.
 
 What it enforces: indentation, spacing, trailing whitespace, the newline rules and

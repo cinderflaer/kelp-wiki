@@ -10,7 +10,7 @@ integer software rasterizer into a framebuffer and links no GTK, no display serv
 and no libc. It is the half a custom operating system, a test harness or a
 bare-metal image uses, and it is what makes a whole Polyp program testable with no
 display at all. The original design is
-[`plan/polyp-v3.md`](https://homelabone.xenoo.dev/gitea/Lilly/kelp/src/branch/main/plan/polyp-v3.md),
+[`design/polyp-v3`](/design/polyp-v3),
 stages 2, 3 and 5; [`libraries/polyp.md`](/libraries/polyp)
 adds clocks, animation, UTF-8, accessibility and memoisation.
 
@@ -318,7 +318,7 @@ nix-shell shell.nix --run 'cd kelpc && ../target/release/kelpc build ../examples
 ```
 
 On the development host (7.8 GiB, LLVM backend, release `kelpc`), a full run of
-`plan/polyp-v3.md`'s benchmark table:
+`design/polyp-v3`'s benchmark table:
 
 | Scenario | frames | pixels | rects | allocs | median us/frame | worst us/frame |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -371,5 +371,5 @@ the same counts per frame; the table above is a full run.
   framebuffer equivalence proof
 - [Freestanding mode](/language/freestanding): the `[target]` section, the
   admitted `std` subset and the linker script
-- [`plan/polyp-v3.md`](https://homelabone.xenoo.dev/gitea/Lilly/kelp/src/branch/main/plan/polyp-v3.md):
+- [`design/polyp-v3`](/design/polyp-v3):
   the design record, stages 2, 3 and 5

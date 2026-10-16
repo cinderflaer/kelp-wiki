@@ -687,7 +687,7 @@ every other setup.
 
 Moved here from the retired `plan/tls-hardening.md`. The text is kept as the record it was.
 
-*Release goal 1 (`plan/release-goals.md`). Part 1 shipped the typed `try_` API, truncation detection,
+*Release goal 1 (`kelp issue #246`). Part 1 shipped the typed `try_` API, truncation detection,
 timeouts, the private CA and `wss` ([`meta/milestones.md`](/meta/milestones)). This file is part 2: a local hostile-conditions matrix
 against `std/tls`, `std/http` and `std/ws`, and every bug it found, fixed in the module or the compiler.*
 
@@ -765,7 +765,7 @@ success.
 
 **Fix.** `tls_truncated.kp`, `tls_timeout_read.kp` and every new fixture call `try_shutdown` on every
 path where a `TlsStream` exists, including after a read error. The typed-handle follow-up in
-`plan/release-goals.md` landed ([`stdlib/tls.md`](/stdlib/tls)): `TlsStream.handle` is the opaque `tls.TlsHandle`
+`kelp issue #246` landed ([`stdlib/tls.md`](/stdlib/tls)): `TlsStream.handle` is the opaque `tls.TlsHandle`
 rather than a `usize`, so the handle can no longer be confused with an address or a length. It is a `Copy`
 handle that owns nothing, though, so the contract stands unchanged: nothing frees the `SSL*` on a `TlsStream`'s
 drop, `try_shutdown` is still the call that does, and that is what the leak gate checks.

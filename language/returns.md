@@ -4,7 +4,7 @@ description: "The => T clause, expression and block bodies, what return does, th
 isPublished: true
 tags: "language"
 ---
-Source: [`syntax.md` §7.1 and §6.4](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §7.1 and §6.4](/design/syntax).
 
 ## The `=> T` clause
 

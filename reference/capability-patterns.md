@@ -5,7 +5,7 @@ isPublished: true
 tags: "reference, capability"
 ---
 Source section:
-[`syntax.md` §15.2](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
+[`syntax.md` §15.2](/design/syntax).
 
 A grant is written on the `impl` line that acquires it:
 

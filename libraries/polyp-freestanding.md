@@ -11,7 +11,7 @@ the same `core.kp`, the same `backends/soft/soft/` rasterizer, the same `soft_ba
 the same application program into an image with no libc, boot under QEMU, and
 print a checksum per frame. The claim is narrow and total: they draw the **same
 pixels** as the hosted run. The original design is
-[`plan/polyp-v3.md`](https://homelabone.xenoo.dev/gitea/Lilly/kelp/src/branch/main/plan/polyp-v3.md),
+[`design/polyp-v3`](/design/polyp-v3),
 stage 4, with the display stretch in
 [`libraries/polyp-freestanding.md`](/libraries/polyp-freestanding).
 The v4 hosted demo is also checked against both freestanding kernels when the

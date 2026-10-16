@@ -17,7 +17,7 @@ How this documentation relates to the code, what is known to be broken, and how 
 ## The one-paragraph version
 
 This site is a **derived** document. The authorities live in the repositories, except the roadmap and the milestone record, which are pages on this site:
-`plan/syntax.md` for the language and style, `plan/architecture.md` for the design,
+`design/syntax` for the language and style, `design/architecture` for the design,
 the [roadmap](/meta/roadmap) for the plan and the [milestone record](/meta/milestones) for what has shipped. Each page
 here cites the section it came from, and where a page and its source disagree, the
 source wins. That is a bug in the page, so please report it.

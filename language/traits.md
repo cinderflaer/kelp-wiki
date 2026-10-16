@@ -4,7 +4,7 @@ description: "Traits: methods with optional default bodies, supertraits, impl Tr
 isPublished: true
 tags: "language"
 ---
-Source: [`syntax.md` §9.5 and §9.5.1-9.5.2](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §9.5 and §9.5.1-9.5.2](/design/syntax).
 
 A `trait` is a named set of methods. `impl` makes a type provide them, and a
 generic function may then require that its type parameter implements one. A

@@ -8,7 +8,7 @@ Kelp leaves some things out on purpose. Other things are not built yet. This pag
 lists both, plus the fixed limits the compiler enforces. Each item links to the
 page that explains the rule.
 
-Source: [`syntax.md` §17](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §17](/design/syntax).
 The [roadmap](/meta/roadmap)
 tracks the items that are planned.
 

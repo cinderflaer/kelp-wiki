@@ -647,7 +647,7 @@ three ways to be surprised by it:
 - **A panic does not run a destructor**, for the same reason it does not run a
   `defer`: the panic path is a call that ends the process, not an unwind. Every
   value the abandoned frame owns leaks, and a lock a destructor would have
-  released stays held. This is the same admitted leak `plan/mk9-memory-model.md`
+  released stays held. This is the same admitted leak `kelp issue #245`
   §2 records for an abandoned worker frame, now stated for every frame.
 - **A destructor that itself panics or never returns replaces the drop point it
   is running on.** The compiler does not check termination, idempotence, or that
@@ -1193,7 +1193,7 @@ consumed, and that a freestanding manifest refuses the whole type by name.
 `lock` calls in one thread deadlock, a program can deadlock on lock ordering, and poisoning is a
 runtime flag the compiler cannot see. A panic inside the block releases the lock and poisons the
 mutex through the runtime's `pthread_cleanup_push` handler, but the panicking frame's owned values
-are still abandoned (`plan/mk9-memory-model.md` section 2). The runtime's cleanup is only reached
+are still abandoned (`kelp issue #245` section 2). The runtime's cleanup is only reached
 on the `pthread_exit` path a worker takes; a panic on the main thread still ends the process with
 `exit(1)`, so a mutex it held is never unlocked and never observed.
 
@@ -1451,7 +1451,7 @@ through the current page tables; and any property of the machine a gate is the f
 observe. The APIC, SMP, ACPI, a TSS/IST stack and x86 user mode are deliberately not built, so
 nothing here is a plan's promise either.
 
-## A-12 slice 4: borrowed trait objects (`&dyn`, `plan/traits.md` 9)
+## A-12 slice 4: borrowed trait objects (`&dyn`, `design/traits` 9)
 
 **New ways to reach undefined behaviour.** The slice puts a function pointer in a
 `.rodata` table and calls it with a pointer the compiler erased to `void*`. The
@@ -1624,7 +1624,7 @@ signatures once, with `core.apply_patches` inlined into each backend's `apply` b
 An implementation whose signature drifted would be a compile error naming the method, not a
 runtime hazard, and the trait's methods carry no raw pointer or lifetime an implementation could
 lie about. The GTK backend still calls `extern` symbols whose prototypes come from `gtk/gtk.h`,
-which is `plan/user-ffi-gap-analysis.md` gap 3 and is unchanged: a wrong prototype is still
+which is `design/user-ffi-gap-analysis` gap 3 and is unchanged: a wrong prototype is still
 outside what the compiler checks.
 
 ## Library note: Polyp v3's software rasterizer (2026-10-02, not a kernel stage)
@@ -1671,7 +1671,7 @@ rectangle containment.
 
 A library stage (`examples/polyp/soft_backend.kp`, `soft/event.kp`, `soft/platform.kp`,
 `soft/headless_platform.kp`, `soft/ppm_platform.kp`, `soft/frac.kp`), not a compiler one: nothing
-in the compiler changed. `plan/polyp-v3.md` stage 3 is the design and
+in the compiler changed. `design/polyp-v3` stage 3 is the design and
 `examples/polyp/PLATFORM.md` the platform contract.
 
 **The new pointer shapes.** Three, all in modules a consumer lists on `[unsafe] modules`:
@@ -1717,7 +1717,7 @@ checksums at 400x300 and 800x600. Both run on the LLVM and C backends under `run
 
 ## Library note: Polyp v3's freestanding framebuffer proof (2026-10-04, not a kernel stage)
 
-*Polyp stage 4 (`plan/polyp-v3.md`) runs the v3 core, the stage-2 raster and the soft backend on
+*Polyp stage 4 (`design/polyp-v3`) runs the v3 core, the stage-2 raster and the soft backend on
 two bare-metal targets. It adds no compiler surface, so this is a library note: the same shape as
 the stage-3 note above, for the code the kernels add.*
 
@@ -1779,7 +1779,7 @@ ignored ([`libraries/polyp-freestanding.md`](/libraries/polyp-freestanding)).
 
 ## Library note: Polyp v3's latency model, work budgets and deadline (2026-10-04, not a kernel stage)
 
-*Stage 5 of Polyp v3. `plan/polyp-v3.md`'s "Stage 5" section is the design; this note is the UB
+*Stage 5 of Polyp v3. `design/polyp-v3`'s "Stage 5" section is the design; this note is the UB
 half, and it is short because the stage adds no new pointer path.*
 
 **New ways to reach UB: none in Polyp.** Stage 5 adds no `unsafe` operation, no raw pointer, no
@@ -1875,7 +1875,7 @@ recursion is bounded by the parser's depth limit, its repeats by the program
 size, and its only allocation is the compiled scratch, which goes through the
 project's own functions, so a bad pattern is a `RegexErr` value and never a
 crash.
-## A-12 slice 5: associated types (`plan/traits.md` 10)
+## A-12 slice 5: associated types (`design/traits` 10)
 
 **New ways to reach undefined behaviour.** None: the slice adds a type-level
 name, not a runtime one. `I::Item` is a concrete type at every instantiation, so
@@ -1917,7 +1917,7 @@ check that the iterator terminates, so an infinite iterator without a `break` is
 a non-terminating program, exactly as `while true` is; and it does not track the
 cursor through a raw `Ptr<T>` any more than it did before.
 
-## Language-completeness 3: generic traits, `From`, and `?` (`plan/traits.md` 11)
+## Language-completeness 3: generic traits, `From`, and `?` (`design/traits` 11)
 
 **New ways to reach undefined behaviour.** None by itself. A static trait method
 is an ordinary monomorphized function keyed by its type and trait instance, so
@@ -1943,7 +1943,7 @@ does with its argument, does not relate two impls of different instances of one
 trait, and does not check an uninstantiated generic function whose body would
 fail a bound, exactly as before.
 
-## Language-completeness 4: owned trait objects, `Box<dyn>` (`plan/traits.md` 12)
+## Language-completeness 4: owned trait objects, `Box<dyn>` (`design/traits` 12)
 
 **New ways to reach undefined behaviour.** The representation adds one: a `Box<dyn Name>` is a fat
 owned pointer whose concrete type is erased, so the compiler no longer knows the size, the
@@ -1965,7 +1965,7 @@ writable place. It does not check that the vtable of one trait agrees with anoth
 routine computes every pair's slot order), does not track whether a box is empty (an empty box
 panics at the point of use), and does not read the size/align entries it emits.
 
-## Language-completeness 5: operator traits and `Display` (`plan/traits.md` 13)
+## Language-completeness 5: operator traits and `Display` (`design/traits` 13)
 
 **New ways to reach undefined behaviour.** None. Every operator is a front-end desugar into an
 ordinary method call (`a + b` is `a.add(&b)`, `a < b` is `a.cmp(&b) < 0`, `-a` is `a.neg()`, and a

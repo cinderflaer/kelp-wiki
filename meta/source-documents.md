@@ -11,12 +11,12 @@ page here and its source disagree, the source is right and the page is a bug.
 
 | File | Authority for |
 | --- | --- |
-| [`plan/syntax.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md) | the language and the style: every section of the Language chapter cites it by number |
-| [`plan/architecture.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/architecture.md) | the design: compiler layout, the capability model, the v1 surface, the standard library's decisions |
+| [`design/syntax`](/design/syntax) | the language and the style: every section of the Language chapter cites it by number |
+| [`design/architecture`](/design/architecture) | the design: compiler layout, the capability model, the v1 surface, the standard library's decisions |
 | [`meta/roadmap`](/meta/roadmap) | the plan: the marks, the open items, the backlog. This page is the authority; it replaces the roadmap file that was in `plan/` |
 | [`meta/open-issues`](/meta/open-issues) | the open bugs and missing features, with the rule for adding and closing one. This page replaces `plan/ISSUES.md` in the kelp repository |
 | [`meta/milestones.md`](/meta/milestones) | the milestone record of what has shipped, including the MK7 LLVM backend and the retired hand-written track it replaced |
-| [`plan/mk9-memory-model.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/mk9-memory-model.md) | the memory model and threads: the plan of record for MK9-S3-M1 (atomics, ordering, the Send/Sync-shaped discipline) and MK6-S1-M1 (threads, the per-thread panic policy). The decisions are settled, stage A1 (`Atomic<T>` and `Ordering`, in [`std/atomic`](/stdlib/atomic)), stage A2 (`thread.fence`), stage B1 (the crossing rules the checker enforces) and stage C1 (`thread.spawn` and `thread.join`) have shipped, and the stages after them have not |
+| [`kelp issue #245`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/issues/245) | the memory model and threads: the plan of record for MK9-S3-M1 (atomics, ordering, the Send/Sync-shaped discipline) and MK6-S1-M1 (threads, the per-thread panic policy). The decisions are settled, stage A1 (`Atomic<T>` and `Ordering`, in [`std/atomic`](/stdlib/atomic)), stage A2 (`thread.fence`), stage B1 (the crossing rules the checker enforces) and stage C1 (`thread.spawn` and `thread.join`) have shipped, and the stages after them have not |
 | [`README.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/README.md) | the front door: what the language has, how to build, the repository layout |
 | `kelpc/std/*.kp` | the standard library, which is the authority for its own signatures: the [index](/reference/stdlib-index) is kept in step with it |
 | `kelpc/src/*.rs` | the compiler; each file's `//!` header describes its job |

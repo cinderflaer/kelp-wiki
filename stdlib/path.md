@@ -30,7 +30,7 @@ impl "std/path"
 `normalize` is the one to know about: the compiler's capability matcher uses the
 same lexical normalization, and `fs` patterns are matched against a normalized,
 symlink-resolved path. It is documented in
-[`syntax.md` §15.2](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md)
+[`syntax.md` §15.2](/design/syntax)
 and implemented twice (in Kelp here and in Rust in `kelp-rt`) with the
 differential tests comparing the two.
 

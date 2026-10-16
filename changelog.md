@@ -185,8 +185,8 @@ overload.
 **Fixed.** `f -= 1` on a function name was an internal compiler error and is a
 diagnostic.
 
-**Design notes and decisions.** `plan/generic-trait-impls.md` (what is built and what
-is not) and `plan/capability-narrowing.md` (forwarding a narrowed grant, runtime
+**Design notes and decisions.** `kelp issue #243` (what is built and what
+is not) and `kelp issue #241` (forwarding a narrowed grant, runtime
 capability values) are written. `kelpc fmt` never re-wraps: it keeps the author's
 line breaks.
 

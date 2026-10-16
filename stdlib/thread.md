@@ -154,7 +154,7 @@ The rule is "a panic ends the thread it happened in", and the process ends when
 
 v1 has no unwinding, no user `Drop` and no `must_use`, and two leaks follow from
 that. Both are deliberate, and both are recorded in
-[`plan/mk9-memory-model.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/mk9-memory-model.md)
+[`kelp issue #245`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/issues/245)
 section 5:
 
 - **A panicking worker's frame is abandoned.** A panic ends the worker by

@@ -4,7 +4,7 @@ description: "A module is a file. impl names it and can grant it authority. Cove
 isPublished: true
 tags: "language"
 ---
-Source: [`syntax.md` §13](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §13](/design/syntax).
 
 A module **is** a file. `impl` names it, and optionally grants it authority.
 

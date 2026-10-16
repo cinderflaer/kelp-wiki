@@ -66,7 +66,7 @@ Split out of the original MK2 on the same reasoning that split MK1-S4-M1/MK1-S4-
 - **`diag.rs` (new).** A `Span` is only meaningful inside the file it was lexed from, so every diagnostic now carries the canonical id of the module it came from, and `SourceMap` maps that id back to path+text to print `--> file:line:col`. `ast::DatacDecl`/`ast::FunctionDecl` and `tir::Function` carry a `module` field for exactly this; `infer.rs` and `borrowck.rs` tag their errors with it at the function/decl boundary, so their internals are otherwise unchanged. Verified: a borrow error inside an imported module points at the imported file, not the entry file.
 - **`resolve.rs` (new).** Loads the entry file, follows `impl` transitively, and returns one *merged* `ast::Program` plus a `Project` naming table. `impl "shapes/circle"` resolves to `src/shapes/circle.kp` relative to the project's `src/`; the last path segment is the default alias, `as` overrides it (line-segment validation rejects absolute paths, `..`/`.`, non-identifier segments, a trailing `.kp`, and reserved `std/...` with a "not implemented until MK3/MK4-S1-M1" message). Import cycles are rejected with the chain printed (`import cycle: a -> b -> a`), duplicate aliases within one file are rejected, and a module reached twice (diamond) is loaded once.
 - **Merging, not a real module system.** Each module's top-level names are prefixed with the module's dotted path (`Circle` in `shapes/circle` becomes `shapes.circle.Circle`; the *entry* module is unprefixed) and `FunctionDecl.module` records the origin. Nothing else about the pipeline changed shape: infer → borrowck → one C translation unit → one `cc` call. `resolve.rs` rewrites a receiver's type name too, so `sig_key`'s existing `Type#name` scheme keeps working unchanged.
-- **Strict module-qualified namespace** (chosen over a flat merge): a module's items are reachable from another module only as `alias.Item`, never bare, and a file's own items are reachable bare inside that file. (As of MK8-S2 item A-13 slice 1 an item is also private by default, so `alias.Item` reaches only what the module exports with `pub`; see `plan/syntax.md` 13.4.) `circle.Circle(r = 2.0)` and `circle.scale(x)` are parsed as method/field syntax and re-interpreted in `infer.rs::check_expr` when the base identifier is an `impl` alias that no local shadows so a local `val util = 5` still shadows a `util` module alias, exactly like any other name lookup. Type annotations use the same alias table (`fun describe(t: u.Tally)`). Unqualified references to an imported item get a targeted "did you mean 'prov.Thing'?" hint; so does a module used as a value.
+- **Strict module-qualified namespace** (chosen over a flat merge): a module's items are reachable from another module only as `alias.Item`, never bare, and a file's own items are reachable bare inside that file. (As of MK8-S2 item A-13 slice 1 an item is also private by default, so `alias.Item` reaches only what the module exports with `pub`; see `design/syntax` 13.4.) `circle.Circle(r = 2.0)` and `circle.scale(x)` are parsed as method/field syntax and re-interpreted in `infer.rs::check_expr` when the base identifier is an `impl` alias that no local shadows so a local `val util = 5` still shadows a `util` module alias, exactly like any other name lookup. Type annotations use the same alias table (`fun describe(t: u.Tally)`). Unqualified references to an imported item get a targeted "did you mean 'prov.Thing'?" hint; so does a module used as a value.
 - **`coral.toml`** (`name`, `version`, `entry`, hand-parsed no TOML dependency, unknown keys rejected): `kelpc build <dir>` uses the manifest's entry point, and `kelpc build <file>` walks up to find the manifest and requires the file to live under `<root>/src`. **A manifest is optional**: with no `coral.toml` found, the entry file's own directory is the module root, which is what keeps all 19 single-file fixtures and both `examples/` compiling with no manifest at all.
 - **Codegen mangling**: `types::c_ident` turns `.` and `#` into `__` (`shapes.circle.Circle#area` → `kelp_shapes__circle__Circle__area`, struct tag `struct_shapes__circle__Circle`). Same low-risk/collision caveat MK1-S4-M2 recorded for `#`, now covering module prefixes too.
 - Tests: 34 fixture/project tests (`cargo test` = 38 unit + 34) `shapes` (manifest, nested import inside an imported module, receiver methods on an imported type), `same_name` (two modules both declaring `Item` and `describe`, proving the prefixing avoids collisions), `alias` (`impl "util" as u` plus a qualified type in a signature), `loose` (manifest-less sibling import), and rejected `cycle`, `unknown_module`, `duplicate_alias`, `dotdot`, `bad_path`, `unknown_member`, `unqualified_import`, `stdlib_import`, `caps_clause`.
@@ -1574,7 +1574,7 @@ compare byte-for-byte now.
 warning became a note about why a *library* still takes a `mut` parameter:
 module scope, not borrows), `wiki/libraries/testkit.md`,
 `wiki/examples/tests_and_bench.md`, `fpl/testkit/lib.kp` and
-`fpl/docs/testkit.md`; `plan/syntax.md` §14.2 states the rule the compiler now
+`fpl/docs/testkit.md`; `design/syntax` §14.2 states the rule the compiler now
 implements; [`meta/roadmap.md`](/meta/roadmap) item 17 is closed; and the asm coverage ratchet
 gained `pd_write_reaches_callers` and `pd_var_mut_argument` (152 fixtures built
 by the C backend, 100 by the asm backend, 52 refused), the direction the ratchet
@@ -1637,7 +1637,7 @@ unit, 273 end-to-end, 57 formatter, 2 capability-matcher, 1 path-normalizer, 1 m
 
 ## C's own diagnostics name the `.kp` line: roadmap item 20 (DONE)
 
-`plan/architecture.md` has recommended "generate readable, `#line`-annotated C" since MK1, [`meta/milestones.md`](/meta/milestones)'s
+`design/architecture` has recommended "generate readable, `#line`-annotated C" since MK1, [`meta/milestones.md`](/meta/milestones)'s
 MK1-S2-M1 entry and both wiki codegen rows already claimed it shipped, and `codegen_c.rs` emitted no `#line`
 directive at all. Item 20 framed the choice as implement it or drop the claim; this implements it, which is
 also what the capability denial's baked-in `file:line:col` string was standing in for.
@@ -2553,7 +2553,7 @@ is required to believe the flip, and saying so is part of the flip's notes.
   now this rule or a named refusal. Found and **not** fixed: two reborrows of one `mut` parameter
   in one call (`g(s, s)`) are unchecked (recorded under A-11). 9 accepted and 12 refused
   `excl_*` fixtures; nested blocks that use an exclusively captured name are refused in v1.
-- **Interaction matrix** (`plan/traits.md` 14): eight cells, each a fixture on both backends; no
+- **Interaction matrix** (`design/traits` 14): eight cells, each a fixture on both backends; no
   behaviour bug found, four message improvements (message text only), one documented limit (a
   const-generic type cannot implement a trait), and one documented non-bug (`Ord` does not decide
   `Map` key identity).

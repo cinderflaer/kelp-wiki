@@ -183,7 +183,7 @@ without unwinding, or document the leak as permanent) before it is a task.
 
 repo: kelp | found: 2026-10-09 | effort: L
 
-source: `plan/generic-trait-impls.md` section 6 (excluded from the generic trait impls
+source: `kelp issue #243` section 6 (excluded from the generic trait impls
 design); refused by name today: `kelpc/tests/fixtures/traits_assoc_const.kp`, "associated
 consts are not in this slice". Follow-up release: none scheduled (no release named in
 `plan/roadmap.md`).
@@ -192,7 +192,7 @@ consts are not in this slice". Follow-up release: none scheduled (no release nam
 
 repo: kelp | found: 2026-10-09 | effort: L
 
-source: `plan/generic-trait-impls.md` section 6 (excluded); `plan/traits.md` 12 names it open
+source: `kelp issue #243` section 6 (excluded); `design/traits` 12 names it open
 for `Box<dyn Name>` and `&dyn Name`. Follow-up release: none scheduled (no release named in
 `plan/roadmap.md`).
 
@@ -200,7 +200,7 @@ for `Box<dyn Name>` and `&dyn Name`. Follow-up release: none scheduled (no relea
 
 repo: kelp | found: 2026-10-09 | effort: L
 
-source: `plan/generic-trait-impls.md` header ("Not built") and section 4 step 6 onward. Step 5
+source: `kelp issue #243` header ("Not built") and section 4 step 6 onward. Step 5
 (bounds on projections and equality constraints, on functions and generic impls) is built in
 26.10.4. Still refused by name: an equality constraint or a `where` projection bound on a
 blanket impl (`impl<T: Iterator<Item = i64>> Tr for T`); an impl for one instantiation
@@ -212,7 +212,7 @@ generic impl. The rest are unscheduled.
 
 repo: kelp | found: 2026-10-09 | effort: XL
 
-source: `plan/generic-trait-impls.md` section 2 item 5 and section 6 (excluded: coherence is
+source: `kelp issue #243` section 2 item 5 and section 6 (excluded: coherence is
 overlap-free with no specialization). Follow-up release: none scheduled; a design decision
 first.
 
@@ -220,7 +220,7 @@ first.
 
 repo: kelp | found: 2026-10-09 | effort: XL
 
-source: `plan/generic-trait-impls.md` section 6 (excluded). Refused by name today:
+source: `kelp issue #243` section 6 (excluded). Refused by name today:
 `kelpc/tests/fixtures/refused_negative_bound.kp`, "a negative bound ('!Name') is excluded from
 generic trait impls". Follow-up release: none scheduled; a design decision first.
 
@@ -228,7 +228,7 @@ generic trait impls". Follow-up release: none scheduled; a design decision first
 
 repo: kelp | found: 2026-10-09 | effort: XL
 
-source: `plan/generic-trait-impls.md` section 6 (excluded); refused by name today:
+source: `kelp issue #243` section 6 (excluded); refused by name today:
 `kelpc/tests/fixtures/traits_assoc_gat.kp`, "generic associated type is not in this slice".
 Follow-up release: none scheduled; a design decision first.
 
@@ -236,14 +236,14 @@ Follow-up release: none scheduled; a design decision first.
 
 repo: kelp | found: 2026-10-09 | effort: XL
 
-source: `plan/generic-trait-impls.md` section 6 (excluded). Follow-up release: none scheduled;
+source: `kelp issue #243` section 6 (excluded). Follow-up release: none scheduled;
 a design decision first.
 
 ### MISSING-Ko8Ej kelp: no `impl Trait` in return position
 
 repo: kelp | found: 2026-10-09 | effort: XL
 
-source: `plan/generic-trait-impls.md` section 6 (excluded); the parser refuses `impl Trait`
+source: `kelp issue #243` section 6 (excluded); the parser refuses `impl Trait`
 in a return type today (`kelpc/tests/fixtures/impl_trait_return_refused.kp`). Follow-up
 release: none scheduled; a design decision first.
 
@@ -258,7 +258,7 @@ coroutines, with no roadmap item tracking either yet"; only `SeqCst` is shipped,
 Two separate gaps. Async/coroutines: nothing in `plan/` names a design, so a
 server is thread-per-connection (`serve_threaded`, `std/pool` creates one thread
 per job). Weaker orderings: reserved syntax, no semantics; they need the memory
-model in `plan/mk9-memory-model.md` to say what they promise before they ship.
+model in `kelp issue #245` to say what they promise before they ship.
 `AtomicPtr` is absent for the same reason.
 
 ### MISSING-Bm8Wk kelp: no named nested functions, no lifetime syntax, no borrows in containers
@@ -286,13 +286,13 @@ still static: grants are source text, a plugin or worker cannot be handed a
 narrower grant at runtime, and a grant cannot be revoked or bounded in lifetime
 or holder count. Listed so the capability story is not read as complete.
 
-Design note written (26.10.3): `plan/capability-narrowing.md`, sections 3 and 4.
+Design note written (26.10.3): `kelp issue #241`, sections 3 and 4.
 
 ### MISSING-t9Qmz kelp: a module in the middle cannot forward a narrowed grant
 
 repo: kelp | found: 2026-09-24 | effort: XL
 
-Design note written (26.10.3): `plan/capability-narrowing.md`, sections 1 and 2.
+Design note written (26.10.3): `kelp issue #241`, sections 1 and 2.
 
 source: repro run against `kelpc` on 2026-09-24, prompted by a library that
 wants to send for its caller; `kelpc/src/resolve.rs` (the delegation rule).
