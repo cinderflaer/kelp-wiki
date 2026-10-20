@@ -23,7 +23,7 @@ writing Kelp. Group under the headings below; delete the headings that stay
 empty on release.
 
 ## added
-- The parser reads `block name: T { ... }` as a manual memory block at the start of an expression, and the checker refuses it with "blocks are not built yet" until the block runtime lands; `block` stays an ordinary name everywhere else.
+- A manual memory block, `block name: T { ... }`, frees its values when the block ends, on every exit (`return`, `break`, `continue`, `?`). Inside it, `name.box()?` makes one zeroed element of the block's type in its own chunk, counted against `heap_max`, and the block's value is `Result<T, BlockError>`. A block value cannot leave its block, be stored in a shared container, a static, a closure or a thread, and a block element holds scalars or a `datac` of scalars only. `block` stays an ordinary name everywhere else.
 
 - A word from another language used as a keyword or type name gets its Kelp word in the `help:` line: `fn`, `def`, `function`, `struct`, `class`, `let`, `match`, `null`, `nil`, `None`, `True`, `False`, `println`, `as`, `int`, `string` and `elseif`. The first line of the message is unchanged.
 - A string template outside `print` is a `String` value: `val part = "${out}.part"` binds it, and a `String` parameter takes it. A template in `print` or `print!` prints as before.
@@ -47,7 +47,7 @@ empty on release.
 
 - Text aliases are written with a leading underscore: a reference is `_name` and a declaration is `alias _name = <text>`, and a `[alias]` key in `coral.toml` is `_name = "path"`. The old `%*name*%` form is refused as a syntax error. A `_name` that no alias declares is an ordinary identifier.
 
-- The checked program has a node for a manual block region (`tir::ExprKind::Region`). No checked program holds one yet: the surface form is still refused, and the lowering comes later.
+- The checked program has a node for a manual block region (`tir::ExprKind::Region`), and the collector releases a block's element when the block ends.
 - The collector's tests cover the shared pool's refusal of a run past `heap_max` while live blocks hold the budget (R12).
 - The collector's block runtime (not reachable from source yet) charges each block's chunk against `heap_max`, the shared pool refills only within what the live blocks leave, and a block creation past the budget runs one clearing before it fails.
 - The standard library, the examples and the tests no longer write `.as_str()` at call arguments whose parameter is `str` or `&str`, such as `str.concat(a, b)` or `out.push_str(...)`: the checker takes the same borrow implicitly. Sites that still need the explicit form (`String.from_str`, generic `Children` methods, trait methods, function-typed parameters and `Bytes` values) keep it.
