@@ -127,6 +127,7 @@ empty on release.
 - The `fs`, `io`, `arena`, `path` and `fmt` modules now have doc comments on every item, private helpers included, so `kelpc doc --std --check` reports nothing for them.
 - The `process` and `str` modules now have doc comments on every item, private helpers included, so `kelpc doc --std --check` reports nothing for them.
 - The `encoding` and `pool` modules now have doc comments on every item, private helpers included, so `kelpc doc --std --check` reports nothing for them.
+- A `select { recv(rx) as v -> e, send(tx, x) -> e, timeout(ms) -> e, closed -> e }` form waits on several channel cases at once in a hosted build, with no polling: the first ready arm in source order runs, a blocked select sleeps until a channel it watches changes or its deadline passes, and a send arm on a `sync.rendezvous` channel completes only once a receiver takes its value.
 
 ## fixes
 

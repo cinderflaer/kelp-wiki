@@ -1,6 +1,6 @@
 ---
 title: "`std/sync`"
-description: "`Mutex<T>`, `RwLock<T>` and `Condvar` through scoped blocks, plus bounded and unbounded channels (`sync.bounded`, `Sender`, `Receiver`, `for v in rx`) and `Mutex.share`/`swap`. Hosted only. The thread pool is `std/pool`."
+description: "`Mutex<T>`, `RwLock<T>` and `Condvar` through scoped blocks, plus bounded, unbounded and zero-capacity channels (`sync.bounded`, `Sender`, `Receiver`, `for v in rx`), the `select` form over channel cases, and `Mutex.share`/`swap`. Hosted only. The thread pool is `std/pool`."
 isPublished: true
 tags: "stdlib, concurrency"
 ---
@@ -19,7 +19,8 @@ small operations they are built from, `share` and `swap`. A thread pool is
 > to a worker thread: `'std.sync.Sender<i64>' cannot be a thread's argument in a hosted
 > build: 'std.sync.Sender<i64>' is a resource, ...`. The same holds for a `List` element, a
 > `Mutex` value and a closure capture. A `Mutex` or `RwLock` holding a `List` or a `String`
-> builds. The `sync.rendezvous` and `select` forms were not built on this status line.
+> builds. The zero-capacity channel (`sync.rendezvous`) and the `select` form are built;
+> see [Select](#select).
 
 ```kelp
 impl "std/sync"
@@ -595,15 +596,16 @@ back
   error: in 'std.sync.bounded<Mutex<i64>>': in 'std.sync.Sender<Mutex<i64>>': 'Mutex<i64>' cannot be a 'List' element: a mutex owns a runtime record and is reached by borrowing it, while a container's own routines move and drop an element like a plain location. Keep the mutex in a local or a field ('val m = Mutex.new(0)') and lock it there
   ```
 
-- **No zero-capacity (rendezvous) channel.** `sync.bounded<i64>(0)` panics with
-  `sync.bounded: the capacity must be at least 1`.
+- **`sync.bounded(0)` panics** with `sync.bounded: the capacity must be at least 1`.
+  The zero-capacity channel is `sync.rendezvous<T>()`: each send waits until a
+  receive takes its value.
 - **`send` returns `Option<T>`, not `Result<(), E>`**, because no expression
   produces `unit` to put in an `Ok`. `None` is success. The compiler does **not**
   force you to look at the result (v1 has no `must_use`), so `tx.send(1)` on its
   own line compiles and silently drops the value that comes back when the
   receiver is gone. The examples bind it (`val back = tx.send(v)`) to say so.
-- **No `select`** over several channels, no `try_send`, and no receive with a
-  deadline on more than one channel. A receiver has one owner: it is not
+- **No `default` arm in a `select`.** A select with nothing ready blocks, or ends
+  at its `timeout` arm (see [Select](#select)). A receiver has one owner: it is not
   cloneable, so there is no multi-consumer queue (use a [pool](/stdlib/pool)).
 - **`for v in rx` needs a mutable place**, so bind the pair with `var`. A trait
   impl cannot name a generic instantiation, so `Receiver<T>` is not an
@@ -621,6 +623,97 @@ back
   tests are `chan_bounded_mpsc` (four producers, one consumer, sum 124500),
   `chan_close`, `chan_recv_timeout`, `chan_zero_capacity`, `chan_non_sendable`
   and `chan_send_a_lock`.
+
+## Select
+
+`select` waits on several channel cases at once and runs the arm of the first
+case that is ready. It is an expression: its value is the value of the arm that
+ran, so every arm gives the same type.
+
+```
+select {
+    recv(rx) as v -> handle(v),
+    send(tx, x) -> sent(),
+    timeout(250) -> give_up(),
+    closed -> stop(),
+}
+```
+
+The arms are:
+
+| Arm | Ready when | Inside the arm |
+| --- | --- | --- |
+| `recv(rx) as v -> e` | `rx` holds a value, or is closed and empty | `v` is the value taken from `rx` |
+| `send(tx, x) -> e` | `tx` has room, or it is a zero-capacity channel with a receiver blocked on it | `x` has been sent |
+| `timeout(ms) -> e` | the deadline (`ms` milliseconds from the start) passes with nothing else ready | |
+| `closed -> e` | the chosen receive case is closed and empty | |
+
+Each arm is separated from the next by a comma or a newline. The channel of a
+case is a variable or a field (`rx`, `self.rx`), because every poll reads it
+again. `ms` is an `i64`, and a negative `ms` ends the wait at once.
+
+Rules:
+
+- A select with a receive arm needs a `closed` arm, and a `closed` arm needs a
+  receive arm. At most one `timeout` arm and one `closed` arm are allowed.
+- When several arms are ready, the first one in source order wins.
+- The select does not poll in a loop. When nothing is ready it blocks until a
+  channel it watches changes, or until its deadline passes, and then looks
+  again.
+- A value is moved into the select when it starts, so a value that is sent in
+  two cases is refused by name. A value whose case was not chosen is dropped
+  when the select ends.
+- A send to a channel whose receiver is gone is ready at once, and the value is
+  dropped, as `try_send` drops it. A caller that needs the value back uses
+  `send`, which returns it.
+- A send arm on a zero-capacity channel is ready only while a receiver is
+  blocked on that channel. Once the send arm is chosen, the select waits until
+  that receiver takes the value.
+- A receive case counts as a waiting receiver only while its select is blocked,
+  so a select never hands a value to one of its own cases.
+- A worker that panics inside a select releases the select and its cases, and
+  the senders the worker owns close, so a receiver on those channels sees
+  `Closed` (the panic path, as for any local).
+
+```
+impl "std/sync"
+
+fun main() {
+    val (tx, rx) = sync.bounded<i64>(1)
+    val sent = select {
+        send(tx, 7) -> "sent",
+        recv(rx) as v -> "received",
+        closed -> "closed",
+    }
+    print(sent)
+}
+```
+
+This prints `sent`: the channel has room, and nothing is queued to receive yet.
+
+### Limits of select
+
+- **No `default` arm.** A select that has nothing ready blocks until a case is
+  ready, unless it has a `timeout` arm.
+- **A rendezvous send can wait after it is chosen.** The chosen send arm waits
+  for its receiver to take the value. If that receiver's own select picks
+  another arm first, the sender waits for the next receive, and its other arms
+  do not run in the meantime.
+- **The channel of a case is a place.** `recv(make_rx())` is refused, because the
+  case would call it again at every poll. Bind the channel to a variable first.
+
+### Refusals
+
+The parser names the form that is missing:
+
+```
+error: a 'select' with a receive case needs a 'closed -> e' arm: it runs when the chosen receive case is closed and empty
+error: the value 'x' is sent in two cases of this select: a value can be sent in one case only, so send a copy or a second value in the other case
+error: a select case names its channel as a variable or a field (`rx`, `self.rx`), because the case reads it again at every poll
+```
+
+A `select` needs `impl "std/sync"` in the module, as the channel functions do.
+A freestanding build refuses the module by name, so a `select` is refused there too.
 
 ## The thread pool
 
@@ -659,8 +752,8 @@ by design, and neither backend can lower a mutex without the hosted runtime.
 
 - A try-lock or timed lock on `Mutex<T>` itself (`RwLock<T>` has `try_read` and
   `try_write`), and an ordering slot.
-- A `select` over several channels, a rendezvous (capacity 0) channel and a
-  multi-consumer receiver (see [Limits of channels](#limits-of-channels)).
+- A `default` arm in a `select`, and a multi-consumer receiver (see
+  [Limits of channels](#limits-of-channels)).
 - A `lock` that returns a guard value: the scoped block is the whole reason the
   borrow cannot escape, and a returned guard would reintroduce the escape.
 - A blocking `Condvar.wait` that hands back a guard; `wait_while` is the shape.

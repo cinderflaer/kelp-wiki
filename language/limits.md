@@ -72,7 +72,8 @@ See [Traits](/language/traits), [Generic traits](/language/generic-traits),
 
 ### Concurrency
 
-- Select over several channels, and rendezvous channels with zero capacity.
+- A `default` arm in a `select` ([`std/sync`](/stdlib/sync#select)); a select case
+  names its channel as a variable or a field.
 - A panic does not unwind. A panicking worker drops its owned locals and its user
   `Drop` thread arguments, newest first, but not the temporaries it holds, and a
   thread handle that nobody joins leaks its result slot.

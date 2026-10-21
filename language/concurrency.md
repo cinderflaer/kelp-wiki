@@ -236,9 +236,9 @@ than decided speculatively; none of them blocks anything above:
   `Mutex`-guarded queue whose two ends share one runtime record through
   `Mutex.share()`, and a pool is the same queue of closures
   ([`std/sync`](/stdlib/sync), [`std/pool`](/stdlib/pool)). On current `main` a channel
-  builds inside one thread, a channel end and a pool are refused, and `select` and
-  rendezvous channels are not built, until the step that lets the collector see values
-  that a thread or a lock holds.
+  builds inside one thread, a channel end and a pool are refused, until the step that
+  lets the collector see values that a thread or a lock holds. The `select` form over
+  receive, send and timeout arms is built ([`std/sync`, Select](/stdlib/sync#select)).
 
 ## See also
 
