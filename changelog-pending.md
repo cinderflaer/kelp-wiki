@@ -163,8 +163,7 @@ empty on release.
 - A hosted build refuses an enum stored inside a `datac`: the collector does not describe that layout yet, so such a program is a compile error.
 - A `Map` whose value is an enum is refused by the checker at the `Map` type, with a sentence that names the type and says to keep the values in a `List`; the hosted build's codegen does not describe an enum inside a map's entry yet, and a `datac` holding the enum is refused the same way.
 - The Tidepool M7 gate measures the scalar row only; the String case is not measured in this release.
-- Manual block regions are out of scope for this release; the design is held until its open questions are answered.
+- The poison sweep is not in this release: a dead manual-block object is not poisoned under `KELP_GC_VERIFY=1`. Its test is still failing and waits on the owner's decision (issue 194).
 - A-11 (full borrow checking) is not finished.
-- Adds the collector's C entry points for a manual block (`kelp_gc_block_alloc`, `kelp_gc_block_free`), and a hosted program with a block region links the collector and releases each region's block when the region ends. No program can write a region yet: the checker still refuses the surface form.
 - A panicking worker does not drop the temporaries it holds when it panics.
 - A worker that panics inside a `select` arm frees the select's waiter on the panic path, and a test checks it with the `KELP_RT_TEST_WAITERS=1` exit report.
