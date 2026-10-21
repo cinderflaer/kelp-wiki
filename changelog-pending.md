@@ -55,7 +55,7 @@ empty on release.
 
 - The checked program has a node for a manual block region (`tir::ExprKind::Region`), and the collector releases a block's element when the block ends.
 - The collector's tests cover the shared pool's refusal of a run past `heap_max` while live blocks hold the budget (R12).
-- The collector's block runtime (not reachable from source yet) charges each block's chunk against `heap_max`, the shared pool refills only within what the live blocks leave, and a block creation past the budget runs one clearing before it fails.
+- The collector's block runtime, which the `block name: T { ... }` form uses, charges each block's chunk against `heap_max`, the shared pool refills only within what the live blocks leave, and a block creation past the budget runs one clearing before it fails.
 - The standard library, the examples and the tests no longer write `.as_str()` at call arguments whose parameter is `str` or `&str`, such as `str.concat(a, b)` or `out.push_str(...)`: the checker takes the same borrow implicitly. Sites that still need the explicit form (`String.from_str`, generic `Children` methods, trait methods, function-typed parameters and `Bytes` values) keep it.
 - A parse error prints the token as written (`found ';'`, `found 'fun'`, `found end of file`) where it printed a Rust debug name (`found Semi`, `found Ident("fn")`).
 - `kelpc repl` builds run under a resumable memory guard: when memory runs low the guard stops the build's child tools, the line is refused with a low-memory message, and the session continues. A parse error in a typed line points at its place in the line, and an unknown name in the REPL no longer tells the user to declare it with `val` or `var`.
@@ -119,7 +119,7 @@ empty on release.
 - `kelpc lint` warns on `== true` and on `.len() == 0`, which read better as the condition alone and `.is_empty()`. The warning does not fail the build.
 - A string literal is accepted where a `String` is expected; the examples write it that way, without `String.from_str`.
 - `kelpc doc --std --check` reports nothing for the shipped standard library: every public item has a doc comment.
-- The drop plan records each manual block region the function declares (`DropPlan::region`), with its name and element type. The table is not read by codegen yet, and no checked program holds a region.
+- The drop plan records each manual block region the function declares (`DropPlan::region`), with its name and element type. The table is not read by codegen yet; codegen lowers each region from its own `Region` node, which the `block` form produces.
 - The largest compiler source files are split into modules (`kelpc/src/infer/`, `codegen_llvm/`, `resolve/`, `parser/`, `borrowck/`, `llvm_ffi/`, `lexer/` and the integration test suites). The split moves code only: the language, the diagnostics and the generated IR are unchanged.
 
 ## stdlib
@@ -153,6 +153,7 @@ empty on release.
 - A test holds the collector's fallback headroom to the manifest default of 10 percent, so the two copies cannot drift apart without a failing test.
 - A hosted thread may take a `Sender`, `Receiver`, `Mutex`, `Condvar`, `Thread` or a `datac` of them as its argument or its result, and a worker that panics still closes the channels its `Sender`s belonged to.
 - A hosted worker that panics while a later argument of a call is evaluated still drops the resource an earlier argument of that call holds, so a receiver of its `Sender` sees `Closed` instead of waiting.
+- A worker that panics inside a `select` arm frees the select's waiter on the panic path. The test `a_select_worker_that_panics_frees_its_waiter` (kelp commit 30628097) runs the panic fixture under `KELP_RT_TEST_WAITERS=1`, which reports any waiter still live at exit.
 
 ## limits
 
@@ -166,4 +167,3 @@ empty on release.
 - The poison sweep is not in this release: a dead manual-block object is not poisoned under `KELP_GC_VERIFY=1`. Its test is still failing and waits on the owner's decision (issue 194).
 - A-11 (full borrow checking) is not finished.
 - A panicking worker does not drop the temporaries it holds when it panics.
-- A worker that panics inside a `select` arm frees the select's waiter on the panic path, and a test checks it with the `KELP_RT_TEST_WAITERS=1` exit report.
