@@ -29,7 +29,7 @@ The lowering refuses these cases with a diagnostic:
 - a `?` in the same block as a `defer` (`defer.rs`);
 - a `return` inside an action (`defer.rs`);
 - a `break` or `continue` inside an action (`defer.rs`);
-- a local declared after the `defer` that the action could use (`defer.rs`, `refuse_later_locals`).
+- a local declared after the `defer` that the action could use (`defer/scan.rs`, `refuse_later_locals`).
 
 Because the copies are ordinary statements, a use of a moved value inside an action is reported by the borrow checker at the `defer` line.
 
@@ -49,7 +49,7 @@ No fixture pairs a `defer` with a `break` or `continue`, so it has not been conf
 
 - A type is `Copy` when `is_copy` says so (`types.rs`).
   Scalars and `&str` are `Copy`. A `datac` or an `enum` is not.
-- A bare read of a non-`Copy` local is a move (`use_value_moving`, `borrowck.rs`).
+- A bare read of a non-`Copy` local is a move (`use_value_moving`, `borrowck/ctx_use.rs`).
 - A field read off an owned local moves that field out, and the local keeps the rest.
   The `Projection` values (`borrowck.rs`) record which parts moved.
 - A local that is moved on some paths and kept on others is `MaybeMoved`.
@@ -58,7 +58,7 @@ No fixture pairs a `defer` with a `break` or `continue`, so it has not been conf
 ## Borrows
 
 A borrow state is `None`, `Shared(n)` or `Exclusive` (`BorrowKind`, `borrowck.rs`).
-`start_borrow` (`borrowck.rs`) allows any number of shared borrows, or one exclusive borrow with no others.
+`start_borrow` (`borrowck/ctx_use.rs`) allows any number of shared borrows, or one exclusive borrow with no others.
 
 There are two kinds of borrow:
 
@@ -66,17 +66,17 @@ There are two kinds of borrow:
   `check_call` (`borrowck.rs`) starts all of them before it releases any, so `f(&mut c, &c)` is refused.
   They end when the call returns (`borrowck.rs`).
 - **Scope borrows** are bound to a name, for example `val p = &c`, or come from a call that returns a borrow.
-  `hold` (`borrowck.rs`) attaches the borrow to the name.
+  `hold` (`borrowck/ctx_use.rs`) attaches the borrow to the name.
 
-A reference binding records the owners it may borrow from (`set_roots`, `borrowck.rs`).
+A reference binding records the owners it may borrow from (`set_roots`, `borrowck/ctx_borrow.rs`).
 A cursor therefore keeps its owner pinned.
 
 ### Last use
 
 A scope borrow ends after the last statement that mentions its name, not at the end of its scope.
-`last_use_index` (`borrowck.rs`) finds that statement.
+`last_use_index` (`borrowck/walk.rs`) finds that statement.
 A use inside a loop or an `if` counts as the whole enclosing statement, so the borrow lasts for the loop.
-`release_expired` (`borrowck.rs`) releases borrows after each statement.
+`release_expired` (`borrowck/ctx_use.rs`) releases borrows after each statement.
 
 The effect is that `val first = names.get(0)` followed by `names.push(...)` is accepted once `first` is no longer used.
 
@@ -97,7 +97,7 @@ The main messages are:
 ## The drop plan
 
 An owned local is a binding whose type needs a drop.
-`define_owned` (`borrowck.rs`) registers it.
+`define_owned` (`borrowck/ctx_borrow.rs`) registers it.
 Owned `move T` parameters are registered too.
 The plan records, for each block, return, `?`, `break`, `continue` and assignment, which owned values must be dropped at that point.
 

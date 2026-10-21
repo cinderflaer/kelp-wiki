@@ -15,7 +15,7 @@ cargo test --test fmt                        # the formatter's corpus and proper
 
 There is one backend, so there is no script that runs the suite once per backend.
 
-## The fixture suite (`tests/compile_and_run.rs`)
+## The fixture suite (`tests/compile_and_run/`)
 
 The harness runs the real `kelpc` binary on two sets of inputs.
 

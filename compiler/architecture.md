@@ -15,10 +15,10 @@ The checks run once over the whole program, and only then is code generated.
 
 | Step | Entry point | File |
 | --- | --- | --- |
-| Load and resolve the module graph | `resolve::load` | `resolve.rs` |
-| Lex, expand aliases, parse each module | `visit_body` and `Parser::parse_program` | `resolve.rs`, `parser.rs` |
-| Lower `defer` into ordinary statements | `defer::lower` | `resolve.rs`, `defer.rs` |
-| Type check the whole program | `infer::check_program` | `infer.rs` |
+| Load and resolve the module graph | `resolve::load` | `resolve/loader.rs` |
+| Lex, expand aliases, parse each module | `visit_body` and `Parser::parse_program` | `resolve/loader_visit.rs`, `parser/parser_part1.rs` |
+| Lower `defer` into ordinary statements | `defer::lower` | `resolve/loader_visit.rs`, `defer.rs` |
+| Type check the whole program | `infer::check_program` | `infer/program.rs` |
 | Check moves, borrows and build the drop plan | `borrowck::check_program` | `borrowck.rs` |
 | Check the freestanding allowed set | `freestanding::check` | `freestanding.rs` |
 | Generate LLVM IR and an object | `codegen_llvm::compile` | `codegen_llvm.rs` |
@@ -75,8 +75,8 @@ Each pass does the following with it.
 | LLVM codegen | Emits `main`, `area` and the list helpers into one module, then runs the LLVM passes at `-O2`. |
 | Driver | Writes `build/<name>.ll` and `build/<name>.o` and runs `ld.lld`. |
 
-The loop desugaring is in `infer.rs`.
-The borrow at the call site is inserted by `check_call_arg` (`infer.rs`).
+The loop desugaring is in `infer/loops_closures.rs`.
+The borrow at the call site is inserted by `check_call_arg` (`infer/args_coerce.rs`).
 
 ## Known gaps in the pipeline
 

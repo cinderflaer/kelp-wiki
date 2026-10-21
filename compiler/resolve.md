@@ -10,21 +10,21 @@ The language-level rules are on the [Capabilities](/language/capabilities) page.
 
 ## Loading the program
 
-`resolve::load` (`resolve.rs`) starts from the entry file or project directory.
+`resolve::load` (`resolve/loader.rs`) starts from the entry file or project directory.
 
-1. A directory entry reads `coral.toml` there. Its `[caps]` section becomes the entry module's grant (`parse_manifest`, `resolve.rs`).
+1. A directory entry reads `coral.toml` there. Its `[caps]` section becomes the entry module's grant (`parse_manifest`, `resolve/manifest.rs`).
    A loose `.kp` file has no manifest, and its directory becomes the source root.
 2. The `[alias]` entries are defined (`resolve.rs`).
-3. `load_project` (`resolve.rs`) runs the discovery rounds and then a strict pass.
-4. `visit_body` (`resolve.rs`) handles one module.
+3. `load_project` (`resolve/loader_visit.rs`) runs the discovery rounds and then a strict pass.
+4. `visit_body` (`resolve/loader_visit.rs`) handles one module.
    It lexes and parses the module, lowers its `defer` statements and visits each `impl` import.
 
 A module id is the path under `src/` without the `.kp` extension.
 So `src/shapes/circle.kp` is the module `shapes/circle`.
 Paths may not contain `..` and may not leave the project.
-Dependencies under `src/deps/<key>/` use `lib.kp` and take the directory name as their module name (`module_id_of`, `resolve.rs`).
+Dependencies under `src/deps/<key>/` use `lib.kp` and take the directory name as their module name (`module_id_of`, `resolve/subst.rs`).
 
-Standard library ids are read from text compiled into the binary, not from disk (`tokens_of`, `resolve.rs`).
+Standard library ids are read from text compiled into the binary, not from disk (`tokens_of`, `resolve/loader_visit.rs`).
 See [Runtime](/compiler/runtime#the-standard-library-in-the-binary).
 
 A cycle of imports is reported (`resolve.rs`).
@@ -34,23 +34,23 @@ A cycle of imports is reported (`resolve.rs`).
 `impl "shapes/circle"` binds the module to the name `circle`.
 The name is the last path segment (`default_alias`, `resolve.rs`).
 A duplicate name is an error.
-The parser reads the `impl` line in `parse_impl_decl` (`parser.rs`).
+The parser reads the `impl` line in `parse_impl_decl` (`parser/parser_part1.rs`).
 
 Names are qualified by the module name.
 `qualify` (`resolve.rs`) rewrites `alias.item` into the module's prefix plus the item name.
 An unknown alias is an error.
 Inside a module, its own items are reached without a prefix.
-`infer.rs` tries the prefixed spelling for a bare name (`qualify_own`, `infer.rs`).
+`infer/pd_wiring.rs` tries the prefixed spelling for a bare name (`qualify_own`, `infer/pd_wiring.rs`).
 
 ## Visibility
 
 Items are private unless they are declared `pub`.
-`collect_exports` (`infer.rs`) records the `pub` items, and every item of a shipped standard library module.
-`check_exported` (`infer.rs`) refuses a use of a private item from another module with a message that says to add `pub`.
+`collect_exports` (`infer/fn_values.rs`) records the `pub` items, and every item of a shipped standard library module.
+`check_exported` (`infer/pd_wiring.rs`) refuses a use of a private item from another module with a message that says to add `pub`.
 
 Two more rules use the same export set:
 
-- A `pub` declaration's signature may name only types that its module exports (`check_pub_signatures`, `infer.rs`).
+- A `pub` declaration's signature may name only types that its module exports (`check_pub_signatures`, `infer/exports.rs`).
 - An `impl X for Y` whose type or trait comes from another module needs that item to be `pub` (`infer.rs`).
 
 ## Capability grants
@@ -66,7 +66,7 @@ Grants come from two places.
   `caps(*)` passes on every domain the importer holds (`AllGrantEdge`, `resolve.rs`).
 
 A non-entry module holds only what its importers delegate.
-A module may delegate only a pattern it holds itself (`pattern_covered`, `resolve.rs`).
+A module may delegate only a pattern it holds itself (`pattern_covered`, `resolve/caps.rs`).
 A delegation that is wider than the module's own grant is refused at load time:
 
 ```text
@@ -81,7 +81,7 @@ The domain that a standard library module needs is set by `domain_of` (`stdlib.r
 
 ## Enforcement at compile time
 
-`check_capability` (`infer.rs`) runs at each reference to a gated item.
+`check_capability` (`infer/pd_wiring.rs`) runs at each reference to a gated item.
 That covers calls, function values and names used as values.
 A reference passes when:
 
@@ -100,8 +100,8 @@ The exact text of the `<function>` part comes from `display_callee`, which this 
 
 Patterns that depend on a value, such as a path or a host, are checked when the program runs.
 
-- `cap_plan` in `codegen_llvm.rs` finds the caller's patterns and the check that each gated call needs.
-- `emit_cap_checks` in `codegen_llvm.rs` emits a `kelp_cap_check_*` call before the gated call.
+- `cap_plan` in `codegen_llvm/declare_items.rs` finds the caller's patterns and the check that each gated call needs.
+- `emit_cap_checks` in `codegen_llvm/ops_asm.rs` emits a `kelp_cap_check_*` call before the gated call.
   The kinds are `path`, `name`, `host`, `hostport` and `port`.
 - A failed check calls `kelp_cap_deny`, which `kelp-rt` exports (`kelp-rt/src/cap.rs`).
   The message names the path and the module and exits with status 1:

@@ -17,7 +17,7 @@ The resolver calls all three for each module (`resolve.rs`).
   A newline after a line-continuing token such as `+`, `,` or `.` is dropped (`lexer.rs`).
   That is why Kelp has no semicolons.
 - **Comments** are skipped unless trivia is requested (`lexer.rs`).
-- **Strings** are decoded in `lex_string` (`lexer.rs`).
+- **Strings** are decoded in `lex_string` (`lexer/literals.rs`).
   A string with `$name` or `${expr}` becomes a flat run of template tokens: `TemplateStart`, `StrChunk`, `TemplateExprStart`, `TemplateExprEnd` and `TemplateEnd`.
 - **Labels** are `'name` with no closing quote (`lexer.rs`).
 - **Keywords** are matched by text (`lexer.rs`).
@@ -34,7 +34,7 @@ It is a flat, global text substitution with no parameters, no scoping and no con
 
 Two sources feed one table:
 
-- `[alias]` entries in `coral.toml`, loaded by `load_manifest_aliases` (`resolve.rs`).
+- `[alias]` entries in `coral.toml`, loaded by `load_manifest_aliases` (`resolve/loader_visit.rs`).
 - Inline lines of the form `alias _name = <text to end of line>`, found by `alias_decl_shape` (`preprocess.rs`).
   The line must start after a newline, `{`, `}` or at the start of the file.
   An alias name starts with `_` and has at least one more character after it.
@@ -55,10 +55,10 @@ A failure in a discovery round is skipped, so a file loaded later can supply an 
 
 ## Parsing (`parser.rs`)
 
-`Parser::parse_program` (`parser.rs`) reads top-level items and dispatches on the leading keyword.
-Statements are parsed by `parse_stmt` (`parser.rs`).
-Expressions use precedence climbing in `parse_binary` (`parser.rs`).
-Types are parsed by `parse_type_inner` (`parser.rs`), and string templates by `parse_template` (`parser.rs`).
+`Parser::parse_program` (`parser/parser_part1.rs`) reads top-level items and dispatches on the leading keyword.
+Statements are parsed by `parse_stmt` (`parser/parser_part4.rs`).
+Expressions use precedence climbing in `parse_binary` (`parser/parser_part5.rs`).
+Types are parsed by `parse_type_inner` (`parser/parser_part3.rs`), and string templates by `parse_template` (`parser/parser_part3.rs`).
 
 The parser returns its first error and does not recover.
 Expressions nest up to 200 levels (`MAX_NESTING`, `parser.rs`).

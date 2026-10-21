@@ -29,38 +29,38 @@ They are ordinary generic enums in `std/option.kp:39` and `std/result.kp:32`.
 
 Four sources give an expression its type.
 
-1. **The expected type.** `check_expr` (`infer.rs`) takes an optional expected type.
+1. **The expected type.** `check_expr` (`infer/expr.rs`) takes an optional expected type.
    Call arguments, typed `val` initializers, `return` values, field initializers and block tails all pass one.
    A `val` with no written type takes the type of its initializer.
-2. **Integer literals.** `int_lit_ty` (`infer.rs`) takes the expected integer type.
+2. **Integer literals.** `int_lit_ty` (`infer/builtin_sigs.rs`) takes the expected integer type.
    Without one, the literal is `i32`.
-   `check_int_literal` (`infer.rs`) rejects a value that does not fit.
-3. **Generic arguments.** `bind_type_params` (`infer.rs`) matches the written parameter types against the argument types.
-   `bind_from_expected` (`infer.rs`) fills the rest from the expected type.
+   `check_int_literal` (`infer/builtin_sigs.rs`) rejects a value that does not fit.
+3. **Generic arguments.** `bind_type_params` (`infer/generics.rs`) matches the written parameter types against the argument types.
+   `bind_from_expected` (`infer/generics.rs`) fills the rest from the expected type.
    A type parameter that nothing binds is an error that asks for an annotation (`infer.rs`).
 4. **Empty containers.** `List.empty()` with no type is allowed only as the initializer of a `val`.
    A later `push` decides the element type (`defer_empty_container`, `infer.rs`).
 
 A parameter of a `datac` type is a borrow.
-At a call site the checker borrows a plain place argument itself (`check_call_arg`, `infer.rs`).
+At a call site the checker borrows a plain place argument itself (`check_call_arg`, `infer/args_coerce.rs`).
 Callers never write `&` for these parameters.
 
 ## Order of checking
 
 `check_program` (`infer.rs`) runs three checks before any body:
 
-- `check_pub_signatures` (`infer.rs`), which applies the private-in-public rule;
-- `check_extern_type_names` (`infer.rs`);
-- `check_program_pass` (`infer.rs`), which collects the declarations.
+- `check_pub_signatures` (`infer/exports.rs`), which applies the private-in-public rule;
+- `check_extern_type_names` (`infer/fn_values.rs`);
+- `check_program_pass` (`infer/program.rs`), which collects the declarations.
 
-`check_program_pass` then checks each non-generic function body in source order (`infer.rs`).
+`check_program_pass` then checks each non-generic function body in source order (`infer/program.rs`).
 It drains an instance worklist after that (`infer.rs`).
 The checker runs this pass once, and a second time when it finds passdown modes that need a probe.
 
 ## Generics are monomorphised
 
 A generic `datac` or `enum` is kept as a `GenericTemplate` (`infer.rs`).
-Each use with concrete arguments creates one record or sum under the key `name<args>` (`instance_key`, `infer.rs`).
+Each use with concrete arguments creates one record or sum under the key `name<args>` (`instance_key`, `infer/env.rs`).
 A generic function is a `FuncTemplate` (`infer.rs`).
 Each distinct argument list gets one signature and one queued body.
 
@@ -70,22 +70,22 @@ The checker stops after `MAX_FUNCTION_INSTANTIATIONS` (2048, `infer.rs`) instanc
 
 ## Traits
 
-- `collect_traits` (`infer.rs`) records each trait's methods, supertraits, associated types and generic parameters.
-- `collect_trait_impls` (`infer.rs`) records which type implements which trait.
+- `collect_traits` (`infer/pd_wiring.rs`) records each trait's methods, supertraits, associated types and generic parameters.
+- `collect_trait_impls` (`infer/trait_checks.rs`) records which type implements which trait.
 - A normal impl may leave out a method that has a default body.
   A blanket impl (`impl<T: B> Trait for T`) must write every method.
-- `check_trait_bounds` (`infer.rs`) checks the bounds on type arguments at each call.
-- `I::Item` style projections are resolved by `assoc_type_of` (`infer.rs`).
+- `check_trait_bounds` (`infer/claims_impls.rs`) checks the bounds on type arguments at each call.
+- `I::Item` style projections are resolved by `assoc_type_of` (`infer/claims_impls.rs`).
 
 ### Dynamic dispatch
 
-`&dyn Trait` and `Box<dyn Trait>` are created by `coerce_to_dyn` (`infer.rs`) and `coerce_box_to_dyn` (`infer.rs`).
-`check_dyn_object_safety` (`infer.rs`) refuses a trait with associated types, and a trait with a method that cannot be called through a trait object.
+`&dyn Trait` and `Box<dyn Trait>` are created by `coerce_to_dyn` (`infer/args_coerce.rs`) and `coerce_box_to_dyn` (`infer/args_coerce.rs`).
+`check_dyn_object_safety` (`infer/trait_checks.rs`) refuses a trait with associated types, and a trait with a method that cannot be called through a trait object.
 The vtables go into `tir::Program.dyn_vtables`.
 
 ## Closures and function values
 
-A `fun` literal is checked by `check_fn_literal` (`infer.rs`).
+A `fun` literal is checked by `check_fn_literal` (`infer/loops_closures.rs`).
 It takes parameter types from the expected function type when it has none.
 Its body becomes a separate function with a generated key.
 
@@ -99,13 +99,13 @@ A plain function used where a closure is expected is wrapped with `FnToClosure` 
 
 ## The try operator
 
-`check_try` (`infer.rs`) handles `?`.
-`try_shape` (`infer.rs`) accepts an enum with exactly two variants: `Ok` and `Err`, or `Some` and `None`.
+`check_try` (`infer/when_try_blocks.rs`) handles `?`.
+`try_shape` (`infer/generics.rs`) accepts an enum with exactly two variants: `Ok` and `Err`, or `Some` and `None`.
 Otherwise the checker reports an error.
 
 The operand must be an enum held by value, and the enclosing function must return a try-shaped enum.
 Both must agree on whether the failure carries a payload.
-When the failure types differ, the checker looks for `impl From<Source> for Target` (`find_from_conversion`, `infer.rs`).
+When the failure types differ, the checker looks for `impl From<Source> for Target` (`find_from_conversion`, `infer/when_try_blocks.rs`).
 The result of `?` has the type of the success payload.
 
 ## The typed IR

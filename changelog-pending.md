@@ -114,6 +114,7 @@ empty on release.
 - A string literal is accepted where a `String` is expected; the examples write it that way, without `String.from_str`.
 - `kelpc doc --std --check` reports nothing for the shipped standard library: every public item has a doc comment.
 - The drop plan records each manual block region the function declares (`DropPlan::region`), with its name and element type. The table is not read by codegen yet, and no checked program holds a region.
+- The largest compiler source files are split into modules (`kelpc/src/infer/`, `codegen_llvm/`, `resolve/`, `parser/`, `borrowck/`, `llvm_ffi/`, `lexer/` and the integration test suites). The split moves code only: the language, the diagnostics and the generated IR are unchanged.
 
 ## stdlib
 

@@ -31,7 +31,7 @@ Some features are refused by name on the LLVM backend:
 `llvm_ffi.rs` is the only code that calls LLVM.
 It wraps `llvm-sys` 211, which is LLVM 21.1, and links it dynamically.
 
-`compile` and `lower_to_object` in `codegen_llvm.rs` do the work:
+`compile` and `lower_to_object` in `codegen_llvm/driver.rs` do the work:
 
 1. Create the target machine first. Enum sizes come from the data layout, so the layout must be known before any type is built (in `compile`).
 2. Create the module, set the triple and data layout, and build the generator state (`Gen::new`).
