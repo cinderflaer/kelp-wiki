@@ -604,9 +604,8 @@ back
   force you to look at the result (v1 has no `must_use`), so `tx.send(1)` on its
   own line compiles and silently drops the value that comes back when the
   receiver is gone. The examples bind it (`val back = tx.send(v)`) to say so.
-- **No `default` arm in a `select`.** A select with nothing ready blocks, or ends
-  at its `timeout` arm (see [Select](#select)). A receiver has one owner: it is not
-  cloneable, so there is no multi-consumer queue (use a [pool](/stdlib/pool)).
+- **A receiver has one owner.** It is not cloneable, so there is no
+  multi-consumer queue (use a [pool](/stdlib/pool)).
 - **`for v in rx` needs a mutable place**, so bind the pair with `var`. A trait
   impl cannot name a generic instantiation, so `Receiver<T>` is not an
   `Iterator` implementor: the compiler's `for` accepts a generic `datac` whose
@@ -647,6 +646,7 @@ The arms are:
 | `send(tx, x) -> e` | `tx` has room, or it is a zero-capacity channel with a receiver blocked on it | `x` has been sent |
 | `timeout(ms) -> e` | the deadline (`ms` milliseconds from the start) passes with nothing else ready | |
 | `closed -> e` | the chosen receive case is closed and empty | |
+| `default -> e` | no other arm is ready at the first look; the select does not wait | |
 
 Each arm is separated from the next by a comma or a newline. The channel of a
 case is a variable or a field (`rx`, `self.rx`), because every poll reads it
@@ -655,7 +655,9 @@ again. `ms` is an `i64`, and a negative `ms` ends the wait at once.
 Rules:
 
 - A select with a receive arm needs a `closed` arm, and a `closed` arm needs a
-  receive arm. At most one `timeout` arm and one `closed` arm are allowed.
+  receive arm. At most one `timeout`, one `closed` and one `default` arm are
+  allowed. A `default` arm cannot be combined with a `timeout` arm, because the
+  select would then both wait and not wait.
 - When several arms are ready, the first one in source order wins.
 - The select does not poll in a loop. When nothing is ready it blocks until a
   channel it watches changes, or until its deadline passes, and then looks
@@ -693,8 +695,6 @@ This prints `sent`: the channel has room, and nothing is queued to receive yet.
 
 ### Limits of select
 
-- **No `default` arm.** A select that has nothing ready blocks until a case is
-  ready, unless it has a `timeout` arm.
 - **A rendezvous send can wait after it is chosen.** The chosen send arm waits
   for its receiver to take the value. If that receiver's own select picks
   another arm first, the sender waits for the next receive, and its other arms
@@ -708,6 +708,7 @@ The parser names the form that is missing:
 
 ```
 error: a 'select' with a receive case needs a 'closed -> e' arm: it runs when the chosen receive case is closed and empty
+error: a 'select' with a default arm does not wait, so it cannot also have a timeout arm: keep one of them
 error: the value 'x' is sent in two cases of this select: a value can be sent in one case only, so send a copy or a second value in the other case
 error: a select case names its channel as a variable or a field (`rx`, `self.rx`), because the case reads it again at every poll
 ```
@@ -752,8 +753,7 @@ by design, and neither backend can lower a mutex without the hosted runtime.
 
 - A try-lock or timed lock on `Mutex<T>` itself (`RwLock<T>` has `try_read` and
   `try_write`), and an ordering slot.
-- A `default` arm in a `select`, and a multi-consumer receiver (see
-  [Limits of channels](#limits-of-channels)).
+- A multi-consumer receiver (see [Limits of channels](#limits-of-channels)).
 - A `lock` that returns a guard value: the scoped block is the whole reason the
   borrow cannot escape, and a returned guard would reintroduce the escape.
 - A blocking `Condvar.wait` that hands back a guard; `wait_while` is the shape.
