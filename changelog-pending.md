@@ -43,7 +43,12 @@ empty on release.
 - `tl var NAME: T = LITERAL` gives each thread its own scalar copy, starting from the literal on first access. A borrow of a `tl` cannot cross to a worker. A heap-owning or `Drop` type, and an initializer that is not a literal, are refused by name.
 - A panicking worker runs the user `Drop` of each owned local and each user `Drop` thread argument, newest first, before its joiner sees the panic.
 
+- `std/os` is a new module: the target (`os()`, `arch()`), process facts (`pid`, `parent_pid`, `exe_path`, `current_dir`, `set_current_dir`, `exit`), `cpu_count`, `total_memory`, environment variables (`env_var`, `set_env_var`, `unset_env_var`, gated on `env`), and the machine facts `hostname`, `user_name`, `home_dir`, `temp_dir`, `uid` and `gid` (gated on the new `machine` domain, which takes no pattern).
+- `std/os` has `make_temp_dir(template)` and `make_temp_file(template)`, which return a `TempDir` or `TempFile` owning a fresh path made from a template ending in `XXXXXX`. The grant is checked against the template at the call. Its drop removes the contents, and the runtime removes the path at exit or on a panic, since a panic runs no destructor.
+- `std/sys` re-exports `os()` and `arch()` from `std/os`, so existing programs build as before.
+
 ## changed
+
 
 - Text aliases are written with a leading underscore: a reference is `_name` and a declaration is `alias _name = <text>`, and a `[alias]` key in `coral.toml` is `_name = "path"`. The old `%*name*%` form is refused as a syntax error. A `_name` that no alias declares is an ordinary identifier.
 

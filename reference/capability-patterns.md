@@ -30,6 +30,7 @@ the compiler for a module you do not want to let out.
 | `env` | variable name, `*` | the name string |
 | `time` | no pattern | (an empty list is the whole grant) |
 | `rand` | no pattern | (an empty list is the whole grant) |
+| `machine` | no pattern | (an empty list is the whole grant) |
 | `ui` | `*` only | the domain gate alone: no display call names the display |
 | `mmio` | `0xBASE+LEN`, or `*` | the byte range of a device register block; `LEN` counts bytes |
 | `frames` | `0xBASE+LEN`, or `*` | the physical byte range `frame.claim` may take frames from |
@@ -95,14 +96,20 @@ impl "std/env" caps(env = ["*"])          // anything
 There is no way to enumerate the environment: a grant names what may be read, so
 "which variables exist?" is not a question the language lets you ask.
 
-## `time` and `rand`
+## `time`, `rand` and `machine`
 
 No pattern exists: the domain is the grant:
 
 ```kelp
 impl "std/time" caps(time = [])
 impl "std/rand" caps(rand = [])
+impl "std/os" caps(machine = [])
 ```
+
+`machine` covers the host name, the user name, the home and temporary directories,
+and the numeric user and group ids that [`std/os`](/stdlib/os) reads. It is a
+domain of its own rather than an `env` name, so a grant of one variable does not
+read the host name.
 
 ## `ui`
 

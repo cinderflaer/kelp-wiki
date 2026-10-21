@@ -32,7 +32,8 @@ One page per `std/*` module, the capability domain each one needs, and the compi
 - [`std/source`](/stdlib/source): the `file` and `line` of the Kelp call site.
 - [`std/str`](/stdlib/str): text search, slicing, splitting, parsing and formatting.
 - [`std/sync`](/stdlib/sync): `Mutex`, `RwLock`, `Condvar` and channels (hosted builds only; channels build on current `main` inside one thread).
-- [`std/sys`](/stdlib/sys): `os()` and `arch()`, the build target's names.
+- [`std/os`](/stdlib/os): the target, process and machine facts, environment variables, and temporary directories and files that clean up (gated per item on `env`, `machine` and `fs`).
+- [`std/sys`](/stdlib/sys): `os()` and `arch()`, the build target's names, re-exported from `std/os`.
 - [`std/thread`](/stdlib/thread): `spawn`, `join`, `fence`, `sleep_ms` and `current_id`.
 - [`std/time`](/stdlib/time): `now_unix`, `now_mono_ns` and `sleep_ms` (gated on `time`).
 - [`std/tls`](/stdlib/tls): client and server TLS, with the `tlsfile` PEM reads (needs `net` delegated).
@@ -64,7 +65,8 @@ The domain each module needs comes from the compiler's own table
 | `std/mem` | - | `alloc` |
 | `std/str` | - | text: search, slice, split, parse, format |
 | `std/path` | - | lexical path handling |
-| `std/sys` | - | `os()` and `arch()`: the build target's names |
+| `std/sys` | - | `os()` and `arch()`: the build target's names (re-exported from `std/os`) |
+| `std/os` | `env`, `machine`, `fs` (per item) | target, process and system facts (ungated), environment variables, machine facts, temporary directories and files |
 | `std/math` | - | `sqrt`, `pow`, trig, `abs`/`min`/`max`/`clamp` |
 | `std/fmt` | - | number, grouping, byte-size and padding formatting into `String`, and the `Display` trait |
 | `std/encoding` | - | base64, base32, base58, hex and percent encoding |

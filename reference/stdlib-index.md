@@ -101,10 +101,33 @@ Functions:
 
 ## `std/sys`
 
-Functions:
+Functions (re-exported from `std/os`, ungated):
 
 - `fun os() => str`
 - `fun arch() => str`
+
+## `std/os`
+
+Gated per item (see [`std/os`](/stdlib/os)). Ungated: `os`, `arch`, `pid`, `parent_pid`, `exe_path`, `current_dir`, `set_current_dir`, `exit`, `cpu_count`, `total_memory`, and the `path` of a `TempDir` or `TempFile`.
+
+Functions:
+
+- `fun env_var(name: &str) => option.Option<String>` (`env`)
+- `fun set_env_var(name: &str, value: &str)` (`env`)
+- `fun unset_env_var(name: &str)` (`env`)
+- `fun hostname() => String` (`machine`)
+- `fun user_name() => String` (`machine`)
+- `fun home_dir() => option.Option<String>` (`machine`)
+- `fun temp_dir() => String` (`machine`)
+- `fun uid() => u32` (`machine`)
+- `fun gid() => u32` (`machine`)
+- `fun make_temp_dir(template: &str) => result.Result<TempDir, OsError>` (`fs`, checked against the template)
+- `fun make_temp_file(template: &str) => result.Result<TempFile, OsError>` (`fs`, checked against the template)
+
+Types:
+
+- `enum OsError { BadTemplate, CreateFailed }`
+- `datac TempDir(val dir: String)` and `datac TempFile(val file: String)`, each with `fun path() => &str` and a drop that removes what it owns
 
 ## `std/math`
 

@@ -77,6 +77,7 @@
   - [`std/mem`](stdlib/mem.md)
   - [`std/net`](stdlib/net.md)
   - [`std/option`](stdlib/option.md)
+  - [`std/os`](stdlib/os.md)
   - [`std/path`](stdlib/path.md)
   - [`std/pool`](stdlib/pool.md)
   - [`std/process`](stdlib/process.md)

@@ -138,7 +138,7 @@ error: 'std.fs.read_lines' needs the 'fs' capability, which module 'notes' was n
 The error is about `notes`, the file that makes the call, and it names the power
 it lacks. The fix goes in the file that imports `notes`.
 
-The domains are `fs`, `net`, `process`, `env`, `time`, `rand`, `ui`, `mmio`, `irq`
+The domains are `fs`, `net`, `process`, `env`, `time`, `rand`, `machine`, `ui`, `mmio`, `irq`
 and `frames`. A grant with an empty list, such as `process = []`, grants nothing.
 The [capabilities reference](/language/capabilities) lists them all.
 

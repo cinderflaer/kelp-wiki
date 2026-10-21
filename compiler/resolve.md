@@ -56,7 +56,7 @@ Two more rules use the same export set:
 ## Capability grants
 
 A module may use a gated resource only when it holds a grant for that domain.
-The domains are `fs`, `net`, `process`, `env`, `time`, `rand`, `ui`, `mmio`, `irq` and `frames` (`stdlib.rs`).
+The domains are `fs`, `net`, `process`, `env`, `time`, `rand`, `machine`, `ui`, `mmio`, `irq` and `frames` (`stdlib.rs`).
 
 Grants come from two places.
 
