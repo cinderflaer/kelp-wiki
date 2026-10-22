@@ -171,3 +171,16 @@ $ llvm-nm scratch/kp-percpu.elf | grep kelp_SLOT
   `_start` stub
 - [Kernel 0](/language/kernel): the examples that boot under QEMU, with their
   real serial output
+
+## Where it is tested
+
+- The layout is checked on the object file: `freestanding_percpu_static_is_one_cache_line_at_cpus_1`
+  and `freestanding_percpu_statics_are_four_aligned_copies_at_cpus_4` in
+  `kelpc/tests/compile_and_run/asm_freestanding.rs` read the `.percpu` section size and
+  alignment.
+- The refusals each have a project under `kelpc/tests/projects/`: a hosted build,
+  a missing `mut`, a use outside `unsafe`, a non-constant initializer, and a `cpus`
+  outside `1..=64`.
+- The boot is `examples/kernel0-percpu` under QEMU with two harts:
+  `kernel0_percpu_boots_with_two_harts_and_shows_the_other_copy` in the same file
+  asserts `cpu0 4`, `cpu1 7`, `idx 1` and `count 2`.

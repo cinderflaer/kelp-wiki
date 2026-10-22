@@ -46,7 +46,7 @@ hello from kelp
 | `examples/kernel0-heap` | `List<i32>` over a bump allocator | `heap sum 55` then `balanced` |
 | `examples/kernel0-string` | `String`/`Bytes` on the project allocator | `s: hello kelp!`, `n: 12345`, `b: 300`, `balanced` |
 | `examples/kernel0-percpu` | `percpu static mut` on two harts | `cpu0 4`, `cpu1 7`, `idx 1`, `count 2` |
-| `examples/kernel0-vm` | Sv39 tables, the S-mode drop, a high alias | nine `vm:` lines |
+| `examples/kernel0-vm` | Sv39 tables, the S-mode drop, a high alias, the `Space` range check | eleven `vm:` lines |
 | `examples/kernel0-vm-fault` | the load and store page faults | `fault: scause 0xd stval 0x40000000`, `fault: scause 0xf stval 0x3ffffff000` |
 | `examples/kernel0-stack` | an unmapped guard page and the stack probe | both faults print `stack overflow: scause 0xf stval 0x...` |
 | `examples/kernel0-user` | the trap frame, `ecall`, U-mode | `hello from user`, `bad write -> E`, `user exited 7` |
@@ -477,12 +477,54 @@ vm: s-mode
 vm: paging on
 vm: alias ok
 vm: unmap ok
+vm: align refused
+vm: range refused
 run.sh: booted .../examples/kernel0-vm-fault and the UART printed:
 fault: m-mode
 fault: paging on
 fault: scause 0xd stval 0x40000000
 fault: scause 0xf stval 0x3ffffff000
 ```
+
+### The owner: `Space`, a checked range and frames as capabilities
+
+The walker's functions are private to `vm.kp`. Every mapping in the example goes
+through `vm.Space`, a datac that holds the root table as a `frame.Frame` and the
+virtual range `[lo, hi)` its owner may map:
+
+```kelp
+pub datac Space(val root: frame.Frame, val lo: usize, val hi: usize)
+
+fun Space.map(va: usize, pa: frame.Frame, flags: u64) => bool
+fun Space.map_range(va: usize, first: frame.Frame, pages: usize, flags: u64) => bool
+fun Space.unmap(va: usize) => bool
+fun Space.translate(va: usize) => option.Option<usize>
+fun Space.enable()
+```
+
+`map` answers `false` and writes nothing when `va` is not page-aligned, when the
+whole page does not lie inside `[lo, hi)`, when no table frame is left, or when a
+superpage is in the way. `unmap` takes the same range check, and `translate`
+answers `None` for any address outside `[lo, hi)`. The example's boot ends with
+two refusals on the owner: an unaligned page (`vm: align refused`) and a page at
+`2^38`, one past the owner's range (`vm: range refused`).
+
+The physical side is a capability. A `frame.Frame` exists only as the value
+`frame.claim` returns, and `claim` checks the address against the `frames` grant
+of the module that calls it ([`std/frame`](/stdlib/frame)). The example's
+`[caps]` section names `frames = ["*"]`, and `vm` is delegated the same wildcard
+with `impl "vm" caps(...)`, because the root table (claimed in `main`) and every
+page `map_range` maps are computed addresses in the frame region, and a computed
+claim cannot be folded against a range. A `[caps]` section that names no
+`frames` line would leave the entry without the domain at all. Narrowing that grant to one range makes the module refuse the claim at the
+check, before any boot: `kelpc/tests/irq_frames.rs` builds the example with the
+narrowed grant and asserts the refusal says the address cannot be folded and names the wildcard it needs.
+
+The owner does not stop a holder of a whole-resource `frames` grant from mapping
+one frame into two spaces, and it does not free a frame, since frames are never
+freed here. Only one space exists in the example. `examples/kernel0-user` keeps
+its own copy of the free-function walker, with the user-page check on top, so
+`Space` is not used there yet.
 
 What this example deliberately leaves out: TLB shootdown (`flush_tlb` is one local
 `sfence.vma`), ASIDs (`satp` always carries ASID 0), huge pages (the walker

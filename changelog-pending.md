@@ -58,6 +58,7 @@ empty on release.
 - `tlsfile.ca_dir_pem(dir)` reads every `.pem` and `.crt` file directly inside a directory, each through the `fs` gate, and returns them as one PEM text for `with_ca_pem`, so a private CA directory needs no loop. A directory with no such file is a typed `TlsError.Io`, not an empty set of extra roots (issue 252).
 - `[package]` in `coral.toml` takes `author`, `description`, `license`, `repository` and `homepage`, checked when the file is read. `coral init --author` and `--description` write them, and the new `coral info` prints them.
 - `for x in xs.iter()` borrows a `List` and reads every element once. A mutator of that list during the loop (`set`, `remove`, a nested `push`) is refused by the same rule as `for x in xs` (issue 215).
+- The `kernel0-vm` example maps its pages through a `vm.Space` owner: a datac that holds the root table as a `frame.Frame` and the virtual range it may map. `Space.map`, `map_range`, `unmap` and `translate` refuse an unaligned page and a page outside the range (the boot prints `vm: align refused` and `vm: range refused`), and the `frames` grant that the computed claims need is narrowed in `irq_frames` to show the refusal (issue 253).
 
 ## changed
 
