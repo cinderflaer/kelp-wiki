@@ -132,6 +132,9 @@ combinators.
   stays refused, and the sized `Ptr.free_count(count)` is the freestanding free
   (see [The allocator hook](#the-allocator-hook)).
 - `static`/`static mut` and `defer`.
+- `interrupt fun` on the `riscv64` and `x86_64` triples: a CPU handler whose
+  register save and interrupt return the compiler emits. See [The `interrupt`
+  attribute](/language/kernel#the-interrupt-attribute).
 - A user `extern fun` whose module has its own `[extern."<id>"]` section.
 - A call to the builtin `panic(msg)`, and the bounds checks, which all route
   through the compiler's panic entry to the project's `panic` handler (or the

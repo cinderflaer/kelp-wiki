@@ -415,6 +415,46 @@ The full `asm` body, the register save list and `examples/kernel0-trap/src/trap.
 are in the repository; the point here is that the vector is a naked function
 plus one `asm`, and the language never sees the trap.
 
+## The `interrupt` attribute
+
+`interrupt fun trap()` marks a CPU handler: the CPU enters it when an interrupt or
+a trap arrives, so Kelp code never calls it. The body is ordinary Kelp. The
+compiler saves the registers the body uses and returns with the target's
+interrupt-return instruction, so no `asm` has to save and restore anything:
+
+```text
+align(4) interrupt fun trap() {
+    unsafe {
+        TICKS = TICKS + 1
+    }
+}
+```
+
+The handler's address is taken with `Ptr.from_fn(trap).addr()` and written into the
+trap vector, as `kernel0-trap` does for its naked vector. `align(4)` matters on riscv64,
+where the low two bits of `mtvec` are the mode.
+
+- **Where it is legal.** Only in a freestanding build, on the `riscv64` and `x86_64`
+  triples. A hosted build refuses it by name, and so does an `aarch64` triple, which has
+  no lowering yet.
+- **Shape.** No parameters, no result, not generic, not a method, not `extern` and not
+  `naked`. A `section(...)` or `align(N)` clause applies as it does to any `fun`.
+- **Calls.** A direct call to a handler is refused, and the refusal says to take its
+  address instead. A handler copied into a function value and called through that value
+  is not refused yet.
+- **Lowering.** On riscv64 the function carries LLVM's `interrupt("machine")` attribute,
+  so the body saves what it touches and ends in `mret`. On x86-64 it uses the
+  `x86_intrcc` calling convention: the CPU has pushed `RIP`, `CS`, `RFLAGS`, `RSP` and
+  `SS`, the handler takes that frame by value as a hidden first argument that Kelp
+  code never reads, and it returns with `iretq`.
+- **Not yet.** The x86-64 vectors that push an error code (`#DF`, `#TS`, `#NP`, `#SS`,
+  `#GP`, `#PF`, `#AC`) need a handler that takes the code too, so the IDT example keeps
+  its `#GP` and `#PF` gates as naked bodies. The calling-convention attributes are
+  still open.
+
+`examples/kernel0-sched` and `kernel0-x86_64-idt` keep their naked vectors; a new kernel
+can write its handlers as `interrupt fun` instead.
+
 ## Address spaces: Sv39
 
 The mapping example is `examples/kernel0-vm`. Its Sv39 module, `src/vm.kp`, is
@@ -908,8 +948,9 @@ The remaining gaps, from
   installs `mtvec` itself and enables nothing, and the line `kernel0-caps`
   claims is still not wired to a handler. Panic semantics with no OS, the row's
   other half, is the [section above](#panic-location-and-the-double-panic).
-- **The `interrupt` and calling-convention attributes** are still open, so a trap handler is a naked body the compiler does not understand as a
-  handler.
+- **The calling-convention attributes** are still open. The `interrupt` attribute
+  ships for riscv64 and x86-64 ([above](#the-interrupt-attribute)), except for the
+  x86-64 vectors that push an error code.
 - **`Ptr.free` has a sized form.** The global allocator reroutes
   `Box`/`List`/`Map`/`String`/`Bytes`, `Ptr.alloc` and `Ptr.try_alloc` go through
   the project's `[target] alloc`, and the [`std/arena`](/stdlib/arena) bump region
@@ -927,9 +968,7 @@ The remaining gaps, from
   the x86-64 target, the machine timer with the preemptive scheduler, the x86-64
   IDT with the PIC and PIT timer, and the sized `Ptr.free_count`. The sections
   above show each one.
-- **The remaining holes are the rest of the process model.** No `interrupt`
-  attribute exists, so a trap handler is still a naked body the compiler does
-  not understand as a handler. A
+- **The remaining holes are the rest of the process model.** A
   preemptive scheduler exists for machine-mode riscv64 tasks, but
   there is no `fork`, no `exec`/`wait`, no priorities or blocking, no TLB
   shootdown, no SMP and no preemption of user mode; x86-64 has an IDT and a
@@ -1079,8 +1118,8 @@ top-level `fun` may carry `align(N)` (a power of two up to 4096), lowered as the
 function's alignment on both backends. `examples/kernel0-trap` installs its
 trap vector with `Ptr.from_fn(trap_handler).addr()` and names no mangled symbol,
 and [`language/unsafe-ub-catalogue.md`](/language/unsafe-ub-catalogue) stage 8 is the UB catalogue for the new surface.
-The `interrupt`/calling-convention attributes stage 5 deferred are the remaining
-half of that hole.
+The calling-convention attributes stage 5 deferred are the remaining half of that
+hole; the `interrupt` attribute ships ([above](#the-interrupt-attribute)).
 
 **Stage 6's `defer` half is done** (MK9-S6-M1, [`language/statics-and-defer.md`](/language/statics-and-defer)): `defer EXPR` is a
 statement whose action runs when its block is left, on every ordinary exit, last-in-first-out
