@@ -828,23 +828,26 @@ The remaining gaps, from
   other half, is the [section above](#panic-location-and-the-double-panic).
 - **The `interrupt` and calling-convention attributes** are still open, so a trap handler is a naked body the compiler does not understand as a
   handler.
-- **`Ptr.free` still has no allocator hook.** The global allocator reroutes
+- **`Ptr.free` has a sized form.** The global allocator reroutes
   `Box`/`List`/`Map`/`String`/`Bytes`, `Ptr.alloc` and `Ptr.try_alloc` go through
   the project's `[target] alloc`, and the [`std/arena`](/stdlib/arena) bump region
-  is available. `Ptr.free` stays refused in freestanding: a project's `dealloc`
-  needs the block's byte size, and a pointer does not carry it. Closing that needs
-  a design choice (a sized free, or a free that takes the element count), so it is
-  not made here.
+  is available. The no-argument `Ptr.free` stays refused in freestanding, because a
+  project's `dealloc` needs the block's byte size and a pointer does not carry it.
+  `Ptr.free_count(count)` closes that: it takes the element count the block was
+  allocated with and passes `dealloc` the same size and alignment the allocation
+  got, and a count whose size wraps panics instead (see
+  [Freestanding mode](/language/freestanding#what-freestanding-keeps)).
 - **Shipped:** user `Drop` ([`fun mut T.drop()`](/language/drop)), per-CPU
   statics ([Per-CPU storage](/language/percpu)), freestanding `String` and `Bytes`,
   the [`std/arena`](/stdlib/arena) bump region and `Ptr.try_alloc`, the stack guard
   and probe, the `mmio`, `irq` and `frames` grants, the
   [freestanding standard subset](/language/freestanding#the-freestanding-standard-subset),
-  the x86-64 target, the machine timer with the preemptive scheduler, and the x86-64
-  IDT with the PIC and PIT timer. The sections above show each one.
+  the x86-64 target, the machine timer with the preemptive scheduler, the x86-64
+  IDT with the PIC and PIT timer, and the sized `Ptr.free_count`. The sections
+  above show each one.
 - **The remaining holes are the rest of the process model.** No `interrupt`
   attribute exists, so a trap handler is still a naked body the compiler does
-  not understand as a handler, and `Ptr.free` still has no sized hook. A
+  not understand as a handler. A
   preemptive scheduler exists for machine-mode riscv64 tasks, but
   there is no `fork`, no `exec`/`wait`, no priorities or blocking, no TLB
   shootdown, no SMP and no preemption of user mode; x86-64 has an IDT and a

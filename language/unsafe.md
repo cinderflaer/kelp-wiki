@@ -146,6 +146,7 @@ binding ('val p: Ptr<i32> = Ptr.null()')
 | `Ptr.alloc<T>(count)` | hosted `malloc`; unavailable in a freestanding build |
 | `Ptr.try_alloc<T>(count)` | the same allocation without the panic: the null `Ptr<T>` on failure, the byte count checked for wrap; freestanding it needs an `[target] alloc`/`dealloc` pair |
 | `p.free()` | hosted `free`; unavailable in a freestanding build |
+| `p.free_count(count)` | freestanding only, with the `[target] alloc`/`dealloc` pair: the project's `dealloc` gets `count * size_of<T>` bytes and `align_of<T>`, the pair `Ptr.alloc<T>(count)` used; a wrapping count panics, a null pointer is not passed on |
 
 ```kelp project
 fun main() {

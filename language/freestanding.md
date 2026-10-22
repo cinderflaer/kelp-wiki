@@ -70,7 +70,7 @@ message names the construct.
 
 - **Refused:** `print`/`print!` (the `printf` call), `assert` (the runtime's
   `kelp_assert`), a defined `main` (the hosted entry point and its
-  `argc`/`argv` globals), `Ptr.alloc` without an allocator pair and `Ptr.free` (the hosted `malloc`/`free`),
+  `argc`/`argv` globals), `Ptr.alloc` and `Ptr.free_count` without an allocator pair, and `Ptr.free` (the hosted `malloc`/`free`),
   passdowns (`pd`, whose initializers run through the generated `kelp_init_pds`
   that only the hosted entry point calls), `Thread` (which always reaches the
   hosted runtime), `Box`, `List`, `Map`, `String` and `Bytes` when no
@@ -129,7 +129,8 @@ combinators.
 - `Ptr<T>`, the compile-time `size_of`/`align_of`/`offset_of`, `unsafe`,
   `asm` and naked functions. `Ptr.alloc` and `Ptr.try_alloc` are allowed by the
   same `[target] alloc`/`dealloc` pair `String` and `Bytes` need; `Ptr.free`
-  stays refused (see [The allocator hook](#the-allocator-hook)).
+  stays refused, and the sized `Ptr.free_count(count)` is the freestanding free
+  (see [The allocator hook](#the-allocator-hook)).
 - `static`/`static mut` and `defer`.
 - A user `extern fun` whose module has its own `[extern."<id>"]` section.
 - A call to the builtin `panic(msg)`, and the bounds checks, which all route
@@ -374,9 +375,31 @@ is the deliberate exception: it answers the null `Ptr<T>` instead of panicking
 
 `Ptr.free` stays refused in a freestanding build. The hosted `free` takes only the
 pointer, but a project's `dealloc` takes the block's byte size and alignment as
-well, and a pointer does not carry them. A freestanding program frees through
-`Box`, `List` or `Map`, which know their own size, or keeps its blocks for the
-life of the image, as a bump allocator does.
+well, and a pointer does not carry them. A freestanding program has two ways to
+free a raw block:
+
+- `Ptr.free_count(count)` is the sized free. Its argument is the element count
+  the block was allocated with, and the compiler derives the byte size as
+  `count * size_of<T>` and the alignment as `align_of<T>`, the exact pair
+  `Ptr.alloc<T>(count)` passed to `alloc`. So `dealloc` receives the size the
+  block was allocated with, provided the count matches the allocation. A count
+  whose byte size wraps is a panic (`Ptr.free_count: the byte size overflows`),
+  never a smaller size handed to `dealloc`. A null pointer owns no block, so
+  `free_count` on it calls nothing. It needs the `[target] alloc`/`dealloc`
+  pair, the same as `Ptr.alloc`, and a hosted build refuses it by name.
+- `Box`, `List` or `Map` free their own storage, since they know their size.
+
+A block a program never frees stays for the life of the image, as a bump
+allocator's does.
+
+```text
+// freestanding, with `[target] alloc = "alloc"` and `dealloc = "dealloc"`
+val p: Ptr<u32> = unsafe { Ptr.alloc<u32>(4) }   // alloc(16, 4)
+unsafe {
+    p.write(1234)
+    p.free_count(4)                              // dealloc(p, 16, 4)
+}
+```
 
 `examples/kernel0-string` is the idiom: the heap example's bump allocator with
 the optional `realloc` named, `str.concat` and `str.from_u64` for text, a
