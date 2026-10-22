@@ -293,6 +293,39 @@ Sections are not closed: an unrecognised section such as `[bogus]` is accepted a
 ignored, which is how Coral stays compatible with a manifest carrying sections it
 does not know yet.
 
+### `[package]`: project metadata
+
+`[package]` also holds the keys that describe the project. Coral reads and checks
+them. `kelpc` skips the whole section, so they never change a build.
+
+| Key | Shape | Notes |
+| --- | --- | --- |
+| `author` | a string, or an array of strings | each author is `"Name <email>"`, for example `author = ["Ada Lovelace <ada@example.org>", "Grace Hopper <grace@example.org>"]`; a single string is one author |
+| `description` | one line | a summary of the project; it must not be empty |
+| `license` | a string | the license name, for example `"MIT"`; it must not be empty |
+| `repository` | one word, no spaces | the source URL |
+| `homepage` | one word, no spaces | the project's web page |
+
+An author needs a name, then a space, then an address in angle brackets that
+holds an `@` with a character on each side. None of these values may contain a
+quote or a backslash. A refusal names the key and the fix, for example:
+
+```text
+coral.toml author 'Ada' must be written "Name <email>", for example "Ada Lovelace <ada@example.org>"
+```
+
+`coral init` writes these keys when it is given `--author "Name <email>"`
+(repeatable) and `--description "..."`. `coral info` prints the project's name and
+version, then each metadata key that is set:
+
+```text
+demo 0.1.0
+author: Ada Lovelace <ada@example.org>
+description: A demo project
+```
+
+Package archives made by `coral build --package` do not carry these keys yet.
+
 ### Sections
 
 | Section | Shape | Notes |

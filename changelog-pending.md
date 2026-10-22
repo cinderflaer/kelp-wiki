@@ -169,3 +169,4 @@ empty on release.
 - The poison sweep runs only under `KELP_GC_VERIFY=1`. A release build does not write the poison byte, so a read through a dangling reference there still sees the old contents.
 - A-11 (full borrow checking) is not finished.
 - A panicking worker does not drop the temporaries it holds when it panics.
+- `[package]` in `coral.toml` takes `author`, `description`, `license`, `repository` and `homepage`, checked when the file is read. `coral init --author` and `--description` write them, and the new `coral info` prints them.
