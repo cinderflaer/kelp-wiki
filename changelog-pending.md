@@ -106,6 +106,7 @@ empty on release.
 
 ## compiler
 
+- A hosted program's link sets `RUNPATH` to `$ORIGIN/lib`, so a program finds the libraries bundled in the `lib/` directory beside its executable (a `.ckp` archive). No environment variable is read.
 - A compiler error prints a `  help:` line under its location for the common mistakes: an undefined variable, an undefined local, an assignment to a `val`, a return type mismatch, a missing `main`, a use of a moved value, a second statement on one line, a module that cannot be found and a call to an undefined function. The message on the first line is unchanged, and `check --json` gives the same text in a `help` key that is there only when a finding has one.
 - The link step uses `ld.lld`, not `cc`: a build with no `cc` can link, and `KELPC_LLD` selects the `ld.lld` binary (otherwise the first one on PATH).
 - A TLS program finds OpenSSL's `libssl.so` and `libcrypto.so` through `pkg-config openssl` (then the build-time record, then the system directories), so a Nix build links without a hand-set library path.
