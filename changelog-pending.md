@@ -55,6 +55,8 @@ empty on release.
 - A freestanding project whose manifest names the `[target] alloc`/`dealloc` pair can call `Ptr.alloc`: the block comes from the project's own allocator, and a failed allocation is the `out of memory` panic, as it is for `Box` and `List`. `Ptr.free` stays refused in a freestanding build, because a project's `dealloc` needs the block's byte size and a pointer does not carry it; free through `Box`, `List` or `Map` instead.
 
 - `tlsfile.ca_dir_pem(dir)` reads every `.pem` and `.crt` file directly inside a directory, each through the `fs` gate, and returns them as one PEM text for `with_ca_pem`, so a private CA directory needs no loop. A directory with no such file is a typed `TlsError.Io`, not an empty set of extra roots (issue 252).
+- `[package]` in `coral.toml` takes `author`, `description`, `license`, `repository` and `homepage`, checked when the file is read. `coral init --author` and `--description` write them, and the new `coral info` prints them.
+- `for x in xs.iter()` borrows a `List` and reads every element once. A mutator of that list during the loop (`set`, `remove`, a nested `push`) is refused by the same rule as `for x in xs` (issue 215).
 
 ## changed
 
@@ -97,7 +99,7 @@ empty on release.
 - A `KELP_GC_` variable whose value is not a whole number prints one notice and is ignored. `KELP_GC_STOP_TIMEOUT_MS=0` is refused the same way.
 - The collector's root table has no fixed limit: it starts with 1024 slots and doubles as it fills, so a count of roots is never refused.
 - The first collection's trigger is capped at the size of the heap region, so a start guess larger than the heap cannot move the first clearing past the end of the region.
-- A hosted program's collector starts with 10 percent headroom. Its first collection starts at the midpoint of the start guesses (1 and 4 MiB) plus the headroom, not at 8 MiB, and later collections follow the two latest live sizes (the default `two-size` trigger) plus the headroom. A program with a small live set collects more often than before. `[tidepool]` in `coral.toml` changes the guesses, the headroom and the trigger rule.
+- A hosted program's collector starts with 10 percent headroom. Its first collection starts at the midpoint of the start guesses (1 and 4 MiB) plus the headroom, about 2.75 MiB, where it was 8 MiB before, so the first clearing comes sooner. Later collections fire at the larger of the 8 MiB floor and the live size plus the headroom, following the two latest live sizes (the default `two-size` trigger). `[tidepool]` in `coral.toml` changes the guesses, the headroom and the trigger rule.
 - The language reference says `kelpc` emits LLVM IR, not C, and no longer says the binary is written next to a `.c` file.
 
 - A misspelled or misplaced Tidepool section is refused by name: `[target.tidepool]`, `[[tidepool]]`, `[tidpool]`, `[tidepool.x]` and the old name `[gc]` each stop the build, and a `[tidepool]` key in a freestanding build is refused, where before the section was skipped without a word. An out-of-range `headroom_pct` (above 1000), a duplicate key and a `start_high_mib` above `heap_max` are refused by name.
@@ -130,7 +132,7 @@ empty on release.
 - `kelpc lint` warns on `== true` and on `.len() == 0`, which read better as the condition alone and `.is_empty()`. The warning does not fail the build.
 - A string literal is accepted where a `String` is expected; the examples write it that way, without `String.from_str`.
 - `kelpc doc --std --check` reports nothing for the shipped standard library: every public item has a doc comment.
-- The drop plan records each manual block region the function declares (`DropPlan::region`), with its name and element type. The table is not read by codegen yet; codegen lowers each region from its own `Region` node, which the `block` form produces.
+- The drop plan keeps a table of each manual block region the function declares, with its name and element type. `DropPlan::has_regions` tells codegen that a program needs the collector's block entry points. Codegen lowers each region from its own `Region` node, which the `block` form produces, and does not read the table.
 - The largest compiler source files are split into modules (`kelpc/src/infer/`, `codegen_llvm/`, `resolve/`, `parser/`, `borrowck/`, `llvm_ffi/`, `lexer/` and the integration test suites). The split moves code only: the language, the diagnostics and the generated IR are unchanged.
 
 ## stdlib
@@ -175,8 +177,11 @@ empty on release.
 - A hosted worker that panics while a later argument of a closure call, a function value call or a runtime call is evaluated leaks a resource an earlier argument holds, so a receiver waiting on its channel may block.
 - A hosted build refuses an enum stored inside a `datac`: the collector does not describe that layout yet, so such a program is a compile error.
 - A `Map` whose value is an enum is refused by the checker at the `Map` type, with a sentence that names the type and says to keep the values in a `List`; the hosted build's codegen does not describe an enum inside a map's entry yet, and a `datac` holding the enum is refused the same way.
-- The Tidepool M7 gate measures the scalar row only; the String case is not measured in this release.
+- The Tidepool M7 gate (`m7_scan_roots_hw_1_and_hw_1024` in `kelpc/tests/gc/panic_loc.rs`) times the root scan with one live root only; no String case is measured in this release.
 - The poison sweep runs only under `KELP_GC_VERIFY=1`. A release build does not write the poison byte, so a read through a dangling reference there still sees the old contents.
 - A-11 (full borrow checking) is not finished.
-- A panicking worker does not drop the temporaries it holds when it panics.
-- `[package]` in `coral.toml` takes `author`, `description`, `license`, `repository` and `homepage`, checked when the file is read. `coral init --author` and `--description` write them, and the new `coral info` prints them.
+- The kernel and OS stack (release goal 3, issue 253) is not finished: the syscall ABI with untrusted-pointer checks and address-space management are not in this release. The freestanding standard subset, `Ptr.alloc` and the `mmio`, `irq` and `frames` capabilities are in.
+- `mem.release`, which would end an owned value before its scope ends, is not in this release (issue 197).
+- Project-wide capability grants are not in this release (issue 19). A grant is written per module, in that module's `impl` line.
+- Call-site borrow inference and a single text parameter type are not in this release (issue 12).
+- Deferred to a later release (issues 6 to 15, 18, 218 to 229, 238, 247 and plans 184 to 203): user `extern fun` with variadics, function pointers or its own linkage; const generics beyond plain integer and `bool` parameters; Unicode case mapping and codepoint-aware `str` slicing; a client-only `std/ws` and an HTTP/1.1-only `std/http`; blanket impls and impls for one instantiation; async, coroutines and weaker atomic orderings; named nested functions, lifetime syntax and borrows in containers; capability narrowing and revocation through a module in the middle; a verification duty with no UB catalogue. Syntax items such as digit separators, multi-line string literals, `orExit` on `Result`, field shorthand and implicit `String` to `str` at call arguments are deferred too.
