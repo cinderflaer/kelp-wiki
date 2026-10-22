@@ -63,6 +63,8 @@ empty on release.
 
 ## changed
 
+- A freestanding image's stack guards now cover the trap stack as well as the kernel stack: a page below the trap stack is unmapped, so a store into it faults (`examples/kernel0-stack`, phase t). The stacks of the sched, percpu, user, aarch64 and x86-64 examples are not guarded yet.
+- The panic-path rule for freestanding images is written down and tested: a panic runs the handler and nothing else, so no `defer` and no user `Drop` runs (`examples/kernel0-panic2`, phase 7). A hosted worker thread is the one place a panic runs a `Drop`.
 
 - `()` is accepted as a type and means `unit`, so `Result<(), E>` is the same type as `Result<unit, E>` and a function can return it (issue 223). `unit` is still refused as a tuple element, and the `'()' is not a type` error is gone.
 - Text aliases are written with a leading underscore: a reference is `_name` and a declaration is `alias _name = <text>`, and a `[alias]` key in `coral.toml` is `_name = "path"`. The old `%*name*%` form is refused as a syntax error. A `_name` that no alias declares is an ordinary identifier.

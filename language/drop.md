@@ -1,6 +1,6 @@
 ---
 title: "User `Drop`"
-description: "fun mut T.drop() gives a user datac or enum a destructor. It runs at every drop point, before the fields drop. A moved value is not dropped, a partial move is refused, and a panic runs no destructor."
+description: "fun mut T.drop() gives a user datac or enum a destructor. It runs at every drop point, before the fields drop. A moved value is not dropped, a partial move is refused, and a panic runs no destructor except on a hosted worker thread."
 isPublished: true
 tags: "language, ownership, kernel"
 ---
@@ -216,9 +216,14 @@ error: method 'Leaf.drop' is defined more than once
 
 ## A panic runs no destructor
 
-There is still **no unwinding**. A `panic` abandons the frame: neither a
-`defer` nor a destructor of any value in it runs, and the leak is the same one
-the memory model already admits. On an ordinary exit a `defer` is spliced before
+There is still **no unwinding**, with one exception. A `panic` abandons the
+frame: neither a `defer` nor a destructor of any value in it runs, and the leak
+is the same one the memory model already admits. The exception is a hosted
+worker thread: when its panic ends the thread, the user `Drop` of each owned
+local runs, newest first, before its joiner sees the panic
+([Concurrency in v1](/language/concurrency)). A `defer` does not run on that
+path, and a freestanding image never has it. A freestanding panic runs no
+destructor at all, so a kernel cleans up in its panic handler, not in a `Drop`. On an ordinary exit a `defer` is spliced before
 the block's ordinary drops, so a deferred action runs before the destructor of a
 value in the same block.
 

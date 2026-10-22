@@ -955,9 +955,25 @@ Every compiler-inserted check calls one compiler-emitted entry,
   stops, exactly as before.
 
 The acceptance is `examples/kernel0-panic2`, booted by its own `run.sh` and by
-`kernel0_panic2_names_each_checks_message_and_location`: six phases, each
-asserting the exact `panic: <message> at <file>:<line>` line, with the last one
-asserting `double panic`.
+`kernel0_panic2_names_each_checks_message_and_location`: seven phases, each
+asserting the exact `panic: <message> at <file>:<line>` line, with phase 6
+asserting `double panic`. Phase 7 is the cleanup rule (below): its `defer` and
+its `Drop` are live when the check fires, and `run.sh` fails if either one
+prints.
+
+### What a freestanding panic runs
+
+A freestanding panic runs the handler and nothing else. There is no unwinding,
+so a `defer` in any frame between the check and `kmain` does not run, and no
+user `Drop` of a value in those frames runs. The handler cannot return, so
+control never comes back to the frame that panicked. The image halts in the
+handler (or in `kelp_double_panic` if the handler panics too).
+
+This is the same rule for every freestanding image, and it is what makes the
+handler the only cleanup a kernel gets on a panic. A kernel that needs state
+written out on a panic writes it from `kp_panic` itself. The rule is tested by
+phase 7 of `examples/kernel0-panic2`. A hosted program has one exception, which
+is a worker thread: see [User `Drop`](/language/drop#a-panic-runs-no-destructor).
 
 ### The target machine and the link
 

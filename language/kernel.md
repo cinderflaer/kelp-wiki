@@ -41,14 +41,14 @@ hello from kelp
 | `examples/kernel0` | the driver, the entry, the halt | `hello from kelp` |
 | `examples/kernel0-trap` | a trap vector, an `ecall`, `mret` | `trap: ecall` then `done` |
 | `examples/kernel0-panic` | the compiler's bounds check reaches the handler | `panic: Array.get: index out of bounds` |
-| `examples/kernel0-panic2` | the location-carrying handler, one check per boot, and a double panic | `panic: <message> at <file>:<line>` per phase, then `double panic` |
+| `examples/kernel0-panic2` | the location-carrying handler, one check per boot, a double panic, and a panic that skips a `defer` and a `Drop` | `panic: <message> at <file>:<line>` per phase, then `double panic`; phase 7 prints `panic: cleanup skipped` and no `defer ran` or `drop ran` |
 | `examples/kernel0-bss` | `_start` erased a marker the image loaded into `.bss` | `bss clear` |
 | `examples/kernel0-heap` | `List<i32>` over a bump allocator | `heap sum 55` then `balanced` |
 | `examples/kernel0-string` | `String`/`Bytes` on the project allocator | `s: hello kelp!`, `n: 12345`, `b: 300`, `balanced` |
 | `examples/kernel0-percpu` | `percpu static mut` on two harts | `cpu0 4`, `cpu1 7`, `idx 1`, `count 2` |
 | `examples/kernel0-vm` | Sv39 tables, the S-mode drop, a high alias, the `Space` range check | eleven `vm:` lines |
 | `examples/kernel0-vm-fault` | the load and store page faults | `fault: scause 0xd stval 0x40000000`, `fault: scause 0xf stval 0x3ffffff000` |
-| `examples/kernel0-stack` | an unmapped guard page and the stack probe | both faults print `stack overflow: scause 0xf stval 0x...` |
+| `examples/kernel0-stack` | an unmapped guard page under each of the two stacks (the trap stack and the kernel stack) and the stack probe | three faults print `stack overflow: scause 0xf stval 0x...`, each followed by `stack: stval in guard` |
 | `examples/kernel0-user` | the trap frame, `ecall`, U-mode | `hello from user`, `bad write -> E`, `user exited 7` |
 | `examples/kernel0-aarch64` | the second architecture | `hello from kelp (aarch64)` |
 | `examples/kernel0-caps` | `irq`/`frames` claims handed to a driver | `line 10`, `frame 0x80100000`, `offset 0x80100010` |
@@ -869,18 +869,21 @@ a frame that reaches the guard page below the stack faults instead of a single
 `sub sp` stepping over the hole. Hosted builds carry no attribute, because a
 hosted process has no guard page to probe for.
 
-The linker script puts a 16 KiB trap stack below the image, an unmapped 4 KiB
-guard page above it and the 8 KiB kernel stack above the guard. `kmain` identity
-maps `[image, __guard_bottom)` and `[__guard_top, __frames_end)` and leaves the
-guard page with no leaf.
+The linker script puts an unmapped 4 KiB guard page below the 16 KiB trap stack,
+and a second one below the 8 KiB kernel stack, with the kernel stack above its
+guard. `kmain` identity maps the image up to `__trap_guard_bottom`, then
+`[__trap_guard_top, __guard_bottom)` and `[__guard_top, __frames_end)`, and it
+leaves each guard page with no leaf.
 
-One boot takes the two overflows on purpose. Phase a recurses with a 16-byte
-frame until the frame that crosses `__stack_bottom` stores its saved `ra` into
-the guard; the S-mode handler runs on the trap stack, prints the `scause` and
-`stval` it saw, checks `stval` against the guard bounds and, for the first fault,
-points `sepc` at phase b and returns. Phase b calls a function whose single
+One boot takes three faults on purpose. Phase t stores into the trap stack's
+guard, and the handler, which runs on the trap stack, prints it and resumes
+phase a at the top of the kernel stack. Phase a recurses with a 16-byte frame
+until the frame that crosses `__stack_bottom` stores its saved `ra` into the
+kernel guard; the S-mode handler prints the `scause` and `stval` it saw, checks
+`stval` against both guard bounds and, for the first two faults, points `sepc`
+at the next phase and returns. Phase b calls a function whose single
 `[u8; 16384]` frame is larger than the whole kernel stack: the probe walks it
-down page by page into the same guard, which is the case a `sub sp` alone would
+down page by page into the kernel guard, which is the case a `sub sp` alone would
 miss.
 
 ```sh
@@ -891,22 +894,35 @@ examples/kernel0-stack/run.sh
 run.sh: booted .../examples/kernel0-stack and the UART printed:
 stack: m-mode
 stack: paging on
-stack: guard 0x80007000 0x80008000
+stack: guard 0x80009000 0x8000a000
+stack: trap guard 0x80004000 0x80005000
+stack: phase t
+stack overflow: scause 0xf stval 0x80004ff8
+stack: stval in guard
 stack: phase a
-stack overflow: scause 0xf stval 0x80007ff8
+stack overflow: scause 0xf stval 0x80009ff8
 stack: stval in guard
 stack: phase b
-stack overflow: scause 0xf stval 0x80007de0
+stack overflow: scause 0xf stval 0x80009da0
 stack: stval in guard
 stack: halted
 ```
 
-Both faults are `scause 0xf`, a store page fault, and each `stval` falls inside
-the guard the kernel printed. `run.sh` asserts the seven `stack:` lines, and the
-suite's boot test parses the printed bounds and both fault addresses to check
-the same range independently.
+Each stack has its own hole. The trap stack's guard is one page below the trap
+stack, so a store into it faults (phase t) before the handler, which runs on the
+trap stack, has anything to say about the kernel stack. The kernel stack's guard
+is one page below the kernel stack and takes the two overflows (phases a and b).
+Every fault is `scause 0xf`, a store page fault, and each `stval` falls inside
+one of the two guards the kernel printed. `run.sh` asserts the `stack:` lines,
+and the suite's boot test parses both bounds and all three fault addresses to
+check the same ranges independently.
 
-What this is not: the guard page is the linker script's, not the compiler's
+The guards sit in the linker script, in this order from the bottom: the trap
+stack's guard, the trap stack (16 KiB), the kernel stack's guard, the kernel
+stack (8 KiB). The identity map covers the image and the trap stack, skips each
+guard page, and covers the kernel stack and the page frames above it.
+
+What this is not: the guard pages are the linker script's, not the compiler's
 (`probe-stack` only turns a large frame into stores, and whether they land on an
 unmapped page is the script's business), the probe does not compare `sp` against
 a bound and does not run on a `naked` function, and nothing maps a page to grow
@@ -948,6 +964,13 @@ The remaining gaps, from
   installs `mtvec` itself and enables nothing, and the line `kernel0-caps`
   claims is still not wired to a handler. Panic semantics with no OS, the row's
   other half, is the [section above](#panic-location-and-the-double-panic).
+- **Stack guards cover two of the kernel's stacks, not all of them.** The kernel
+  stack and the trap stack of `examples/kernel0-stack` have a guard page each.
+  The task stacks of `examples/kernel0-sched` are `[u8; 4096]` in `.bss` and run
+  in machine mode with no page table, so no page can be left unmapped under them.
+  The per-hart stacks of `examples/kernel0-percpu` and `examples/kernel0-user`,
+  and the stacks of the aarch64 and x86-64 examples, have no guard. Each needs
+  its own page layout (or a PMP entry, for machine mode). Tracked in issue 255.
 - **The calling-convention attributes** are still open. The `interrupt` attribute
   ships for riscv64 and x86-64 ([above](#the-interrupt-attribute)), except for the
   x86-64 vectors that push an error code.
@@ -962,8 +985,8 @@ The remaining gaps, from
   [Freestanding mode](/language/freestanding#what-freestanding-keeps)).
 - **Shipped:** user `Drop` ([`fun mut T.drop()`](/language/drop)), per-CPU
   statics ([Per-CPU storage](/language/percpu)), freestanding `String` and `Bytes`,
-  the [`std/arena`](/stdlib/arena) bump region and `Ptr.try_alloc`, the stack guard
-  and probe, the `mmio`, `irq` and `frames` grants, the
+  the [`std/arena`](/stdlib/arena) bump region and `Ptr.try_alloc`, the stack
+  guards of the kernel stack and the trap stack and the probe, the `mmio`, `irq` and `frames` grants, the
   [freestanding standard subset](/language/freestanding#the-freestanding-standard-subset),
   the x86-64 target, the machine timer with the preemptive scheduler, the x86-64
   IDT with the PIC and PIT timer, and the sized `Ptr.free_count`. The sections
@@ -1338,9 +1361,10 @@ LLVM build emits carries `probe-stack="inline-asm"`, so a frame larger than a pa
 page in order and a guard page catches the overflow instead of the frame stepping over it;
 hosted builds carry no attribute. `examples/kernel0-stack` is the acceptance: an Sv39 riscv64
 kernel whose kernel stack sits above an unmapped guard page, with a 16 KiB trap stack below the
-hole. One boot recurses with a small frame into the guard, the S-mode handler reports `scause`
-and `stval` on that stack and resumes a second phase at the top of the kernel stack, and that
-phase overflows the same guard with one `[u8; 16384]` frame. What the example forced is a
+hole, and a guard page under the trap stack too. One boot stores into the trap stack's guard,
+then recurses with a small frame into the kernel guard, and the S-mode handler reports `scause`
+and `stval` on the trap stack each time and resumes at the top of the kernel stack; the last
+phase overflows the kernel guard with one `[u8; 16384]` frame. What the example forced is a
 lowering fix: `[v; N]` now fills the local's own slot in place (`{array}__fill_into`) rather than
 returning the array by value, because LLVM's instcombine exhausted memory folding the by-value
 store of a frame-sized array at `-O2`.
