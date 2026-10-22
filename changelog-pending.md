@@ -23,6 +23,10 @@ writing Kelp. Group under the headings below; delete the headings that stay
 empty on release.
 
 ## added
+
+- A `.ckp` package runs on any machine whose glibc is at least the one its files need. `build --package` bundles every library the executable and its files need, except the glibc family and `libgcc_s` (the base set), into `lib/`, and it refuses a package that needs `libstdc++` by name. `llvm-readelf` must be on `PATH` to build a package.
+- A `.ckp` manifest has a `[requires]` table: `glibc` (the highest `GLIBC_x.y` any file references), `gcc_runtime`, `libstdcxx` (always `none`), `libc` (`glibc`) and `bundled` (the files under `lib/`). `coral inspect` prints them and a `host` line for the machine it runs on.
+- `coral run` and `coral inspect` refuse a package whose `requires glibc` is newer than the host's glibc, or that has no glibc, before anything is unpacked. The reason is printed on standard error and the exit status is 1.
 - A manual memory block, `block name: T { ... }`, frees its values when the block ends, on every exit (`return`, `break`, `continue`, `?`). Inside it, `name.box()?` makes one zeroed element of the block's type in its own chunk, counted against `heap_max`, and the block's value is `Result<T, BlockError>`. A block value cannot leave its block, be stored in a shared container, a static, a closure or a thread, and a block element holds scalars or a `datac` of scalars only. `block` stays an ordinary name everywhere else.
 
 - A word from another language used as a keyword or type name gets its Kelp word in the `help:` line: `fn`, `def`, `function`, `struct`, `class`, `let`, `match`, `null`, `nil`, `None`, `True`, `False`, `println`, `as`, `int`, `string` and `elseif`. The first line of the message is unchanged.
@@ -105,6 +109,7 @@ empty on release.
 - The examples walk a list with `for item in xs { ... }` where they used `var i = 0` and `while i < xs.len()` with `xs.get(i)`. Style only; no program changes.
 
 ## compiler
+- A program records the standard loader path `/lib64/ld-linux-x86-64.so.2` as its interpreter, not the path of the build host's GCC, so a program built on one distro starts on the others (the release matrix checks this on debian-trixie, ubuntu-noble, fedora and arch).
 
 - A hosted program's link sets `RUNPATH` to `$ORIGIN/lib`, so a program finds the libraries bundled in the `lib/` directory beside its executable (a `.ckp` archive). No environment variable is read.
 - A compiler error prints a `  help:` line under its location for the common mistakes: an undefined variable, an undefined local, an assignment to a `val`, a return type mismatch, a missing `main`, a use of a moved value, a second statement on one line, a module that cannot be found and a call to an undefined function. The message on the first line is unchanged, and `check --json` gives the same text in a `help` key that is there only when a finding has one.

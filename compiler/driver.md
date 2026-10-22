@@ -60,6 +60,12 @@ With `emit = "html"` it writes `index.html` and does not start the program as an
 
 Every hosted link runs `ld.lld` directly. Nothing runs `cc` to link a program.
 
+Every hosted program also gets `RUNPATH` set to `$ORIGIN/lib`, which is the last `-rpath` in the link line. A `.ckp` package keeps the libraries it bundles in `lib/` beside the executable, so the program finds them without an environment variable. The loader expands `$ORIGIN`. The RUNPATH applies to the libraries the program needs directly. A bundled library that another bundled library needs is found through `LD_LIBRARY_PATH`, which `coral run` sets as a fallback.
+
+The program records the standard x86_64 dynamic loader, `/lib64/ld-linux-x86-64.so.2`, as its interpreter when the loader found on the build host is that same file. A distro's own path (for example GCC's `/usr/lib/gcc/x86_64-linux-gnu/13/../../../...`, or `/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2`) is recorded in canonical form. A binary built on one distro then starts on the others in the release matrix.
+
+The base set, which a package never bundles because the host supplies it, is `ld-linux-x86-64.so.2`, `libc.so.6`, `libm.so.6`, `libpthread.so.0`, `libdl.so.2`, `librt.so.1` and `libgcc_s.so.1`.
+
 A hosted build is the managed link, and every hosted build takes it. `driver::link_managed_object` links, in this order: the program's object, the embedded runtime object `kelp_rt_managed.o`, the program's `extern fun` object when there is one, the collector archive `libkelp_gc.a`, the libraries the manifest names, and `-ldl`. `driver::link_llvm_objects_with_archive` writes the runtime object to a temporary file, and the collector archive too when it is the embedded copy, runs `ld.lld` with the argument list from `sysroot::hosted_link_argv`, and removes the temporary files.
 
 The collector archive is found by `driver::managed_archive`. `KELP_GC_LIB` names a file when it is set, and that file must exist, or the build fails before any code is written. Otherwise the archive is the copy `kelpc/build.rs` built from `kelpc/gc` and `include_bytes!` embeds in `kelpc`, so a `kelpc` binary needs no build tree and no environment variable.

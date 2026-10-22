@@ -148,9 +148,19 @@ os: linux
 arch: x86_64
 format: 1
 capabilities: none
+requires glibc: 2.39
+requires gcc_runtime: 14.2
+requires libstdcxx: none
+requires libc: glibc
+requires bundled: libssl.so.3, libcrypto.so.3
+host: ok
 signature: valid alice
 files:
 ```
+
+The `requires` lines come from the package's `[requires]` table, see [Portable packages](#portable-packages).
+The `host` line reads `ok` when the glibc of the machine that runs `inspect` meets `requires glibc`.
+When it does not, `host` reads `refused`, the reason is printed on standard error, and `inspect` exits with status 1.
 
 Add `--require-signed` after the package to make `inspect` refuse an unsigned package or one from an unknown key.
 
@@ -173,6 +183,25 @@ Put `--require-signed` directly after the package path, before `--`.
 ```bash
 coral run build/app-1.0.0-linux-x86_64.ckp --require-signed -- --verbose
 ```
+
+## Portable packages
+
+A package runs on any machine that has the glibc its files reference, and it needs no rebuild for each distro.
+Coral makes it so at `build --package` time:
+
+- The executable is linked dynamically against glibc. The glibc family (`ld-linux-x86-64.so.2`, `libc.so.6`, `libm.so.6`, `libpthread.so.0`, `libdl.so.2`, `librt.so.1`) and `libgcc_s.so.1` are never bundled. The host supplies them.
+- Every other library that the executable or a bundled file needs is copied into `lib/` in the package, with its sha256 in `[files]`. The executable finds `lib/` through its `RUNPATH`, `$ORIGIN/lib`.
+- A package that needs `libstdc++` is refused at build time, and the message names the library.
+- `[requires]` states the glibc the package needs. It is the highest `GLIBC_x.y` version that any file references, found with `llvm-readelf --version-info`. `build --package` refuses when `llvm-readelf` is not on `PATH`.
+
+Build a package in the oldest glibc you support. A package built on Ubuntu 24.04 (glibc 2.39) runs on every newer glibc.
+A package built on a newer distro may name a newer glibc, and then it runs only on machines that have that glibc or a newer one.
+
+`run` and `inspect` check `requires glibc` against the host before they unpack anything.
+On a machine with an older glibc, or with no glibc, `run` refuses with a message such as `this package needs glibc 2.39 or newer; this machine has glibc 2.35`, exits with status 1, and creates no cache directory.
+
+A bundled OpenSSL is a copy of the distro's 3.x library.
+A security fix in OpenSSL therefore needs a new package, not only a system update.
 
 ## What each signature line means
 
