@@ -29,6 +29,7 @@ empty on release.
 - A string template outside `print` is a `String` value: `val part = "${out}.part"` binds it, and a `String` parameter takes it. A template in `print` or `print!` prints as before.
 - `kelpc caps <project>` prints each module's capabilities and the caps each dependency reaches, sorted for CI diffs. A `[dependencies]` entry whose modules reach a domain its `coral.toml` list does not name is refused at build time.
 - `[target] heap_max = N` sets a hosted program's heap cap in MiB (1 to 65536, default 256). A program that needs more stops with `out of memory`. A freestanding build refuses the key.
+- `KELP_GC_VERIFY=1` poisons every dead object in the shared pool with the byte `0xA5` at each collection, so a read through a dangling reference sees the poison, not the old contents. The poison is written only in verify mode.
 - `KELP_GC_STATS=1` prints one counter line to stderr at exit and before a fatal exit: collections, pause totals and maxima, live roots and charged bytes.
 - `[build] emit = "html"` writes a Polyp view as a static HTML file. `[build] emit_entry` names the program that builds it. A Polyp HTML build needs no env grant.
 - `let Some(user) = find(id) else { return Err("missing") }` (let-else) binds an enum variant's payload for the rest of the block when it matches. The else block must end in return, break, continue or panic.
@@ -164,6 +165,6 @@ empty on release.
 - A hosted build refuses an enum stored inside a `datac`: the collector does not describe that layout yet, so such a program is a compile error.
 - A `Map` whose value is an enum is refused by the checker at the `Map` type, with a sentence that names the type and says to keep the values in a `List`; the hosted build's codegen does not describe an enum inside a map's entry yet, and a `datac` holding the enum is refused the same way.
 - The Tidepool M7 gate measures the scalar row only; the String case is not measured in this release.
-- The poison sweep is not in this release: a dead manual-block object is not poisoned under `KELP_GC_VERIFY=1`. Its test is still failing and waits on the owner's decision (issue 194).
+- The poison sweep runs only under `KELP_GC_VERIFY=1`. A release build does not write the poison byte, so a read through a dangling reference there still sees the old contents.
 - A-11 (full borrow checking) is not finished.
 - A panicking worker does not drop the temporaries it holds when it panics.
