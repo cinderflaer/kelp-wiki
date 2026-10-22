@@ -828,12 +828,13 @@ The remaining gaps, from
   other half, is the [section above](#panic-location-and-the-double-panic).
 - **The `interrupt` and calling-convention attributes** are still open, so a trap handler is a naked body the compiler does not understand as a
   handler.
-- **`Ptr.alloc`/`Ptr.free` still have no allocator hook.** The global allocator
-  reroutes `Box`/`List`/`Map`/`String`/`Bytes`, and the
-  [`std/arena`](/stdlib/arena) bump region and the fallible `Ptr.try_alloc` are
-  available, but
-  the `Ptr.alloc`/`free` pair is still the hosted `malloc`/`free` and is refused
-  in freestanding.
+- **`Ptr.free` still has no allocator hook.** The global allocator reroutes
+  `Box`/`List`/`Map`/`String`/`Bytes`, `Ptr.alloc` and `Ptr.try_alloc` go through
+  the project's `[target] alloc`, and the [`std/arena`](/stdlib/arena) bump region
+  is available. `Ptr.free` stays refused in freestanding: a project's `dealloc`
+  needs the block's byte size, and a pointer does not carry it. Closing that needs
+  a design choice (a sized free, or a free that takes the element count), so it is
+  not made here.
 - **Shipped:** user `Drop` ([`fun mut T.drop()`](/language/drop)), per-CPU
   statics ([Per-CPU storage](/language/percpu)), freestanding `String` and `Bytes`,
   the [`std/arena`](/stdlib/arena) bump region and `Ptr.try_alloc`, the stack guard
@@ -843,7 +844,7 @@ The remaining gaps, from
   IDT with the PIC and PIT timer. The sections above show each one.
 - **The remaining holes are the rest of the process model.** No `interrupt`
   attribute exists, so a trap handler is still a naked body the compiler does
-  not understand as a handler, and `Ptr.alloc`/`Ptr.free` still have no hook. A
+  not understand as a handler, and `Ptr.free` still has no sized hook. A
   preemptive scheduler exists for machine-mode riscv64 tasks, but
   there is no `fork`, no `exec`/`wait`, no priorities or blocking, no TLB
   shootdown, no SMP and no preemption of user mode; x86-64 has an IDT and a

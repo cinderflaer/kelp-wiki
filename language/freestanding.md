@@ -70,7 +70,7 @@ message names the construct.
 
 - **Refused:** `print`/`print!` (the `printf` call), `assert` (the runtime's
   `kelp_assert`), a defined `main` (the hosted entry point and its
-  `argc`/`argv` globals), `Ptr.alloc`/`Ptr.free` (the hosted `malloc`/`free`),
+  `argc`/`argv` globals), `Ptr.alloc` without an allocator pair and `Ptr.free` (the hosted `malloc`/`free`),
   passdowns (`pd`, whose initializers run through the generated `kelp_init_pds`
   that only the hosted entry point calls), `Thread` (which always reaches the
   hosted runtime), `Box`, `List`, `Map`, `String` and `Bytes` when no
@@ -127,9 +127,9 @@ combinators.
   derived pair, a `Bytes`-field equality (a declared `eq` that walks the bytes),
   a `View` slice and a `std/regex` match over the UART on riscv64 and x86-64.
 - `Ptr<T>`, the compile-time `size_of`/`align_of`/`offset_of`, `unsafe`,
-  `asm` and naked functions. `Ptr.alloc`/`Ptr.free` stay refused; `Ptr.try_alloc`
-  is allowed by the same `[target] alloc`/`dealloc` pair `String` and `Bytes`
-  need.
+  `asm` and naked functions. `Ptr.alloc` and `Ptr.try_alloc` are allowed by the
+  same `[target] alloc`/`dealloc` pair `String` and `Bytes` need; `Ptr.free`
+  stays refused (see [The allocator hook](#the-allocator-hook)).
 - `static`/`static mut` and `defer`.
 - A user `extern fun` whose module has its own `[extern."<id>"]` section.
 - A call to the builtin `panic(msg)`, and the bounds checks, which all route
@@ -367,9 +367,16 @@ one byte so the terminating NUL always has a slot). Growth doubles the capacity
 through the manifest's `realloc` when it names one, else alloc + copy + dealloc,
 and a null from any of the three reaches the project's `[target] panic` handler
 with `"out of memory"`, so a failed allocation is a panic and never a null
-dereference. `Ptr.try_alloc` is the deliberate exception: the same pair admits
-it, and it answers the null `Ptr<T>` instead of panicking (see
-[Unsafe code and raw pointers](/language/unsafe)).
+dereference. `Ptr.alloc` takes the same route: with the pair configured it calls
+the project's `alloc` and gets the same `"out of memory"` panic. `Ptr.try_alloc`
+is the deliberate exception: it answers the null `Ptr<T>` instead of panicking
+(see [Unsafe code and raw pointers](/language/unsafe)).
+
+`Ptr.free` stays refused in a freestanding build. The hosted `free` takes only the
+pointer, but a project's `dealloc` takes the block's byte size and alignment as
+well, and a pointer does not carry them. A freestanding program frees through
+`Box`, `List` or `Map`, which know their own size, or keeps its blocks for the
+life of the image, as a bump allocator does.
 
 `examples/kernel0-string` is the idiom: the heap example's bump allocator with
 the optional `realloc` named, `str.concat` and `str.from_u64` for text, a
@@ -663,8 +670,8 @@ refused by name with the two manifest keys.
 
 **Refused, each naming the construct.** `print`/`print!` (the `printf` call),
 `assert` (the runtime's `kelp_assert`), a defined `main` (the hosted entry point
-and its `argc`/`argv` globals), `Ptr.alloc`/`Ptr.free` (the hosted
-`malloc`/`free`), passdowns (`pd`, whose initializers run through the generated
+and its `argc`/`argv` globals), `Ptr.alloc` without an allocator pair and `Ptr.free`
+(the hosted `malloc`/`free`), passdowns (`pd`, whose initializers run through the generated
 `kelp_init_pds` that only the hosted entry point calls), `Thread` (which reaches
 the hosted runtime whatever the manifest says), `String` and
 `Bytes` when no allocator is configured, and `Box`, `List` and `Map` when no
