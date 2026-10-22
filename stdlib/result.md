@@ -22,9 +22,10 @@ can fail returns `Result<T, E>` and its caller writes `val v = f(...)?`.
 
 ## `Result<unit, E>`
 
-A function that only succeeds or fails has `Result<unit, E>`. Since 26.10.4 its
-success value is written `()`, the absent value, so `Ok(value = ())` constructs
-and matches like any other `Ok`:
+A function that only succeeds or fails has `Result<unit, E>`, which can also be
+written `Result<(), E>`: `()` is the type of the absent value, the same type as
+`unit`. Since 26.10.4 its success value is written `()`, so `Ok(value = ())`
+constructs and matches like any other `Ok`:
 
 ```kelp
 impl "std/result"

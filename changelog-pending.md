@@ -52,6 +52,7 @@ empty on release.
 ## changed
 
 
+- `()` is accepted as a type and means `unit`, so `Result<(), E>` is the same type as `Result<unit, E>` and a function can return it (issue 223). `unit` is still refused as a tuple element, and the `'()' is not a type` error is gone.
 - Text aliases are written with a leading underscore: a reference is `_name` and a declaration is `alias _name = <text>`, and a `[alias]` key in `coral.toml` is `_name = "path"`. The old `%*name*%` form is refused as a syntax error. A `_name` that no alias declares is an ordinary identifier.
 
 - The checked program has a node for a manual block region (`tir::ExprKind::Region`), and the collector releases a block's element when the block ends.
