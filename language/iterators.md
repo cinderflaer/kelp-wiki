@@ -134,6 +134,15 @@ Reading it line by line:
 
   An iterator that is a function parameter has to be bound to a `var` first,
   because a parameter is an immutable binding.
+- **`xs.iter()` over a `List<T>` or `[T; N]`** is the same walk as `for x in xs`,
+  and the element reads the same way. The loop borrows `xs` for its whole run: the
+  body may read `xs` and may change a different list, and `xs` may change again
+  after the loop. A mutator of `xs` inside the loop (`push`, `set`, `remove`,
+  `clear`, an assignment, a move, `&mut xs`), including one in a nested
+  `xs.iter()`, is refused with `cannot mutate 'xs' while iterating over it`.
+  `xs.iter()` is a `for` form only: `val it = xs.iter()` is refused with
+  `List<i32> has no method 'iter'`, because an iterator value cannot keep the
+  borrow (see [What is not there yet](#what-is-not-there-yet)).
 - **Anything else** is refused, and the message names the trait:
 
   ```
@@ -378,9 +387,13 @@ whole set of consumers.
 
 ## What is not there yet
 
-- **A borrowing `List.iter()`** that yields `&T`: a borrow into a list cannot outlive the
-  iterator that hands it out without a way to say how long it lives. `iter.into_iter`
-  moves the list in and yields owned items, and `iter.cloned(&xs)` walks a copy.
+- **A borrowing iterator value.** `xs.iter()` borrows the list only as a `for`
+  loop (above). A value that yields `&T` into `iter.map`, `iter.filter` and the
+  other adapters would have to keep the list's borrow with the iterator, and a
+  `datac` holds owned data only: a field cannot be a reference, and a constructor
+  refuses a borrow. The language has no way yet to tie a borrow to an iterator
+  value. Until it does, `iter.into_iter(move xs)` walks the owned items and
+  `iter.cloned(&xs)` walks a copy.
 
 ## See also
 
