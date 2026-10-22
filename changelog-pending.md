@@ -111,6 +111,8 @@ empty on release.
 - A `&` on a `List` or `str` parameter is redundant: `xs: &List<T>` and `s: &str` take the same arguments as `xs: List<T>` and `s: str`. `kelpc lint` warns about it; the examples no longer write it.
 - The examples walk a list with `for item in xs { ... }` where they used `var i = 0` and `while i < xs.len()` with `xs.get(i)`. Style only; no program changes.
 
+- The kernel0-user syscall layer names its refusals as a `SysErr` value (`BadFd`, `Fault`, `NoSys`) and turns one into a register value only in `errno`. `write` checks every page of its range before the first byte is copied, so a call refused at a later page prints nothing; the boot checks each refusal the ABI names (`syscall: refusals ok`) before any program runs (kernel stage 11, #253).
+
 ## compiler
 - A program records the standard loader path `/lib64/ld-linux-x86-64.so.2` as its interpreter, not the path of the build host's GCC, so a program built on one distro starts on the others (the release matrix checks this on debian-trixie, ubuntu-noble, fedora and arch).
 

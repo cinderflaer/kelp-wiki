@@ -494,7 +494,8 @@ never freed once a table holds them.
 
 `examples/kernel0-user` is the same Sv39 boot plus five things: `src/trap.kp`
 (the `TrapFrame`, the naked `trap_entry`, `trap_dispatch` and `enter_user`),
-`src/syscall.kp` (the numbers, `write` and `exit`, and the copy path),
+`src/syscall.kp` (the number table, the typed refusals, `write` and `exit`, the
+range check and the copy path),
 `src/user.kp` (two hand-written user programs, each a naked function in its own
 section, copied into its program's code page at boot), `src/vm.kp` (the walker
 plus `user_page_pa`, the walk that demands the U and R bits), and a `kernel.ld`
@@ -536,14 +537,23 @@ frame, and `sepc` advances by 4 (an `ecall` is never the compressed form).
 | 0 | `write` | `a0` = fd (only 1), `a1` = pointer, `a2` = length | the length written |
 | 1 | `exit` | `a0` = code | does not return |
 
-Errors are the small negative errno values: `-9` (`EBADF`) for a file descriptor
-other than 1, `-14` (`EFAULT`) for a pointer the kernel will not copy from, and
-`-38` (`ENOSYS`) for a number the kernel does not know. `exit` is the one syscall
-that does not return: the handler prints `user exited <code>` and the dispatcher
-tells the entry to leave the kernel rather than resume the program.
+Inside the kernel a refusal is a value of the enum `SysErr`, one variant per
+errno the ABI names: `BadFd` (`-9`, `EBADF`) for a file descriptor other than 1,
+`Fault` (`-14`, `EFAULT`) for a pointer the kernel will not copy from, and `NoSys`
+(`-38`, `ENOSYS`) for a number the table does not know. Each call returns
+`Reply`, which is either `Done(value)` or `Refused(err)`, and `errno` is the one
+place a refusal becomes a register value, so a path cannot answer with a number
+that is not one of these. `exit` is the one syscall that does not return: the
+handler prints `user exited <code>` and the dispatcher tells the entry to leave
+the kernel rather than resume the program.
+
+Every call decodes the same shape: the number from `a7`, and exactly six argument
+words from `a0`..`a5`. A call reads only the words it uses, so an extra argument
+is never a reason to refuse a call and never a read the kernel has to justify.
 
 `write` is the only way user memory crosses into the kernel, and it copies
-through a kernel buffer. Before any byte moves, the pointer is validated:
+through a kernel buffer. The range check is `user_range_ok(ptr, len)`, a pure
+function the boot exercises directly:
 
 - `len > 4096` is refused, so one call can never ask for more than the kernel's
   one-frame copy buffer.
@@ -551,19 +561,43 @@ through a kernel buffer. Before any byte moves, the pointer is validated:
   canonical Sv39 low address), refuses a range that would wrap `ptr + len` and
   refuses every pointer at or above the user limit. The arithmetic is written so
   the addition itself cannot overflow, because a wrap would slip a range past
-  the bound check instead of being refused.
-- The copy walks the program's page table one page at a time with
-  `vm.user_page_pa`, which answers only when the leaf has **both** `PTE_U` and
-  `PTE_R`. A kernel address that happens to be mapped (the identity map is in
-  every program's table) is not user-readable, so it is refused here and not by
-  a lucky address range.
-- Each page's bytes are read from the **physical** address the walk returned,
-  through the identity map, into the buffer, and the buffer is what the UART
-  driver writes. The user virtual address is never dereferenced, so a page the
-  walk rejects cannot be reached by a second access that races a remap.
+  the bound check instead of being refused. `len` is tested first, so the
+  subtraction cannot wrap either.
+- The first pass walks the program's page table one page at a time with
+  `vm.user_page_pa`, over every page the range touches, which answers only when
+  the leaf has **both** `PTE_U` and `PTE_R`. A kernel address that happens to be
+  mapped (the identity map is in every program's table) is not user-readable, so
+  it is refused here and not by a lucky address range. A range whose second page
+  is unmapped is refused before its first page is copied.
+- Only after the first pass has passed does the copy run. Each page's bytes are
+  read from the **physical** address the walk returned, through the identity map,
+  into the buffer, and the buffer is what the UART driver writes. The user virtual
+  address is never dereferenced, so a page the walk rejects cannot be reached by a
+  second access that races a remap.
 
-The refused pointer prints the demo's own line (`user: efault ok`) and returns
-`-14`; the kernel keeps running and the program sees the error in `a0`.
+Before the first pass existed, a range that crossed into an unmapped page printed
+the bytes of its first page and then refused. The two-pass copy makes a refusal
+print nothing, so an `EFAULT` always means no byte of that call reached the UART.
+
+The dispatcher, not `handle`, prints the demo's own line (`user: efault ok`) when a
+program's call answers `EFAULT`, and the program sees `-14` in `a0`; the kernel
+keeps running. The boot runs `syscall.self_test` before any program: it drives
+`handle` against a throwaway address space built the same way a program's is, and
+checks each reply the ABI names, one line per case: a valid write of three bytes
+(`ok`), `EBADF` for fd 2, `EFAULT` for a 4097-byte write, a range that crosses the
+user limit, a range that wraps past 2^64, a pointer exactly at the limit, an
+unmapped user page, a mapped kernel page, a range that crosses into an unmapped
+second page, and `ENOSYS` for number 99. Only when every reply matches does it
+print `syscall: refusals ok`; a mismatch halts the boot with `syscall self test
+failed`.
+
+Capabilities do not gate the syscall ABI in this release. The capability model
+([Capabilities](/language/capabilities)) grants a kernel module device registers
+and frames at build time, from the manifest; it has no per-process handle that a
+program could hold and pass in a call. The one resource a program reaches,
+stdout, is already the only fd `write` accepts, so the fd check is the gate for
+it. A per-process capability table is the design a later process model would
+need, and it is not started here.
 Program one calls `write(1, "hello from user\n", 16)`, then
 `write(1, 0x80000000, 16)` (a mapped kernel page), builds `bad write -> X` on its
 stack, replaces `X` with `55 + (-a0)` (the hex digit of the errno magnitude, so
@@ -582,6 +616,8 @@ user: m-mode
 user: s-mode
 user: paging on
 user: frame ok
+ok
+syscall: refusals ok
 hello from user
 user: efault ok
 bad write -> E
@@ -589,6 +625,9 @@ user exited 7
 user killed: scause 13
 kernel survived
 ```
+
+The `ok` line is the self test's one valid write; it comes before the refusals
+line because the self test runs first.
 
 What is deliberately **not** here: no scheduler (one process at a time, one hart,
 no run queue and no context switch between two live programs, since program two
@@ -598,7 +637,8 @@ process teardown (pages are never freed and no address space is ever reused), no
 ASIDs or TLB shootdown, no copy-on-write, demand paging, guard pages or address
 space abstraction, and no interrupt path (`trap_entry` assumes the trap came from
 U-mode; a kernel-mode fault would swap the stack pointer out from under the
-running handler). There are no signals, and no more than six syscall arguments.
+running handler). There are no signals, and six argument words is the most a call
+takes.
 The timer-driven scheduler in the next section is a separate image,
 `examples/kernel0-sched`.
 
