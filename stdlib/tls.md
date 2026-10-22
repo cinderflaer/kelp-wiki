@@ -262,7 +262,21 @@ that wants a CA from a file needs `std/tlsfile`, which needs an `fs` grant; a
 module with no `fs` grant is refused at compile time ("needs the 'fs'
 capability"), and a path outside the grant is the ordinary `fs` denial and is
 never opened. A directory of CAs (`ca_dir`) has no bytes form; read the
-certificates you want and concatenate the PEM text. The old spellings are compile errors (checked on 2026-10-04):
+certificates you want and concatenate the PEM text. `tlsfile.ca_dir_pem(dir)` does that
+for a directory: it reads every `.pem` and `.crt` file directly inside `dir`, each through the
+`fs` gate, and returns the joined PEM text for `with_ca_pem`. Other files in the directory are
+never opened. A directory with no `.pem` or `.crt` file is `TlsError.Io` (`tls: the directory
+<dir> holds no .pem or .crt CA certificate`), so a wrong path never falls back to the system
+store silently:
+
+```kelp
+impl "std/tlsfile" caps(fs = ["/etc/myapp/ca.d/**"])
+
+val ca = tlsfile.ca_dir_pem("/etc/myapp/ca.d")?
+val opts = tls.client_options().with_ca_pem(ca)
+```
+
+The old spellings are compile errors (checked on 2026-10-04):
 
 ```text
 error: datac 'std.tls.TlsClientOptions' has no method 'with_ca_file'
@@ -616,7 +630,9 @@ complete.
 handshake starts, so a silent peer is `Err(Timeout)` instead of a hang. The
 settings stay on the socket for the reads and writes that follow, and
 `set_timeout` changes them later. `0` is "no timeout", which is `SO_RCVTIMEO`'s
-own meaning; there is no silent default deadline.
+own meaning; there is no silent default deadline. A write that stalls past the
+deadline, because the peer stopped reading, is `Err(Timeout)` from `try_write` and
+`try_write_all`; the same deadline covers the reads.
 
 ## Certificate verification is not optional
 

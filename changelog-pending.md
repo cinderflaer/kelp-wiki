@@ -49,6 +49,8 @@ empty on release.
 - `std/os` has `make_temp_dir(template)` and `make_temp_file(template)`, which return a `TempDir` or `TempFile` owning a fresh path made from a template ending in `XXXXXX`. The grant is checked against the template at the call. Its drop removes the contents, and the runtime removes the path at exit or on a panic, since a panic runs no destructor.
 - `std/sys` re-exports `os()` and `arch()` from `std/os`, so existing programs build as before.
 
+- `tlsfile.ca_dir_pem(dir)` reads every `.pem` and `.crt` file directly inside a directory, each through the `fs` gate, and returns them as one PEM text for `with_ca_pem`, so a private CA directory needs no loop. A directory with no such file is a typed `TlsError.Io`, not an empty set of extra roots (issue 252).
+
 ## changed
 
 
