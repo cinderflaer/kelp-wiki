@@ -60,9 +60,9 @@ With `emit = "html"` it writes `index.html` and does not start the program as an
 
 Every hosted link runs `ld.lld` directly. Nothing runs `cc` to link a program.
 
-A hosted build is the managed link, and every hosted build takes it. `driver::link_managed_object` links, in this order: the program's object, the embedded runtime object `kelp_rt_managed.o`, the program's `extern fun` object when there is one, the collector archive `libkelp_gc.a`, the libraries the manifest names, and `-ldl`. `driver::link_llvm_objects_with_archive` writes the runtime object to a temporary file, runs `ld.lld` with the argument list from `sysroot::hosted_link_argv`, and removes the temporary file.
+A hosted build is the managed link, and every hosted build takes it. `driver::link_managed_object` links, in this order: the program's object, the embedded runtime object `kelp_rt_managed.o`, the program's `extern fun` object when there is one, the collector archive `libkelp_gc.a`, the libraries the manifest names, and `-ldl`. `driver::link_llvm_objects_with_archive` writes the runtime object to a temporary file, and the collector archive too when it is the embedded copy, runs `ld.lld` with the argument list from `sysroot::hosted_link_argv`, and removes the temporary files.
 
-The collector archive is found by `driver::managed_archive`. `KELP_GC_LIB` names it when it is set. Otherwise it is the archive that `kelpc/build.rs` built. A path that is not a file is an error that names the path and the variable, before any code is written.
+The collector archive is found by `driver::managed_archive`. `KELP_GC_LIB` names a file when it is set, and that file must exist, or the build fails before any code is written. Otherwise the archive is the copy `kelpc/build.rs` built from `kelpc/gc` and `include_bytes!` embeds in `kelpc`, so a `kelpc` binary needs no build tree and no environment variable.
 
 The argument list uses `-m elf_x86_64`, `-pie`, the glibc dynamic loader and the glibc start files.
 It adds the program object, the runtime object, the optional externs object, the collector archive, the library directories, `-lm -lpthread`, and `-lssl -lcrypto` when TLS is used.
