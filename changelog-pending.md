@@ -26,6 +26,10 @@ empty on release.
 
 - The Coral, Polyp, fpl and Lighthouse pages match their `main` branches: Coral has no version pins and records `coral.lock`, Polyp exports no `QUIT_ID` and its API lists the v4 and v5 nodes, fpl has 32 libraries, and Lighthouse has a Kelp port of the server in progress.
 
+## Added
+
+- A multi-line string literal: `"""` opens a block, a line holding only `"""` closes it, and the closing line's indentation is removed from the lines between. The value always ends with a newline and uses the string escapes, so a block equals the same text written with `\n` (issue 260). An unterminated block is refused at its opening.
+
 ## Changed
 
 - The example pages match their programs: `count-lines-words-bytes` passes an absolute path, the `sandbox-directory-grant` panic line is current, and the `count-lines-in-kelp-tree` listing is the current `examples/src`.

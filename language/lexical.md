@@ -199,7 +199,7 @@ val i = b'x'            // byte literal
   233).
 - **String, character and byte literals** use this escape set (grammar §20):
   `\n`, `\t`, `\r`, `\0`, `\'`, `\"`, `\\`, `\xNN` and `\u{...}`, plus `\$` in
-  a string literal. What each
+  a string literal, and a multi-line block (below) uses the string set. What each
   form refuses is the shape it cannot hold: a string literal is NUL-terminated
   UTF-8, so it has no `\0` and no `\u{...}` and a byte above `0x7f` is not text
   (`"\xff"` is refused), and a byte literal is one byte, so it has no
@@ -217,6 +217,34 @@ val i = b'x'            // byte literal
   on into the text after it: `"\x41a"` is `"Aa"`, where C's hex escape
   swallows the `a`. In a character literal it is the code point (`'\x41'` is
   `'A'`); in a byte literal it is the byte (`b'\xff'` is 255).
+- **A multi-line string block** is a string literal that runs over several
+  lines. It opens with `"""` followed by a line break, and it closes on a line
+  that holds only `"""` after its indentation. Each line between them is taken
+  as it is written:
+
+  ```kelp
+  val usage = """
+      usage: kelp build [options]
+        -o FILE   write the output to FILE
+
+      see the manual
+      """
+  // "usage: kelp build [options]\n  -o FILE   write the output to FILE\n\nsee the manual\n"
+  ```
+
+  The indentation of the closing `"""` is removed from every line, so the block
+  sits at the indentation of the code around it. A line that is not blank and
+  is less indented than the closing `"""` is refused. A blank line, or one with
+  only spaces and tabs shorter than that indentation, is empty. Every line ends
+  with a newline, the last one included, so the value always ends with `\n`; the
+  line break after the opening `"""` is not part of it. A CR just before a line
+  break is part of the break, so a CRLF file gives the same value as an LF one.
+  The string escapes (`\n`, `\t`, `\r`, `\"`, `\\`, `\$` and `\xNN`) apply to the
+  text after the indentation is removed. A `"` needs no escape inside a block,
+  and a line that would begin with `"""` is written `\"""`. A block is not a
+  template: `$` is text there, so `$name` is not interpolated. Text after the
+  opening `"""` on its line (`"""abc"""`) is refused, and a block with no closing
+  line is refused at its opening, naming the line it opened on.
 
 ## String templates
 
