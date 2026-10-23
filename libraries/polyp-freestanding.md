@@ -6,7 +6,7 @@ tags: "library, ui, freestanding"
 ---
 Polyp's display-free half draws into any framebuffer a `Platform` hands it, so it
 also runs with no operating system under it. The proof is two bare-metal
-projects, `examples/polyp-fb-riscv64/` and `examples/polyp-fb-x86_64/`, that link
+projects, `kelpc/tests/fixtures/examples/polyp-fb-riscv64/` and `kelpc/tests/fixtures/examples/polyp-fb-x86_64/`, that link
 the same `core.kp`, the same `backends/soft/soft/` rasterizer, the same `soft_backend.kp` and
 the same application program into an image with no libc, boot under QEMU, and
 print a checksum per frame. The claim is narrow and total: they draw the **same
@@ -66,7 +66,7 @@ pixels still come from the same renderer.
 
 ## The shared scenario and the step lines
 
-The three runs share their driver. `examples/polyp-todo/src/scenario.kp` builds
+The three runs share their driver. `kelpc/tests/fixtures/examples/polyp-todo/src/scenario.kp` builds
 the program's initial state, applies `core.create_all`, paints and presents the
 first frame, schedules every `app.script()` event on the backend, then calls
 `soft_backend.frame` until the program quits, emitting one line per step:
@@ -83,7 +83,7 @@ kernels write the bytes to their UART. The line is built in the scenario module,
 not by the platform, so the two sides cannot format the same checksum differently.
 
 The same driver finishes with the program's human-readable report
-(`examples/polyp-todo/src/report.kp`, separate from `app.kp` because its body
+(`kelpc/tests/fixtures/examples/polyp-todo/src/`, separate from `app.kp` because its body
 calls `print`, which a freestanding build refuses wherever it appears). The plan
 quotes the kernel's first and last step as:
 
@@ -102,20 +102,20 @@ alpha goes, and that is the value the display comparison uses.
 ## How to run it
 
 Both projects and the equivalence test need `ld.lld` and an emulator on `PATH`,
-which is the repository's `dev-kernel.nix` shell, and a `kelpc` built there
+which is the repository's `shell.nix` shell, and a `kelpc` built there
 (`run.sh` looks for `target/debug/kelpc`; set `KELPC` to point at another binary).
 
 The test that compares the kernels with the hosted run:
 
 ```sh
-nix-shell dev-kernel.nix --run 'cd kelpc && cargo test --test compile_and_run polyp_fb'
+nix-shell shell.nix --run 'cd kelpc && cargo test --test compile_and_run polyp_fb'
 ```
 
 The two manual boots:
 
 ```sh
-nix-shell dev-kernel.nix --run 'examples/polyp-fb-riscv64/run.sh'
-nix-shell dev-kernel.nix --run 'examples/polyp-fb-x86_64/run.sh'
+nix-shell shell.nix --run 'kelpc/tests/fixtures/examples/polyp-fb-riscv64/run.sh'
+nix-shell shell.nix --run 'kelpc/tests/fixtures/examples/polyp-fb-x86_64/run.sh'
 ```
 
 `run.sh` builds the project, boots it under `timeout 20 qemu-system-<arch>`,
@@ -126,7 +126,7 @@ emulator is not on `PATH`.
 
 ### What the comparison proves
 
-The Rust test builds `examples/polyp-todo-soft`, runs it with
+The Rust test builds `kelpc/tests/fixtures/examples/polyp-todo-soft`, runs it with
 `POLYP_SOFT_SIZE=kernel` (320x200, the kernels' resolution), builds each kernel,
 boots it under `timeout 20 qemu-system-<arch>`, and compares the two outputs line
 by line from the first `step ` line to the report's `end`, dropping the hosted
@@ -147,9 +147,9 @@ image.
 ## What a bare-metal project must provide
 
 There is no libc and no runtime behind a bare-metal Polyp image, so a project
-writes a few more facts down in its `coral.toml`. `examples/polyp-fb-riscv64/` is
+writes a few more facts down in its `coral.toml`. `kelpc/tests/fixtures/examples/polyp-fb-riscv64/` is
 the worked example (about two hundred lines of project code;
-`examples/polyp-fb-x86_64/src/fb_platform.kp` is literally the same file):
+`kelpc/tests/fixtures/examples/polyp-fb-x86_64/src/fb_platform.kp` is literally the same file):
 
 1. **A framebuffer.** The platform owns it. A `static mut [u32; W * H]` in `.bss`
    is enough, and `_start` zeroes `.bss`, so the surface starts black the way
