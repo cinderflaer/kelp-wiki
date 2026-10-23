@@ -32,5 +32,7 @@ empty on release.
 
 ## Changed
 
+- Field shorthand: in a `datac` or enum variant construction, a bare name `host` means `host = host` when a local has that name, and it mixes with named arguments (`Job(host, port, paths = paths)`). A bare name with no matching local or field is refused with the name in the message. Calls to functions are unchanged.
+
 - The example pages match their programs: `count-lines-words-bytes` passes an absolute path, the `sandbox-directory-grant` panic line is current, and the `count-lines-in-kelp-tree` listing is the current `examples/src`.
 - The bench runner (`bench/gc/run.sh`) and the Tidepool step 0, step 1 and block test comments describe the hosted build and the checked blocks. No behaviour changed.

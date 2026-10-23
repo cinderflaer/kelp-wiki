@@ -55,6 +55,21 @@ twice. The convention in this repository is to use named arguments wherever a
 call would otherwise be ambiguous: in practice every `datac` construction with
 two or more fields.
 
+### Field shorthand
+
+In a `datac` or enum variant construction, a bare name is shorthand for the
+named form when a local has the field's name. The two lines build the same value:
+
+```kelp
+val j = Job(host, port, paths)
+val k = Job(host = host, port = port, paths = paths)
+```
+
+Bare and named arguments may be mixed in one list: `Job(host, port, paths = paths)`.
+The shorthand needs both a local called `host` in scope and a field called `host`;
+otherwise the call is refused with the name in the message. In a call to a
+function a bare name stays positional, so `f(host)` is not shorthand.
+
 ## Overloading and recursion
 
 - **A user program cannot overload a name.** `fun pick(a: i32)` and

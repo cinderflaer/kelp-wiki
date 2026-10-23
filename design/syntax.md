@@ -967,6 +967,19 @@ print(str.concat("a", "b"))            // positional is fine too
 
 A name that the function does not declare is an error; so is naming an argument to `print`, which takes one positional argument.
 
+**Field shorthand (constructions only).** In the argument list of a `datac` or an `enum` variant construction, a bare name `host` means `host = host`: the field and the local have the same name, and the call writes the name once. The spelling is the bare name alone, with no `=`. It mixes with named and positional arguments in one list:
+
+```kelp
+val a = Job(host, port, paths)              // the same as Job(host = host, port = port, paths = paths)
+val b = Job(host, port, paths = paths)      // bare and named mixed
+```
+
+The rules:
+
+- A bare name needs a local of that name in scope and a field of that name in the constructor. Otherwise the call is refused and the message names the missing one.
+- A bare name in a call to a `fun` (or through a function value) is still a positional argument. The shorthand does not apply there, so `f(host)` passes the local `host` by position.
+- The long form `Job(host = host)` still compiles and builds the same tree.
+
 ### 7.2 Overloading, recursion, closures
 
 - A user program cannot overload a name. Two `fun pick(a: i32)` and `fun pick(a: f64)` collide: `function 'pick' is defined more than once for the same parameter types`. Overloading exists only inside the shipped standard library, and only for `abs`, `min`, `max` and `clamp`, which is how `math.min` accepts `i32`, `i64` and `f64`.
@@ -3099,6 +3112,8 @@ Compiler diagnostics print as `file:line:col`, a message, and often a note with 
 | `'first' is a generic function` (as a value) | a function value needs one concrete signature; wrap the call in a small non-generic function |
 | `'f' reads a passdown, so it cannot be a function value` | a passdown is a hidden argument, so its C signature is not a plain function pointer; call it directly |
 | `a call through 'f' cannot use named arguments` | a function type has no parameter names; pass the arguments positionally |
+| `'host' is shorthand for 'host = host', but no local named 'host' is in scope` | a bare name in a construction is a field and a local of the same name; declare the local, or write `field = value` |
+| `'host' is shorthand for 'host = host', but datac 'Job' has no field named 'host'` | a bare name must be a field of the constructor; write the field's own name |
 | `a call through 'f' takes 1 argument(s), found 2` | an indirect call is counted against the callee's own parameter list |
 | `'mut'/'&' cannot be written on the function type` | a function value is Copy, so a borrow of one is a pointer to a pointer |
 | `a function type cannot return another function type` | C cannot write that declarator; return a `datac` holding the function value |

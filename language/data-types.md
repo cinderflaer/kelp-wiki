@@ -83,7 +83,8 @@ enum Shape {
 - An `enum` value is owned and **not `Copy`**, like a `datac`. Assigning or
   passing one moves it; dropping it drops the live variant's payloads.
 - Construction names the variant, qualified by the enum:
-  `Shape.Circle(r = 1.0)`, `Shape.Empty`. Arguments may be named or positional.
+  `Shape.Circle(r = 1.0)`, `Shape.Empty`. Arguments may be named or positional, and a
+  bare name is shorthand for `name = name` (`Shape.Circle(r)` when a local `r` exists).
 - An `enum` may declare receiver methods, and a call on a value of the type
   resolves one. A receiver that builds a variant names a type rather than a value,
   so it is refused: bind the variant first.
