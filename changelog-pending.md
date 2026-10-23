@@ -25,3 +25,8 @@ empty on release.
 ## Documentation
 
 - The Coral, Polyp, fpl and Lighthouse pages match their `main` branches: Coral has no version pins and records `coral.lock`, Polyp exports no `QUIT_ID` and its API lists the v4 and v5 nodes, fpl has 32 libraries, and Lighthouse has a Kelp port of the server in progress.
+
+## Changed
+
+- The example pages match their programs: `count-lines-words-bytes` passes an absolute path, the `sandbox-directory-grant` panic line is current, and the `count-lines-in-kelp-tree` listing is the current `examples/src`.
+- The bench runner (`bench/gc/run.sh`) and the Tidepool step 0, step 1 and block test comments describe the hosted build and the checked blocks. No behaviour changed.

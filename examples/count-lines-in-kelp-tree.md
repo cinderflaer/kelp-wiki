@@ -104,21 +104,28 @@ kelpc build count-lines-in-kelp-tree.kp -o count-lines-in-kelp-tree && ./count-l
 Run against this page's own `examples/src` directory:
 
 ```
-    68  count-lines-in-kelp-tree.kp
+    49  build-http-request-parts.kp
+    60  checksums-encodings-dates.kp
+    79  count-lines-in-kelp-tree.kp
     80  count-lines-words-bytes.kp
     43  download-url-to-file.kp
-    43  filter-json-by-score.kp
+   118  exact-numeric-libraries.kp
+    42  filter-json-by-score.kp
+    78  list-and-set-helpers.kp
+    54  pack-bit-fields.kp
     44  ping-pong-client.kp
     60  ping-pong-server.kp
+    53  read-manifest-settings.kp
     25  recursive-fibonacci.kp
     30  sandbox-directory-grant.kp
     54  self-test-and-timing.kp
-    72  total-csv-column.kp
-    18  vault.kp
-   151  word-count-with-flags.kp
+    68  terminal-table-and-logs.kp
+    69  total-csv-column.kp
+    20  vault.kp
+   159  word-count-with-flags.kp
 
-files: 12
-lines: 688
+files: 19
+lines: 1185
 ```
 
 Those counts are the chapter's own sources at the time of the run, so they move

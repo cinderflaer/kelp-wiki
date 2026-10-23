@@ -80,7 +80,7 @@ is a module path relative to it.
 On stderr, and the process exits 1:
 
 ```text
-/tmp/kelp-sandbox-demo/vault.kp:17:12: panic: '/tmp/kelp-sandbox/secret.txt' is outside the fs capability granted to module 'vault'
+/tmp/kelp-sandbox-demo/vault.kp:19:12: panic: '/tmp/kelp-sandbox/secret.txt' is outside the fs capability granted to module 'vault'
   granted:
     /tmp/kelp-sandbox/vault/**
 ```
