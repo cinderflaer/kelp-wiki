@@ -82,7 +82,7 @@ fun main() {
 
 ```text
 $ kelpc check bad1.kp
-error: operator requires matching numeric operands, found 'i64' and 'f64'
+error: operator requires matching numeric operands, found 'int' and 'f64'
   --> bad1.kp:3:18
 ```
 
