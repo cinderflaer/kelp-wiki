@@ -170,56 +170,55 @@ fun main() {
 
 ## Refusals of the collector
 
-A hosted build refuses some shapes by name. These are not ownership errors. They come
-from the collector, which has to see every value it may reclaim. The messages on current
-`main` say "in a hosted build" and name the reason, for example `'Leaf' cannot be a List
-  element in a hosted build: 'Leaf' is a resource, ...`. The text "in managed mode" is
-  retired.
+A hosted build refuses some shapes by name. These are not ownership errors. They come from
+the collector, which has to see every value it may reclaim. The messages say "in a hosted
+build" and name the reason, for example:
 
-- **A resource in a container or a heap slot.** `'Leaf' cannot be a List element in a hosted
-  build: 'Leaf' is a resource, and a resource never enters the collected heap ...`. The
-  same refusal applies to a `Map` key or value, an array element, the payload of a `Box`,
-  and a value captured by a closure environment. A resource stays in a local, a parameter
-  or a field of a stack value.
+```text
+'Leaf' cannot be a List element in a hosted build: 'Leaf' is a resource, and a resource never enters the collected heap
+```
+
+- **A resource in a container or a heap slot.** The same refusal applies to a `Map` key or
+  value, an array element, the payload of a `Box`, a field of a heap-resident `datac`, and a
+  value captured by a closure environment. A resource stays in a local, a parameter or a
+  field of a stack value. The classifier is in `kelpc/src/managed.rs`.
 - **Channel ends and pool values.** A channel end (`SendEnd`, `RecvEnd`, `Sender`,
-  `Receiver`) is a resource. It is refused where a resource is refused, such as a
-  `List` element, and in a `Mutex` or `RwLock` value (the form is given below). It
-  is not refused as a thread argument or result: the channel records cross to a
-  worker, by decision 125 (`CROSSING_CHANNEL_RECORDS` in `kelpc/src/managed.rs`).
-  A `fun` literal passed to [`thread.spawn`](/stdlib/thread) may also capture a
-  `Sender`. A channel used inside one thread builds. A [`std/pool`](/stdlib/pool)
-  value is a resource with a destructor, and it does not cross to a worker.
+  `Receiver`) is a resource, so it is refused where a resource is refused, such as a `List`
+  element, and in a `Mutex` or `RwLock` value (the form is given below). It is not refused as
+  a thread argument or result: the channel records cross to a worker, by commit `c2503916`
+  (`CROSSING_CHANNEL_RECORDS` in `kelpc/src/managed.rs`). A `fun` literal passed to
+  [`thread.spawn`](/stdlib/thread) may also capture a `Sender`. A channel used inside one
+  thread builds. A [`std/pool`](/stdlib/pool) value is a resource with a destructor, and it
+  does not cross to a worker.
 - **A `Mutex` or `RwLock` holding a resource.** The form is `'std.sync.Sender<i64>' cannot
   be the value of a Mutex or RwLock in a hosted build: 'std.sync.Sender<i64>' is a
-  resource, ...`. A `Mutex` or `RwLock` holding a `List`, a `String` or a number is
-  accepted: a local `Mutex<List<i32>>` locks, pushes and returns the length. A `Mutex`
-  inside a `List` or a `Box` is refused, for example `'Mutex<i64>' cannot be a 'List'
-  element: a mutex owns a runtime record and is reached by borrowing it, while a
-  container's own routines move and drop an element like a plain location. Keep the mutex
-  in a local or a field ('val m = Mutex.new(0)') and lock it there`, and the `Box` form
-  says `'Box' element`.
+  resource, ...`. A `Mutex` or `RwLock` holding a `List`, a `String` or a number is accepted:
+  a local `Mutex<List<i32>>` locks, pushes and returns the length. A `Mutex` inside a `List`
+  or a `Box` is refused, for example `'Mutex<i64>' cannot be a 'List' element: a mutex owns a
+  runtime record and is reached by borrowing it`. Keep the mutex in a local or a field
+  (`val m = Mutex.new(0)`) and lock it there.
 - **A `Box<dyn Trait>` in a container or as a thread argument.** The form is `'Box<dyn
   Shape>' cannot be a List element in a hosted build: its declaration was not found, so it
   cannot be classified as memory`. A concrete type with a destructor is a resource, so it
   cannot be the payload of a `Box` either. See [Box dyn](/language/box-dyn).
 - **An enum as a `Map` value.** The checker refuses an enum as a `Map` value: `'Status'
-  cannot be a 'Map' value: a hosted build cannot describe an 'enum' inside a map's entry
-  yet, and a 'datac' that holds the enum is refused the same way. Keep the values in a
-  'List<Status>' and store each value's index in the map instead`. As a key, `Map<Kind, i32>`
-  was refused in a build of `main` before that check, with `a hosted build describes the
-  enum 'Kind' only as a heap object (a Box payload or a List element); an enum stored inside
-  a datac is not described yet`. Whether an enum is accepted as a `List` element or a `Box`
-  payload was not built in this lane.
+  cannot be a 'Map' value: a hosted build cannot describe an 'enum' inside a map's entry yet,
+  and a 'datac' that holds the enum is refused the same way`. Keep the values in a
+  `List<Status>` and store each value's index in the map. An enum is accepted as a `List`
+  element and as a `Box` payload: the collector describes it as a heap object
+  (`kelpc/src/gc_descr.rs`).
 - **A closure that captures a resource.** One that captures a resource is refused as
   `'std.sync.Sender<i64>' cannot be a value captured by a closure environment in a hosted
   build: 'std.sync.Sender<i64>' is a resource, ...`. The exception is a `fun` literal written
   directly as the `thread.spawn` entry, which may capture a channel end
   (`closure_sender_send.kp` and `closure_sender_panic.kp` run). A closure that captures a
-  memory value builds (`fixture_closure_mutex_list` runs). A scoped closure that borrows its
+  memory value builds (`closure_mutex_list.kp` runs). A scoped closure that borrows its
   captures is not checked, because its environment stays on the stack.
 - **A by-value aggregate in a user `extern fun`.** The message says the llvm backend cannot
-  pass the struct, `String` or `List` to a native symbol yet, and asks for a pointer or a
-  handle. See [User FFI](/language/externs).
+  pass the struct, `String` or `List` to a native symbol, and asks for a pointer or a handle.
+  See [User FFI](/language/externs).
+
+For the messages that a manual block prints, see [the boundary](/memory/tidepool/boundary).
 
 ## Where to go next
 

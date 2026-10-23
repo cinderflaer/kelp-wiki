@@ -13,6 +13,7 @@ which is the authority, and it says where a claim comes from a run instead.
 | --- | --- |
 | `server/` | the `lighthouse` language server: a Rust binary with no external crates, the same constraint `kelpc` and Coral hold themselves to |
 | `intellij/` | an IntelliJ plugin: `.kp` file type and syntax highlighting, everything the server offers through LSP4IJ, a Kelp project entry, a Coral run configuration for every Coral command, a gutter run icon on `fun main()`, and the project's compiler version in Settings |
+| `server-kelp/` | the start of a Kelp port of the server: a skeleton with the LSP lifecycle, dispatch, position model and JSON, with a `coral test` task. It is not a replacement yet, and `server/` is the server that ships |
 
 The server has no command-line flags: it reads no arguments in `server/src/main.rs`
 and speaks LSP over stdio, which is why the editor launches it and nothing else
@@ -26,7 +27,7 @@ The split explains what the server can and cannot do, and it is worth reading
 before trusting a squiggle or a completion.
 
 **`kelpc` is the authority on what compiles.** On open, on save, and a debounced
-moment after a document changes (150ms), the server runs `kelpc check --json` on the
+moment after a document changes (150ms by default, or `LIGHTHOUSE_CHECK_DEBOUNCE_MS`), the server runs `kelpc check --json` on the
 current file's project and turns each finding into a diagnostic, with the span
 `kelpc` reports and the kind it reports it as (`error`, `warning` or `outdated`),
 grouped by the file each finding actually points at. After a change, the debounced check reads the open buffer through `kelpc check --json --text`. A `kelpc` too old for `--text` falls back to the file on disk. It finds the compiler
@@ -88,7 +89,7 @@ file's own `fun` declarations plus the free-standing builtins (`print`, `print!`
 
 `kelpc` embeds its standard library in the binary rather than shipping `.kp` files,
 so the server carries its own copy: `server/stdlib/`, one `.kp` per shipped
-module except `std/rt` (20 modules today, `std/atomic`, `std/thread` and `std/ws`
+module except `std/rt` (35 modules today, `std/atomic`, `std/thread` and `std/ws`
 among them), regenerated from a kelp checkout by `server/tools/sync-stdlib.sh` and
 checked against it by drift tests. That copy is what go-to-definition into the
 standard library and completion of `str.*` are answered from.
@@ -149,14 +150,14 @@ What the plugin adds:
 | --- | --- |
 | `.kp` file type and highlighting | a hand-written lexer, not the server's; it reads `pub`, `for`, block comments and byte literals |
 | Everything in the feature table | over LSP, through LSP4IJ |
-| **File ▸ New ▸ Project ▸ Kelp** | scaffolds a project with `coral init`, with a version field and a **Kelp version** field for the `[toolchain]` pin |
-| A Coral run configuration type | one command at a time from every command Coral has (`build`/`run`/`check`/`clean`/`test`/`fmt`/`lint`/`docs`/`task`), each with an arguments field |
+| **File ▸ New ▸ Project ▸ Kelp** | scaffolds a project with `coral init` and a version field; the new project has no compiler pin |
+| A Coral run configuration type | one command at a time from every command Coral has (`build`/`run`/`check`/`sync`/`clean`/`test`/`fmt`/`lint`/`docs`/`task`), each with an arguments field |
 | A gutter run icon | on `fun main()` |
-| **Settings ▸ Languages & Frameworks ▸ Kelp** | the project's compiler version, which is the `[toolchain] pin` in `coral.toml`, and which can install a version with `coral toolchain kelp install <ver>` in the background |
+| **Settings ▸ Languages & Frameworks ▸ Kelp** | the newest Kelp release and the one installed, and it can run `coral toolchain kelp update` |
 
-That last row is the one to know about: the plugin reads and writes the project's
-pin, so the IDE uses the project's compiler rather than its own. See
-[Coral's pinning section](/tooling/coral#the-manifest).
+The plugin reads and writes no compiler pin. Coral builds with the newest Kelp release,
+so the IDE and the command line use the same compiler. See
+[Coral's toolchains section](/tooling/coral#toolchains).
 
 ## Tests
 

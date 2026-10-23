@@ -1,6 +1,6 @@
 ---
 title: "Libraries (fpl)"
-description: "fpl is the first-party Kelp library catalogue - one folder per library in a single repository, twenty-eight of them at the time of writing."
+description: "fpl is the first-party Kelp library catalogue - one folder per library in a single repository, thirty-two of them at the time of writing."
 isPublished: true
 tags: "library"
 ---

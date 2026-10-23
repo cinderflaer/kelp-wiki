@@ -183,19 +183,24 @@ surviving a single worker's failure.
 
 ## Thread-local storage
 
-A `tl` declaration gives each thread its own copy of a scalar. Each copy starts
-from the literal in the declaration on first access, so a worker that reads
-`tl var hits: i64 = 0` sees `0` whatever the main thread has stored:
+A `tl` declaration gives each thread its own copy of a scalar. Each copy starts from the
+literal in the declaration on first access, so a worker that reads `tl var hits: i64 = 0`
+sees `0` whatever the main thread has stored:
 
 ```kelp
 tl var hits: i64 = 0
 ```
 
-Each worker counts into its own `hits` with no lock, and each join returns that
-worker's count. A borrow of a `tl` never crosses to a worker, because it names
-the spawning thread's copy. In this release a `tl` holds a scalar: a heap-owning
-type, a `Drop` type, or an initializer that is not a literal is refused by name.
-Thread-local values do not run destructors at thread exit.
+The fixture `tl_per_thread.kp` shows the rule. Two workers each add 1000 to their own
+copy and return it, and a third worker reads its own copy and gets `0`, while the main
+thread keeps `5`. Its output is `1000`, `1000`, `0` and `5`. A `tl` is read and written
+with no lock.
+
+A borrow of a `tl` does not cross to a worker. The checker refuses the borrow, because a
+shared borrow may cross only when the place it borrows has process lifetime, which in this
+release means a `pd` global (`tl_refuse_borrow.kp`). In this release a `tl` holds a scalar:
+a `String` or a `Drop` value is refused by name (`tl_refuse_heap.kp`), and an initializer
+that is not a literal is refused (`tl_refuse_nonliteral.kp`).
 
 ## A worked example: concurrent downloads
 
@@ -222,9 +227,17 @@ No language or stdlib change was needed for this milestone: everything it
 uses (`thread.spawn`/`thread.join`, an explicit `Pool`, `List`) already existed
 once threads did.
 
+## Channels and the pool
+
+A channel is a `Mutex`-guarded queue whose two ends share one runtime record through
+`Mutex.share()`, and a pool is a queue of closures on the same rule
+([`std/sync`](/stdlib/sync), [`std/pool`](/stdlib/pool)). A channel end may cross to a
+worker as a thread's argument or result. The `select` form over receive, send, timeout and
+closed arms is built ([`std/sync`, Select](/stdlib/sync#select)).
+
 ## What is still open
 
-Four questions were deliberately left for when they actually come up, rather
+Three questions were deliberately left for when they actually come up, rather
 than decided speculatively; none of them blocks anything above:
 
 - **`compare_exchange`, strong form only, or a `_weak` alongside it?** The weak
@@ -233,13 +246,6 @@ than decided speculatively; none of them blocks anything above:
   as well as a memory-model one. It waits for the capability design to cover it.
 - **`Relaxed`, `Acquire` and `Release`** are reserved argument values, not
   shipped: see "One ordering" above.
-- **Channels and a pool are built on the rule above.** A channel is a
-  `Mutex`-guarded queue whose two ends share one runtime record through
-  `Mutex.share()`, and a pool is the same queue of closures
-  ([`std/sync`](/stdlib/sync), [`std/pool`](/stdlib/pool)). On current `main` a channel
-  builds, and a channel end may cross to a worker as a thread's argument or result. The
-  `select` form over receive, send and timeout arms is built
-  ([`std/sync`, Select](/stdlib/sync#select)).
 
 ## See also
 

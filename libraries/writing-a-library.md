@@ -109,7 +109,7 @@ below is a rule.
 
 The `main` of `fpl` is what a consumer gets, and it has to build against the
 **released** compiler: `coral sync` fetches a dependency from the remote's tip,
-and `coral.toml` cannot name a branch (`coral/src/deps.rs` parses a dependency
+and `coral.toml` cannot name a branch (Coral's `src/deps.kp` parses a dependency
 into a URL and a folder, and nothing else). There is no way for a consumer to opt
 out of `main`, so a `main` that needs an unreleased compiler breaks every one of
 them.

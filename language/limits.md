@@ -64,6 +64,9 @@ See [Traits](/language/traits), [Generic traits](/language/generic-traits),
   [Scoped blocks](/language/functions#trailing-blocks-and-scoped-parameters).
 - A block that writes through an exclusive capture and returns a borrow. Return an
   owned value instead.
+- A manual block's value (`block name: T { ... }`) that leaves its block. It cannot be
+  returned, stored outside the block, put in a `List`, passed to a call, or captured by a
+  closure. See [Tidepool: the boundary](/memory/tidepool/boundary).
 
 ### Functions and names
 
@@ -117,6 +120,8 @@ The compiler enforces these numbers. Written code is far from them.
 | Steps while evaluating one `const` | 1,000,000 | `this constant expression did not finish within 1000000 steps` |
 | Nested calls while evaluating one `const` | 64 | a diagnostic naming the call depth |
 | `[target] cpus` in a freestanding build | 1 to 64 | `must be between 1 and 64` |
+| `[target] heap_max` in a hosted build (MiB) | 1 to 65536, default 256 | `coral.toml value for '[target] heap_max' must be between 1 and 65536 MiB` |
+| `[tidepool] headroom_pct` | 0 to 1000 | `coral.toml's [tidepool] key 'headroom_pct' must be from 0 to 1000` |
 
 See [Front-end fuzzing and parser limits](/tooling/fuzzing) for the parser limits.
 

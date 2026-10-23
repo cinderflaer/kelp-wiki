@@ -94,6 +94,9 @@ pub trait Backend {
     fun Self.entry_ids() => List<i32>
     fun Self.entries_built() => i32
     fun Self.stats() => Stats
+    fun Self.scroll_at(path: &Path) => i32
+    fun mut Self.set_scroll(path: &Path, offset: i32)
+    fun mut Self.take_list_moved() => bool
 }
 ```
 
@@ -206,7 +209,12 @@ pub enum Align {
     End
 }
 
-pub datac Opts(var margin: i32, var expand: bool, var align: i32, var classes: List<String>)
+pub datac Opts(
+    var margin: i32, var expand: bool, var align: i32, var classes: List<String>,
+    var opacity: i32, var offset_x: i32, var offset_y: i32,
+    var anim_main: anim.Anim, var anim_opacity: anim.Anim, var anim_ox: anim.Anim, var anim_oy: anim.Anim,
+    var disabled: bool, var min_h: i32,
+)
 pub datac Child<M>(val key: Key, val node: Node<M>, val opts: Opts)
 
 // The tree type lives in `core.kp` now, so a view is written
@@ -216,12 +224,16 @@ pub enum Node<M> {
     Row(val children: List<Child<M>>, val spacing: i32)
     Text(val text: String, val size: i32, val bold: bool)
     Spacer(val height: i32)
-    Entry(val text: String, val on_change: fun (String) => M)
+    Entry(val text: String, val on_change: closure(String) => M)
     Button(val label: String, val on_click: M)
     Checkbox(val label: String, val checked: bool, val on_toggle: M)
     Progress(val permille: i32)
     Separator
     Scrolled(val children: List<Child<M>>, val spacing: i32)
+    Image(val w: i32, val h: i32, val pixels: List<u32>)
+    Memo(val deps: Deps, val build: fun (&Deps) => List<Child<M>>)
+    VList(val count: i32, val row_h: i32, val viewport_h: i32, val deps: Deps, val build: fun (&Deps, i32) => List<Child<M>>)
+    Viewport(val children: List<Child<M>>, val rows: i32, val viewport_h: i32)
 }
 
 // The builder. `column`/`row` take the trailing block; the methods on
@@ -232,7 +244,7 @@ fun mut Children<M>.text(t: str)
 fun mut Children<M>.text_styled(t: str, size: i32, bold: bool)
 fun mut Children<M>.spacer(height: i32)
 fun mut Children<M>.button(label: str, on_click: move M)
-fun mut Children<M>.entry(value: str, on_change: fun (String) => M)
+fun mut Children<M>.entry(value: str, on_change: closure(String) => M)
 fun mut Children<M>.checkbox(label: str, checked: bool, on_toggle: move M)
 fun mut Children<M>.progress(permille: i32)
 fun mut Children<M>.separator()
@@ -250,6 +262,17 @@ fun mut Children<M>.margin(n: i32)
 fun mut Children<M>.expand()
 fun mut Children<M>.align(a: Align)
 fun mut Children<M>.class(name: str)
+fun mut Children<M>.image(w: i32, h: i32, pixels: List<u32>)
+fun mut Children<M>.memo(key: str, deps: Deps, build: fun (&Deps) => List<Child<M>>)
+fun mut Children<M>.memo_int(key: i64, deps: Deps, build: fun (&Deps) => List<Child<M>>)
+fun mut Children<M>.virtual_list(count: i32, row_h: i32, viewport_h: i32, deps: Deps, build: fun (&Deps, i32) => List<Child<M>>)
+fun mut Children<M>.anim(a: Anim)
+fun mut Children<M>.disabled()
+fun mut Children<M>.opacity(permille: i32)
+fun mut Children<M>.opacity_anim(a: Anim)
+fun mut Children<M>.offset(x: i32, y: i32)
+fun mut Children<M>.offset_x_anim(a: Anim)
+fun mut Children<M>.offset_y_anim(a: Anim)
 
 // The v0 plain constructors. `text` and `button` keep their names because
 // their builder twins are methods (a separate namespace); `column`/`row` are
@@ -263,14 +286,13 @@ pub fun button<M>(label: move String, on_click: move M) => Node<M>
 pub fun run<S, M>(title: str, width: i32, height: i32, init: move S,
                   view: fun(S) => Node<M>, update: fun(mut S, M)) => S
 
-pub datac Stats(val created: i32, val updated: i32, val removed: i32, val live: i32)
+pub datac Stats(val created: i32, val updated: i32, val removed: i32, val live: i32, val memo_hits: i32, val memo_misses: i32, val view_calls: i32)
 pub fun stats() => Stats
 pub fun focus_present() => bool
 pub fun focus_survived() => bool
 pub fun entries_built() => i32
 pub fun entry_text(index: i32) => String
 pub fun css(text: str)
-pub const QUIT_ID: i32
 pub fun schedule_post(delay_ms: u32, id: i32)
 pub fun schedule_quit(delay_ms: u32)
 pub fun schedule_set_entry(delay_ms: u32, index: i32, new_text: str)
@@ -291,7 +313,7 @@ pub fun schedule_focus_entry(delay_ms: u32, index: i32)
 - `entry(value, on_change)` is a text field. `value` seeds the text the first
   time the widget is built; a patch rewrites it only when the model's text
   differs **and** the entry is not where the focus is, so a user's cursor and
-  selection are not fought. `on_change` is a plain `fun(String) => M` (called
+  selection are not fought. `on_change` is a closure, `closure(String) => M` (called
   with a borrowed `String`) that turns the live text into the application's
   `Msg`.
 - `checkbox(label, checked, on_toggle)` posts `on_toggle` on `toggled`; the
@@ -324,7 +346,7 @@ pub fun schedule_focus_entry(delay_ms: u32, index: i32)
 - **An id is an interactive widget's.** The core and the backend derive the same
   integer from the same rule: the nth `Entry`, `Button` or `Checkbox` a run
   creates is id n, ids only grow and are never reused, and a handler captures its
-  id forever. `QUIT_ID` is `-2`, because `polyp_poll` answers `-1` for an empty
+  id forever. The GTK backend's `QUIT_ID` is `-2` (in `backends/gtk/gtk_backend.kp`, not exported by the facade), because `polyp_poll` answers `-1` for an empty
   queue. A surviving widget keeps its id; a removed one's id resolves to no path,
   so a queued id whose widget is gone is dropped instead of reaching `update`.
   An application should still carry a `Msg` rather than post a raw id.

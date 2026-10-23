@@ -1,11 +1,12 @@
 ---
 title: "Catalogue"
-description: "All twenty-nine first-party libraries, grouped by what they do. Twenty-eight are folders in the fpl repository, a manifest line each; Polyp ships with the compiler instead."
+description: "All thirty-two first-party libraries in the fpl repository, grouped by what they do. Each is a folder with an index entry. Polyp is a separate repository and has its own page."
 isPublished: true
 tags: "library"
 ---
-All twenty-eight first-party libraries, grouped by what they do. Each is a folder in the
-[fpl repository](https://homelabone.xenoo.dev/gittea/Lilly/fpl), a single manifest line each.
+All thirty-two first-party libraries, grouped by what they do. Each is a folder in the
+[fpl repository](https://homelabone.xenoo.dev/gittea/Lilly/fpl), with an entry in its `index.toml`.
+[Polyp](/libraries/polyp) is a separate repository, fetched as `fpl/polyp`, and is not counted here.
 
 ## Data formats
 
@@ -16,6 +17,8 @@ All twenty-eight first-party libraries, grouped by what they do. Each is a folde
 | [`csv`](/libraries/csv) | RFC-4180-ish CSV parse/write: quoting, escaped quotes, embedded newlines |
 | [`encoding`](/libraries/encoding) | Base64 (RFC 4648), base32 (RFC 4648 §6), base58 (Bitcoin), hex, percent (RFC 3986) and form (`application/x-www-form-urlencoded`) encode/decode, plus a hexdump |
 | [`url`](/libraries/url) | RFC 3986 URI parsing, building, `remove_dot_segments` and relative-reference resolution |
+| `flate` | DEFLATE decoder (RFC 1951), zlib (RFC 1950, Adler-32 checked) and gzip (RFC 1952, CRC-32 checked, multi-member) over Bytes, with an output cap. Decoding only |
+| `html` | HTML parser into an index arena: tags, attributes, text, comments, doctype, void and raw-text elements, 33 named entities and numeric references. Selectors come in a later stage |
 
 ## Numbers and mathematics
 
@@ -36,6 +39,13 @@ All twenty-eight first-party libraries, grouped by what they do. Each is a folde
 | --- | --- |
 | [`glob`](/libraries/glob) | `*`/`?` glob matching and list filtering |
 | [`datetime`](/libraries/datetime) | Civil date/time from unix seconds, ISO-8601, day-of-week |
+
+## Media and packages
+
+| Library | What it does | Needs |
+| --- | --- | --- |
+| `audio` | Pure WAV core: RIFF/WAVE header parse (8, 16 and 24 bit PCM), a 44-byte header writer and integer sample conversions. Freestanding, no allocation | - |
+| `resource` | Reads and copies the files a Coral `.ckp` package carries, by path relative to its resource folder | `fs`, `process` |
 
 ## Collections and ergonomics
 
