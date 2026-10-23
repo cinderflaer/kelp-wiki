@@ -214,18 +214,19 @@ error: 'Leaf.drop' must take its receiver with 'mut': the drop body reads and ma
 error: method 'Leaf.drop' is defined more than once
 ```
 
-## A panic runs no destructor
+## A panic and destructors
 
-There is still **no unwinding**, with one exception. A `panic` abandons the
-frame: neither a `defer` nor a destructor of any value in it runs, and the leak
-is the same one the memory model already admits. The exception is a hosted
-worker thread: when its panic ends the thread, the user `Drop` of each owned
-local runs, newest first, before its joiner sees the panic
-([Concurrency in v1](/language/concurrency)). A `defer` does not run on that
-path, and a freestanding image never has it. A freestanding panic runs no
-destructor at all, so a kernel cleans up in its panic handler, not in a `Drop`. On an ordinary exit a `defer` is spliced before
-the block's ordinary drops, so a deferred action runs before the destructor of a
-value in the same block.
+There is no unwinding. A `panic` leaves the frame it happens in, so the destructors of
+that frame's owned values do not run, and the memory model admits the leak. The exception
+is a hosted worker thread. When its panic ends the thread, the user `Drop` of each owned
+local runs, newest first, before its joiner sees the panic. The fixtures
+`panic_drop_order.kp`, `panic_drop_arg.kp`, `panic_drop_handle.kp` and `panic_drop_moved.kp`
+cover this path ([Concurrency in v1](/language/concurrency)). A freestanding image runs no
+destructor on a panic, so a kernel cleans up in its panic handler, not in a `Drop`.
+
+On an ordinary exit a `defer` is spliced before the block's ordinary drops, so a deferred
+action runs before the destructor of a value in the same block. A panic on the main
+thread runs no destructor, as this example shows:
 
 ```kelp
 datac Leaf(val tag: i32)
