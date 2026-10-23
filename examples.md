@@ -6,7 +6,7 @@ tags: "example"
 ---
 The example programs are real files in this repository, not snippets.
 Each page shows the whole source, the command that builds or runs it, and the output it prints.
-Every program is compiled and run by `scripts/check-examples.sh`, so an example that stops working shows up as a failure.
+The programs that need no dependency or second file are built and run by `scripts/check-examples.sh`, so an example that stops working shows up as a failure. The others are only parsed by it.
 
 New to Kelp? Start with the [Tutorial](/tutorial), which teaches the language one idea at a time.
 Its last chapter builds a small tool the same way the programs here are built.

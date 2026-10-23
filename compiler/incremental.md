@@ -164,10 +164,10 @@ memory). Every cell is the **median of three runs**, in milliseconds, of a real
 preceding build filled; "edit" is one literal changed in one module of a program
 whose cache was filled by the unedited build, so exactly that module misses.
 
-The three programs are `examples/hello.kp` (3 lines); `http_rate_limit`, the
+The three programs are `kelpc/tests/fixtures/examples/hello.kp` (3 lines); `http_rate_limit`, the
 largest hosted project under `kelpc/tests/projects/` that binds `std/http`
 (about 100 lines of Kelp plus the shipped `std` modules it reaches); and
-`examples/download_pool.kp` (203 lines, `std/http` plus `std/thread` and
+`kelpc/tests/fixtures/examples/download_pool.kp` (203 lines, `std/http` plus `std/thread` and
 `std/process`).
 
 | program | build | debug median (ms) | release median (ms) |
@@ -309,9 +309,9 @@ One unit per source module id holds:
   instance of module `M`'s generic function is owned by `M`, not by the module
   that happened to instantiate it);
 - its `statics` and its `section("...")` consts;
-- the trampolines its `extern fun` declarations reach, which stay C in the
-  per-program `externs.c` object (one object for the whole program, exactly as
-  today: the C text is the C backend's own).
+- the trampolines its `extern fun` declarations reach, which go into the
+  per-program `<out>.externs.o` object (one object for the whole program, written
+  as LLVM IR by the same target machine as the program).
 
 `main` and the program's own module are ordinary units.
 
@@ -350,10 +350,10 @@ it owns. Ownership is total: one symbol, one defining object.
   is the widening of a *known* function value: its shim lives in `_support` and
   calls the function directly, so a function named as a value is referenced from
   outside its unit even when the reference was written inside it. The second is
-  the per-program C object (`externs.c`): an `extern fun` body, the capability
-  glue or a `std/rt` prototype can call a Kelp function across the object
-  boundary in C, which no typed node shows, so the C text is scanned for the
-  emitted symbol names. `main` is always external (the C runtime is what calls
+  the per-program externs object (`<out>.externs.o`): an `extern fun` body, the
+  capability glue or a `std/rt` prototype can call a Kelp function across the
+  object boundary, which no typed node shows, so the externs object's symbol
+  references are scanned for the emitted symbol names. `main` is always external (the C runtime is what calls
   it). Everything `_support` defines is external, because a generated helper can
   be reached from any unit.
 - An over-approximation is harmless (the symbol is merely visible); a missed
@@ -549,7 +549,7 @@ The guard (`src/guard.rs`) is unchanged and keeps working:
   kernel; no destructor runs under a running LLVM call and there is nothing to
   corrupt. The exit status stays 75.
 - The floor can fire while unit workers are alive. No `cc` or `ld.lld` child is
-  running during that phase (the per-program C object is compiled before the
+  running during that phase (the per-program externs object is built before the
   units and the link happens after they join), so there is no child for the guard
   to kill at that moment, and it does not need one: the workers die with the
   process.
@@ -572,7 +572,7 @@ The guard (`src/guard.rs`) is unchanged and keeps working:
 ### Measured numbers (slice 3)
 
 Host: the small dev machine this work runs on (7.8 GiB RAM, limited free
-memory), through `dev.nix`. Every cell is the **median of three runs**, in
+memory), in the development shell that `dev.nix` described at the time (the tree now has `shell.nix`). Every cell is the **median of three runs**, in
 milliseconds, of a real `kelpc` binary: the debug build
 (`target/debug/kelpc`) and the release build (`target/release/kelpc`,
 `cargo build --release --bin kelpc`). Both are available, so both are reported.
@@ -582,12 +582,12 @@ by the unedited build, so exactly that module misses.
 
 The three programs:
 
-- `hello`: `examples/hello.kp`, the 3-line example.
+- `hello`: `kelpc/tests/fixtures/examples/hello.kp`, the 3-line example.
 - `http_rate_limit`: `kelpc/tests/projects/http_rate_limit`, the largest hosted
   project under `kelpc/tests/projects/` that binds `std/http` (about 100 lines of
   Kelp plus the shipped `std` modules it reaches: `std/http`, `std/str`,
   `std/result`, `std/option`, `std/process`, and everything they pull in).
-- `download_pool`: `examples/download_pool.kp`, 203 lines, `std/http` plus
+- `download_pool`: `kelpc/tests/fixtures/examples/download_pool.kp`, 203 lines, `std/http` plus
   `std/thread` and `std/process`.
 
 | program | build | debug median (ms) | release median (ms) |

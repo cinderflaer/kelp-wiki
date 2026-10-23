@@ -74,9 +74,12 @@ fun main() {
 
 ## Run it
 
+The program takes an absolute path, because the language has no way to read the
+current directory. The run passes `$PWD/input.txt` for that reason.
+
 ```sh
 printf 'the quick brown fox\njumps over the lazy dog\nand again\n' > input.txt
-kelpc build count-lines-words-bytes.kp -o count-lines-words-bytes && ./count-lines-words-bytes input.txt
+kelpc build count-lines-words-bytes.kp -o count-lines-words-bytes && ./count-lines-words-bytes "$PWD/input.txt"
 ```
 
 ## Output

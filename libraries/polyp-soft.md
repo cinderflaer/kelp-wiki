@@ -302,11 +302,11 @@ would need a retained view model; see the limits below.
 
 ## The work-budget test and the benchmark
 
-`examples/polyp-budget-test/` drives the backend directly and prints one number
+`kelpc/tests/fixtures/examples/polyp-budget-test/` drives the backend directly and prints one number
 per line. The Rust test `polyp_soft_work_budgets_hold` pins the whole output. It is the
 program behind the table above.
 
-`examples/polyp-bench/` runs five scenarios (200-row scroll, type 100 characters,
+`kelpc/tests/fixtures/examples/polyp-bench/` runs five scenarios (200-row scroll, type 100 characters,
 toggle 50 checkboxes, resize 800x600 to 1024x768, full repaint), each five times,
 and prints per scenario: frames, pixels, presented rectangles, backend
 allocations, and median and worst microseconds per frame. The counts are exact and

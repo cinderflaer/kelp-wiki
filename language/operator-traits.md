@@ -163,9 +163,9 @@ false
 
   The receiver is a borrow, so printing leaves the value owned. `x.to_text()`
   may be called directly wherever the method is declared.
-- **A template is not a value.** `to_text` has to build its `String` with
-  `String.empty()` and `push_str`, `fmt.*` or `str.concat`; writing
-  `"(${self.x}, ${self.y})"` as a return value is refused.
+- **A template is a `String` value.** `to_text` can return one:
+  `return "(${self.x}, ${self.y})"` compiles, and `print("p = $p")` runs `to_text`
+  for the value.
 - **Builtins are untouched.** `i32 + i32`, `f64` arithmetic and the formatting of
   numbers, `bool`, `char`, `str`, `String`, `Bytes` and `View` are as before, and
   a user `impl Add for i32` is refused by the orphan rule:

@@ -1,6 +1,6 @@
 ---
 title: "Text"
-description: "str and String, templates, building and splitting text, and parsing numbers, with the two refusals every newcomer meets: a template is not a value, and a String is not a str."
+description: "str and String, templates, building and splitting text, and parsing numbers, with the refusal every newcomer meets: a String is not a str."
 isPublished: true
 tags: "tutorial, language, text"
 ---
@@ -86,8 +86,9 @@ type you have.
 
 ## Templates
 
-`"hello, ${name}"` is a template. It works only inside `print`. A template is not
-a value you can store, return or pass on:
+`"hello, ${name}"` is a template. Inside `print` it writes its text directly.
+Outside `print` it is a `String`, so you can keep it, return it, or pass it where a
+`String` is expected:
 
 ```kelp
 fun label(n: i32) => String {
@@ -95,13 +96,8 @@ fun label(n: i32) => String {
 }
 ```
 
-```text
-$ kelpc check bad1.kp
-error: a string template can only be printed: pass it to 'print(...)' or 'print!(...)'; a template is not a value, so build the text with 'str.concat', 'fmt.*' or a 'String'
-  --> bad1.kp:2:12
-```
-
-To build text that you keep, use `str.concat`, the `fmt` functions, or a `String`.
+`label(7)` returns the `String` `n is 7`. To build text a piece at a time, use
+`str.concat`, the `fmt` functions, or a `String`.
 `fmt.int(42)` turns a number into a `String`. Pass a borrow of it on with
 `.as_str()`, and bind it to a variable first, as the program does. A call that
 returns a borrow of a temporary value is refused, because the temporary would be

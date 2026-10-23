@@ -32,9 +32,13 @@ var m: Map<String, String> = Map.new()
 m.insert(key = "k", v = "v")                    // a key and a value convert
 ```
 
-Nothing converts the other way. `String` → `str` is a borrow, written
-`.as_str()`, and a `View` is **not** a `str` (a slice has no NUL after it), so a
-view that must become text takes `v.to_string()`.
+A `String` passed to a `str` parameter of a plain function or method is borrowed for
+the call, so it needs no `.as_str()` there. A generic function's or a trait method's
+`str` parameter still needs `.as_str()`. A `let`, an assignment, a `return` and a
+`datac` field take no conversion: `val y: str = x` is refused, and `String` → `str`
+is a borrow written `.as_str()`. A `View` is **not** a `str`
+(a slice has no NUL after it), so a view that must become text takes
+`v.to_string()`, and passing a `View` to a `str` parameter is refused.
 
 `str` parameters (`str.len`, `str.eq`, `fs.write_text`, `path.join`, …) keep
 taking a borrowed view with no allocation.
@@ -59,8 +63,8 @@ print("name\tvalue")     // tabs, too; see the escape set in Lexical structure
 `print` takes exactly one positional argument and accepts scalars, `str`,
 `String`, `Bytes`, `View` and a template. It does **not** accept a `datac`, a
 `List`, a `Map`, a `Box`, an `Option` or a `Result`, and it takes no named
-arguments. A template (`"$x"`) is the only way to print a mixture, and a template
-is not a value.
+arguments. A template (`"$x"`) is the way to write a mixture: printed, its text is
+written directly, and outside `print` it is a `String` value.
 
 A template interpolates **any** scalar or text value, owned or borrowed, so
 `print("w = ${s}")` works with `s` a `String`, a `Bytes` or a `View` as well as
@@ -175,8 +179,8 @@ val x: f64 = big.to_f64()            // 3.0, the only integer-to-float widening
   mkName().name.as_str()` remain valid for the binding's scope. A borrow that
   escapes its frame, including a returned borrow, still needs an owner supplied
   by the caller.
-- **A `String` argument where a `str` parameter is expected** needs
-  `.as_str()`: the error message names the argument.
+- **A `View` where a `str` parameter is expected** is refused, and the error names
+  the argument. A `String` in the same place is accepted, as a borrow for the call.
 
 ## See also
 

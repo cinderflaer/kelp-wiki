@@ -84,8 +84,9 @@ fun main() {
 
 So the column limit, the order inside the last group and the naming rules need a
 review, not a formatter. `kelpc lint` is where those live: it is warning-only,
-so it never fails a build, and it reports three rules: the comment run, an
-`else if` link written where `elif` is preferred, and the naming case.
+so it never fails a build, and it reports four rules: the comment run, the naming
+case, a redundant borrow on a `List` or `str` parameter, and a redundant
+comparison such as `== true`.
 
 ## The comment run
 
@@ -109,16 +110,10 @@ a defect.
 
 ## The `else if` link
 
-A chain link is written `elif`:
-
-```text
-warning: 'else if' compiles, but 'elif' is the preferred spelling
-  --> server.kp:14:7
-```
-
-The `else if` spelling stays legal and compiles identically; the warning is a
-reading preference and nothing more, and `kelpc fmt` never rewrites one into the
-other, because it never rewrites a token.
+`else if` is the preferred spelling of a chain link. `elif` is the same link: it
+stays legal and compiles identically, and `kelpc fmt` never rewrites one into the
+other, because it never rewrites a token. `kelpc lint` does not warn about either
+spelling.
 
 ## The naming case
 

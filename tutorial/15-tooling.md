@@ -107,24 +107,25 @@ fun main() {
 
 ## Linting
 
-`kelpc lint` prints warnings. A warning does not stop a build. This file uses
-`else if`, which compiles, but `elif` is the spelling Kelp prefers:
+`kelpc lint` prints warnings. A warning does not stop a build, and the exit status
+stays zero. It checks four things: a run of `//` lines that could be one block
+comment, a name that does not follow the project's naming case, a redundant `&` on a
+`List` or `str` parameter, and a comparison a plain condition says better. This file
+compares a `bool` with `true`, which compiles and means the same as the condition alone:
 
 ```kelp
 fun main() {
-    val n = 2
-    if n > 5 {
-        print("big")
-    } else if n > 1 {
-        print("medium")
+    val ready = true
+    if ready == true {
+        print("go")
     }
 }
 ```
 
 ```text
 $ kelpc lint lint.kp
-warning: 'else if' compiles, but 'elif' is the preferred spelling
-  --> lint.kp:5:7
+warning: '== true' is redundant: write the condition alone
+  --> lint.kp:3:14
 ```
 
 ## Documentation

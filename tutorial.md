@@ -15,13 +15,13 @@ ideas into a real tool.
 
 ## What you need
 
-- The `kelpc` compiler, version 26.10.4 or later. [Install](/getting-started/install)
+- The `kelpc` compiler, version 26.10.6 or later. [Install](/getting-started/install)
   explains the routes to get it.
 - A text editor. [Editor setup](/getting-started/editor) lists the options.
 
 ## How the examples were checked
 
-Every program in this tutorial was compiled and run with the `kelpc 26.10.4`
+Every program in this tutorial was compiled and run with the `kelpc 26.10.6`
 release binary. The output under each program is the output of that run, copied
 without edits. Every compiler error shown is the text `kelpc check` printed for
 the file beside it. Where a file path appears in an error, it is shortened to the

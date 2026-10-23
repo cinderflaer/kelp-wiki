@@ -133,8 +133,9 @@ val n = xs.
 An identifier starts with a letter or `_`. These are the keywords (§2.3):
 
 ```
-as  closure  const  datac  elif  else  enum  extern  false  for  fun  if  impl
-move  mut  pd  pub  return  trait  true  val  var  when  while
+as  closure  const  datac  defer  elif  else  enum  errdefer  extern  false  for
+fun  if  impl  move  mut  pd  pub  return  static  tl  trait  true  val  var  when
+while
 ```
 
 `fn`, `let`, `struct`, `use`, `loop`, `break`, `continue`, `match` and
@@ -232,11 +233,11 @@ literal dollar sign: `"\$HOME"` is the five characters `$HOME`, an ordinary
 string value rather than a template. A `$` followed by anything that is not a
 name or `{` is already literal.
 
-> **A template is not a value**
+> **A template outside `print` is a `String`**
 >
-> The only place a template may appear is as the single argument of `print` or
-> `print!`. To build a string with the same content, use `str.concat`, `fmt.*`
-> or a `String`.
+> Inside `print` or `print!` the text is written directly. Anywhere else a template
+> is a `String` value: bind it, return it or pass it where a `String` is expected.
+> To build text a piece at a time, use `String.push_str`, `str.concat` or `fmt.*`.
 
 ## Operators
 

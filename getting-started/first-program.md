@@ -4,8 +4,8 @@ description: "A guided tour of Kelp's shape in one file, with output - run throu
 isPublished: true
 tags: "getting-started"
 ---
-The Kelp repository ships four examples: `examples/hello.kp`, `examples/fib.kp`,
-`examples/download.kp` and `examples/download_pool.kp` (the last one fetches
+The Kelp repository ships four examples: `kelpc/tests/fixtures/examples/hello.kp`, `kelpc/tests/fixtures/examples/fib.kp`,
+`kelpc/tests/fixtures/examples/download.kp` and `kelpc/tests/fixtures/examples/download_pool.kp` (the last one fetches
 several URLs concurrently with one worker thread per connection pool: see
 [Concurrency in v1](/language/concurrency)). This page walks the first two,
 then adds the pieces a real program needs.
@@ -13,8 +13,8 @@ then adds the pieces a real program needs.
 Every command here is shown twice, once as bare `kelpc` and once through
 [Coral](/tooling/coral). Both work. Start with Coral anyway: it costs one
 `coral.toml` now, and it is the thing you would otherwise have to learn later,
-at the moment your program grows past a single file and suddenly needs a task, a
-dependency, or a pinned toolchain.
+at the moment your program grows past a single file and suddenly needs a task or a
+dependency.
 
 ## Hello
 
@@ -48,8 +48,7 @@ entry = "src/main.kp"
 and `coral run` builds and runs it. That is the whole difference at this size.
 What it buys you later is [what a project is](/getting-started/projects): `impl`
 paths relative to `src/`, dependencies fetched by `coral sync`, extra entry points
-as `[tasks]`, and a `[toolchain]` pin so a machine builds with the compiler the
-project names rather than whatever `kelpc` happens to be on `PATH`.
+as `[tasks]`, and a single `coral build` that fetches what the project declares.
 
 From here on the page uses `kelpc`, because it is one word shorter and makes the
 language the subject. `coral build` and `coral run` accept the same sources.
@@ -65,8 +64,8 @@ fun main() {
 }
 ```
 
-A template is **not a value**: it may only appear as the single argument of
-`print`/`print!`. To build text, use `str.concat`, `fmt.*`, or a `String`:
+Inside `print`/`print!` a template writes its text directly. Anywhere else it is a
+`String` value. To build text a piece at a time, use `String.push_str`:
 
 ```kelp
 var out = String.empty()
@@ -211,6 +210,6 @@ consumer decides the pattern. See [Capabilities](/language/capabilities).
 
 - [A first real tool](/getting-started/first-tool): a `head` that runs, with `argv` and an exit code
 - [Projects and coral.toml](/getting-started/projects): the manifest, dependencies, tasks
-- [Coral](/tooling/coral): `init`, `build`, `run`, `check`, `sync`, toolchain pins
+- [Coral](/tooling/coral): `init`, `build`, `run`, `check`, `sync`, the compiler install
 - [Language](/language): the reference for everything above
 - [Libraries (fpl)](/libraries): JSON, CSV, dates, globs, HTTP helpers

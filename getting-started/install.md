@@ -16,7 +16,7 @@ tags: "getting-started"
 | OpenSSL development output (the `libssl` and `libcrypto` link files) | the same programs: `ld.lld` links `-lssl -lcrypto`, so the development links must exist. No header is read. |
 | glibc | `ld.lld` links the object the `llvm` backend emits, against glibc's start files and libraries. No C compiler is run. |
 | `valgrind` (optional) | the memory gate test |
-| [Coral](/tooling/coral) (recommended) | the build tool and package manager: projects, dependencies, tasks, toolchain pins. One `coral.toml`, and it calls `kelpc` for you |
+| [Coral](/tooling/coral) (recommended) | the build tool and package manager: projects, dependencies, tasks, and the compiler install. One `coral.toml`, and it calls `kelpc` for you |
 
 A program that reaches neither `std/tls`, `std/http` nor `std/ws` needs no
 OpenSSL at all: `hello` builds on a host without it. `nix-shell shell.nix`
@@ -40,13 +40,13 @@ A prebuilt release binary installs with the verifying `build/install.sh` instead
 ## Run a file
 
 ```sh
-./target/release/kelpc run examples/hello.kp
+./target/release/kelpc run kelpc/tests/fixtures/examples/hello.kp
 ```
 
 `run` compiles and executes in one step. To keep the artifact:
 
 ```sh
-./target/release/kelpc build examples/download.kp      # artifact in build/download
+./target/release/kelpc build kelpc/tests/fixtures/examples/download.kp      # artifact in build/download
 ```
 
 Through Coral the same two commands are `coral run` and `coral build`, run inside
@@ -63,42 +63,24 @@ So `kelpc build myproject/` writes `build/myproject`,
 writes `build/main`. Pass `-o` when that is not where you want it, and pass
 `-O0` for a cheap dev build (`-O2` is the default).
 
-## Install Coral with Nix
+## Install Coral
 
-Coral carries an official `flake.nix` at its repository root, so a machine with
-flakes enabled needs no Rust toolchain to build it:
-
-```sh
-nix run git+https://homelabone.xenoo.dev/gittea/Lilly/coral -- version
-nix build git+https://homelabone.xenoo.dev/gittea/Lilly/coral
-./result/bin/coral version
-```
-
-A tag is a flake ref too, but the full ref path is what resolves, since a short
-name is looked for under `refs/heads/` only:
+Coral is a Kelp program with no dependencies, so the compiler builds it:
 
 ```sh
-nix build git+https://homelabone.xenoo.dev/gittea/Lilly/coral?ref=refs/tags/v26.09.4
+git clone https://homelabone.xenoo.dev/gittea/Lilly/coral
+cd coral
+kelpc build src/main.kp -o coral
+./coral version
 ```
 
-With no `ref` the default branch is used, so the two commands above take `main`.
-From a checkout, `.` is the same flake:
-
-```sh
-nix build .#coral              # result/bin/coral
-nix run . -- version
-nix develop                    # cargo and rustc, at the revision the flake pins
-```
-
-The flake pins `nixos-26.05`. It reads the package version from `Cargo.toml`
-rather than repeating it, so a release bump moves the package with it, and it
-runs Coral's unit tests as part of the build.
-
-`kelpc` is deliberately **not** part of it. Coral manages the compiler itself,
-and `coral toolchain kelp install <ver>` is how one arrives, so pinning a second
-compiler in the flake would be a second answer to the same question. Build the
-compiler from source with the steps above, or let Coral fetch a release asset
-(see [Toolchains](/tooling/coral#toolchains)).
+Coral's `main` branch has no Nix flake. The flake that builds Coral is on the
+`v26.09.4` tag, which is the older Rust build, so it is not the way to get the Kelp
+port. Once `coral` is on your `PATH`, `coral toolchain kelp update` installs the
+newest Kelp compiler release into `~/.coral/toolchains/` and links
+`~/.coral/bin/kelpc` to it (see [Toolchains](/tooling/coral#toolchains)). That is
+how most people get `kelpc`, so the source build above is only needed to bootstrap
+Coral itself.
 
 ## Backends
 

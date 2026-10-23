@@ -9,8 +9,8 @@ Coral is the build tool and package manager for Kelp. The division is the point:
 cache, dependencies, toolchains) and calls `kelpc` as a subprocess.
 
 Coral is now written in Kelp and lives at the root of its repository. The earlier
-Rust implementation is kept on the `rust-legacy` branch for reference only, must not
-be used in production, and its removal is pending. This page follows
+Rust implementation is the `v26.09.4` tag and the tags before it. It is for reference
+only and must not be used in production. This page follows
 [Coral's README](https://homelabone.xenoo.dev/gittea/Lilly/coral/src/branch/main/README.md),
 which is the authority for the design. Where the binary's output and the README
 differ, this page follows the binary and says so. Those places are listed again in
@@ -19,8 +19,7 @@ differ, this page follows the binary and says so. Those places are listed again 
 This page describes Coral as it is on the `main` branch, which is the Kelp port.
 The first release of the port is `v26.10.5`. Changes on `main` after that tag are not
 released yet, and the [Coral changelog](/changelog/coral) lists each release. The
-newest tag before the port, `v26.09.4`, is the older Rust build, which is kept on the
-`rust-legacy` branch for reference only.
+newest tag before the port, `v26.09.4`, is the older Rust build, kept for reference only.
 
 ## Install and where Coral lives
 
@@ -121,7 +120,7 @@ commands:
 | `coral task <name>` | build and run one task |
 | `coral clean` | remove `build/` |
 | `coral fmt [paths...] [-w\|--check]` | format the project's sources, or one named file; `--check` exits nonzero on a file that is not already formatted |
-| `coral lint [paths...]` | print the compiler's lint warnings (a comment run, the `else if` link, the project's naming case); always exits zero |
+| `coral lint [paths...]` | print the compiler's lint warnings (the comment run, the naming case, a redundant borrow and a redundant comparison); always exits zero |
 | `coral test [name-filter] [--json] [--valgrind]` | build and run every fixture under `tests/`, compare stdout, and check the fixtures marked as refused |
 | `coral toolchain kelp latest\|installed\|update` | print the newest release, print the installed one, or install the newest and link it |
 | `coral info` | print the project's name, version and `[package]` metadata |
@@ -614,7 +613,6 @@ entry = "src/main.kp"
 headroom_pct = 20        # allowed growth of the shared pool between collections, in percent (0 to 1000)
 start_low_mib = 1        # lower guess of the shared pool's first size, in MiB (at least 1)
 start_high_mib = 4       # upper guess of the first size, in MiB (at least start_low_mib, at most heap_max)
-# No toolchain pin yet. A pin will be required once the minimum compiler release exists.
 
 $ cat .gitignore
 build/
@@ -915,7 +913,6 @@ fingerprint, a newer compiler rebuilds rather than replaying a cached artifact.
 | Variable | Effect |
 | --- | --- |
 | `KELPC` | the compiler to run, ahead of the newest installed release |
-| `CORAL_HOME` | overrides `~/.coral` (used by Coral's own tests) |
 | `CORAL_REGISTRY` | the Gitea base URL that `owner/repo` resolves against, ahead of the config file's `registry` (no default) |
 | `CORAL_OWNER` | the account `fpl/<name>` resolves under, ahead of the config file's `owner` (no default) |
 | `CORAL_CONFIG` | the config file's path, ahead of `$XDG_CONFIG_HOME/coral/config.toml` and `~/.config/coral/config.toml` |

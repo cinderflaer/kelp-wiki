@@ -132,7 +132,7 @@ not language work.
 
 ## Running the example
 
-`examples/kernel0-percpu` boots a two-hart riscv64 `virt` with `-smp 2`. Hart 0
+`kelpc/tests/fixtures/examples/kernel0-percpu` boots a two-hart riscv64 `virt` with `-smp 2`. Hart 0
 sets `tp = 0`, writes `4` into its copy and prints it; it then sets `tp = 1` by
 hand, so the same name reads the untouched second copy; `cpu_index()` and
 `cpu_count()` print `1` and `2`.
@@ -181,6 +181,6 @@ $ llvm-nm scratch/kp-percpu.elf | grep kelp_SLOT
 - The refusals each have a project under `kelpc/tests/projects/`: a hosted build,
   a missing `mut`, a use outside `unsafe`, a non-constant initializer, and a `cpus`
   outside `1..=64`.
-- The boot is `examples/kernel0-percpu` under QEMU with two harts:
+- The boot is `kelpc/tests/fixtures/examples/kernel0-percpu` under QEMU with two harts:
   `kernel0_percpu_boots_with_two_harts_and_shows_the_other_copy` in the same file
   asserts `cpu0 4`, `cpu1 7`, `idx 1` and `count 2`.

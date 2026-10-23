@@ -60,7 +60,7 @@ impl "std/option"
 | `unknown module alias 'x' in type 'x.T'` | the module was never imported | add `impl "std/x"` for a standard module, or the local path for a file |
 | `cannot find module 'shapes/circle': expected '/proj/src/shapes/circle.kp'` | the `impl` path does not resolve | in a project, paths are relative to `src/`, never to the importing file |
 | `use of moved value 'a'` | an owned value was consumed and then used | a plain parameter borrows; check whether the call needed `move` at all |
-| `argument 's' has type 'String', expected 'str'` | an owned string where a view is wanted | add `.as_str()` |
+| `cannot assign value of type 'String' to 'y' declared as 'str'` | an owned string bound to a `str` | add `.as_str()` |
 | `List.empty()` or `Map.new()` has no element type | nothing said what is inside | write it on the binding (`var xs: List<i32> = List.empty()`), or let the first `push`/`insert` decide it |
 | `unexpected argument 'extra'` | `kelpc run` was given arguments | it takes none: `kelpc build` then run the binary, or `coral run -- <args>` |
 | `--backend is gone: kelpc builds every program with the llvm backend` | a `--backend=` flag or a set `KELPC_BACKEND` | there is no choice: `llvm` is the one backend ([Backends](/compiler/backends)) |

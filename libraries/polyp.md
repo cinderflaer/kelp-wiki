@@ -17,8 +17,8 @@ the GTK backend needs the grant; the core, the headless backend and the software
 backend name no display symbol and need no capability.
 
 Since v5, Polyp is its own repository: [`lilly/polyp`](https://homelabone.xenoo.dev/gittea/Lilly/polyp).
-The Kelp repository keeps consumer copies in `examples/polyp*/`. `examples/polyp-v0/` is a frozen copy of the
-earlier plain-constructor API and `examples/polyp-counter-v0/` its counter. A consumer declares Polyp in its own
+The Kelp repository keeps consumer copies in `kelpc/tests/fixtures/examples/polyp*/`. The frozen copies
+`polyp-v0` and `polyp-counter-v0`, which earlier revisions of this page named, are no longer in the tree. A consumer declares Polyp in its own
 `coral.toml` (see [Using the library](#using-the-library) and [Polyp v5](#polyp-v5)).
 
 There is no published version number. **v2** added the keyed patch, `scrolled`,
@@ -108,7 +108,7 @@ the focus check and the counters, and it names no backend.
 
 The **headless** backend (`backends/headless/headless_backend.kp`) applies the same
 patches to an in-memory tree and prints a text dump; it needs no display, so a
-whole program can run in a test. `examples/polyp-core-test/` asserts the pure
+whole program can run in a test. `kelpc/tests/fixtures/examples/polyp-core-test/` asserts the pure
 diff (identical trees produce nothing, a text change one `Update`, a keyed
 reorder `Move`s and no create or remove, and a duplicate key panics naming it)
 and runs the todo program on the headless backend with the same counters the GTK
@@ -372,8 +372,8 @@ nothing keeps it after the widgets exist.
 
 ## The counter
 
-`examples/polyp-counter/` is the minimal program, complete and buildable. Its `coral.toml` fetches Polyp
-with `polyp = "fpl/polyp"`, and its imports are:
+The counter program (`polyp-counter`) is no longer in the Kelp tree at this revision, so the listing below
+is kept for reference. Its `coral.toml` fetched Polyp with `polyp = "fpl/polyp"`, and its imports were:
 
 ```kelp project
 impl "deps/polyp/core/core"
@@ -466,7 +466,7 @@ return polyp.plain_column(kids)
 
 ## The keyed todo list
 
-`examples/polyp-todo/` is the keyed-list program: an entry and an add button at the top,
+`kelpc/tests/fixtures/examples/polyp-todo/` is the keyed-list program: an entry and an add button at the top,
 a scrolled list of keyed rows, and a progress bar of done over total. Each row is
 one `keyed` child whose key is the item's own id, never its index, so a row is
 the same row after a move or a removal above it. Its `view` is:
@@ -572,12 +572,10 @@ not guesses:
   strips trailing newlines.
 
 ```sh
-examples/polyp-counter/smoke.sh
-examples/polyp-counter-v0/smoke.sh
-examples/polyp-todo/smoke.sh
+kelpc/tests/fixtures/examples/polyp-todo/smoke.sh
 ```
 
-The loop is also tested with no display at all: `examples/polyp-core-test/` runs
+The loop is also tested with no display at all: `kelpc/tests/fixtures/examples/polyp-core-test/` runs
 the same todo program on the headless backend with no GTK and no Xvfb, and
 [Polyp on a framebuffer](/libraries/polyp-soft) covers the software backend's
 layout, input and damage tests. Those run in the plain development shell on both

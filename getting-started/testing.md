@@ -1,19 +1,23 @@
 ---
 title: "Testing what you write"
-description: "Kelp has no `kelpc test` and no test discovery. What it has is testkit, a library that counts and prints, and Coral tasks, which compile and run an entry file - together that is the whole harness, and this page builds one."
+description: "Coral runs the fixtures under tests/ with coral test. Without fixtures, testkit counts and prints checks and a Coral task runs one entry file: how to set up each, and where the test file goes."
 isPublished: true
 tags: "getting-started, testing"
 ---
-Kelp has no `kelpc test` and no test discovery. What it has is two pieces you
-assemble yourself:
+Coral has a test runner. `coral test` builds and runs every fixture under `tests/`:
+each `tests/<name>.kp` is compared with its `tests/<name>.expected` output, and a
+fixture marked `.refused` must fail to compile. It takes an optional name filter,
+`--json` for one machine-readable document, and `--valgrind`. The fixture layout is
+in [Coral](/tooling/coral#the-command-surface).
+
+The other way is a harness you assemble yourself from two pieces:
 
 - **`testkit`**, a library that keeps a running tally and prints `ok` or `FAIL`
   for each check;
 - **a Coral task**, which compiles and runs one entry file, forwards `argv` and the
   exit code, and caches the result.
 
-That is the whole harness. It is enough for a library of a few hundred lines, and
-it is honest about what it does not do: no filtering, no parallel runs, no timing.
+The harness is enough for a library of a few hundred lines. It has no timing.
 
 ## Where the test file goes
 
