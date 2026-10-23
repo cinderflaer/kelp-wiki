@@ -32,9 +32,11 @@ var m: Map<String, String> = Map.new()
 m.insert(key = "k", v = "v")                    // a key and a value convert
 ```
 
-A `String` passed to a `str` parameter is borrowed for the call, so it needs no
-`.as_str()` there. Anywhere else nothing converts it: `val y: str = x` is refused,
-and `String` → `str` is a borrow written `.as_str()`. A `View` is **not** a `str`
+A `String` passed to a `str` parameter of a plain function or method is borrowed for
+the call, so it needs no `.as_str()` there. A generic function's or a trait method's
+`str` parameter still needs `.as_str()`. A `let`, an assignment, a `return` and a
+`datac` field take no conversion: `val y: str = x` is refused, and `String` → `str`
+is a borrow written `.as_str()`. A `View` is **not** a `str`
 (a slice has no NUL after it), so a view that must become text takes
 `v.to_string()`, and passing a `View` to a `str` parameter is refused.
 

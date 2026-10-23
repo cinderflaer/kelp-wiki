@@ -104,8 +104,8 @@ xs.push("pushed")                  // so does an element
 val s: String = "a literal"        // and an assignment
 ```
 
-A `String` passed to a `str` parameter is borrowed for the call. Anywhere else,
-`String` → `str` is a borrow, written `.as_str()`.
+A `String` passed to a `str` parameter of a plain function is borrowed for the call.
+Elsewhere, `String` → `str` is a borrow, written `.as_str()`.
 [Text](/language/text) covers the whole picture.
 
 ## Integers convert explicitly
