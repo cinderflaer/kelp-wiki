@@ -64,7 +64,10 @@ this page is the index to it.
 
 446 commits since 26.10.5, the portable-packages and kernel-start release. It closes
 the three release goals of the 26.10 plan: stable TLS, the bugfix pass, and the first
-kernel and OS stack. The suite results are in the line under the test gate below.
+kernel and OS stack. The suite passes (1983 tests, 50 ignored by default) except three
+`gc_descr` tests that were already failing before this release: the container lowering
+and hosted identity checks against the goldens, and the node descriptor test for two box
+slots. No other test fails.
 
 **Portable Linux packages.** `build/release-packages.sh` in the kelp repository builds
 kelpc in one container per distro and installs each package into a fresh container of
