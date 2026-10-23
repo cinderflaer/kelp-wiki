@@ -33,8 +33,9 @@ dead value can stay in the heap until the next collection.
   alone) or `gogc-style` (the latest live size plus the stack and global bytes scanned
   with it). No trigger is set above the heap region.
 - The heap is capped by `[target] heap_max`, in MiB. The default is 256, and the
-  range is 1 to 65536. When a collection cannot make room under the cap, the program
-  stops with a fatal `out of memory` message.
+  range is 1 to 65536. When the shared pool cannot make room under the cap after a
+  collection, the program stops and prints `out of shared-pool memory`, with the cap and
+  the live sizes. See [failure and recovery](/memory/tidepool/failure-recovery).
 - A value that a thread or a lock holds is collected like any other, because the
   runtime registers it as a collector root. A resource (a file, socket, process, thread
   handle, `Mutex` or `RwLock` record, condition variable, channel end or pool) is refused
@@ -43,12 +44,12 @@ dead value can stay in the heap until the next collection.
 A freestanding build has no collector and no shared heap. See
 [Freestanding](/language/freestanding).
 
-The measured numbers on [Performance](/memory/performance) are for the 26.10.5
-release, which had no collector. Current `main` has not been measured on that page.
-Tidepool steps 1 and 2 are on `main`: the collector roots the values that threads and
-locks hold, and `[tidepool]` in `coral.toml` sets the start guesses, the headroom and
-the trigger rule. Manual block regions (`block name: T { ... }`) are on `main` too. See
-[Tidepool](/memory/tidepool).
+The numbers on [Performance](/memory/performance) are for the 26.10.5 release, which
+linked no collector. For what the benchmark scripts measure on the current compiler, see
+[Tidepool: performance claims](/memory/tidepool/performance-claims). The collector roots
+the values that threads and locks hold. `[tidepool]` in `coral.toml` sets the start guesses,
+the headroom and the trigger rule. Manual block regions (`block name: T { ... }`) are part
+of every hosted build. See [Tidepool](/memory/tidepool).
 
 ## Pages
 

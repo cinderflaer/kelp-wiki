@@ -5,10 +5,11 @@ isPublished: true
 tags: "performance, memory, benchmarks"
 ---
 These are the recorded numbers for Kelp's 26.10.5 hosted build, which had manual
-memory: no collector, every value freed by its owner. Current `main` links the
-collector into every hosted build, and that build has not been measured on this
-page. The C programs were removed from the tree, so the C figures cannot be rerun.
-Tidepool steps 1 and 2 are on `main`. Its design is on [Tidepool](/memory/tidepool).
+memory: no collector, every value freed by its owner. Every hosted build of the current
+compiler links the collector. The C programs were removed from the tree, so the C figures
+cannot be rerun. For the collector's measurements, see
+[Tidepool: performance claims](/memory/tidepool/performance-claims). The design is on
+[Tidepool](/memory/tidepool).
 
 ## Conditions
 
