@@ -32,7 +32,18 @@ fun entries_for(pages: usize) => usize {
 }
 ```
 
-- The type is mandatory.
+- The type is optional. `const NAME: T = value` has type `T`. Without the
+  annotation, `const NAME = value`, the const takes the type its value has with no
+  expected type: an integer literal is `int` (the native width), a float is `f64`,
+  and a `bool`, `char` or `str` keeps its own type. A const built from a typed
+  const keeps that type, so `const WIDE: u8 = 200` and `const WRAPPED = WIDE + 100`
+  make `WRAPPED` a `u8` that wraps to 44.
+- A use never changes a const's type. A const used where another type is needed,
+  such as a `usize` address or a `usize` length, keeps its annotation: with
+  `const BASE = 0x1000`, `val p: usize = BASE` is refused, and `const BASE: usize = 0x1000`
+  is the fix.
+- Only a scalar (a number, `bool`, `char` or `str`) can leave the type out. An
+  array or a tuple, and a `section("...")` array, keep the annotation.
 - Every `const` and `pd` must come before the first `datac`, `enum`, `trait` or
   `fun` in the file.
 - The initializer is **evaluated while the compiler runs**. It may use a

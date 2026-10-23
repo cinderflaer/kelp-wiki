@@ -140,8 +140,9 @@ const NAME: str = "x"
 const PI2: f64 = math.PI * 2.0
 ```
 
-A `const` is a top-level compile-time value. The type is mandatory, the
-initializer is evaluated while the compiler runs, and every use is substituted as
+A `const` is a top-level compile-time value. The type is optional: without it the
+const takes the type of its value, and a use never changes it. The initializer is
+evaluated while the compiler runs, and every use is substituted as
 a literal, so a `const` costs no storage and no startup work. A `const` may only
 name constants declared before it; it may also call a plain `fun` whose own body
 stays inside what a constant can evaluate, and that function may be declared

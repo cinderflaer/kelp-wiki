@@ -35,7 +35,7 @@ traitname    := ident [ "." ident ]                    // `Shape` or `shape.Shap
 typename     := ident [ "." ident ]
 method       := "fun" [ "mut" ] "Self" "." ident "(" [ param ("," param)* ] ")"
                 [ "=>" type ] body
-const        := [ "pub" ] "const" ident ":" type "=" expr
+const        := [ "pub" ] "const" ident [ ":" type ] "=" expr
 pd           := "pd" ("val" | "var") ident [ ":" type ] "=" expr
 datac        := [ "pub" ] "datac" ident [ typeparams ] "(" [ field ("," field)* ] ")"
 field        := ("val" | "var") ident ":" type

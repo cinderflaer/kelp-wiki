@@ -2353,7 +2353,7 @@ fun entries_for(pages: usize) => usize {
 const TABLE_ENTRIES: usize = entries_for(pages = 64)
 ```
 
-A `const` is a top-level compile-time value. The type is mandatory, the initializer is **evaluated while the compiler runs**, and each use is substituted as a literal, so there is no storage and no initialization at startup.
+A `const` is a top-level compile-time value. The type is optional: `const NAME = value` takes the type of its value (an integer literal is `int`), and a use never changes it. The initializer is **evaluated while the compiler runs**, and each use is substituted as a literal, so there is no storage and no initialization at startup.
 
 What an initializer may be:
 
