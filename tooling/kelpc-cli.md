@@ -13,18 +13,24 @@ wording of a message may differ slightly from the current binary.
 usage: kelpc build <file.kp> [-o <out>] [-O0|-O1|-O2|-O3|-Os] [--deny-outdated] [--incremental] [--timings]
        kelpc run <file.kp> [-O0|-O1|-O2|-O3|-Os] [--deny-outdated] [--incremental] [--timings]
        kelpc check <file.kp> [--json] [--deny-outdated] [--text]
+       kelpc caps <file.kp|project dir>
+       kelpc repl [--script <file>]
        kelpc fmt <file.kp>
        kelpc fmt -w <path>...
        kelpc fmt --check <path>...
        kelpc lint <path>...
        kelpc doc <file.kp|project dir>... [-o <dir>] [--format md|html] [--private] [--check]
+       kelpc doc <file.kp|project dir>... --format json
+       kelpc doc --text <file.kp> --format json < buffer
        kelpc doc --std [-o <dir>] [--format md|html] [--private] [--check]
+       kelpc stdlib --json --dir <dir>
        kelpc cache stats|clear [--dir <dir>]
-       kelpc version
+       kelpc version [--verbose]
 ```
 
-There is no `--help` and no `--version`: each of those prints the usage block
-above, and `kelpc version` is the version query.
+There is no `--help` and no `--version`: an unknown command or flag prints the usage
+block above, and `kelpc version` is the version query. The usage block on `main` is
+the source of this list (`usage` in `kelpc/src/main.rs`).
 
 ## Subcommands
 
@@ -46,6 +52,9 @@ above, and `kelpc version` is the version query.
 | `kelpc doc --std` | the same for the shipped standard library | as above |
 | `kelpc cache stats` | prints the per-unit object cache's entry count and total size | 0 |
 | `kelpc cache clear` | deletes every cached unit object | 0, or 1 when the directory cannot be removed |
+| `kelpc caps <file.kp\|project dir>` | prints what each project module holds, what it reaches and what it grants, from the capability gate ([Capabilities](/language/capabilities)) | see `kelpc/src/caps_report.rs` |
+| `kelpc repl [--script <file>]` | the read-eval-print loop, or a script run through it (`kelpc/src/repl.rs`) | not stated here |
+| `kelpc stdlib --json --dir <dir>` | writes every shipped std module's source under `<dir>` and prints a JSON listing with each module's SHA-256 (`kelpc/src/commands/cmd_stdlib.rs`). Refused without `--json` or `--dir` | 1 on a bad flag |
 | `kelpc version [--verbose]` | prints the release name the binary was built from, for example `kelpc 26.10.4`. With `--verbose` it also prints the commit, build date, rustc and LLVM versions ([Release tooling](/tooling/release-tooling)). The name is the same text as the release tag. For months before October the tag keeps a leading zero (`v26.09.5`) that `Cargo.toml` cannot carry, and this command adds it back | 0 |
 
 Two behaviours worth knowing:
