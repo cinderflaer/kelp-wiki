@@ -58,7 +58,7 @@ c.id = 5                 // error: the field `id` is declared val
   (`var xs: List<i32> = List.empty()`) when nothing decides it, which is what a
   list that is only ever measured (`xs.len()`) hits
   ([Collections](/language/collections)).
-- An integer literal takes the type its context requires, and `i32` when nothing
+- An integer literal takes the type its context requires, and `int` (64-bit) when nothing
   determines it ([Lexical structure](/language/lexical)). There is no implicit
   numeric conversion afterwards, so the annotation is a real decision.
 - A **character** literal follows the same rule and is `char` when nothing asks

@@ -62,7 +62,7 @@ val p = Pair(first = 1, second = String.from_str(s = "one"))   // A = i32, B = S
 - A parameter that neither the expected type nor the arguments determine is an
   error that names it, with the fix to write: `val x: Maybe<i32> = ...`.
 - An integer literal takes its type from the expected type or from the other
-  argument, not from the `i32` default.
+  argument, not from the `int` default.
 - A payload-less variant cannot take an instantiation, because there is no call to
   attach it to. Write the expected type instead, as `b` above does.
 

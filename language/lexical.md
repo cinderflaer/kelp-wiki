@@ -161,15 +161,15 @@ val i = b'x'            // byte literal
 - **Integer literals** are decimal, hexadecimal after `0x`, or binary after `0b`:
   `0xff`, `0b1010`. A radix literal is the same value as its decimal
   spelling (`0xff` is `255`), and like any literal it has no width of its own:
-  it takes the integer type its context requires, and `i32` when nothing
+  it takes the integer type its context requires, and `int` (64-bit) when nothing
   determines it, so `val mask: u8 = 0xff` and `val mask: u64 = 0xff` both work.
   A literal that does not fit the type its context asks for is refused at its own
-  line, with a message naming a type that holds it: `val big = 4294967295` is an
-  error, because nothing gives the literal a type and `i32` cannot hold it, so it
-  is written `val big: u64 = 4294967295`. The widest literal that can be written
+  line, with a message naming a type that holds it: `val big = 18446744073709551615` is an
+  error, because nothing gives the literal a type and `int` cannot hold it, so it
+  is written `val big: u64 = 18446744073709551615`. The widest literal that can be written
   is `u64::MAX`, `18446744073709551615`, because the scanner holds the whole
   `u64` range; a literal above it is refused by name rather than truncated. The same applies to a literal receiver,
-  where the call supplies no expected type: `4294967295.to_u64()` is refused.
+  where the call supplies no expected type: `18446744073709551615.to_u64()` is refused.
   There is no suffix (`5u8` is an error: the width comes from where the literal
   sits) and there is no octal form. A malformed one is
   refused by name: `0b12` is "invalid digit '2' in a binary literal".

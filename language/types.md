@@ -14,6 +14,7 @@ valid inside the scope that lent it.
 
 | Type | Kind | Notes |
 | --- | --- | --- |
+| `int` | Copy | the default integer type: the 64-bit signed integer, the type an unannotated integer literal takes. `int` is `i64`, the same type under a second name |
 | `i32` `i64` `u8` `u16` `u32` `u64` `usize` `isize` | Copy | integers; all widths are distinct |
 | `f32` `f64` | Copy | IEEE floats |
 | `bool` | Copy | `true` / `false` |
@@ -57,7 +58,7 @@ val (lo, hi) = min_max(xs)      // a tuple value is read by destructuring
 
 - **Two or more elements.** `(T)` is not a one-element tuple. It is the
   parenthesized type `T`, exactly as `(e)` is the parenthesized expression `e`,
-  so `val x = (5)` binds an `i32`. `()` is the absent value, and its type is
+  so `val x = (5)` binds an `int`. `()` is the absent value, and its type is
   `unit`: `()` as a type and `unit` name the same type, so `Result<(), E>` and
   `Result<unit, E>` are one type. `()` as a value can be returned, passed and
   bound, and it is the success payload of a `Result<unit, E>`

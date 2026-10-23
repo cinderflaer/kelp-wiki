@@ -33,7 +33,7 @@ Four sources give an expression its type.
    Call arguments, typed `val` initializers, `return` values, field initializers and block tails all pass one.
    A `val` with no written type takes the type of its initializer.
 2. **Integer literals.** `int_lit_ty` (`infer/builtin_sigs.rs`) takes the expected integer type.
-   Without one, the literal is `i32`.
+   Without one, the literal is `int`, which is `i64`.
    `check_int_literal` (`infer/builtin_sigs.rs`) rejects a value that does not fit.
 3. **Generic arguments.** `bind_type_params` (`infer/generics.rs`) matches the written parameter types against the argument types.
    `bind_from_expected` (`infer/generics.rs`) fills the rest from the expected type.

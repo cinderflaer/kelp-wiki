@@ -40,3 +40,4 @@ empty on release.
 
 - The example pages match their programs: `count-lines-words-bytes` passes an absolute path, the `sandbox-directory-grant` panic line is current, and the `count-lines-in-kelp-tree` listing is the current `examples/src`.
 - The bench runner (`bench/gc/run.sh`) and the Tidepool step 0, step 1 and block test comments describe the hosted build and the checked blocks. No behaviour changed.
+- An unannotated integer literal is `int`, the 64-bit signed integer, instead of `i32` (decision 72, issue #275). `int` is a type name for `i64`, so `val n: int = 5` is valid. A value past 2^31 is an ordinary value with no annotation, and an unannotated literal past `i64::MAX` is refused by name. Annotated `i32` code is unchanged; code that relied on the `i32` default needs `: i32`.

@@ -66,7 +66,7 @@ Some of this is new. `impl "std/option"` brings in the `Option` type that the
 ## Types
 
 The scalar types are `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `usize`, `isize`,
-`f32`, `f64`, `bool` and `char`. A whole-number literal is an `i32` unless the
+`f32`, `f64`, `bool` and `char`. A whole-number literal is an `int`, a 64-bit integer, unless the
 context asks for another type. A decimal literal is an `f64`. The
 [types reference](/language/types) has the full table.
 
