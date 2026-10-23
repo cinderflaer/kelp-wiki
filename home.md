@@ -16,8 +16,8 @@ and tagged unions, ownership without a garbage collector, `Option` and `Result` 
 
 ## Current release
 
-**26.10.5** (2026-10-09). The release notes and the binary are on the
-[v26.10.5 release page](https://homelabone.xenoo.dev/gittea/Lilly/kelp/releases/tag/v26.10.5).
+**26.10.6** (2026-10-23). The release notes and the binary are on the
+[v26.10.6 release page](https://homelabone.xenoo.dev/gittea/Lilly/kelp/releases/tag/v26.10.6).
 Every release is listed in the [changelog](/changelog).
 
 ## Start here
