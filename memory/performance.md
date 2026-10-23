@@ -48,10 +48,12 @@ with `BT_DEPTH=16`, 7 runs and 1 warm-up. Times in seconds.
 The ratio is the hosted median divided by the C median. The checksum of every
 hosted run matched the C output.
 
-## Older run: 26.09.5, the full suite (recorded)
+## Older run: 26.09.5, the full suite, i5-6500T (recorded)
 
 Source: `bench/RESULTS.md`, the second run, kelp-llvm column, 7 runs each, on the
-same machine under heavier load. Times in seconds.
+i5-6500T described above, under heavier load. This is the older machine. It is not the
+laptop used for the 2026-10-23 runs on [Tidepool: performance claims](/memory/tidepool/performance-claims).
+Times in seconds.
 
 | benchmark | kelp-llvm median | min | max | C (gcc -O2) median | ratio | kelp-llvm peak RSS MiB | C peak RSS MiB |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
