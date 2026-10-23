@@ -108,11 +108,13 @@ Each diagnostic is a message, a module id and a byte span.
 ```text
 error: <message>
   --> <file path>:<line>:<column>
+  help: <a fix, when the compiler has one>
   note: <note message>
   --> <note file path>:<line>:<column>
 ```
 
 - The label is `error: `, `warning: ` or `outdated: `.
+- A `help: ` line, when there is one, follows the primary location and names a fix.
 - Each note is printed after the primary location, with the `note: ` prefix and its own location line.
 - Line and column are 1-based.
   The column counts Unicode characters from the start of the line, and a tab counts as one.
@@ -122,7 +124,7 @@ There is no source excerpt and no caret under the error.
 The line and column are the only location information.
 
 `kelpc check --json` uses `render_json`.
-Each finding is an object with `severity`, `message`, `module`, `file`, `line`, `column`, `end_line`, `end_column` and `notes`.
+Each finding is an object with `severity`, `message`, `module`, `file`, `line`, `column`, `end_line`, `end_column` and `notes`, and a `help` key when the finding has a next step.
 The end position is exclusive.
 
 The lexer and the parser report only their first error for each module.

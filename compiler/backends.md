@@ -78,7 +78,8 @@ A closure call passes the environment pointer first (`emit_indirect_call`).
 - A narrowing conversion checks only the bounds that the source type cannot rule out.
 - Integer arithmetic has no overflow check and carries no `nsw` or `nuw` flags, so it wraps.
 - Integer division has no zero check in the generated code.
-  The front end rejects a constant division by zero .
+  The front end accepts a division by a literal zero, so `1 / 0` compiles and
+  the division runs.
 
 ### Debug information
 
