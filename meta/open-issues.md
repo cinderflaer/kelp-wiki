@@ -60,9 +60,10 @@ Sorted easiest first. `effort:` is S (a stdlib function or one small diagnostic)
 
 repo: kelp | found: 2026-10-06 | effort: M
 
-source: roadmap B-11 / MK9-S3-M3; wiki `language/limits.md` (unreleased) calls it
-"a named backlog item rather than ruled out, it is simply not built". Per-CPU
-storage shipped (freestanding only); hosted thread-local did not.
+source: roadmap B-11 / MK9-S3-M3. Per-CPU storage shipped (freestanding only). Hosted
+`tl` declarations for scalars shipped in `f71422c8` (see `language/concurrency.md`,
+"Thread-local storage"). Still open: a `tl` holding a heap-owning or `Drop` type, which
+is refused by name, and a `tl` with an initializer that is not a literal.
 
 ### MISSING-vT4Kd coral: no `.ckp` (compiled Kelp) archive for an application
 
@@ -167,17 +168,19 @@ can wait for the peer's `Close`, and an IPv6 literal in `ws.parse_url` (and in
 `net` capability patterns, which split the port at the first `:`). HTTP/2 is
 absent: ALPN names `h2` but the server speaks HTTP/1.1. Not on the roadmap.
 
-### MISSING-Jy7Df kelp: `Drop` does not run on the panic path (no unwinding)
+### MISSING-Jy7Df kelp: `Drop` on the panic path is partial (no unwinding)
 
 repo: kelp | found: 2026-10-06 | effort: L
 
-source: wiki `language/limits.md` (unreleased), "Concurrency": a user `Drop`
-exists but "does not run on the panic path: there is still no unwinding"; a
-panicking worker's frame is abandoned. `plan/panic-semantics.md`.
+source: wiki `language/limits.md` (unreleased), "Concurrency". A worker that panics
+now runs the user `Drop` of each owned local and each `Drop` thread argument, newest
+first (`658fb86c`, see `language/drop.md`). There is still no unwinding: the temporaries a
+panicking worker holds are not dropped, and the main thread's panic runs no drop
+(`kelpc/tests/tidepool_step0.rs`, `t69_a_main_thread_panic_runs_no_drop`).
 
-A panic leaks every live owner in the frames above it, including a held `Mutex`
-guard and an open file in a worker. Needs a decision (unwind, or run drops
-without unwinding, or document the leak as permanent) before it is a task.
+Still open: a panic leaks the owners in the frames above it that are not locals or `Drop`
+thread arguments, including a held `Mutex` guard's temporaries. Needs a decision (unwind,
+or run drops without unwinding, or document the leak as permanent) before it is a task.
 
 ### MISSING-Gk3Rw kelp: no associated consts in traits or generic impls
 

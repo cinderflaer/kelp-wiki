@@ -85,8 +85,9 @@ fun quarter(n: i64) => result.Result<i64, str.ParseErr> {
 
 ## `panic` and `assert`
 
-`panic(message)` ends the program with a non-zero status. `assert(cond)` is the
-checked form, and it panics with `assertion failed`. The message is a `str` or an
+`panic(message)` ends the program with a non-zero status. In a worker thread it ends
+that thread instead, and its joiner sees the panic as an `Err` ([`std/thread`](/stdlib/thread#the-panic-policy)).
+`assert(cond)` is the checked form, and it panics with `assertion failed`. The message is a `str` or an
 owned `String`, so a message built in the failing branch needs no binding and no
 `.as_str()`:
 

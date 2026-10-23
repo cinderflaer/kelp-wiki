@@ -37,7 +37,8 @@ impl "std/str"
 | `trim(s)` / `trim_start(s)` / `trim_end(s)` | `String` / `&str` / `String` | whitespace is space, tab, LF, CR |
 | `is_space(c: u8)` | `bool` | space, tab, LF, CR |
 | `is_digit(c: u8)` | `bool` | ASCII `0`-`9` |
-| `to_upper(s)` / `to_lower(s)` | `String` | **ASCII only** |
+| `to_upper(s)` / `to_lower(s)` | `String` | every letter with a simple Unicode case mapping; the full mappings are not applied, so `ß` stays as it is |
+| `slice(s: &str, from: usize, to: usize)` | `String` | the bytes `[from, to)`, copied. Panics when `to` is past the end, when `from` is past `to`, or when either end lies inside a codepoint |
 | `repeat(s: &str, n: usize)` | `String` | |
 | `replace(s: &str, from: &str, to: &str)` | `String` | every occurrence |
 | `split(s: &str, sep: &str)` | `List<String>` | keeps empty pieces: `"a,"` splits to 2 |
@@ -100,7 +101,8 @@ fun main() {
   same 13 MB scan takes about 15 ms. See [Text](/language/text#view-borrowed-text-with-a-length).
 - Everything byte-oriented counts bytes: `str.len("é")` is 2. Use `char_count`
   when the answer must be characters.
-- `to_upper`/`to_lower` are ASCII-only; other scripts are left alone.
+- `to_upper`/`to_lower` apply the simple Unicode case mappings (`kelpc/std/str.kp`, the generated table). U+00DF (sharp s) stays as it is, and U+0130 lowercases to U+0069.
+- `slice` checks that both ends fall on codepoint boundaries. `copy_range` and `prefix` are byte-offset helpers and do not check.
 - `split` keeps empty pieces, so a trailing separator produces a trailing empty
   string. To count the lines of a text file, split on `"\n"` and do not count
   a final empty piece.

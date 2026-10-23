@@ -260,4 +260,5 @@ the drop point, and with no unwinding the remaining drops of the frame are skipp
 - [Statics and `defer`](/language/statics-and-defer): `defer`, which runs before
   the destructors of its block
 - [Concurrency in v1](/language/concurrency): a value moved into a worker
-- [Errors and panics](/language/errors): the panic path, which runs no drop
+- [Errors and panics](/language/errors): the panic path. A worker's panic runs the
+  `Drop` of its owned locals, and the main thread's panic runs none

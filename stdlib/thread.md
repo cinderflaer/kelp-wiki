@@ -153,15 +153,17 @@ The rule is "a panic ends the thread it happened in", and the process ends when
 
 ## The two admitted leaks
 
-v1 has no unwinding, no user `Drop` and no `must_use`, and two leaks follow from
-that. Both are deliberate, and both are recorded in
+v1 has no unwinding and no `must_use`, and two leaks follow from that. Both are
+deliberate, and both are recorded in
 [`kelp issue #245`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/issues/245)
 section 5:
 
-- **A panicking worker's frame is abandoned.** A panic ends the worker by
-  `pthread_exit`, so the owned values the abandoned frame held are never
-  dropped. Unwinding needs the `Drop` story the language does not have, and
-  aborting the process is what the panic policy removes.
+- **A panicking worker's temporaries are not dropped.** A panic ends the worker
+  without unwinding. The worker still runs the user `Drop` of each owned local and
+  each `Drop` thread argument, newest first, before its joiner sees the panic
+  (commit `658fb86c`, [Drop](/language/drop)). A value the frame holds only as a
+  temporary is not dropped, and that is the part still open
+  ([Limits in v1](/language/limits)).
 - **A handle nobody joins is detached.** Dropping a handle whose worker is
   still running cannot free the worker record, the argument slot or the result
   slot, because the worker writes through them, so the drop detaches the worker,
