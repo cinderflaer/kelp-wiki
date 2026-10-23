@@ -35,10 +35,11 @@ through `$KELPC` first (`server/src/diagnostics.rs`), which is what makes a
 development build of the compiler usable with a release build of the server.
 
 On open and on save the server also runs `kelpc lint` on the file and publishes
-its findings (`elif` preferred over `else if`, and a run of `//` lines preferred as
-one `/* ... */` block) as `Hint`-severity diagnostics, one step milder than
-`outdated`. Two of them are quick fixes too: the `else if` finding rewrites to
-`elif`, and the comment-run finding merges the run into one block comment.
+its findings (the comment run, the naming case, a redundant borrow and a redundant
+comparison) as `Hint`-severity diagnostics, one step milder than `outdated`. The
+comment-run finding is a quick fix too: it merges the run into one block comment.
+`kelpc` no longer reports `else if`, since `else if` is the preferred spelling, so
+the server's `elif` quick fix has no finding to attach to.
 `kelpc lint` has no `--text` mode, so these tips see the last saved text, the
 same limitation `check` has before a save.
 

@@ -14,6 +14,8 @@ that wrote it; the plan behind it is
 
 ```text
 usage: kelpc doc <file.kp|project dir>... [-o <dir>] [--format md|html] [--private] [--check]
+       kelpc doc <file.kp|project dir>... --format json
+       kelpc doc --text <file.kp> --format json < buffer
        kelpc doc --std [-o <dir>] [--format md|html] [--private] [--check]
 ```
 
@@ -178,9 +180,11 @@ type because a method of a public type is listed with the type.
 | `<file.kp>` | document one file; its module id is its file stem |
 | `<project dir>` | document a project's `src/`; a module's id is its path relative to `src/` |
 | `-o <dir>` | the output directory, `doc` by default, created if missing |
-| `--format md\|html` | Markdown (the default) or HTML; any other value is refused (`error: '--format' takes 'md' or 'html', found 'pdf'`) |
+| `--format md\|html\|json` | Markdown (the default), HTML, or JSON. Any other value is refused (`error: '--format' takes 'md', 'html' or 'json', found 'pdf'`) |
+| `--text <file.kp>` | read the file's text from standard input instead of the disk, for an editor's unsaved buffer. It takes exactly one `.kp` file name and no directory or `--std` |
 | `--private` | list private items too, not only `pub` ones |
 | `--check` | write nothing; exit 1 when a listed item lacks a doc |
+| `--format json` | write one JSON document to standard output instead of pages. It takes no `-o`, and it cannot be combined with `--check` |
 | `--std` | document the shipped standard library instead of your files |
 
 Several paths may be given at once; each file or project contributes its modules

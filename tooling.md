@@ -33,11 +33,11 @@ trusting a number written here. As of this page:
 
 | Piece | Newest tagged release | Notes |
 | --- | --- | --- |
-| `kelpc` | `v26.10.4` (`kelpc 26.10.4`) | the `main` branch's `Cargo.toml` carries the same version |
-| Coral | no tag for the Kelp port yet | `main` is Coral written in Kelp; the newest tag, `v26.09.4`, is the older Rust build |
+| `kelpc` | `v26.10.6` (`kelpc 26.10.6`) | the `main` branch's `Cargo.toml` carries the same version |
+| Coral | `v26.10.5` (`coral 26.10.5`) | `main` is Coral written in Kelp, and that tag is on it; `v26.09.4` is the last Rust build |
 | Lighthouse | IntelliJ plugin `26.09.2` | the language server is `26.9.5` in `server/Cargo.toml` and has no tag |
 
-Coral's Rust implementation survives only on the `rust-legacy` branch, kept for
+Coral's Rust implementation is the `v26.09.4` tag and the tags before it, kept for
 reference. Do not use it in production.
 
 ## How they divide the work
@@ -51,7 +51,7 @@ change what it compiles (`[build]`, `[target]`, `[caps]`, `[unsafe]` and
 [`kelpc` CLI](/tooling/kelpc-cli#projects).
 
 **Coral owns the project, and calls `kelpc` as a subprocess.** It reads the
-manifest, installs a pinned compiler, fetches dependencies, decides whether a
+manifest, installs the newest Kelp compiler, fetches dependencies, decides whether a
 build is up to date, and then runs `kelpc` on the entry point. That is why "how
 do I build?" and "how do I name a dependency?" are two different pages: one is a
 command, the other is a manifest line. The Coral README is the authority for its
@@ -69,7 +69,7 @@ one of the three that runs while you type.
 | --- | --- |
 | a single file, or a handful of files with no dependencies | `kelpc` |
 | a program that imports a library from a git remote | Coral, because fetching a dependency is Coral's job |
-| a project that must build with one specific compiler version | Coral, with a `[toolchain]` pin |
+| a project that must build with one specific compiler version | `kelpc`, with `KELPC` pointing at that build (Coral always uses the newest release) |
 | CI that must assert "this build did no I/O" | Coral, with `sync` then `build --offline` |
 | formatting one file, or checking formatting in CI | `kelpc fmt` |
 | the style rules a formatter cannot enforce, reported as warnings | `kelpc lint` |
@@ -81,7 +81,7 @@ one of the three that runs while you type.
 | --- | --- | --- |
 | compile or run a file, format sources | `kelpc` | [`kelpc` CLI](/tooling/kelpc-cli) |
 | generate documentation from `///` comments | `kelpc doc` | [`kelpc doc`](/tooling/kelpc-doc) |
-| have a project with dependencies, tasks, a pinned compiler | Coral (and `kelpc` for the actual compile) | [Coral](/tooling/coral) |
+| have a project with dependencies and tasks | Coral (and `kelpc` for the actual compile) | [Coral](/tooling/coral) |
 | completion, hover, diagnostics, rename in an editor | Lighthouse, plus `kelpc` for diagnostics | [Lighthouse](/tooling/lighthouse) |
 | understand what a dependency is, and why a folder must stand alone | the library model | [Libraries (fpl)](/libraries) |
 | write one | the library rules | [Writing a library](/libraries/writing-a-library) |

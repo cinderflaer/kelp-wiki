@@ -116,14 +116,15 @@ install.sh --uninstall [--prefix <dir>]
 
 The default prefix is `~/.local`: the binary goes to `<prefix>/bin/kelpc`, and a
 manifest of what was installed goes to `<prefix>/share/kelpc/manifest`, which is
-all `--uninstall` removes. Before installing it checks that the platform is Linux
-x86_64, that `cc` and `libLLVM-21.so` exist (with install hints per distribution
-when not). `kelpc` does not run `cc`, so the `cc` check is a leftover in
-`build/install.sh`, and it still asks for the compiler. After installing it compiles and runs a hello-world program with the
-new binary. Linux x86_64 is the only supported platform.
+all `--uninstall` removes. Before installing it checks that the platform is
+Linux x86_64, and that the linker `ld.lld` and the shared library `libLLVM-21.so`
+are present, and it says what is missing when they are not. `KELP_INSTALL_SKIP_CHECKS=1`
+skips that check and the hello-world run below. After installing it compiles and
+runs a hello-world program with the new binary. Linux x86_64 is the only supported
+platform.
 
 A session, in a temporary prefix, inside the development `nix-shell` (which
-supplies `cc` and `libLLVM-21`), with a copy of a `kelpc` binary and a
+supplies `ld.lld` and `libLLVM-21`), with a copy of a `kelpc` binary and a
 `SHA256SUMS` made with `sha256sum` (paths shortened to `$T`):
 
 ```text
