@@ -182,12 +182,13 @@ from the collector, which has to see every value it may reclaim. The messages on
   and a value captured by a closure environment. A resource stays in a local, a parameter
   or a field of a stack value.
 - **Channel ends and pool values.** A channel end (`SendEnd`, `RecvEnd`, `Sender`,
-  `Receiver`) is a resource. Built examples: `'std.sync.Sender<i64>' cannot be a List
-  element in a hosted build: 'std.sync.Sender<i64>' is a resource, ...`, the same refusal
-  as a thread argument, a `Mutex` value and a closure capture. A channel used inside one
-  thread builds. [`std/pool`](/stdlib/pool) is refused because its `PoolShared` record is
-  a resource: `'std.pool.PoolShared' cannot be a thread's argument in a hosted build:
-  'std.pool.PoolShared' is a resource, ...`.
+  `Receiver`) is a resource. It is refused where a resource is refused, such as a
+  `List` element, and in a `Mutex` or `RwLock` value (the form is given below). It
+  is not refused as a thread argument or result: the channel records cross to a
+  worker, by decision 125 (`CROSSING_CHANNEL_RECORDS` in `kelpc/src/managed.rs`).
+  A `fun` literal passed to [`thread.spawn`](/stdlib/thread) may also capture a
+  `Sender`. A channel used inside one thread builds. A [`std/pool`](/stdlib/pool)
+  value is a resource with a destructor, and it does not cross to a worker.
 - **A `Mutex` or `RwLock` holding a resource.** The form is `'std.sync.Sender<i64>' cannot
   be the value of a Mutex or RwLock in a hosted build: 'std.sync.Sender<i64>' is a
   resource, ...`. A `Mutex` or `RwLock` holding a `List`, a `String` or a number is
@@ -211,9 +212,11 @@ from the collector, which has to see every value it may reclaim. The messages on
   payload was not built in this lane.
 - **A closure that captures a resource.** One that captures a resource is refused as
   `'std.sync.Sender<i64>' cannot be a value captured by a closure environment in a hosted
-  build: 'std.sync.Sender<i64>' is a resource, ...`. A closure that captures a memory value
-  was not built in this lane. A scoped closure that borrows its captures is not checked,
-  because its environment stays on the stack.
+  build: 'std.sync.Sender<i64>' is a resource, ...`. The exception is a `fun` literal written
+  directly as the `thread.spawn` entry, which may capture a channel end
+  (`closure_sender_send.kp` and `closure_sender_panic.kp` run). A closure that captures a
+  memory value builds (`fixture_closure_mutex_list` runs). A scoped closure that borrows its
+  captures is not checked, because its environment stays on the stack.
 - **A by-value aggregate in a user `extern fun`.** The message says the llvm backend cannot
   pass the struct, `String` or `List` to a native symbol yet, and asks for a pointer or a
   handle. See [User FFI](/language/externs).

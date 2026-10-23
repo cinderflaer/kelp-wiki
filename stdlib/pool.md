@@ -8,13 +8,12 @@ A fixed pool of worker threads that run closures from one first-in first-out
 queue. Written in Kelp over [`Mutex`, `Condvar`](/stdlib/sync) and
 [`thread.spawn`](/stdlib/thread). Hosted only.
 
-> **Status on current `main`.** `std/pool` is refused on `main`. A program that uses
-> `pool.new` is refused with `'std.pool.PoolShared' cannot be a thread's argument in a
-> hosted build: 'std.pool.PoolShared' is a resource, ...`, because its `PoolShared` record
-> holds a `Mutex` and a `Condvar`, which are runtime resources. The pool passes a
-> `PoolShared` to each worker thread, and the checker refuses that by name.
-> The job type `Job` holds a closure, which is memory, so it is not the blocker. The rest
-> of this page describes the API.
+> **Status on current `main`.** `std/pool` builds and runs on `main`. The test
+> `a_pool_runs_a_thousand_jobs` in `kelpc/tests/compile_and_run/atomics.rs` runs
+> `kelpc/tests/fixtures/pool_sum.kp`, which queues 1000 jobs on four workers and prints
+> `499500` and `0`. Other pool fixtures cover a panicking job, a zero-worker pool and a
+> spawn after the join. A `Pool` value is a resource with a destructor, so it stays in
+> the thread that made it and does not cross to a worker.
 
 
 ```kelp

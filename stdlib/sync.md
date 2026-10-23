@@ -15,12 +15,13 @@ small operations they are built from, `share` and `swap`. A thread pool is
 > so a `Mutex` or `RwLock` may hold a `List` or a `String`. Channels build on `main`. A
 > channel used inside one thread builds and runs, for example `var (tx, rx) =
 > sync.bounded<i64>(2)` with two sends and a `try_recv` in `main`. A channel end
-> (`SendEnd`, `RecvEnd`, `Sender` and `Receiver`) is a resource, so a channel cannot cross
-> to a worker thread: `'std.sync.Sender<i64>' cannot be a thread's argument in a hosted
-> build: 'std.sync.Sender<i64>' is a resource, ...`. The same holds for a `List` element, a
-> `Mutex` value and a closure capture. A `Mutex` or `RwLock` holding a `List` or a `String`
-> builds. The zero-capacity channel (`sync.rendezvous`) and the `select` form are built;
-> see [Select](#select).
+> (`SendEnd`, `RecvEnd`, `Sender` and `Receiver`) is a resource, so it may not be stored in
+> shared-pool memory: `'std.sync.Sender<i64>' cannot be a List element in a hosted build:
+> 'std.sync.Sender<i64>' is a resource, ...`, and a `Mutex` or `RwLock` value refuses it
+> the same way. A channel end may cross to a worker as a thread's argument or result, and a
+> `datac` that holds one may too. A `fun` literal written as the `thread.spawn` entry may
+> capture one. A `Mutex` or `RwLock` holding a `List` or a `String` builds. The zero-capacity
+> channel (`sync.rendezvous`) and the `select` form are built; see [Select](#select).
 
 ```kelp
 impl "std/sync"
@@ -431,10 +432,10 @@ for v in rx { ... }
 
 The pair is a tuple, so it is taken apart with a destructuring binding. Write
 `var (tx, rx) = ...` when a `for` over `rx` needs a mutable place, and `val`
-otherwise. `thread.spawn` takes one argument, and a `datac` that holds a sender is not an
-allowed argument, so the program below cannot hand a sender to a worker. It is
-shown as the form the checker refuses. Two producers and one consumer, the producers
-`send`ing three values each through a channel of capacity 2:
+otherwise. `thread.spawn` takes one argument, and a `datac` that holds a sender may be that
+argument. The program below hands a sender to each of two workers. Two producers and
+one consumer, the producers `send`ing three values each through a channel of capacity 2.
+It has the same shape as `chan_string_producers.kp`, which the test suite runs:
 
 ```kelp
 impl "std/thread"
@@ -476,10 +477,7 @@ fun main() {
 }
 ```
 
-This program is refused on `main`: `'Job' cannot be a thread's argument in a hosted
-build: 'Job' is a resource, and a resource never enters the collected heap, ...`.
-`Job` holds a `sync.Sender`, which is a resource. Use the channel inside one thread
-until a channel end may cross to a worker.
+The program prints `6`, the number of values received, and then `96`, their sum.
 
 ### `try_recv` and `recv_timeout`
 

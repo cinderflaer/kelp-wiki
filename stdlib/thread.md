@@ -11,8 +11,9 @@ shared borrow that may cross one, and the per-thread panic policy. Ungated.
 > argument and result may hold collected memory. The runtime registers the closure
 > environment, the argument and the result as collector roots, so numbers and memory
 > values cross. A thread's argument may be a number or a `List`: an `i64` argument and a
-> `List<i32>` argument both run. A resource (a file, socket, process, thread handle, lock,
-> condition variable or channel end) does not cross. The checker refuses it by name, for
+> `List<i32>` argument both run. A channel end crosses as well, as do a `Mutex`, an `RwLock`
+> and a `Condvar` (see [`std/sync`](/stdlib/sync)). A file, a socket, a process or another
+> value with a destructor does not cross. The checker refuses it by name, for
 > example `'Mutex<i64>' cannot be a thread's argument in a hosted build: 'Mutex<i64>' is a
 > resource, ...`. A `Box<dyn Trait>` does not cross either: `'Box<dyn Shape>' cannot be a
 > thread's argument in a hosted build: its declaration was not found, so it cannot be
@@ -320,8 +321,9 @@ fun main() {
 - **A worker is a real OS thread.** `thread.spawn` starts one and `thread.join`
   waits for it; nothing here is green, pooled or scheduled by the language.
   [Limits in v1](/language/limits) records what the thread surface still does
-  not have: no `Relaxed`/`Acquire`/`Release`, no thread-local storage, and no
-  async or coroutines. `Mutex<T>`, `RwLock<T>`, `Condvar` and channels are in
+  not have: no `Relaxed`/`Acquire`/`Release` and no async or coroutines. A `tl`
+  declaration gives each thread a scalar of its own, as described in
+  [Concurrency](/language/concurrency#thread-local-storage). `Mutex<T>`, `RwLock<T>`, `Condvar` and channels are in
   [`std/sync`](/stdlib/sync), and a thread pool is [`std/pool`](/stdlib/pool).
 - **The thread pool is a module of its own.** [`std/pool`](/stdlib/pool)
   (`pool.new`, `Pool.spawn`, `Pool.join`) is built on `thread.spawn`, but a
@@ -329,8 +331,8 @@ fun main() {
   `std/thread`. A program that wants a handle to each worker still spawns and
   joins them itself, as `examples/download_pool.kp` does. `spawn` takes one
   argument, so a worker that needs several values is handed a `datac` that holds
-  them. A `datac` that holds a channel's `Sender` is refused as a thread argument,
-  so a worker cannot receive a sender this way.
+  them. A `datac` that holds a channel's `Sender` may be that argument, as the
+  producer example in [`std/sync`](/stdlib/sync) shows.
 - **`current_id` names a thread, not a pool slot.** v1 hands out no sequential
   worker numbers; a program that wants "worker 3 of 8" has to track that itself,
   keyed by the id if it needs a stable key.

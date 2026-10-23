@@ -93,8 +93,8 @@ The domain each module needs comes from the compiler's own table
 | `std/frame` | `frames` | a physical frame as a capability: `frame.claim(addr)` is the only constructor, checked against the calling module's `frames` grant and 4 KiB-aligned |
 | `std/atomic` | - | `Atomic<T>` and the one ordering v1 has |
 | `std/thread` | - | `spawn`, `join`, `fence(order)`, `sleep_ms`, `current_id` and the `ThreadErr` a join hands back |
-| `std/sync` | - | `Mutex<T>`, `RwLock<T>` and `Condvar` through scoped blocks, plus channels (`sync.bounded`, `sync.unbounded`, `Sender`, `Receiver`) and `Mutex.share`/`swap`; hosted only; channels build on current `main` inside one thread (see the page) |
-| `std/pool` | - | a fixed thread pool: `pool.new`, `Pool.spawn`, `join`, `panicked`; hosted only; refused on current `main` (see the page) |
+| `std/sync` | - | `Mutex<T>`, `RwLock<T>` and `Condvar` through scoped blocks, plus channels (`sync.bounded`, `sync.unbounded`, `Sender`, `Receiver`) and `Mutex.share`/`swap`; hosted only; channels build on current `main`, and a channel end may cross to a worker (see the page) |
+| `std/pool` | - | a fixed thread pool: `pool.new`, `Pool.spawn`, `join`, `panicked`; hosted only; builds on current `main` (see the page) |
 | `std/iter` | - | the `Iterator` trait `for` walks, `Range`, and `count`/`sum_i64`/`collect_list` |
 | `std/ops` | - | the operator traits `Add`, `Sub`, `Mul`, `Div`, `Rem`, `Neg` and `Ord` |
 | `std/convert` | - | the `From<T>` and `Into<T>` traits; `?` converts a failure through `From` |

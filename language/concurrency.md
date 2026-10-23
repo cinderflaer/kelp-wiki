@@ -52,8 +52,8 @@ keeping on record:
   (a Miri-style checker) that gives evidence about the checker,
   not the enforcement mechanism.
 - **Not channels-only.** A channel is a value type a program may use (it
-  is in [`std/sync`](/stdlib/sync#channels), and it builds on current `main` inside
-  one thread), but it cannot be *the*
+  is in [`std/sync`](/stdlib/sync#channels), and it builds on current `main`), but it
+  cannot be *the*
   mechanism: a
   channel-only model still lets two threads hold a `&mut T` to one location if
   nothing refuses it. The rule above is what makes the race unwritable; a
@@ -68,8 +68,9 @@ one scalar takes one. It also holds the channels, which move owned values
 between threads instead of sharing a location, and [`std/pool`](/stdlib/pool)
 is a fixed pool of workers over one queue. The limits of both are on their pages:
 hosted only, an owned element, one thread created per pool job. On current `main`,
-a channel builds when it stays in one thread. A channel end is a resource and does not
-cross to a worker thread, and a program that uses the pool is refused for the same reason.
+a channel builds on current `main`, inside one thread or across threads: a channel end may
+be a thread's argument or result. A pool is a resource with a destructor, so it stays in
+the thread that made it.
 
 ## One ordering: `SeqCst`
 
@@ -236,9 +237,9 @@ than decided speculatively; none of them blocks anything above:
   `Mutex`-guarded queue whose two ends share one runtime record through
   `Mutex.share()`, and a pool is the same queue of closures
   ([`std/sync`](/stdlib/sync), [`std/pool`](/stdlib/pool)). On current `main` a channel
-  builds inside one thread, a channel end and a pool are refused, until the step that
-  lets the collector see values that a thread or a lock holds. The `select` form over
-  receive, send and timeout arms is built ([`std/sync`, Select](/stdlib/sync#select)).
+  builds, and a channel end may cross to a worker as a thread's argument or result. The
+  `select` form over receive, send and timeout arms is built
+  ([`std/sync`, Select](/stdlib/sync#select)).
 
 ## See also
 
