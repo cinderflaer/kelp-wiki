@@ -48,9 +48,9 @@ if n > 2 {
 }
 ```
 
-- **`elif` is the preferred spelling.** `else if` is the same link, stays legal
+- **`else if` is the preferred spelling.** `elif` is the same link, stays legal
   and compiles identically, and `kelpc fmt` never rewrites one into the other;
-  `kelpc lint` warns about `else if` and says which spelling to write.
+  `kelpc lint` warns about neither spelling.
 - A chain may mix the two, and `elif` takes the same grammar as `if`: a
   condition and a block, or a pattern and a block (`elif let`).
 

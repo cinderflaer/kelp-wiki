@@ -16,7 +16,8 @@ The build side is [Freestanding mode](/language/freestanding).
 ## Running one
 
 The examples need `qemu-system-riscv64`, `qemu-system-aarch64`,
-`qemu-system-x86_64` and `ld.lld`, which the repository's Nix shell supplies. Each has a
+`qemu-system-x86_64` and `ld.lld`. The repository's `shell.nix` supplies `ld.lld`
+and LLVM 21, but not the QEMU binaries, so they must be on `PATH`. Each has a
 `run.sh` that builds the project, boots it under `timeout 20 qemu-system-riscv64
 -machine virt -bios none -nographic -no-reboot -serial mon:stdio -kernel <elf>`,
 reads QEMU's own stdout until the last expected line appears, kills QEMU, and
@@ -32,34 +33,34 @@ The script builds with `target/debug/kelpc` by default; `KELPC` points it at
 another binary. The real output, from a build of the current tree:
 
 ```text
-run.sh: booted examples/kernel0 and the UART printed:
+run.sh: booted kelpc/tests/fixtures/examples/kernel0 and the UART printed:
 hello from kelp
 ```
 
 | Example | What it proves | Serial output |
 | --- | --- | --- |
-| `examples/kernel0` | the driver, the entry, the halt | `hello from kelp` |
-| `examples/kernel0-trap` | a trap vector, an `ecall`, `mret` | `trap: ecall` then `done` |
-| `examples/kernel0-panic` | the compiler's bounds check reaches the handler | `panic: Array.get: index out of bounds` |
-| `examples/kernel0-panic2` | the location-carrying handler, one check per boot, a double panic, and a panic that skips a `defer` and a `Drop` | `panic: <message> at <file>:<line>` per phase, then `double panic`; phase 7 prints `panic: cleanup skipped` and no `defer ran` or `drop ran` |
-| `examples/kernel0-bss` | `_start` erased a marker the image loaded into `.bss` | `bss clear` |
-| `examples/kernel0-heap` | `List<i32>` over a bump allocator | `heap sum 55` then `balanced` |
-| `examples/kernel0-string` | `String`/`Bytes` on the project allocator | `s: hello kelp!`, `n: 12345`, `b: 300`, `balanced` |
-| `examples/kernel0-percpu` | `percpu static mut` on two harts | `cpu0 4`, `cpu1 7`, `idx 1`, `count 2` |
-| `examples/kernel0-vm` | Sv39 tables, the S-mode drop, a high alias, the `Space` range check | eleven `vm:` lines |
-| `examples/kernel0-vm-fault` | the load and store page faults | `fault: scause 0xd stval 0x40000000`, `fault: scause 0xf stval 0x3ffffff000` |
-| `examples/kernel0-stack` | an unmapped guard page under each of the two stacks (the trap stack and the kernel stack) and the stack probe | three faults print `stack overflow: scause 0xf stval 0x...`, each followed by `stack: stval in guard` |
-| `examples/kernel0-user` | the trap frame, `ecall`, U-mode | `hello from user`, `bad write -> E`, `user exited 7` |
-| `examples/kernel0-aarch64` | the second architecture | `hello from kelp (aarch64)` |
-| `examples/kernel0-caps` | `irq`/`frames` claims handed to a driver | `line 10`, `frame 0x80100000`, `offset 0x80100010` |
-| `examples/kernel0-x86_64` | the third ISA, a COM1 port-I/O driver | `hello from kelp (x86_64)` |
-| `examples/kernel0-x86_64-lmode` | long mode with paging, then a triple fault on purpose | `hello from kelp (x86_64)`, `long mode on` |
-| `examples/kernel0-sched` | the machine timer, preemption and round-robin | `A`/`B`/`C` lines, then `sched: done ticks=40` |
-| `examples/kernel0-x86_64-idt` | the IDT, four exceptions and the PIC+PIT timer | `exception 6 ...`, `exception 0 ...`, `tick 1`...`tick 5`, `x86: done`, `exception 14 ...` |
+| `kelpc/tests/fixtures/examples/kernel0` | the driver, the entry, the halt | `hello from kelp` |
+| `kelpc/tests/fixtures/examples/kernel0-trap` | a trap vector, an `ecall`, `mret` | `trap: ecall` then `done` |
+| `kelpc/tests/fixtures/examples/kernel0-panic` | the compiler's bounds check reaches the handler | `panic: Array.get: index out of bounds` |
+| `kelpc/tests/fixtures/examples/kernel0-panic2` | the location-carrying handler, one check per boot, a double panic, and a panic that skips a `defer` and a `Drop` | `panic: <message> at <file>:<line>` per phase, then `double panic`; phase 7 prints `panic: cleanup skipped` and no `defer ran` or `drop ran` |
+| `kelpc/tests/fixtures/examples/kernel0-bss` | `_start` erased a marker the image loaded into `.bss` | `bss clear` |
+| `kelpc/tests/fixtures/examples/kernel0-heap` | `List<i32>` over a bump allocator | `heap sum 55` then `balanced` |
+| `kelpc/tests/fixtures/examples/kernel0-string` | `String`/`Bytes` on the project allocator | `s: hello kelp!`, `n: 12345`, `b: 300`, `balanced` |
+| `kelpc/tests/fixtures/examples/kernel0-percpu` | `percpu static mut` on two harts | `cpu0 4`, `cpu1 7`, `idx 1`, `count 2` |
+| `kelpc/tests/fixtures/examples/kernel0-vm` | Sv39 tables, the S-mode drop, a high alias, the `Space` range check | eleven `vm:` lines |
+| `kelpc/tests/fixtures/examples/kernel0-vm-fault` | the load and store page faults | `fault: scause 0xd stval 0x40000000`, `fault: scause 0xf stval 0x3ffffff000` |
+| `kelpc/tests/fixtures/examples/kernel0-stack` | an unmapped guard page under each of the two stacks (the trap stack and the kernel stack) and the stack probe | three faults print `stack overflow: scause 0xf stval 0x...`, each followed by `stack: stval in guard` |
+| `kelpc/tests/fixtures/examples/kernel0-user` | the trap frame, `ecall`, U-mode | `hello from user`, `bad write -> E`, `user exited 7` |
+| `kelpc/tests/fixtures/examples/kernel0-aarch64` | the second architecture | `hello from kelp (aarch64)` |
+| `kelpc/tests/fixtures/examples/kernel0-caps` | `irq`/`frames` claims handed to a driver | `line 10`, `frame 0x80100000`, `offset 0x80100010` |
+| `kelpc/tests/fixtures/examples/kernel0-x86_64` | the third ISA, a COM1 port-I/O driver | `hello from kelp (x86_64)` |
+| `kelpc/tests/fixtures/examples/kernel0-x86_64-lmode` | long mode with paging, then a triple fault on purpose | `hello from kelp (x86_64)`, `long mode on` |
+| `kelpc/tests/fixtures/examples/kernel0-sched` | the machine timer, preemption and round-robin | `A`/`B`/`C` lines, then `sched: done ticks=40` |
+| `kelpc/tests/fixtures/examples/kernel0-x86_64-idt` | the IDT, four exceptions and the PIC+PIT timer | `exception 6 ...`, `exception 0 ...`, `tick 1`...`tick 5`, `x86: done`, `exception 14 ...` |
 
 ## IRQ lines and frames as capabilities
 
-`examples/kernel0-caps` adds two device capabilities beside the `mmio` grant,
+`kelpc/tests/fixtures/examples/kernel0-caps` adds two device capabilities beside the `mmio` grant,
 both narrowed in the manifest so the grant and the code say the
 same thing.
 
@@ -117,7 +118,7 @@ compiler's `_start` stub builds long mode before it calls Kelp. The full boot
 flow, `noredzone` and the SSE enable are in [Freestanding
 mode](/language/freestanding#the-x86-64-target).
 
-`examples/kernel0-x86_64` is a COM1 driver: it polls the Line Status Register at
+`kelpc/tests/fixtures/examples/kernel0-x86_64` is a COM1 driver: it polls the Line Status Register at
 port `0x3FD` and writes the Transmit Holding Register at `0x3F8` through the
 `in`/`out` instructions, both inline `asm` in the module the `[unsafe]` list
 names. Port I/O is not memory-mapped, so the manifest carries no `mmio` grant:
@@ -132,7 +133,7 @@ run.sh: booted .../examples/kernel0-x86_64 and the UART printed:
 hello from kelp (x86_64)
 ```
 
-`examples/kernel0-x86_64-lmode` proves the stub really left protected mode: it
+`kelpc/tests/fixtures/examples/kernel0-x86_64-lmode` proves the stub really left protected mode: it
 reads `CR0`, `CR4` and `EFER` through `asm`, prints `long mode on` only when
 `EFER.LMA`, `CR0.PG` and `CR4.PAE` are all set, then loads a null IDT and
 executes `ud2`. With no IDT that is a triple fault, so the machine resets and
@@ -154,7 +155,7 @@ greeting and `long mode on` whole.
 
 ## x86-64 interrupts: the IDT, the exceptions and the timer
 
-`examples/kernel0-x86_64-idt` covers the part the `lmode` boot leaves open: it builds a real IDT, handles four CPU exceptions and takes the
+`kelpc/tests/fixtures/examples/kernel0-x86_64-idt` covers the part the `lmode` boot leaves open: it builds a real IDT, handles four CPU exceptions and takes the
 8254/8259 timer interrupt, with the same shape as the riscv64 trap examples (a
 naked vector, a frame the compiler does not know about, a Kelp dispatcher, and a
 resuming `iretq`). The design is
@@ -216,7 +217,7 @@ page (`"0x200000000+0x1000"`). No compiler change was needed: `Ptr.from_fn`,
 all in place.
 
 ```sh
-KELPC=<kelpc> examples/kernel0-x86_64-idt/run.sh
+KELPC=<kelpc> kelpc/tests/fixtures/examples/kernel0-x86_64-idt/run.sh
 ```
 
 ```text
@@ -316,7 +317,7 @@ The message is the check's own text, which is why `kernel0-panic` can assert tha
 ## Panic location and the double panic
 
 A freestanding handler may take the compiler's location as well as the message:
-`examples/kernel0-panic2` declares the three-argument form, and the compiler
+`kelpc/tests/fixtures/examples/kernel0-panic2` declares the three-argument form, and the compiler
 refuses every other shape by name.
 
 ```kelp
@@ -344,7 +345,7 @@ the user's; a panic raised inside `std/option`'s own body names `option.kp`.
 Every check calls one compiler-emitted entry, and the entry calls the handler
 only once: it exchanges a `.bss` flag, and a check that fires while the handler
 is already running reaches `kelp_double_panic` instead of recursing. The
-compiler defines that weakly as a `wfi` loop; `examples/kernel0-panic2` links a
+compiler defines that weakly as a `wfi` loop; `kelpc/tests/fixtures/examples/kernel0-panic2` links a
 strong definition beside the object (the same link-time override the `memcpy`
 fallbacks use) and prints `double panic`.
 
@@ -411,7 +412,7 @@ the linker resolves. `report` is reached through `mscratch` for the same reason,
 and because an inline-asm operand would make the compiler materialise a register
 before the handler had saved anything.
 
-The full `asm` body, the register save list and `examples/kernel0-trap/src/trap.kp`
+The full `asm` body, the register save list and `kelpc/tests/fixtures/examples/kernel0-trap/src/trap.kp`
 are in the repository; the point here is that the vector is a naked function
 plus one `asm`, and the language never sees the trap.
 
@@ -452,12 +453,12 @@ where the low two bits of `mtvec` are the mode.
   its `#GP` and `#PF` gates as naked bodies. The calling-convention attributes are
   still open.
 
-`examples/kernel0-sched` and `kernel0-x86_64-idt` keep their naked vectors; a new kernel
+`kelpc/tests/fixtures/examples/kernel0-sched` and `kernel0-x86_64-idt` keep their naked vectors; a new kernel
 can write its handlers as `interrupt fun` instead.
 
 ## Address spaces: Sv39
 
-The mapping example is `examples/kernel0-vm`. Its Sv39 module, `src/vm.kp`, is
+The mapping example is `kelpc/tests/fixtures/examples/kernel0-vm`. Its Sv39 module, `src/vm.kp`, is
 written in the language the earlier examples build. The one construct it leans
 on is `asm`: a linker-script symbol has no Kelp spelling, so the
 frame region arrives through `asm("la {0}, __frames_start", out("r") _)`, the
@@ -493,7 +494,7 @@ matches), `medeleg` granting the page faults to S-mode, `mstatus.MPP = S`, and
 translate, and `satp` is written in supervisor mode, so the code that turns the
 MMU on is already running at the privilege the MMU applies to.
 
-The second example, `examples/kernel0-vm-fault`, is the S-mode handler. `stvec`
+The second example, `kelpc/tests/fixtures/examples/kernel0-vm-fault`, is the S-mode handler. `stvec`
 names a naked `align(4)` function, the `asm` idiom, which saves the
 caller-saved registers, calls its report function through `sscratch`, and either
 advances `sepc` by the faulting instruction's own length (read from its low bits,
@@ -503,7 +504,7 @@ a load from an address no leaf maps (`scause` 13, `stval` the address) and a
 store to the read-only leaf (15). One boot prints both.
 
 ```sh
-examples/kernel0-vm/run.sh; examples/kernel0-vm-fault/run.sh
+kelpc/tests/fixtures/examples/kernel0-vm/run.sh; kelpc/tests/fixtures/examples/kernel0-vm-fault/run.sh
 ```
 
 ```text
@@ -562,7 +563,7 @@ narrowed grant and asserts the refusal says the address cannot be folded and nam
 
 The owner does not stop a holder of a whole-resource `frames` grant from mapping
 one frame into two spaces, and it does not free a frame, since frames are never
-freed here. Only one space exists in the example. `examples/kernel0-user` keeps
+freed here. Only one space exists in the example. `kelpc/tests/fixtures/examples/kernel0-user` keeps
 its own copy of the free-function walker, with the user-page check on top, so
 `Space` is not used there yet.
 
@@ -574,7 +575,7 @@ never freed once a table holds them.
 
 ## Traps, user mode and the syscall ABI
 
-`examples/kernel0-user` is the same Sv39 boot plus five things: `src/trap.kp`
+`kelpc/tests/fixtures/examples/kernel0-user` is the same Sv39 boot plus five things: `src/trap.kp`
 (the `TrapFrame`, the naked `trap_entry`, `trap_dispatch` and `enter_user`),
 `src/syscall.kp` (the number table, the typed refusals, `write` and `exit`, the
 range check and the copy path),
@@ -722,11 +723,11 @@ U-mode; a kernel-mode fault would swap the stack pointer out from under the
 running handler). There are no signals, and six argument words is the most a call
 takes.
 The timer-driven scheduler in the next section is a separate image,
-`examples/kernel0-sched`.
+`kelpc/tests/fixtures/examples/kernel0-sched`.
 
 ## A timer interrupt and a preemptive scheduler
 
-`examples/kernel0-sched` shows the machine timer and a
+`kelpc/tests/fixtures/examples/kernel0-sched` shows the machine timer and a
 preemptive round-robin scheduler, still in machine mode with no paging. It is
 the process-model half the user-mode example above leaves out. The design is
 [`language/kernel.md`](/language/kernel).
@@ -781,7 +782,7 @@ times, that no line is torn (each is exactly `<letter> <count>`) and that the
 stop line is whole:
 
 ```sh
-KELPC=<kelpc> examples/kernel0-sched/run.sh
+KELPC=<kelpc> kelpc/tests/fixtures/examples/kernel0-sched/run.sh
 ```
 
 ```text
@@ -831,7 +832,7 @@ granted. The UART drivers hold exactly their device's window
 PL011), and the modules that build a pointer from a computed address (a
 page-table frame, a trap-frame slot, a user page) hold the whole-address-space
 `["*"]`. See [Capabilities](/language/capabilities#mmio-device-registers).
-`examples/kernel0-caps` adds the two device-value domains beside it: a narrowed
+`kelpc/tests/fixtures/examples/kernel0-caps` adds the two device-value domains beside it: a narrowed
 `irq` grant and a narrowed `frames` grant; see [below](#irq-lines-and-frames-as-capabilities).
 
 The four RISC-V boots, run one after another:
@@ -862,7 +863,7 @@ hello from kelp (aarch64)
 
 ## Stack guards and probing
 
-`examples/kernel0-stack` is the overflow made loud. Every function a freestanding
+`kelpc/tests/fixtures/examples/kernel0-stack` is the overflow made loud. Every function a freestanding
 LLVM build emits carries LLVM's `"probe-stack"="inline-asm"` attribute, so a
 frame larger than one page is built by touching each page in order from the top;
 a frame that reaches the guard page below the stack faults instead of a single
@@ -956,19 +957,19 @@ The remaining gaps, from
 
 - **The interrupt path exists, but not as a language construct.** A riscv64
   machine timer interrupt and a preemptive round-robin scheduler are
-  `examples/kernel0-sched` ([above](#a-timer-interrupt-and-a-preemptive-scheduler)),
+  `kelpc/tests/fixtures/examples/kernel0-sched` ([above](#a-timer-interrupt-and-a-preemptive-scheduler)),
   and an x86-64 IDT with four exception gates and the PIC+PIT timer is
-  `examples/kernel0-x86_64-idt`
+  `kelpc/tests/fixtures/examples/kernel0-x86_64-idt`
   ([above](#x86-64-interrupts-the-idt-the-exceptions-and-the-timer)). Both are
   naked bodies the compiler does not model as handlers. `kernel0-trap` still
   installs `mtvec` itself and enables nothing, and the line `kernel0-caps`
   claims is still not wired to a handler. Panic semantics with no OS, the row's
   other half, is the [section above](#panic-location-and-the-double-panic).
 - **Stack guards cover two of the kernel's stacks, not all of them.** The kernel
-  stack and the trap stack of `examples/kernel0-stack` have a guard page each.
-  The task stacks of `examples/kernel0-sched` are `[u8; 4096]` in `.bss` and run
+  stack and the trap stack of `kelpc/tests/fixtures/examples/kernel0-stack` have a guard page each.
+  The task stacks of `kelpc/tests/fixtures/examples/kernel0-sched` are `[u8; 4096]` in `.bss` and run
   in machine mode with no page table, so no page can be left unmapped under them.
-  The per-hart stacks of `examples/kernel0-percpu` and `examples/kernel0-user`,
+  The per-hart stacks of `kelpc/tests/fixtures/examples/kernel0-percpu` and `kelpc/tests/fixtures/examples/kernel0-user`,
   and the stacks of the aarch64 and x86-64 examples, have no guard. Each needs
   its own page layout (or a PMP entry, for machine mode). Tracked in issue 255.
 - **The calling-convention attributes** are still open. The `interrupt` attribute
@@ -1093,7 +1094,7 @@ runtime object. The allowed set (no `print`, no `panic`/`assert` builtins, no he
 `std/*` except `std/atomic`, `std/option` and `std/result`, no `pd`) is enforced by
 `kelpc check` and `kelpc build` alike, and the overflow and bounds checks call the project's
 `panic` handler or a default infinite loop. The acceptance artifact is
-`tests/projects/freestanding_min`, checked with the llvm tools under `dev-kernel.nix`
+`tests/projects/freestanding_min`, checked with the llvm tools under `shell.nix`
 ([`language/freestanding.md`](/language/freestanding), [`language/unsafe-ub-catalogue.md`](/language/unsafe-ub-catalogue)).
 
 Stage 5 (MK9-S7-M1/M3 ISA surface, roadmap B-9/B-16) adds the statement and expression
@@ -1111,13 +1112,13 @@ calling-convention attributes are out of scope for this stage: a naked function 
 one `asm` covers a trap vector without them. [`language/unsafe.md`](/language/unsafe) is the design and
 [`language/unsafe-ub-catalogue.md`](/language/unsafe-ub-catalogue) carries the stage's undefined behaviour.
 
-**Kernel 0 boots.** The pieces above are now wired into `examples/kernel0`: a `[target]`
+**Kernel 0 boots.** The pieces above are now wired into `kelpc/tests/fixtures/examples/kernel0`: a `[target]`
 freestanding riscv64 project whose `kmain` polls the NS16550 UART's LSR bit 5 and writes
 `hello from kelp` to THR through `Ptr<u8>` volatile stores, then halts on `wfi`;
-`examples/kernel0-trap` installs `mtvec` at a naked handler, takes an `ecall`, prints
+`kelpc/tests/fixtures/examples/kernel0-trap` installs `mtvec` at a naked handler, takes an `ecall`, prints
 `trap: ecall` from the handler and `done` after `mret`. Both are built with `kelpc` and booted
 under `timeout 20 qemu-system-riscv64 -machine virt -bios none -nographic -no-reboot
--serial mon:stdio -kernel <elf>`; `examples/kernel0/run.sh` and `examples/kernel0-trap/run.sh`
+-serial mon:stdio -kernel <elf>`; `kelpc/tests/fixtures/examples/kernel0/run.sh` and `kelpc/tests/fixtures/examples/kernel0-trap/run.sh`
 read QEMU's own stdout and assert the expected lines, and
 `cargo test --test compile_and_run kernel0` runs both where the tools are present. No
 compiler change was needed. What the examples could not do is in [`language/kernel.md`](/language/kernel), in
@@ -1128,9 +1129,9 @@ stage 5 deferred), and a usable panic message.
 `str.byte`, `str.eq`, `str.starts_with` and `str.ptr`, lowered as byte loops inside
 the module by the LLVM backend (no `strlen`, no C object), with every other
 `std/str` function refused by name and pruned from the program before inference;
-`examples/kernel0` prints its greeting through `puts(s: str)` and its panic
+`kelpc/tests/fixtures/examples/kernel0` prints its greeting through `puts(s: str)` and its panic
 handler prints `panic: ` plus the compiler's own message, and the new
-`examples/kernel0-panic` proves it by reading one element past an array on
+`kelpc/tests/fixtures/examples/kernel0-panic` proves it by reading one element past an array on
 purpose.
 
 **Kernel gap 2 (the address of a function) is closed.** `Ptr.from_fn(f)` is the
@@ -1138,7 +1139,7 @@ address of a declared `fun` or a `fun` literal that captured nothing, as a
 checked `Ptr<u8>`, legal outside `unsafe` on both backends; a closure is refused
 by name, because it carries an environment its code address cannot describe. A
 top-level `fun` may carry `align(N)` (a power of two up to 4096), lowered as the
-function's alignment on both backends. `examples/kernel0-trap` installs its
+function's alignment on both backends. `kelpc/tests/fixtures/examples/kernel0-trap` installs its
 trap vector with `Ptr.from_fn(trap_handler).addr()` and names no mangled symbol,
 and [`language/unsafe-ub-catalogue.md`](/language/unsafe-ub-catalogue) stage 8 is the UB catalogue for the new surface.
 The calling-convention attributes stage 5 deferred are the remaining half of that
@@ -1174,7 +1175,7 @@ message that names the keys; `Thread` stays refused either way, and `View` is
 admitted later (kernel stage 23) with `View.to_string` in the allocator set. A
 failed
 allocation reaches the project's panic handler with "out of memory".
-`examples/kernel0-heap` is the idiom: a bump allocator over a `static mut`
+`kelpc/tests/fixtures/examples/kernel0-heap` is the idiom: a bump allocator over a `static mut`
 arena, a `List<i32>` of 1..=10, and a counting wrapper that prints `balanced`
 when every allocation reached a matching free. Arenas as a language feature and
 a fallible allocation surface are not in this stage.
@@ -1188,7 +1189,7 @@ libc-free byte loops into the object, growing by doubling through the project's
 `realloc` when one is named and alloc + copy + dealloc otherwise. Every other
 `String`/`Bytes`/`std/str` operation is refused at the call with "needs the
 hosted runtime" (including `str.from_f64`), so nothing is left for the linker to
-report. `examples/kernel0-string` is the acceptance: it concatenates, formats
+report. `kelpc/tests/fixtures/examples/kernel0-string` is the acceptance: it concatenates, formats
 an integer, grows a `Bytes` past several doublings, prints four lines through
 the UART under QEMU and proves `ALLOCS == DEALLOCS`; `llvm-nm -u` stays clean.
 Without an allocator `String`/`Bytes` stay refused, and `Thread` stays
@@ -1224,7 +1225,7 @@ refused, and both the class and the intrinsics are freestanding-only, refused
 by `infer.rs` on both backends. The riscv64 `_start` stub now parks every hart
 whose `mhartid` is not zero before it loads `sp`, so a `-smp 2` image with no
 firmware does not have two harts racing through boot;
-`examples/kernel0-percpu/run.sh` boots one, writes a per-CPU static on hart 0,
+`kelpc/tests/fixtures/examples/kernel0-percpu/run.sh` boots one, writes a per-CPU static on hart 0,
 reads the other copy by setting `tp = 1` by hand, and asserts the four lines
 from QEMU's stdout. A per-CPU allocator or run queue is still a kernel design,
 not this stage.
@@ -1260,7 +1261,7 @@ error for a constant and a panic for a computed one), and a computed argument
 needs the whole-resource `["*"]`. Unlike `mmio`, the check is in `infer.rs` and
 applies to a hosted program and a freestanding image alike; the entry module
 holds both domains by default, so a kernel narrows them in its `[caps]`
-section. `examples/kernel0-caps` is the acceptance, `kelpc/tests/irq_frames.rs`
+section. `kelpc/tests/fixtures/examples/kernel0-caps` is the acceptance, `kelpc/tests/irq_frames.rs`
 the accepting and refusing front-end cases, and every other `examples/kernel0*`
 image still boots.
 
@@ -1272,8 +1273,8 @@ of 2 MiB pages in a `.boot_pt` NOBITS section, enables PAE and `EFER.LME`, loads
 sets `CR0.PG|PE`, then far-jumps into `.code64`, loads `rsp` from `__stack_top`, clears
 `[__bss_start, __bss_end)`, turns SSE on and calls the entry; every emitted function is
 `noredzone`. The manifest gets the `x86-64` CPU, the static relocation model and the
-**small** code model, which is what links an image at 1 MiB. `examples/kernel0-x86_64` is
-the COM1 port-I/O driver (`hello from kelp (x86_64)`), and `examples/kernel0-x86_64-lmode`
+**small** code model, which is what links an image at 1 MiB. `kelpc/tests/fixtures/examples/kernel0-x86_64` is
+the COM1 port-I/O driver (`hello from kelp (x86_64)`), and `kelpc/tests/fixtures/examples/kernel0-x86_64-lmode`
 reads CR0/CR4/EFER through `asm`, prints `long mode on` and then takes a `ud2` with no IDT,
 so it triple-faults; both boot under `qemu-system-x86_64 -M q35 -cpu qemu64 -no-reboot` and
 three tests in `kelpc/tests/compile_and_run.rs` cover the ELF (the PVH note included) and
@@ -1305,8 +1306,8 @@ module as the same length-aware byte loop `View.eq` uses. `View` itself is a
 borrowed two-word value with no storage, so `len`/`is_empty`/`get`/`slice`/`eq`
 are admitted (with `View.to_string` in the allocator-only set) and the two
 missing bodies are emitted. With both in place `std/regex` moved from the
-hosted-only list to the allocator row of the table: `examples/kernel0-eq` and
-`examples/kernel0-eq-x86_64` compare a `String`-field and a `Bytes`-field
+hosted-only list to the allocator row of the table: `kelpc/tests/fixtures/examples/kernel0-eq` and
+`kelpc/tests/fixtures/examples/kernel0-eq-x86_64` compare a `String`-field and a `Bytes`-field
 `datac`, look the first up in a `Map`, slice a view, and match `[a-z]+(\d+)`
 under QEMU on riscv64 and x86-64.
 [`language/freestanding.md`](/language/freestanding) and [`stdlib/regex.md`](/stdlib/regex) carry the detail.
@@ -1323,27 +1324,27 @@ chosen by the manifest's `[target] triple` instead of assuming riscv64: `riscv64
 gets the `generic` CPU, the **small** code model (LLVM refuses medium on AArch64) and an AArch64
 stub that loads `sp` with `ldr x0, =__stack_top; mov sp, x0`, clears `[__bss_start, __bss_end)`
 the same word at a time and halts on `wfe`. Any other triple is refused by name at the stub.
-`examples/kernel0-aarch64` is the PL011 driver (`DR` at `0x09000000`, `FR` bit 5 the FIFO-full
+`kelpc/tests/fixtures/examples/kernel0-aarch64` is the PL011 driver (`DR` at `0x09000000`, `FR` bit 5 the FIFO-full
 flag) whose `kmain` prints `hello from kelp (aarch64)` and halts; it boots under
 `qemu-system-aarch64 -M virt -cpu cortex-a57 -nographic -serial mon:stdio -kernel <elf>` and
-`examples/kernel0-aarch64/run.sh` and two tests in `kelpc/tests/compile_and_run.rs` (an
+`kelpc/tests/fixtures/examples/kernel0-aarch64/run.sh` and two tests in `kelpc/tests/compile_and_run.rs` (an
 `llvm-readelf`/`llvm-nm`/`llvm-objdump` check of the ELF and the boot) cover it. The riscv64
 `examples/kernel0*` all still boot after the change.
 
-**Row 9's mapping half is done** (MK9-S4-M8, [`language/kernel.md`](/language/kernel)): `examples/kernel0-vm`
+**Row 9's mapping half is done** (MK9-S4-M8, [`language/kernel.md`](/language/kernel)): `kelpc/tests/fixtures/examples/kernel0-vm`
 builds Sv39 tables in Kelp (the PTE bits, the VPN split, the PTE and `satp` encoders, a zeroing
 frame allocator over the linker script's `__frames_start`..`__frames_end`, `map_page`,
 `map_range`, `unmap_page` and `translate`), identity-maps the image and the UART, maps a page at
 `0x3F_FFFF_F000`, drops from machine mode to supervisor mode through `pmpaddr0`/`medeleg`/`mstatus`
 and `mret`, turns the MMU on, and proves the high virtual name and the identity-mapped physical
-name are one frame. `examples/kernel0-vm-fault` takes a load page fault (13) and a store page
+name are one frame. `kelpc/tests/fixtures/examples/kernel0-vm-fault` takes a load page fault (13) and a store page
 fault (15) on purpose into a naked S-mode `stvec` handler that prints `scause` and `stval`. No
 compiler change was needed: the only thing the language could not spell is a linker-script symbol,
 and that is stage 5's `asm` with `la`. What this stage deliberately leaves out is TLB
 shootdown, ASIDs, huge-page *creation*, Sv48 and a per-section (W^X) identity map.
 
 **Row 9's other half is done too** (MK9-S4-M9, [`language/kernel.md`](/language/kernel)):
-`examples/kernel0-user` adds the `TrapFrame` and the naked `trap_entry` that builds it on a
+`kelpc/tests/fixtures/examples/kernel0-user` adds the `TrapFrame` and the naked `trap_entry` that builds it on a
 per-hart trap stack (swapping `sp` with `sscratch`), the drop to U-mode through `sepc`,
 `sstatus.SPP` and `sret`, one Sv39 address space per program with its code page at `0x10000` and
 its stack page at `0x20000`, the `ecall` ABI (number in `a7`, arguments in `a0`..`a5`, result in
@@ -1359,7 +1360,7 @@ no Sv48 and no per-section (W^X) identity map.
 **Row 10's stack half is done** (MK9-S7-M2, [`language/kernel.md`](/language/kernel)): every function a freestanding
 LLVM build emits carries `probe-stack="inline-asm"`, so a frame larger than a page touches each
 page in order and a guard page catches the overflow instead of the frame stepping over it;
-hosted builds carry no attribute. `examples/kernel0-stack` is the acceptance: an Sv39 riscv64
+hosted builds carry no attribute. `kelpc/tests/fixtures/examples/kernel0-stack` is the acceptance: an Sv39 riscv64
 kernel whose kernel stack sits above an unmapped guard page, with a 16 KiB trap stack below the
 hole, and a guard page under the trap stack too. One boot stores into the trap stack's guard,
 then recurses with a small frame into the kernel guard, and the S-mode handler reports `scause`
@@ -1376,13 +1377,13 @@ check calls one compiler-emitted entry that exchanges a `.bss` flag (so a check 
 does not recurse) and, on re-entry, calls `kelp_double_panic`, which the compiler defines weakly as
 a `wfi`/`wfe` loop and a project may override with a strong definition. The file and line are the
 same per-statement `SourceMap` values the hosted line tables carry; generated accessor bodies read
-them from two `.bss` globals the current statement stored. `examples/kernel0-panic2` boots one
+them from two `.bss` globals the current statement stored. `kelpc/tests/fixtures/examples/kernel0-panic2` boots one
 phase per check (array bounds, narrowing, `str.byte`, the `panic` builtin, `option.unwrap`, and a
 double panic) and asserts each exact line; [`language/freestanding.md`](/language/freestanding) has the check table and
 records that overflow wraps and division by zero stays an unchecked UB, so neither has a message.
 
 **Kernel stage 21 is done: a timer interrupt and a preemptive round-robin scheduler**
-([`language/kernel.md`](/language/kernel)). `examples/kernel0-sched` is a bare-metal riscv64 image, still in machine
+([`language/kernel.md`](/language/kernel)). `kelpc/tests/fixtures/examples/kernel0-sched` is a bare-metal riscv64 image, still in machine
 mode with no paging, that programs the CLINT's machine timer (`mtimecmp` at `0x02004000 + 8 *
 hart`, `mtime` at `0x0200BFF8`, granted as exactly those two windows), enables `mie.MTIE` and
 `mstatus.MIE`, and handles the interrupt in a naked `trap_entry` that saves all 31 general
@@ -1391,7 +1392,7 @@ calls `schedule(frame)` and restores whichever frame it returns, ending in `mret
 that never yield each loop forever over their own counter and print `A`/`B`/`C` every 50000
 iterations through an `Atomic<bool>` spin lock released by `defer`, so the letters can only
 interleave because the timer preempted them; the kernel stops itself after 40 ticks with
-`sched: done ticks=40`. `examples/kernel0-sched/run.sh` boot-asserts all three letters, at least
+`sched: done ticks=40`. `kelpc/tests/fixtures/examples/kernel0-sched/run.sh` boot-asserts all three letters, at least
 three letter transitions and no torn line from QEMU's own stdout, and a test in
 `compile_and_run.rs` runs it. The one compiler change is the table's type: an array static's
 element may now be a `datac` or another array (recursively), which `tests/projects/static_datac_array`
@@ -1401,7 +1402,7 @@ priorities, blocking, task exit, SMP, and preemption of user mode, which is why 
 of [`language/kernel.md`](/language/kernel) is still one program at a time.
 
 **Kernel stage 22 is done: the x86-64 IDT, the CPU exceptions and the PIC+PIT timer**
-([`language/kernel.md`](/language/kernel)). `examples/kernel0-x86_64-idt` is a freestanding x86-64 image whose
+([`language/kernel.md`](/language/kernel)). `kelpc/tests/fixtures/examples/kernel0-x86_64-idt` is a freestanding x86-64 image whose
 `static mut IDT: [IdtEntry; 256]` gets five gates from `Ptr.from_fn(gate).addr()` - `#DE` 0,
 `#UD` 6, `#GP` 13, `#PF` 14 and the timer's 32 - each a `repr(c)` 16-byte descriptor with
 the offset split in three, selector `0x08` (the boot GDT's code segment), IST 0 and type
@@ -1418,10 +1419,10 @@ sees. The gates read the dispatcher's address through the GS base rather than an
 operand, because an operand is materialised into a register before the gate has saved
 anything. Not in this stage: the APIC, SMP, ACPI, a TSS/IST stack and x86 user mode.
 
-**Polyp's renderer is proved freestanding** (Polyp v3 stage 4, `design/polyp-v3`): `examples/polyp-fb-riscv64`
-and `examples/polyp-fb-x86_64` boot the v3 core, the software raster and the soft backend on both targets and
+**Polyp's renderer is proved freestanding** (Polyp v3 stage 4, `design/polyp-v3`): `kelpc/tests/fixtures/examples/polyp-fb-riscv64`
+and `kelpc/tests/fixtures/examples/polyp-fb-x86_64` boot the v3 core, the software raster and the soft backend on both targets and
 draw the hosted run's exact pixels with no libc, which is the "custom operating system with a framebuffer"
-case the kernel path wanted and `examples/polyp/PLATFORM.md` is the contract it hands an OS.
+case the kernel path wanted and `kelpc/tests/fixtures/examples/polyp/PLATFORM.md` is the contract it hands an OS.
 
 ### Two rules that keep the language honest
 

@@ -42,10 +42,9 @@ and [Cursors and provenance](/language/ownership#cursors-and-provenance).
 
 | Message | Fix |
 | --- | --- |
-| `argument 'b' has type 'String', expected 'str'` | the parameter takes a view: add `.as_str()` |
+| `cannot assign value of type 'String' to 'y' declared as 'str'` | a `str` binding takes a view: add `.as_str()` |
 | `argument 'x' has type 'View', expected 'str'` | a slice has no NUL after it: `v.to_string()` |
 | a returned borrow of a temporary is refused | a direct `val` binding may promote `String.from_str("x").as_str()` or `.view()`; return an owned `String` instead when the borrow would escape |
-| a template is refused as a value | `a string template can only be printed`: build the text with `str.concat`, `fmt.*` or a `String`, or print it where it is written |
 | `field 'text' stores a borrowed 'View'` | move the String/Bytes that owns the view into an earlier field of the same `datac`, or store an owned `String` |
 | comparing two `str` values | a `str` is a borrowed pointer, so `==` would compare addresses: use `str.eq`, or compare two `View`s with `v == w` |
 | `field 'text' stores a borrowed 'str'` | a string literal is static; otherwise move its String/Bytes owner into an earlier field of the same `datac` |

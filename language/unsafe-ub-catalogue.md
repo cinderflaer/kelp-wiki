@@ -222,7 +222,7 @@ bookkeeping is owed, and the borrow checker does not model the asm's own
 memory effects (the clobber list is the only thing that tells the compiler
 about them, and it is not checked).
 
-## Stage 6: kernel 0 integration (`examples/kernel0`, `examples/kernel0-trap`)
+## Stage 6: kernel 0 integration (`kelpc/tests/fixtures/examples/kernel0`, `kelpc/tests/fixtures/examples/kernel0-trap`)
 
 **New ways to reach UB.** This stage adds no construct; it composes stages 1-5
 into an image a boot loader starts, and every new way to be wrong is a promise
@@ -467,7 +467,7 @@ allocation the containers make is now a promise the compiler takes on trust:
   dereferencing null.
 - The allocator may never effect a free (a bump arena's `dealloc` is a no-op),
   which is a leak the compiler cannot see and the counting wrapper in
-  `examples/kernel0-heap` only detects for its own test.
+  `kelpc/tests/fixtures/examples/kernel0-heap` only detects for its own test.
 
 **What the compiler does check.** That `[target]` names `alloc` and `dealloc`
 together or neither, and that `realloc`, when named, needs them; that each name
@@ -681,7 +681,7 @@ read through a raw `Ptr` the value holds, with all of stage 1's consequences.
 ## Stage 11: Sv39 address spaces (MK9-S4-M8, [`language/kernel.md`](/language/kernel))
 
 **New ways to reach UB.** This stage adds no construct. Every line of
-`examples/kernel0-vm` is stage 1's `Ptr<u64>`, stage 7's `static mut`, stage 5's
+`kelpc/tests/fixtures/examples/kernel0-vm` is stage 1's `Ptr<u64>`, stage 7's `static mut`, stage 5's
 `asm` or ordinary arithmetic, so the compiler's whole check set is the one
 stages 1-10 already apply. What is new is that the machine state those unchecked
 writes build is the translation itself, and the ways to be wrong are the ways a
@@ -749,7 +749,7 @@ tools is stages 1, 5, 7 and 8.
 
 ## Stage 12: user mode and the syscall ABI (MK9-S4-M9, [`language/kernel.md`](/language/kernel))
 
-**New ways to reach UB.** No new construct: `examples/kernel0-user` is stage 1's
+**New ways to reach UB.** No new construct: `kelpc/tests/fixtures/examples/kernel0-user` is stage 1's
 `Ptr`, stage 7's `static mut`, stage 5's `asm` and stage 11's page tables. What
 is new is that the kernel now hands the machine's control flow and its address
 translation to code it does not trust, and the ways to be wrong are the ways a
@@ -954,7 +954,7 @@ freestanding function, and the kernel supplies the hole the probe is for:
   turns a large frame into a sequence of stores one page apart; whether those
   stores land on an unmapped page is the linker script's business. A script that
   puts the guard above the stack, sizes it to zero, or maps it anyway means the
-  probe touches ordinary RAM and the overflow is silent. `examples/kernel0-stack`
+  probe touches ordinary RAM and the overflow is silent. `kelpc/tests/fixtures/examples/kernel0-stack`
   splits its identity map around `[__guard_bottom, __guard_top)` to leave the
   hole, and the two bounds are linker-script promises the compiler cannot read.
 - **The probe is not a check.** It does not compare `sp` against a bound, does
@@ -1261,7 +1261,7 @@ fires only for a computed address.
 whether the frame is RAM, device memory, already owned by another module, or still mapped when a
 device writes to it; anything about a byte past `Frame.offset`'s returned number; and, in the other
 direction, whether a module with a correct-looking grant actually needed it. There is still no
-runtime ownership, no liveness, no provenance (roadmap D-1) and no DMA tracking. `examples/kernel0-caps`
+runtime ownership, no liveness, no provenance (roadmap D-1) and no DMA tracking. `kelpc/tests/fixtures/examples/kernel0-caps`
 carries the one grant the boot uses (line 10 and `0x80100000+0x100000`), and [`stdlib/irq.md`](/stdlib/irq)
 is the design note.
 
@@ -1616,7 +1616,7 @@ the same "no lifetime syntax" rules as before, and a root reached through a raw
 
 ## Library note: Polyp v3's core and backends (2026-10-03, not a kernel stage)
 
-This stage is a library change (`examples/polyp/`), not a compiler one, so it adds no new way to
+This stage is a library change (`kelpc/tests/fixtures/examples/polyp/`), not a compiler one, so it adds no new way to
 reach undefined behaviour and nothing in the compiler changed. What it does need recorded is the
 one shape it leans on: a `core.Backend` bound monomorphizes per implementing type, so
 `GtkBackend` is checked against the trait's `make`/`patch_widget`/`drop_widget`/`place_widget`
@@ -1629,7 +1629,7 @@ outside what the compiler checks.
 
 ## Library note: Polyp v3's software rasterizer (2026-10-02, not a kernel stage)
 
-A library stage (`examples/polyp/soft/`), not a compiler one: nothing in the compiler changed, so
+A library stage (`backends/soft/soft/` in the Polyp repository), not a compiler one: nothing in the compiler changed, so
 the only new ways to reach undefined behaviour are the pointer operations a drawing library has
 by nature, and they are the same `Ptr<T>` operations stage 1 catalogued.
 
@@ -1661,7 +1661,7 @@ Kelp's integer arithmetic wraps rather than trapping (a `u64` FNV multiply is th
 whole point), so an over-large coordinate is a wrapped index and an out-of-bounds access, not a
 checked panic; the tests keep their inputs small and rely on the clip for the rest.
 
-**What the tests pin.** The references in `examples/polyp-soft-test` are per-pixel loops with
+**What the tests pin.** The references in `kelpc/tests/fixtures/examples/polyp-soft-test` are per-pixel loops with
 full-precision integers, so a primitive that disagrees in one pixel or one count fails rather
 than passing on a checksum. The three golden FNV checksums cover the scenes end to end, and the
 damage list's "union covers every added rectangle" property is checked per pixel, not by
@@ -1669,10 +1669,10 @@ rectangle containment.
 
 ## Library note: Polyp v3's soft backend, layout, input and platform (2026-10-03, not a kernel stage)
 
-A library stage (`examples/polyp/soft_backend.kp`, `soft/event.kp`, `soft/platform.kp`,
+A library stage (`backends/soft/soft_backend.kp` in the Polyp repository, `soft/event.kp`, `soft/platform.kp`,
 `soft/headless_platform.kp`, `soft/ppm_platform.kp`, `soft/frac.kp`), not a compiler one: nothing
 in the compiler changed. `design/polyp-v3` stage 3 is the design and
-`examples/polyp/PLATFORM.md` the platform contract.
+`kelpc/tests/fixtures/examples/polyp/PLATFORM.md` the platform contract.
 
 **The new pointer shapes.** Three, all in modules a consumer lists on `[unsafe] modules`:
 
@@ -1709,10 +1709,10 @@ path, which keeps a freestanding riscv64 image from needing a soft-float libcall
 progress bar. The checksum printed after every frame is stage 2's FNV-1a, taken by masking the
 `u32` value rather than reading memory, so it is the same on either endianness.
 
-**What the tests pin.** `examples/polyp-ui-test` drives hit testing, focus order, entry editing,
+**What the tests pin.** `kelpc/tests/fixtures/examples/polyp-ui-test` drives hit testing, focus order, entry editing,
 damage (a same-width text change damages exactly one rectangle and a FNV digest of every pixel
 outside it is unchanged; a hover damages one widget; an idle frame presents nothing) and the
-layout skip (one measure, no arrange), and `examples/polyp-todo-soft` pins the todo UI's
+layout skip (one measure, no arrange), and `kelpc/tests/fixtures/examples/polyp-todo-soft` pins the todo UI's
 checksums at 400x300 and 800x600. Both run on the LLVM and C backends under `run_bounded`.
 
 ## Library note: Polyp v3's freestanding framebuffer proof (2026-10-04, not a kernel stage)
@@ -1765,7 +1765,7 @@ a pointer any more.
 output to equal the hosted 320x200 run's line for line, and require `llvm-nm -u` to name no
 undefined symbol.
 
-**Stage 4's `ramfb` stretch adds one more pointer path.** `examples/polyp-fb-riscv64/src/ramfb.kp`
+**Stage 4's `ramfb` stretch adds one more pointer path.** `kelpc/tests/fixtures/examples/polyp-fb-riscv64/src/ramfb.kp`
 builds pointers from three fw_cfg addresses in the granted `0x10100000+0x20` window (the data,
 selector and DMA registers), writes a 16-byte DMA descriptor into a `static mut` for the device to
 read, and hands QEMU's `ramfb` device the physical address of the project's framebuffer in a

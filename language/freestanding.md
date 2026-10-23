@@ -60,7 +60,7 @@ A freestanding project is **LLVM-only**, as every project is now.
 boot loader or an emulator, not a host process.
 
 ```text
-error: 'examples/kernel0' is a freestanding project, whose artifact is a bare-metal ELF; 'kelpc run' does not run one
+error: 'kelpc/tests/fixtures/examples/kernel0' is a freestanding project, whose artifact is a bare-metal ELF; 'kelpc run' does not run one
 ```
 
 ## What freestanding removes
@@ -122,7 +122,7 @@ combinators.
 - A `datac` or `enum` with a `String` field. The derived key equality the
   compiler emits for a keyable type is now a length-aware byte loop in a
   freestanding image too, the body hosted code gets from `kelp_map_key_eq`, so
-  such a type compares and hashes with no libc behind it. `examples/kernel0-eq`
+  such a type compares and hashes with no libc behind it. `kelpc/tests/fixtures/examples/kernel0-eq`
   is the proof: it prints a `String`-field equality, a `Map` lookup through the
   derived pair, a `Bytes`-field equality (a declared `eq` that walks the bytes),
   a `View` slice and a `std/regex` match over the UART on riscv64 and x86-64.
@@ -404,7 +404,7 @@ unsafe {
 }
 ```
 
-`examples/kernel0-string` is the idiom: the heap example's bump allocator with
+`kelpc/tests/fixtures/examples/kernel0-string` is the idiom: the heap example's bump allocator with
 the optional `realloc` named, `str.concat` and `str.from_u64` for text, a
 `String` grown with `push_str`, and a `Bytes` grown through several doublings:
 
@@ -415,7 +415,7 @@ b: 300
 balanced
 ```
 
-`examples/kernel0-heap` is the same idiom for `List<i32>`: a bump allocator over
+`kelpc/tests/fixtures/examples/kernel0-heap` is the same idiom for `List<i32>`: a bump allocator over
 a `static mut` arena, a `List<i32>` of 1..=10, and a counting wrapper that
 prints `balanced` when every allocation reached a matching free.
 
@@ -503,7 +503,7 @@ for the boot page tables:
 `__bss_start` and `__bss_end` are `.weak` exactly as the other two stubs
 declare them, and the double-panic halt is `hlt` for this triple.
 
-`examples/kernel0-x86_64` is the COM1 (port `0x3F8`) driver: poll the Line
+`kelpc/tests/fixtures/examples/kernel0-x86_64` is the COM1 (port `0x3F8`) driver: poll the Line
 Status Register at `0x3FD` for bit 5 (THR empty) through `in`, then write the
 Transmit Holding Register at `0x3F8` through `out`, both inline `asm` in the
 `uart` module the `[unsafe]` list names. Port I/O is not memory-mapped, so the
@@ -524,7 +524,7 @@ the greeting; `run.sh` asserts the greeting line whole, as it does for every
 example, and the greeting's leading `\n` separates it from the banner's
 newline-less `Booting from ROM..` line.
 
-`examples/kernel0-x86_64-lmode` is the long-mode proof. Its `kmain` reads `CR0`,
+`kelpc/tests/fixtures/examples/kernel0-x86_64-lmode` is the long-mode proof. Its `kmain` reads `CR0`,
 `CR4` and `EFER` through `asm`, prints `long mode on` only when `EFER.LMA`,
 `CR0.PG` and `CR4.PAE` are all set, then loads a null IDT and executes `ud2`.
 With no IDT the `#UD` is a triple fault, so the machine resets; the boot test
@@ -542,7 +542,7 @@ long mode on
 
 What is not there: the APIC (local and I/O), SMP and ACPI, a TSS or an IST
 stack, `syscall`/`sysret` and x86 user mode. An IDT with four CPU exception
-gates and the PIC+PIT timer does ship, `examples/kernel0-x86_64-idt`
+gates and the PIC+PIT timer does ship, `kelpc/tests/fixtures/examples/kernel0-x86_64-idt`
 ([Kernel 0](/language/kernel#x86-64-interrupts-the-idt-the-exceptions-and-the-timer)),
 so what a kernel still needs on x86-64 is the local and I/O APIC and ACPI
 enumeration. The `interrupt` and calling-convention attributes are still open. `cpu_index()` has no x86-64 lowering yet, so a `percpu` static is
@@ -833,7 +833,7 @@ stub first. Naming it first is not enough on its own: the script has to name
 the other sections too, because lld places an unnamed orphan (`.eh_frame` is
 the one a program with unwinding tables emits) before `.text`, and QEMU's
 `-bios none` starts the image at 0x80000000 rather than the ELF entry, so
-`_start` has to hold that address (`examples/kernel0/kernel.ld`,
+`_start` has to hold that address (`kelpc/tests/fixtures/examples/kernel0/kernel.ld`,
 [`language/kernel.md`](/language/kernel)).
 
 ### The compiler's `mem*` fallbacks
@@ -942,19 +942,19 @@ Every compiler-inserted check calls one compiler-emitted entry,
   That symbol is always defined, **weakly**, as a `wfi`/`wfe` loop, so an image
   links with no undefined symbol and a project's own strong definition (an
   object linked beside the compiler's, the way `freestanding_memcpy_user`
-  supplies `memcpy`) wins. `examples/kernel0-panic2` proves exactly that: its
+  supplies `memcpy`) wins. `kelpc/tests/fixtures/examples/kernel0-panic2` proves exactly that: its
   handler indexes out of bounds and the boot prints `double panic` from the
   project's assembly definition rather than wedging.
 - The location reaches checks inside *generated* bodies (`Array.get`'s bounds
   check, the container sets) through the two globals `kelp_panic_file` and
   `kelp_panic_line`, which each `.kp` statement stores before the check runs.
   A `naked fun` gets no store: its body is one `asm` and an instruction before
-  it would break the ABI (this is why `examples/kernel0-trap` still boots).
+  it would break the ABI (this is why `kelpc/tests/fixtures/examples/kernel0-trap` still boots).
 - With no `[target] panic`, the entry still exists and its first-panic branch
   calls the generated infinite-loop handler; the image prints nothing and
   stops, exactly as before.
 
-The acceptance is `examples/kernel0-panic2`, booted by its own `run.sh` and by
+The acceptance is `kelpc/tests/fixtures/examples/kernel0-panic2`, booted by its own `run.sh` and by
 `kernel0_panic2_names_each_checks_message_and_location`: seven phases, each
 asserting the exact `panic: <message> at <file>:<line>` line, with phase 6
 asserting `double panic`. Phase 7 is the cleanup rule (below): its `defer` and
@@ -972,7 +972,7 @@ handler (or in `kelp_double_panic` if the handler panics too).
 This is the same rule for every freestanding image, and it is what makes the
 handler the only cleanup a kernel gets on a panic. A kernel that needs state
 written out on a panic writes it from `kp_panic` itself. The rule is tested by
-phase 7 of `examples/kernel0-panic2`. A hosted program has one exception, which
+phase 7 of `kelpc/tests/fixtures/examples/kernel0-panic2`. A hosted program has one exception, which
 is a worker thread: see [User `Drop`](/language/drop#a-panic-runs-no-destructor).
 
 ### The target machine and the link
@@ -1019,7 +1019,7 @@ is ELF64 RISC-V with a 0x80000000 entry, with `llvm-objdump` that `_start`
 disassembles to RISC-V including the `wfi` halt, and with `llvm-nm` that there
 is no undefined symbol. `freestanding_print`, `freestanding_no_entry`,
 `freestanding_main` and `freestanding_ptr_alloc` are the rejection fixtures. All
-of these need `dev-kernel.nix`'s `ld.lld` and llvm
+of these need `shell.nix`'s `ld.lld` and llvm
 tools; where those are absent the acceptance test prints a skip rather than
 failing, so the ordinary suite stays green.
 
@@ -1031,7 +1031,7 @@ Kernel gap 4's own acceptance is four more tests in
 for the weak-linkage one): `freestanding_memcpy` links a 4 KiB `datac` and a
 `[u8; 4096]` array with zero undefined symbols, `llvm-nm` shows the five `mem*`
 symbols weak and `llvm-objdump -d` shows no self-call in any body,
-`examples/kernel0-bss` boots with `bss clear` only after the entry stub has
+`kelpc/tests/fixtures/examples/kernel0-bss` boots with `bss clear` only after the entry stub has
 erased a 64-byte pattern the image itself loaded into `.bss`, and
 `freestanding_memcpy_user` links a project's own strong `memcpy` in place of the
 compiler's weak one. The `_start` clear loop is also checked by decoding its two

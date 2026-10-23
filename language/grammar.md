@@ -154,8 +154,8 @@ chain        := [ "elif" expr block chain
   (`t.0`), by `for (a, b) in ...` and by a tuple pattern in `when`
   ([Bindings and assignment](/language/bindings)).
 - `chain` is what follows the first block of an `if` or an `if let`: nothing, an
-  `else` block, or another link. A link is written `elif` (the preferred
-  spelling) or `else if`, so a chain may mix the two; a chain that produces a
+  `else` block, or another link. A link is written `else if` (the preferred
+  spelling) or `elif`, so a chain may mix the two; a chain that produces a
   value needs the `else` block at its end.
 - `typeargs` is written **adjacent** to the name and to the `(`:
   `Pair<i32, String>(…)`. Write a space before `<` when you mean a comparison.

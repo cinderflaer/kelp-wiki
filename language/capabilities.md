@@ -15,7 +15,7 @@ impl "std/http" caps(net = ["127.0.0.1:*"])
 impl "std/fs"
 ```
 
-Those two lines are `examples/download.kp`'s entire network and filesystem
+Those two lines are `kelpc/tests/fixtures/examples/download.kp`'s entire network and filesystem
 authority. "What can this code do?" is answered by the first few lines of a file
 instead of by auditing it.
 
@@ -301,7 +301,7 @@ the frame and the compiler does not revisit it; and DMA is not tracked, so a
 frame handed to a device can be freed, reused or claimed twice. `irq` and
 `frames` are held by the entry module by default, so an un-narrowed project can
 claim any line and any frame; a kernel that wants the narrow story writes the
-`[caps]` section, as `examples/kernel0-caps` does. See [`std/irq`](/stdlib/irq)
+`[caps]` section, as `kelpc/tests/fixtures/examples/kernel0-caps` does. See [`std/irq`](/stdlib/irq)
 and [`std/frame`](/stdlib/frame).
 
 ## Library grants
