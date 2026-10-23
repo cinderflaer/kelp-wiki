@@ -73,13 +73,18 @@ source: the owner's wish, 2026-10-06; today's behaviour is `kelpc build`
 (`wiki/tooling/kelpc-cli.md`, "Artifacts") and `coral build` (`wiki/tooling/coral.md`),
 and `coral publish` is listed there as an unknown command.
 
+Status (2026-10-23): part of the wish is on coral `main`, and no release has it yet. There,
+`coral build --package` writes a `.ckp` archive, `coral run <archive.ckp>` and `coral inspect` read one,
+and the archive is signed when a key is configured. The first release of the Kelp port, v26.10.5,
+predates that work. The issue stays open for a release and for the self-contained form below.
+
 Wish: `coral build` can package an application into one `.ckp` file (compiled
 Kelp), an archive in the role a `.jar` plays for Java and Kotlin. It is **not**
 portable bytecode: the contents are the same natively compiled code the build
 makes today, gathered into one file instead of left as separate files. The
 extension is decided; the archive's internal layout is not.
 
-What exists: `kelpc build` emits a native executable (`<out>`, plus `<out>.ll`
+What existed before that work: `kelpc build` emits a native executable (`<out>`, plus `<out>.ll`
 and `<out>.o` beside it), and `coral build [--release]` leaves it under
 `build/<mode>/`. Nothing is archived: a program with data files or `[extern]`
 native libraries ships as a loose set of files.

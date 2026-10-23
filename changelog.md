@@ -83,11 +83,11 @@ README has a Without Nix section with the install and source build steps.
 link step uses `ld.lld` rather than `cc`, so a build with no `cc` can link, and
 `KELPC_LLD` selects another linker. A hosted program records the standard loader path
 and sets `RUNPATH` to `$ORIGIN/lib`, so a `.ckp` package runs on any machine whose glibc
-is at least the one its files need. A `.ckp` manifest has a `[requires]` table, and
-`coral run` and `coral inspect` refuse a package whose glibc is newer than the host's.
-`build --package` bundles the libraries the executable needs into `lib/` and refuses a
-package that needs `libstdc++` by name. `llvm-readelf` must be on `PATH` to build a
-package.
+is at least the one its files need. The Coral side is on Coral's `main` branch and has no tagged release yet. There, a `.ckp`
+manifest has a `[requires]` table, `coral run` and `coral inspect` refuse a package whose glibc is
+newer than the host's, and `build --package` bundles the libraries the executable needs into `lib/`
+and refuses a package that needs `libstdc++` by name. `llvm-readelf` (or `llvm-readelf-21`) must be
+on `PATH` to build a package.
 
 **The C backend and the C runtime are gone.** The C backend is removed (2026-10-10):
 `kelpc` builds every program with the LLVM backend. `kelp-rt/`, a Rust `no_std` crate

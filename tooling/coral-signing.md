@@ -7,6 +7,7 @@ tags: "tooling, cli"
 # Signing archives
 
 This page shows how to sign a Coral package and how to check one before you run it.
+It describes Coral's `main` branch: the archive commands are not in a tagged release yet.
 It covers `coral key new`, `coral build --package`, `coral inspect` and `coral run`.
 
 Signing is optional.
@@ -192,7 +193,7 @@ Coral makes it so at `build --package` time:
 - The executable is linked dynamically against glibc. The glibc family (`ld-linux-x86-64.so.2`, `libc.so.6`, `libm.so.6`, `libpthread.so.0`, `libdl.so.2`, `librt.so.1`) and `libgcc_s.so.1` are never bundled. The host supplies them.
 - Every other library that the executable or a bundled file needs is copied into `lib/` in the package, with its sha256 in `[files]`. The executable finds `lib/` through its `RUNPATH`, `$ORIGIN/lib`.
 - A package that needs `libstdc++` is refused at build time, and the message names the library.
-- `[requires]` states the glibc the package needs. It is the highest `GLIBC_x.y` version that any file references, found with `llvm-readelf --version-info`. `build --package` refuses when `llvm-readelf` is not on `PATH`.
+- `[requires]` states the glibc the package needs. It is the highest `GLIBC_x.y` version that any file references, found with `llvm-readelf --version-info`. `build --package` refuses when neither `llvm-readelf` nor `llvm-readelf-21` is on `PATH`.
 
 Build a package in the oldest glibc you support. A package built on Ubuntu 24.04 (glibc 2.39) runs on every newer glibc.
 A package built on a newer distro may name a newer glibc, and then it runs only on machines that have that glibc or a newer one.

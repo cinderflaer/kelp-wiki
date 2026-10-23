@@ -17,22 +17,24 @@ differ, this page follows the binary and says so. Those places are listed again 
 [where this page and the README could disagree](#where-this-page-and-the-readme-could-disagree).
 
 This page describes Coral as it is on the `main` branch, which is the Kelp port.
-That port has no release tag yet. The newest tag, `v26.09.4`, is the older Rust
-build, which is kept on the `rust-legacy` branch for reference only.
+The first release of the port is `v26.10.5`. Changes on `main` after that tag are not
+released yet, and the [Coral changelog](/changelog/coral) lists each release. The
+newest tag before the port, `v26.09.4`, is the older Rust build, which is kept on the
+`rust-legacy` branch for reference only.
 
 ## Install and where Coral lives
 
-Coral manages Kelp's compiler and itself, both fetched from your Gitea. The
-versions on disk live under `~/.coral/toolchains/`, and `~/.coral/bin` is what
-`use` points at:
+Coral manages Kelp's compiler and nothing else. It fetches the newest Kelp release
+from your Gitea, and the installed copy lives under `~/.coral/toolchains/kelp/`.
+`update` points `~/.coral/bin/kelpc` at that copy:
 
 ```sh
-coral toolchain kelp install v26.10.4
-coral toolchain kelp use v26.10.4       # ~/.coral/bin/kelpc -> that build
+coral toolchain kelp latest      # the newest vYY.MM.N release on the remote
+coral toolchain kelp update      # install it and point ~/.coral/bin/kelpc at it
+coral toolchain kelp installed   # the version under ~/.coral/toolchains/
 ```
 
-`~/.coral/bin` is not put on `PATH` for you. `use` prints a one-time reminder if
-it is missing, the same way rustup treats `~/.cargo/bin`.
+`~/.coral/bin` is not put on `PATH` for you.
 
 The flake that builds Coral with Nix, `nix build .#coral`, is on the `v26.09.4` tag
 (the Rust build) and not yet on `main`. For the compiler, see
@@ -47,38 +49,62 @@ wording is the binary's:
 usage: coral <command> [args]
 
 commands:
-  init [name] [--no-git] [--no-sample] [--version <v>] [--kelp <ver>]
+  init [name] [--no-git] [--no-sample] [--version <v>] [--author "Name <email>"]... [--description <text>]
                             scaffold a new project (coral.toml, src/main.kp, tests/, src/tasks/)
-                            --kelp writes the project's [toolchain] pin
+                            --author and --description write the [package] metadata (see info)
   sync [--dry-run] [--offline]
-                            install the pinned toolchain and fetch dependencies, without building
+                            install the newest kelp release and fetch dependencies, without building
                             --dry-run prints the plan and changes nothing
                             --offline refuses instead of fetching (or installing) anything
                             this is also what moves a dependency forward: a library has no
                             version, so a sync takes each remote's tip
-  build [--release] [--offline]
-                            compile the project's entry point with kelpc
+  build [--release] [--offline] [--package]
+                            compile the project's entry point with the newest kelpc
+                            --package also collects the resources and [extern] libraries into
+                            build/<name>-<version>-<os>-<arch>.ckp and prints that path
+                            signed with the configured key (see key new), and never unsigned
+                            when a key is configured
+                            --require-signed refuses to write an unsigned archive
   run [--release] [--offline] [-- args...]
                             build, then run the result, forwarding argv and the exit code
+  run <archive.ckp> [--require-signed] [-- args...]
+                            unpack a package archive (see build --package) into the cache and run
+                            its entry; no coral.toml is needed, and nothing else is read
+                            --require-signed refuses an archive with no signature, or one from a key
+                            the trust file does not list
+  inspect <archive.ckp> [--require-signed]
+                            print a package archive's manifest, its signature line and its files,
+                            checking each sha256; nothing is unpacked or run
+  key new <label>           make a signing key under the config directory (mode 0600) and print
+                            its public key and fingerprint
   check [--offline]         build without keeping the artifact
   clean                     remove build/
+  test [name-filter] [--json] [--valgrind]
+                            build and run every tests/<name>.kp, compare stdout, and
+                            check the fixtures marked as refused (see README.md)
+                            --json prints one document instead of one line per fixture
+                            --valgrind runs each accepted fixture under valgrind and
+                            fails on a leak or a memory error
+  fmt [paths...] [--check] [-w]
+                            run kelpc's formatter over the paths named, or over the
+                            project's own sources (src/ and tests/) when none are
+                            --check writes nothing and exits nonzero when a file is not
+                            already formatted, and -w rewrites the files in place
+  lint [paths...]           run kelpc's linter over the paths named, or over the project's
+                            own sources; a warning is not a failure, so the exit is zero
+  version                   print this release's name (also: coral --version)
   docs get <file>.kp        one file's documentation comments, each with the
                             declaration it documents, and no code bodies
   docs list                 every documented thing in this project: where it is,
                             what it is called, and the first line of its prose
   docs search <query>       the entries whose key or prose match, prose included
                             ('fun:test' asks about that function and nothing else)
+  info                      print the project's name, version and [package] metadata
   task <name> [-- args...]  run a [tasks] entry
   task                      list the tasks declared in coral.toml
-  toolchain kelp|coral list           list versions (git tags) available on your Gitea
-  toolchain kelp|coral installed      list the versions under ~/.coral/toolchains/ (at most one)
-  toolchain kelp|coral install <ver>  fetch and build one (a release binary, if it has one)
-                                      the store keeps one version per component: install drops the others
-  toolchain kelp|coral use <ver>      point ~/.coral/bin/kelpc or /coral at that version
-                                      and drop the other versions the same way
-  toolchain kelp pin <ver>            pin this project to a version in coral.toml ([toolchain])
-  toolchain kelp pin                  print this project's pinned version
-  toolchain kelp pin --clear          remove the pin (go back to the global default)
+  toolchain kelp latest     print the newest kelp release on the remote (vYY.MM.N)
+  toolchain kelp installed  print the kelp version under ~/.coral/toolchains/ (at most one)
+  toolchain kelp update     install the newest kelp release and point ~/.coral/bin/kelpc at it
 ```
 
 | Command | What it does |
@@ -87,7 +113,7 @@ commands:
 | `coral build [--release]` | compile the entry point into `build/<mode>/` |
 | `coral run [-- args...]` | build, then run, forwarding argv and the exit code |
 | `coral check` | build into `build/check/` without producing something to ship |
-| `coral sync` | materialise declared inputs: the pinned compiler and every dependency |
+| `coral sync` | install the newest Kelp release if none is installed, and fetch every dependency, without building |
 | `coral docs get <file>.kp` | print one file's documentation comments and the declarations they document |
 | `coral docs list` | print every documented thing in the project, one line each |
 | `coral docs search <query>` | print the entries whose key or prose match, prose included |
@@ -97,8 +123,13 @@ commands:
 | `coral fmt [paths...] [-w\|--check]` | format the project's sources, or one named file; `--check` exits nonzero on a file that is not already formatted |
 | `coral lint [paths...]` | print the compiler's lint warnings (a comment run, the `else if` link, the project's naming case); always exits zero |
 | `coral test [name-filter] [--json] [--valgrind]` | build and run every fixture under `tests/`, compare stdout, and check the fixtures marked as refused |
-| `coral toolchain kelp|coral ...` | list, installed, install, use, pin |
-| `coral version` / `coral --version` | print the release this binary was built from, as `coral 26.10.0` on `main` (the version constant in `src/main.kp`), padded the way a tag spells it |
+| `coral toolchain kelp latest\|installed\|update` | print the newest release, print the installed one, or install the newest and link it |
+| `coral info` | print the project's name, version and `[package]` metadata |
+| `coral build --package` | build, then write `build/<name>-<version>-<os>-<arch>.ckp`, a package archive that bundles the resources and `[extern]` libraries; see [Signing archives](/tooling/coral-signing) |
+| `coral run <archive.ckp>` | unpack a package archive into the cache and run its entry, with no `coral.toml` needed |
+| `coral inspect <archive.ckp>` | print a package archive's manifest, signature line and files, checking each sha256; nothing is run |
+| `coral key new <label>` | make a signing key under the config directory and print its public key and fingerprint |
+| `coral version` / `coral --version` | print the release this binary was built from, as `coral 26.10.5` on `main` (the `VERSION` constant in `src/main.kp`) |
 
 `coral version` and `coral --version` are the same command, and neither reads a
 project: both answer outside a project too.
@@ -268,8 +299,8 @@ util = "example/kelp-util"           # the whole repo
 json = "example/fpl/json"            # one folder inside a repo
 local = "file:///srv/git/fpl#other"  # a full URL, folder after '#'
 
-[toolchain]
-kelp = "v26.10.4"
+[package]
+kelp = "26.10.5"    # written by coral, not by hand
 ```
 
 ### Flat keys
@@ -305,6 +336,9 @@ them. `kelpc` skips the whole section, so they never change a build.
 | `license` | a string | the license name, for example `"MIT"`; it must not be empty |
 | `repository` | one word, no spaces | the source URL |
 | `homepage` | one word, no spaces | the project's web page |
+| `resources` | an array of project-relative paths, bundled by `coral build --package` | read by Coral for the package archive |
+| `capabilities` | an array of capability names | written into the package archive's manifest |
+| `kelp` | a version string | the Kelp release the project was last built with; written by Coral |
 
 An author needs a name, then a space, then an address in angle brackets that
 holds an `@` with a character on each side. None of these values may contain a
@@ -337,16 +371,13 @@ Package archives made by `coral build --package` do not carry these keys yet.
 | `[tasks]` | `name = "path/to/file.kp"` | each task compiles as its own unit, and `src/tasks/` is where `init` puts them |
 | `[alias]` | `_name = "module/path"` | read by `kelpc`, not Coral: text aliases for `_name`; see [Aliases in coral.toml](/getting-started/projects#aliases-in-coraltoml) |
 | `[dependencies]` | `name = "owner/repo[/folder]"` | see [Dependencies](#dependencies) |
-| `[toolchain]` | `kelp = "v26.10.4"` | written by `coral toolchain kelp pin`, a line edit that leaves comments and section order alone |
+| `[package]` | the metadata keys below, `resources`, `capabilities` and `kelp` | `kelp` is written by Coral, not by hand |
+| `[tidepool]` | `headroom_pct`, `start_low_mib`, `start_high_mib` | written by `coral init`; Coral does not read its keys |
+| `[toolchain]` | refused | Coral no longer reads a pin; a manifest with this section is refused until the section is deleted |
 
-Pinning is how a project builds with the compiler it was written against instead
-of whatever `coral toolchain kelp use` last set machine-wide:
-
-```sh
-coral toolchain kelp pin v26.10.4  # write it into coral.toml
-coral toolchain kelp pin           # print it
-coral toolchain kelp pin --clear   # drop it, back to the global default
-```
+Coral has no version pins. Every build uses the newest Kelp release. The `kelp` key
+in `[package]` records the release a project was last built with. Coral writes it on a
+build, and only after it asks on a terminal: without one, `coral.toml` is left unchanged.
 
 ### `[caps]`: the entry module's own grant
 
@@ -578,6 +609,13 @@ name = "demo"
 version = "0.1.0"
 entry = "src/main.kp"
 
+# Memory settings. See the Tidepool design before changing these.
+[tidepool]
+headroom_pct = 20        # allowed growth of the shared pool between collections, in percent (0 to 1000)
+start_low_mib = 1        # lower guess of the shared pool's first size, in MiB (at least 1)
+start_high_mib = 4       # upper guess of the first size, in MiB (at least start_low_mib, at most heap_max)
+# No toolchain pin yet. A pin will be required once the minimum compiler release exists.
+
 $ cat .gitignore
 build/
 src/deps/
@@ -673,6 +711,10 @@ local = "file:///srv/git/fpl#other"  # a full URL, folder after '#'
 - Anything containing `://` or an `@` is treated as a full URL and used as written,
   and names a folder with a `#` fragment, because a URL's path means whatever its
   host says it means. A full URL reads no configuration at all.
+- A dependency can also be a table that names the capabilities it may use:
+  `net-lib = { source = "example/net-lib", caps = ["net"] }`. The caps are recorded in
+  `coral.lock` by `coral sync`, and a build refuses when the manifest's caps differ
+  from the lock.
 
 ### Configuration
 
@@ -724,11 +766,8 @@ dependency that is missing; only `coral sync` refreshes one that is already ther
 `owner/repo/folder` names one library inside a repository, and only that folder's
 *contents* are downloaded. They land at `src/deps/<name>/` either way, so the
 import is `impl "deps/<name>/lib"` no matter which repository or folder it came
-from:
-[Coral's README](https://homelabone.xenoo.dev/gittea/Lilly/coral/src/branch/main/README.md):
-a folder dependency lands **flat**, so `example/fpl/json` puts the contents of
-`json/` at `src/deps/json/`, and the import is `impl "deps/json/lib"` no matter
-which repository it came from. The clone behind it uses
+from. For example, `example/fpl/json` puts the contents of `json/` at `src/deps/json/`,
+and the import is `impl "deps/json/lib"`. The clone behind it uses
 `--filter=blob:none --sparse` so only the named folder comes down, and a server
 that ignores the filter still works: git says so and does the slower thing.
 
@@ -785,117 +824,113 @@ prints exactly what it installed and fetched before any of it produces an artifa
 and it is what makes `--offline` mean something.
 
 ```sh
-coral sync                 # the pinned toolchain, then every [dependencies] entry
+coral sync                 # the newest Kelp release, then every [dependencies] entry
 coral sync --dry-run       # print the plan, change nothing
 coral sync --offline       # refuse if anything is missing; never touch the network
 coral build --offline      # build with no I/O at all
 ```
 
-A sync does two things. It installs every `[toolchain]` pin that is not already in
-`~/.coral/toolchains/`, and it fetches every `[dependencies]` entry to its remote's
-tip. A project with **no** pin gets a report rather than an install, because which
-compiler a pin-less project uses is `~/.coral/bin/kelpc`'s business and changing
-that is a machine-wide decision a per-project command should not make:
+A sync does two things. It installs the newest Kelp release if none is installed, and
+it fetches every `[dependencies]` entry to its remote's tip and records each one in
+`coral.lock`:
 
 Coral's own messages use a dash between a message and its reason. The examples
 below write a colon in its place.
 
 ```text
 $ coral sync --dry-run
-coral: no [toolchain] pin: builds use kelpc v26.10.4 (from ~/.coral/bin)
 coral: would fetch 'json' at the remote tip
 coral: 'depdemo' would install 0 and fetch 1 (nothing changed)
 
 $ coral sync --offline
-coral: no [toolchain] pin: builds use kelpc v26.10.4 (from ~/.coral/bin)
-error: dependency 'json' is not present at the remote tip, and --offline forbids fetching it: run 'coral sync' where the network is available
-
-$ coral build
-coral: fetching 'fpl' at the remote tip
-coral: building 'g' (dev)
+error: dependency 'json' is not present under src/deps/, and --offline forbids fetching it, run 'coral sync' where the network is available
 ```
 
 The offline refusal names what is missing rather than failing later. A dependency
 that is already present is left at the commit it is at, so `coral build --offline`
 runs the same checks and cannot slip past what a sync would have refused.
 
-## There is no lockfile
+## coral.lock
 
-A Kelp library has no version, so there is nothing for a lockfile to pin: a
-dependency is a git remote, and what makes a build reproducible is that
-`src/deps/<name>/` **is** the tree it built with and stays that way until a
-`coral sync` refreshes it. `coral add` and `coral update` were removed, and so
-were `coral.lock` and `--locked`: the binary refuses both of the commands by name
-and `--locked` by name as well, rather than pretending to know them. A sync in CI
-is `coral sync` after checkout, and a build that must not reach the network is
+`coral sync` writes `coral.lock`, with one table per dependency in name order: the
+source as `coral.toml` declares it, the commit it was fetched at, and the caps it was
+declared with. A build reads the file to check the caps and never changes it. When the
+caps in `coral.toml` differ from the lock, the build refuses and names the dependency,
+so a change to a dependency's capabilities shows up as a diff of `coral.lock` after a
+`coral sync`:
+
+```toml
+[dependency.json]
+source = "example/fpl/json"
+commit = "61f0b8b54c262eeee785038770d1a86a4509ac02"
+caps = []
+```
+
+A Kelp library has no version, so the lock pins commits, not versions. `coral add` and
+`coral update` were removed, and `--locked` is refused by name. A sync in CI is
+`coral sync` after checkout, and a build that must not reach the network is
 `coral build --offline`.
 
 ## Toolchains
 
-A version means a git tag on the kelp or coral repository. `install` prefers the
-tag's own Gitea release: when the release carries an asset named for this platform
-(`kelpc-26.10.4-linux-x86_64`), that binary is downloaded, marked executable and put
-at `~/.coral/toolchains/kelp/<ver>/kelpc`, with no cargo involved. An asset whose
-name carries a *different* version is ignored, so a mislabelled asset cannot
-install the wrong compiler; a name that carries no version at all is accepted (a
-generic single-binary release). A tag with no release, no usable asset for this
-platform, or nothing but a `.zip` falls back to
-`git clone --branch <ver> --depth 1` plus `cargo build --release`, and the fallback
-is announced with its reason
-([Coral's README](https://homelabone.xenoo.dev/gittea/Lilly/coral/src/branch/main/README.md)).
+Coral manages one thing, the Kelp compiler, and only its newest release. `latest` names
+the newest `vYY.MM.N` tag on the remote, `installed` prints the version under
+`~/.coral/toolchains/kelp/`, and `update` installs the newest release and points
+`~/.coral/bin/kelpc` at it. Nothing takes an older version from the user or a project.
 
-Two details from the README that are worth knowing before trusting a failed
-install: the release list lives behind the Gitea HTTPS API, a private instance
-answers an unauthenticated request with a **sign-in page at HTTP 200**, and Coral
-tells that apart from a missing release. A 404 means "no release for this tag" and
-builds from source; a sign-in page says so and suggests a token. Set `CORAL_TOKEN`
-or `GITEA_TOKEN` and it is sent as `Authorization: token ...` for the release list
-and the asset download.
+`update` prefers the tag's own Gitea release. When the release carries an asset named for
+this platform (`kelpc-26.10.5-linux-x86_64`), that binary is downloaded, marked executable
+and put in the store. An asset whose name carries a different version is ignored. A tag
+with no release, or with no usable asset for this platform, falls back to
+`git clone --branch <ver> --depth 1` and `cargo build --release`, and the fallback is
+announced with its reason.
 
-**The store holds one version of each component**, so `install` replaces rather
-than adds. The new binary lands first and only then is every other version, plus
-every half-finished one, deleted, so a failed install leaves the working version
-alone. If the version that was just dropped was the one `~/.coral/bin/kelpc` named,
-the link is repointed at the stored version. There is no lock on the store: two
-Coral processes installing different versions at once would fight over it. The
-trade is deliberate, and it costs one reinstall per switch when two projects pin
-different versions.
+The release list lives behind the Gitea HTTPS API. A private instance answers an
+unauthenticated request with a sign-in page at HTTP 200, and Coral reports that case
+instead of treating it as a missing release. Set `CORAL_TOKEN` or `GITEA_TOKEN` and it
+is sent as `Authorization: token ...` for the release list and the asset download.
+
+The store holds one version. `update` puts the new binary in place first and removes the
+other versions only after that succeeds, so a failed update leaves the working version
+alone. There is no lock on the store.
 
 ```text
 $ coral toolchain kelp installed
-v26.10.4
+v26.10.5
 ```
 
 ## Which compiler Coral runs
 
-Coral resolves `kelpc` in this order, and stops at the first hit
-([Coral's README](https://homelabone.xenoo.dev/gittea/Lilly/coral/src/branch/main/README.md)):
+Coral resolves `kelpc` in this order, and stops at the first hit:
 
 1. `$KELPC`, which is how a compiler built from source gets used;
-2. the project's `[toolchain]` pin, installed on the spot if it is not there;
-3. `~/.coral/bin/kelpc`, the machine-wide default;
-4. `PATH`.
+2. the newest Kelp release in `~/.coral/toolchains/kelp/`, installed on the spot when
+   none is there and the network is allowed.
 
-Because the compiler binary's bytes are part of the build fingerprint, changing the
-pin rebuilds rather than replaying a cached artifact.
+`PATH` is not searched. Because the compiler binary's bytes are part of the build
+fingerprint, a newer compiler rebuilds rather than replaying a cached artifact.
 
 ## Environment variables
 
 | Variable | Effect |
 | --- | --- |
-| `KELPC` | the compiler to run, ahead of the pin, `~/.coral/bin` and `PATH` |
+| `KELPC` | the compiler to run, ahead of the newest installed release |
 | `CORAL_HOME` | overrides `~/.coral` (used by Coral's own tests) |
 | `CORAL_REGISTRY` | the Gitea base URL that `owner/repo` resolves against, ahead of the config file's `registry` (no default) |
 | `CORAL_OWNER` | the account `fpl/<name>` resolves under, ahead of the config file's `owner` (no default) |
 | `CORAL_CONFIG` | the config file's path, ahead of `$XDG_CONFIG_HOME/coral/config.toml` and `~/.config/coral/config.toml` |
 | `XDG_CONFIG_HOME`, `HOME` | where the default config file is looked for when `CORAL_CONFIG` is unset |
 | `CORAL_TOKEN`, `GITEA_TOKEN` | a Gitea token, sent as `Authorization: token ...` for the release list and the asset download |
+| `CORAL_SIGNING_KEY`, `CORAL_SIGNING_FINGERPRINT` | the private key `build --package` signs with, and its fingerprint (config keys `signing_key` and `signing_fingerprint`) |
+| `CORAL_TRUST` | the trust file that lists signing keys (config key `trust`, else `trust.toml` beside the config file) |
 
 ## What is not here yet
 
 Workspaces, `coral bench`, and publishing. `coral bench` and `coral publish`
 answer `unknown command`, which was checked; workspaces are absent from the command
-list rather than refused by name.
+list rather than refused by name. A `coral package` command for distro packages is
+planned (coral issue #4) and is not built. A `build --package` archive is not a distro
+package.
 
 `coral docs` reads text and nothing else, so it resolves no name: a
 `[docs(fun: nosuch)]` head is listed as written, and nothing reports that no such
@@ -918,7 +953,7 @@ and the README wins for what a feature is meant to become. Two claims to watch:
 | Claim | State |
 | --- | --- |
 | a folder dependency lands flat, via a sparse clone | shipped: `owner/repo/folder` lands the folder's contents at `src/deps/<name>/` |
-| a library has no version, so there is no lockfile | shipped: `coral add`, `coral update`, `coral.lock` and `--locked` are gone |
+| a library has no version, so the lock pins commits, not versions | shipped: `coral.lock` records source, commit and caps; `coral add`, `coral update` and `--locked` are gone |
 
 ## See also
 
