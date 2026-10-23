@@ -1,6 +1,6 @@
 ---
 title: "`std/sync`"
-description: "`Mutex<T>`, `RwLock<T>` and `Condvar` through scoped blocks, plus bounded, unbounded and zero-capacity channels (`sync.bounded`, `Sender`, `Receiver`, `for v in rx`), the `select` form over channel cases, and `Mutex.share`/`swap`. Hosted only. The thread pool is `std/pool`."
+description: "`Mutex<T>`, `RwLock<T>` and `Condvar` through scoped blocks, bounded, unbounded and zero-capacity channels, the `select` form over channel cases, and `Mutex.share`/`swap`. Hosted only. The thread pool is `std/pool`."
 isPublished: true
 tags: "stdlib, concurrency"
 ---
