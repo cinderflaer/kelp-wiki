@@ -88,5 +88,19 @@ charged to blocks. The program does not get a value back.
 - `a_pool_run_past_heap_max_is_refused_while_blocks_hold_the_budget` in the same
   file: while live blocks hold part of the cap, a pool run that would pass it is
   refused, and it is served once the blocks are freed.
-- The `trigger_t40` module of `kelpc/tests/gc/mod.rs` and `kelpc/tests/gc/child_first.rs`
-  check the first trigger.
+- `t40a_first_trigger_is_3_mib_for_1_and_4_mib_at_headroom_20` in the `trigger_t40`
+  module of `kelpc/tests/gc/mod.rs` checks the midpoint arithmetic.
+  `t40e_first_clearing_happens_at_the_manifest_trigger` and
+  `t40f_first_clearing_lands_in_the_pool_block_of_the_trigger` are in the same file.
+- `kelpc/tests/gc/child_first.rs` checks that the first clearing lands in the pool
+  block the trigger names: with a 3 MiB trigger, the 131041st 24-byte object is the
+  first one in pool block 97.
+- `two_size_keeps_a_spike_one_clearing_longer_than_last_size` in
+  `kelpc/gc/src/trigger.rs` checks the `two-size` arithmetic for a spike.
+
+## Related
+
+- [Settings in `[tidepool]`](/memory/tidepool/settings): the keys that set the cap and the triggers.
+- [The allocation path](/memory/tidepool/allocation-path): where the trigger is checked.
+- [Failure and recovery](/memory/tidepool/failure-recovery): what a program sees at the cap.
+- [Tidepool memory design](/memory/tidepool): the index.
