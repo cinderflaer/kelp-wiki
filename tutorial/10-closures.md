@@ -32,7 +32,7 @@ fun make_scaler(step: i32) => closure(i32) => i32 {
 }
 
 fun sum_with(xs: List<i32>, f: scoped fun(i32) => i32) => i32 {
-    var total = 0
+    var total: i32 = 0
     var i: usize = 0
     while i < xs.len() {
         total += f(xs.get(i))

@@ -161,7 +161,7 @@ an exclusive borrow.
 
 ```kelp
 fun sum(xs: List<i32>, f: scoped fun(i32) => i32) => i32 {
-    var total = 0
+    var total: i32 = 0
     var i: usize = 0
     while i < xs.len() {
         total += f(xs.get(i))
@@ -227,7 +227,7 @@ fun tally(s: mut State) {
 }
 
 fun main() {
-    var total = 0
+    var total: i32 = 0
     var calls = 0
     each { n ->
         total += n

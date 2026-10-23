@@ -175,7 +175,7 @@ datac Node(val value: i32, val next: Box<Node>)
 fun main() {
     var list = Node(value = 1, next = Box.of(Node(value = 2, next = Box.of(Node(value = 3, next = Box.empty())))))
     var cur = &list
-    var sum = 0
+    var sum: i32 = 0
     sum += cur.value
     while !cur.next.is_empty() {
         cur = cur.next.get()   // accepted: `cur` is rebound, `list` stays the root

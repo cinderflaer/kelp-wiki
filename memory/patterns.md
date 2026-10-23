@@ -203,7 +203,7 @@ fun main() {
     bump(c)
     bump(c)
     print(peek(c))
-    var total = 5
+    var total: i32 = 5
     add_to(total, 10)
     print(total)
     print(c.count)

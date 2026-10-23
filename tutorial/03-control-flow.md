@@ -12,7 +12,7 @@ tags: "tutorial, language"
 ```kelp
 impl "std/iter"
 
-fun sign(n: i32) => &str {
+fun sign(n: int) => &str {
     if n > 0 {
         return "positive"
     } elif n < 0 {
