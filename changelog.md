@@ -70,7 +70,7 @@ and hosted identity checks against the goldens, and the node descriptor test for
 slots. No other test fails.
 
 **Portable Linux packages.** `build/release-packages.sh` in the kelp repository builds
-kelpc in one container per distro and installs each package into a fresh container of
+[`kelpc`](/tooling/kelpc-cli) in one container per distro and installs each package into a fresh container of
 its own distro, which runs `kelpc run` on hello.kp and `kelpc build` on download.kp.
 Packages are a `.deb` for Debian 13 and Ubuntu 24.04, an `.rpm` for Fedora, a pacman
 package for Arch and a `flake.nix` for NixOS. The Debian packages bundle LLVM 21
@@ -78,31 +78,31 @@ because apt.llvm.org is not in a standard install. The `kelpc` launcher sets
 `ld.lld`, and the packages carry no collector archive, since kelpc embeds it. The
 README has a Without Nix section with the install and source build steps.
 
-**Embedded collector and linker.** `kelpc` embeds the collector archive it builds from
+**Embedded collector and linker.** `kelpc` embeds the [collector archive](/compiler/runtime) it builds from
 `kelpc/gc`, as it embeds the runtime, so a managed build needs no `KELP_GC_LIB`. The
 link step uses `ld.lld` rather than `cc`, so a build with no `cc` can link, and
 `KELPC_LLD` selects another linker. A hosted program records the standard loader path
 and sets `RUNPATH` to `$ORIGIN/lib`, so a `.ckp` package runs on any machine whose glibc
-is at least the one its files need. The Coral side is on Coral's `main` branch and has no tagged release yet. There, a `.ckp`
+is at least the one its files need. A `.ckp`
 manifest has a `[requires]` table, `coral run` and `coral inspect` refuse a package whose glibc is
 newer than the host's, and `build --package` bundles the libraries the executable needs into `lib/`
 and refuses a package that needs `libstdc++` by name. `llvm-readelf` (or `llvm-readelf-21`) must be
 on `PATH` to build a package.
 
-**The C backend and the C runtime are gone.** The C backend is removed (2026-10-10):
+**The C backend and the C runtime are gone.** The [C backend](/compiler/backends) is removed (2026-10-10):
 `kelpc` builds every program with the LLVM backend. `kelp-rt/`, a Rust `no_std` crate
 built by `kelpc/build.rs`, replaces the C runtime, and the hosted build compiles no C.
-`--sanitize=` and `[build] sanitize` are refused, since the sanitizers were built by the
+[`--sanitize=`](/tooling/sanitizers) and `[build] sanitize` are refused, since the sanitizers were built by the
 C backend. The retired `--backend`, `KELPC_BACKEND` and `KELPC_ORACLE` names are refused
 by name. The `managed` target mode is removed: a `[target] mode = "managed"` line is
 refused with the reason. The compiler and the examples write no em or en dashes in
 messages or comments.
 
-**Standard library.** `std/os` is a new module: the target (`os()`, `arch()`), process
+**Standard library.** [`std/os`](/stdlib/os) is a new module: the target (`os()`, `arch()`), process
 facts (`pid`, `parent_pid`), and `make_temp_dir(template)` and `make_temp_file(template)`,
-which return a fresh path. `std/sys` re-exports `os()` and `arch()`, so existing programs
+which return a fresh path. [`std/sys`](/stdlib/sys) re-exports `os()` and `arch()`, so existing programs
 build as before. `std/tlsfile.ca_dir_pem(dir)` reads every `.pem` and `.crt` file in a
-directory as CA certificates. `std.http` keeps only plain connections in its pool. `str.split`
+directory as CA certificates. [`std.http`](/stdlib/http) keeps only plain connections in its pool. [`str.split`](/stdlib/str)
 checks the first byte of the separator before comparing the whole separator. The `fs`,
 `io`, `arena`, `path`, `fmt`, `process`, `str`, `encoding`, `pool`, `net`, `thread`,
 `tlsfile`, `trace`, `frame`, `ops`, `sync`, `mem`, `atomic`, `rand`, `convert`, `irq`,
@@ -110,81 +110,59 @@ checks the first byte of the separator before comparing the whole separator. The
 items. `()` is accepted as a type and means `unit`, so `Result<(), E>` is the same type as
 `Result<unit, E>`. A `String` argument is accepted where a `str` parameter is expected.
 
-**Manual memory blocks.** `block name: T { ... }` frees the values it makes when the block
+**Manual memory blocks.** [`block name: T { ... }`](/memory/tidepool/blocks) frees the values it makes when the block
 ends, on every exit (`return`, `break`, `continue`, `?`). Inside it, `name.box()?` makes
 one zeroed element of the block's type in its own chunk, counted against `heap_max`, and
 the block's value is `Result<T, BlockError>`. A block value cannot leave its block, be
 stored in a shared container, a static, a closure or a thread.
 
-**Kernel and OS stack (first cut, release goal 3).** A freestanding build can call
-`Ptr.alloc` through the `[target] alloc`/`dealloc` pair and has the sized free
-`Ptr.free_count(count)`. `interrupt fun` declares a CPU handler on riscv64 and x86-64.
+**Kernel and OS stack (first cut, release goal 3).** A [freestanding](/language/freestanding) build can call
+[`Ptr.alloc`](/language/unsafe) through the `[target] alloc`/`dealloc` pair and has the sized free
+`Ptr.free_count(count)`. [`interrupt fun`](/language/kernel) declares a CPU handler on riscv64 and x86-64.
 Freestanding stack guards cover the kernel stack and the trap stack, and a panic runs no
 defer or `Drop` on that path, a rule that is written down and tested. The `kernel0-vm`
 example maps its pages through a `vm.Space` owner, and the `kernel0-user` syscall layer
-names its refusals as a `SysErr` value. The `mmio`, `irq` and `frames` capabilities are in.
+names its refusals as a `SysErr` value. The [`mmio`, `irq` and `frames`](/language/capabilities) capabilities are in.
 
-**Language.** `let Some(user) = find(id) else { return Err("missing") }` binds the
-variant or returns from the else block. `errdefer EXPR` runs its action only when the
+**Language.** [`let Some(user) = find(id) else { return Err("missing") }`](/language/bindings) binds the
+variant or returns from the else block. [`errdefer EXPR`](/language/errors) runs its action only when the
 function leaves through its `Err`. `derive(eq, hash)` on a `datac` or `enum` writes its
 `eq` and `hash` methods field by field. A function's return type is written `=>`, as in
-`fun f(a: i32) => i32`, and `=>` is the same arrow as `->` in `when` arms. `else if` is the
-preferred spelling of a chain link. `for x in xs.iter()` borrows a `List` and reads every
+`fun f(a: i32) => i32`, and `=>` is the same arrow as `->` in `when` arms. [`else if`](/language/control-flow) is the
+preferred spelling of a chain link. [`for x in xs.iter()`](/language/iterators) borrows a `List` and reads every
 element once; a mutator of that list during the loop is refused. A string template outside
 `print` is a `String` value. A word from another language used as a keyword or type name
 gets its Kelp word in a `help:` line. A `&` on a `List` or `str` parameter is redundant.
 
-**Threads, channels and the collector.** A `select` form over receive, send, timeout and
+**Threads, channels and the collector.** A [`select`](/language/concurrency) form over receive, send, timeout and
 closed arms waits on several channel cases with no polling; a `default` arm runs at once
 when nothing is ready. A hosted build accepts channels that close when their senders or
 receiver drop. `tl var NAME: T = LITERAL` gives each thread its own scalar copy. A
 panicking worker runs the user `Drop` of each owned local and each user `Drop` thread
-local, and frees its select waiter. A hosted build accepts `thread.spawn` with a closure
+local, and frees its select waiter. A hosted build accepts [`thread.spawn`](/stdlib/thread) with a closure
 that captures values, and refuses a spawn once 256 threads are open. `[target] heap_max = N`
 sets a hosted program's heap cap in MiB (1 to 65536, default 256). `KELP_GC_VERIFY=1`
 poisons dead objects, and `KELP_GC_STATS=1` prints one counter line at exit. The root table
 has no fixed limit, and a hosted program's collector starts with 10 percent headroom.
 
-**Tooling.** `kelpc caps <project>` prints each module's capabilities, sorted for CI
+**Tooling.** [`kelpc caps <project>`](/tooling/kelpc-cli) prints each module's capabilities, sorted for CI
 diffs. `kelpc repl` reads one expression or statement per line and runs under a resumable
-memory guard. `kelpc doc --format json` writes the documentation as JSON, and
+memory guard. [`kelpc doc --format json`](/tooling/kelpc-doc) writes the documentation as JSON, and
 `kelpc stdlib --json --dir <dir>` writes the shipped std sources. `[package]` in
-`coral.toml` takes `author`, `description`, `license`, `repository` and `keywords`.
+[`coral.toml`](/getting-started/projects) takes `author`, `description`, `license`, `repository` and `keywords`.
 `[build] obfuscate = "names"` keeps a hosted build's IR and objects free of source names.
-`[build] emit = "html"` writes a Polyp view as a static HTML file. A misspelled Tidepool
+`[build] emit = "html"` writes a [Polyp](/libraries/polyp) view as a static HTML file. A misspelled [Tidepool](/memory/tidepool)
 section is refused by name. `else if` and `elif` are both accepted.
 
 **Bugfix pass (issue 240, release goal 2).** A resolve test that had no `#[test]` attribute
 now runs and passes. The compiler's dead code (a duplicate runtime helper, two never-read
 or test-only items, an unused import) is removed, and no behaviour changed. A hosted
-worker that panics no longer stalls the next collection, a `Mutex` or `RwLock` may hold a
+worker that panics no longer stalls the next collection, a [`Mutex`](/stdlib/sync) or `RwLock` may hold a
 `List`, `String`, `Box`, `Map`, `Bytes` or a struct with those in it, and a hosted build
-refuses an `Atomic` as a container element. The golden corpus index and the `std/fs`
+refuses an [`Atomic`](/stdlib/atomic) as a container element. The golden corpus index and the [`std/fs`](/stdlib/fs)
 tests write scratch files under a directory unique to each test.
 
-**Limits.** A-11 (full borrow checking) is not finished. A thread argument that is a file,
-a socket or a closure value is still refused in a hosted build, and so is a `Mutex` of a
-resource. A hosted worker that panics while it evaluates a resource temporary (inside a
-struct literal field, as a method receiver, or as a later argument of a call) leaks that
-resource, so a receiver waiting on its channel may block. A hosted build refuses an enum
-stored inside a `datac`, and a `Map` whose value is an enum is refused at the `Map` type;
-keep such values in a `List`. The Tidepool M7 gate times the root scan with one live root
-only. The poison sweep runs only under `KELP_GC_VERIFY=1`. The kernel and OS stack is not
-finished: the syscall ABI with untrusted-pointer checks and address-space management are
-not in this release.
-
-**Deferred to a later release.** `mem.release`, which would end an owned value before its
-scope ends (issue 197). Project-wide capability grants (issue 19): a grant is still written
-per module, in that module's `impl` line. Call-site borrow inference and a single text
-parameter type (issue 12). Issues 6 to 15, 18, 218 to 229, 238 and 247, and plans 184 to
-203: user `extern fun` with variadics, function pointers or its own linkage; const generics
-beyond plain integer and `bool` parameters; Unicode case mapping and codepoint-aware `str`
-slicing; a client-only `std/ws` and an HTTP/1.1-only `std/http`; blanket impls and impls
-for one instantiation; async, coroutines and weaker atomic orderings; named nested
-functions, lifetime syntax and borrows in containers; capability narrowing and revocation
-through a module in the middle; a verification duty with no UB catalogue. The syntax items
-digit separators, multi-line string literals, `orExit` on `Result`, field shorthand and
-implicit `String` to `str` at call arguments are deferred too.
+**Limits.**
 
 ## 26.10.5 (2026-10-09)
 
@@ -195,30 +173,29 @@ suite passes (1632 tests, 16 ignored by default) except
 `a_fault_resolves_to_a_kp_file_and_line`, the debug-info test that needs a tool the
 build host does not have, as in 26.10.4.
 
-**Iterating with `.iter()`.** `for x in xs.iter()` and `for (k, v) in m.iter()` run
+**Iterating with `.iter()`.** [`for x in xs.iter()`](/language/iterators) and `for (k, v) in m.iter()` run
 the same walk as `for x in xs` and `for (k, v) in m`. No iterator value is built,
 and the loop body may not mutate the list being walked.
 
-**Channels.** `sync.rendezvous<T>()` makes a zero-capacity channel: a send completes
+**Channels.** [`sync.rendezvous<T>()`](/stdlib/sync) makes a zero-capacity channel: a send completes
 only once a receive takes the value. `sync.bounded(0)` still panics. `sync.select2`
 and `sync.select3` wait on receive cases over one element type and return
 `Pick.Got(index, value)` or `Pick.Closed(index)`; a closed, empty channel counts as
 ready.
 
-**Standard library.** `str.to_upper` and `str.to_lower` apply the Unicode 16.0.0
-simple (one-to-one) case mappings; multi-character mappings such as U+00DF are not
-applied. `str.slice(s, from, to)` takes byte offsets, which must start a codepoint
+**Standard library.** [`str.to_upper`](/stdlib/str) and `str.to_lower` apply the Unicode 16.0.0
+simple (one-to-one) case mappings. `str.slice(s, from, to)` takes byte offsets, which must start a codepoint
 or be the end of the string. `str.index_of` and `str.replace` are about 85 times
 faster on a 4000-piece haystack, `path.split` about 20 times faster on 20000
 components, `base64` and `base32` about 2x and 1.7x faster on 2 MB buffers, and
 `str.from_f64` (and so `fmt.float`) about 2x faster on 400000 two-decimal values.
 
-**Aliases live in `coral.toml`.** Aliases come from an `[alias]` section of the
+**Aliases live in [`coral.toml`](/getting-started/projects).** Aliases come from an `[alias]` section of the
 project's `coral.toml`, one `name = "path"` per line. The project-root
 `alias.kpconf` file is no longer read and is removed. The path must be a relative
 module path with no leading `/` and no `..` component.
 
-**The doc generator never writes a dash.** Generated pages carry no em or en dash
+**The [doc generator](/tooling/kelpc-doc) never writes a dash.** Generated pages carry no em or en dash
 characters and no entities for them: every dash in a generated page is written as a
 plain hyphen, in member and index lines and in copied doc comments. A regression test
 checks the markdown and HTML output.
@@ -231,7 +208,7 @@ checks the markdown and HTML output.
 16 ignored by default) except the debug-info test that needs `gdb`, which the
 build host does not have.
 
-**Polyp HTML output.** `[build] emit = "html"` in `coral.toml` writes a Polyp
+**Polyp HTML output.** `[build] emit = "html"` in [`coral.toml`](/getting-started/projects) writes a Polyp
 app's first frame as a static `index.html` beside the built binary, and
 `[build] emit_entry` names the program that builds it. The entry file calls
 `polyp.emit_html(init, view)`. A Polyp HTML build needs no env grant. Text becomes
@@ -255,20 +232,18 @@ examples are frozen.
 conformance corpus and on the generated programs, and the long front-end fuzz
 finds nothing.
 
-**`.return:` is the return marker.** `fun f(a: i32).return: i32` replaces
+**[`.return:`](/language/returns) is the return marker.** `fun f(a: i32).return: i32` replaces
 `.R:` on a declaration, a `fun` literal and a function type. `.R:` still
 compiles, `kelpc build` and `kelpc run` print an `outdated:` finding for each one
-naming `.return:`, `--deny-outdated` makes them errors, and it is removed in the
-next development cycle. The standard library, the examples, these docs and the
+naming `.return:`, `--deny-outdated` makes them errors. The standard library, the examples, these docs and the
 sibling repositories (Coral, fpl, Lighthouse, webkelp) are migrated. See
 [Functions](/language/functions) and
 [the outdated-syntax register](/tooling/kelpc-cli#outdated-syntax).
 
-**Tuples.** `t.0` (and `t.1.0`) reads a position; `for (a, b) in pairs` takes each
+**[Tuples](/language/types).** `t.0` (and `t.1.0`) reads a position; `for (a, b) in pairs` takes each
 element apart; `when (a, b) { (Some(x), _) -> ... }` matches several values at once
 with variant, literal (`0`, `'a'`, `true`), name, `_` and nested-tuple positions;
-and a tuple can be a `const` (`const ORIGIN: (i32, i32) = (1, 2)`). A tuple written
-as the `when` scrutinee is not built, so a borrowed element is fine. See
+and a tuple can be a `const` (`const ORIGIN: (i32, i32) = (1, 2)`). See
 [Control flow](/language/control-flow#a-tuple-pattern).
 
 **`for (key, value) in map`** walks a `Map`: a snapshot of its keys in insertion
@@ -290,8 +265,8 @@ block's exclusive capture. Overlapping borrows are still refused. See
 
 **Methods and impls.** A method may declare type parameters of its own
 (`fun Pair<A, B>.map_first<C>(...)`, also on a plain type), and a generic `enum`
-can carry methods: `Option` has `is_some`, `is_none`, `map`, `and_then`, `or_else`,
-`each` and `Result` has `is_ok`, `is_err`, `and_then`, `or_else`, `each`. A trait
+can carry methods: [`Option`](/stdlib/option) has `is_some`, `is_none`, `map`, `and_then`, `or_else`,
+`each` and [`Result`](/stdlib/result) has `is_ok`, `is_err`, `and_then`, `or_else`, `each`. A trait
 can be implemented for a generic type under bounds
 (`impl<A: Describe, B: Describe> Describe for Pair<A, B>`, with associated types
 over the parameters), and `where T: A, U: B` is a second spelling of a bound. See
@@ -316,13 +291,8 @@ diagnostic.
 
 **Design notes and decisions.** `kelp issue #243` (what is built and what
 is not) and `kelp issue #241` (forwarding a narrowed grant, runtime
-capability values) are written. `kelpc fmt` never re-wraps: it keeps the author's
+capability values) are written. [`kelpc fmt`](/tooling/kelpc-cli) never re-wraps: it keeps the author's
 line breaks.
-
-**Still open.** A blanket impl (`impl<T: A> B for T`), an impl for one instantiation,
-an equality constraint on a projection (`I: Iterator<Item = i64>`); a borrowing
-`List.iter()` that yields `&T`; capability narrowing and forwarding (designed, not
-built).
 
 ## 26.10.2 (2026-10-07)
 
@@ -344,22 +314,18 @@ handshakes without restarting, and leaves the old one in force when the new
 material is bad. `tlsfile.read_key(path)` refuses a key file that group or others
 can read. See [`std/tls`](/stdlib/tls#encrypted-keys).
 
-**Listening on one host.** `net.listen_on(host, port)` and `http.listen_on(host,
+**Listening on one host.** [`net.listen_on(host, port)`](/stdlib/net) and `http.listen_on(host,
 port)` bind a named host and are checked on `host:port` against the `net` grant,
-where `net.listen(port)` only compares the port (open item 55).
+where `net.listen(port)` only compares the port.
 
-**HTTP.** `http.multipart(boundary)` builds a `multipart/form-data` body
+**HTTP.** [`http.multipart(boundary)`](/stdlib/http) builds a `multipart/form-data` body
 (`add_field`, `add_file`, `finish`) and `http.multipart_request(url, form)` makes
-the POST. `Pool.set_idle_timeout(ms)` makes `checkout` close a connection that
+the POST. [`Pool.set_idle_timeout(ms)`](/stdlib/pool) makes `checkout` close a connection that
 idled too long, and `Pool.close_idle(after_ms)` closes them on demand.
 
 **Compile time.** An all-constant array literal of 256 or more elements bound to a
 local is a private global plus a copy: a 5,000-element literal compiles in 0.16 s
 at `-O2` instead of about 3.8 s.
-
-**Moved.** The `Map` iterator and `List.iter()` wait for 26.11.0, where they ship
-with tuple destructuring in `for`: a library iterator needs generic trait impls,
-which do not exist yet.
 
 ## 26.10.1 (2026-10-07)
 
@@ -368,25 +334,25 @@ which do not exist yet.
 41 commits since 26.10.0. The suite passes (1584 tests, 16 ignored by default)
 except the debug-info test that needs `gdb`, which the build host does not have.
 
-**Failure as a value.** `std/fs` has fallible twins of its mutators: `try_write`,
+**Failure as a value.** [`std/fs`](/stdlib/fs) has fallible twins of its mutators: `try_write`,
 `try_write_text`, `try_append`, `try_remove`, `try_remove_all`, `try_rename`,
 `try_mkdir_all` and `try_symlink` return `Option<io.IoErr>` (`None` is success),
-and `try_list` returns `Result<List<String>, io.IoErr>`. `std/http` has
+and `try_list` returns `Result<List<String>, io.IoErr>`. [`std/http`](/stdlib/http) has
 `Client.try_send`, `Pool.try_send`, `Pool.try_checkout` and `try_get` returning
 `Result<Response, HttpErr>`, where `HttpErr` says whether the server could have
-seen the request (`Dial`, `Exchange`, `Redirects`). `std/net` and `std/tls` have
+seen the request (`Dial`, `Exchange`, `Redirects`). [`std/net`](/stdlib/net) and [`std/tls`](/stdlib/tls) have
 fallible socket and TLS I/O calls returning `NetErr` and `TlsErr`.
 
-**Network.** `wss://` works: `ws.connect_secure`, `ws.try_connect_secure` and
+**Network.** [`wss://`](/stdlib/ws) works: `ws.connect_secure`, `ws.try_connect_secure` and
 `ws.url_is_secure`. A peer that drops a TLS connection without `close_notify` is
 end of stream rather than a panic, and `Pool.checkout` only reuses a connection of
 the scheme asked for.
 
-**Process, system and tracing.** `process.run_inherit` and `run_inherit_in` run a
+**Process, system and tracing.** [`process.run_inherit`](/stdlib/process) and `run_inherit_in` run a
 child on this process's terminal, and `RunResult` and `Child` carry the `signal`
-that killed the child (a hand-built `RunResult` must add the field). `sys.os()`
-and `sys.arch()`, `fs.set_mode`, `source.file()` and `source.line()`, and the
-opt-in `std/trace` events and spans.
+that killed the child (a hand-built `RunResult` must add the field). [`sys.os()`](/stdlib/sys)
+and `sys.arch()`, `fs.set_mode`, [`source.file()`](/stdlib/source) and `source.line()`, and the
+opt-in [`std/trace`](/stdlib/trace) events and spans.
 
 **Checker.** Moving the same enum payload out of an owned value twice is refused
 (`use of moved value 'h.text'`); it was accepted and freed the string twice.
@@ -395,10 +361,10 @@ moves keep sibling fields usable, a mutable method called through an existing
 `&mut` reuses the borrow, and user `extern fun` accepts typed plain `fun(...)`
 callbacks on both backends.
 
-**Smaller.** `List.with_capacity(n)`, `\$` in a string literal, and
-`kelpc build --incremental --timings` reports front-end interface hits and misses.
+**Smaller.** [`List.with_capacity(n)`](/stdlib/list), `\$` in a string literal, and
+[`kelpc build --incremental --timings`](/compiler/incremental) reports front-end interface hits and misses.
 A program that does not reach `std/tls` no longer links OpenSSL, so `hello`
-builds without its development files. `std/env` no longer leaks a table per
+builds without its development files. [`std/env`](/stdlib/env) no longer leaks a table per
 `set`, and `str.byte(s, i)` scans only `i + 1` bytes.
 
 ## 26.10.0 (2026-10-04)
@@ -406,14 +372,14 @@ builds without its development files. `std/env` no longer leaks a table per
 [Release](https://homelabone.xenoo.dev/gitea/Lilly/kelp/releases/tag/v26.10.0)
 
 **Release additions.** Shift counts are checked on both backends, with
-`wrapping_shl` and `wrapping_shr` as the deliberate masking forms. TLS trust
+[`wrapping_shl`](/language/expressions) and `wrapping_shr` as the deliberate masking forms. TLS trust
 anchors are PEM bytes supplied by `TlsClientOptions.with_ca_pem`; file access
-moved to `std/tlsfile`, behind the `fs` capability. The new 13-program benchmark
-suite checks Kelp, C and Rust checksums before reporting timings, and `str.split`
-is linear. Polyp v4 adds timer subscriptions, integer animation, UTF-8 text,
+moved to `std/tlsfile`, behind the `fs` capability. The new 13-program [benchmark](/tooling/benchmarks)
+suite checks Kelp, C and Rust checksums before reporting timings, and [`str.split`](/stdlib/str)
+is linear. [Polyp](/libraries/polyp) v4 adds timer subscriptions, integer animation, UTF-8 text,
 an on-demand accessibility tree and memoised pure subtrees. Expressions now
 evaluate left to right on both backends; several lock-typed `pd val` globals
-initialise on LLVM; and `kelpc doc` no longer gives an undocumented field its
+initialise on LLVM; and [`kelpc doc`](/tooling/kelpc-doc) no longer gives an undocumented field its
 record's comment.
 
 **`unsafe`, `Ptr<T>` and layout control.** A raw pointer type `Ptr<T>` and the
@@ -436,7 +402,7 @@ in `tests/projects/ffi_layout` checks the packed layout against a real C
 compiler. See [Unsafe code and raw pointers](/language/unsafe).
 
 **Freestanding mode, and kernel 0 boots.** A project with `[target] mode =
-"freestanding"` in `coral.toml` gets no libc, no runtime preamble, a
+"freestanding"` in [`coral.toml`](/getting-started/projects) gets no libc, no runtime preamble, a
 compiler-emitted `_start` that sets `sp` and clears `[__bss_start,
 __bss_end)`, the entry and panic functions and a linker script it names, and an
 `ld.lld -T` static link with no runtime object. Everything that would reach
@@ -537,8 +503,7 @@ CLI](/tooling/kelpc-cli#the-memory-floor).
 `fun T.eq(other: &T).R: bool`, before borrow checking and code generation, so
 both backends run the declared body and no operator is added anywhere. `eq`
 alone is now a complete declaration: it gives the operator without making the
-type a `Map` key, and a lone `hash` is still refused. Nothing is derived, so a
-type with no declared `eq` keeps the old refusal, `<`/`>` stay refused, and
+type a `Map` key.
 `View` against `View` or a `str` lowers to the builtin `View.eq`. See
 [Operators and expressions](/language/expressions).
 
@@ -550,10 +515,7 @@ signature matched exactly, and an inherent method of the same name is refused
 at the impl. Dispatch is static: the bound is checked at every call and
 instantiation, and the body is then monomorphized per concrete type exactly as
 generics already are, so neither backend nor the freestanding mode needed a new
-lowering. `dyn` and trait objects, default methods, associated types, `impl
-Trait` in argument position, a trait on a builtin or on a generic
-instantiation, `where` clauses, supertraits and operator overloading through a
-trait are each refused by name. See [Traits and static
+lowering. See [Traits and static
 dispatch](/language/traits).
 
 **`Mutex<T>` in `std/sync`.** A compiler builtin generic in the shape
@@ -564,8 +526,7 @@ the borrow cannot escape; the block's tail is the call's value, and a `return`
 or `?` inside it still releases the lock. A panic inside the block releases the
 lock and marks the mutex POISONED, so a later `lock` panics with
 `mutex poisoned`, and `into_inner` consumes the mutex. A `&Mutex<T>` crosses to
-a worker exactly as a `&Atomic<T>` does. Hosted only: a freestanding manifest
-refuses it by name and points at a spin lock over an `Atomic<T>`. See
+a worker exactly as a `&Atomic<T>` does. See
 [`std/sync`](/stdlib/sync).
 
 **Bugfix pass.** The compiler's own warnings are zero, the differential fuzz ran
@@ -596,8 +557,7 @@ handler is already running reaches `kelp_double_panic` instead of recursing; the
 compiler defines that weakly as a `wfi`/`wfe` loop and a project may override it
 with a strong definition. `examples/kernel0-panic2` boots one phase per check
 (array bounds, narrowing, `str.byte`, the `panic` builtin, `option.unwrap`, and
-a double panic) and asserts each exact line. Integer overflow still wraps and
-division by zero is still an unchecked UB, so neither has a message. See
+a double panic) and asserts each exact line. See
 [Freestanding mode](/language/freestanding#panic-semantics) and
 [Kernel 0](/language/kernel).
 
@@ -625,8 +585,7 @@ a freestanding project may implement. Newly admitted: `std/math`'s integer
 `std/list` and the `std/option`/`std/result` callback combinators. The admitted
 list is `std/arena`, `std/atomic`, `std/frame`, `std/irq`, `std/list`,
 `std/math`, `std/option`, `std/result`, `std/str`; every other module is refused
-by name with "needs a hosted runtime", and `std/math`'s libm externs and the
-rest of `std/str` are refused by name inside the admitted module. See
+by name with "needs a hosted runtime". See
 [Freestanding mode](/language/freestanding#the-freestanding-standard-subset).
 
 **The x86-64 target.** `[target] triple = "x86_64-unknown-none"` (the `-elf`
@@ -640,8 +599,7 @@ function is `noredzone`, and the target machine uses the static relocation and
 small code models. `examples/kernel0-x86_64` is a COM1 port-I/O driver and
 `examples/kernel0-x86_64-lmode` reads CR0/CR4/EFER, prints `long mode on` and
 then triple-faults on purpose; both boot under `qemu-system-x86_64 -M q35 -cpu
-qemu64 -no-reboot`. Interrupts and an IDT, the APIC, SMP and ACPI are not part
-of it. See [Freestanding mode](/language/freestanding#the-x86-64-target).
+qemu64 -no-reboot`. See [Freestanding mode](/language/freestanding#the-x86-64-target).
 
 ## 26.09.5 (2026-09-28)
 
@@ -665,21 +623,20 @@ development output to compile. [Install and
 build](/getting-started/install#requirements) lists both, and `nix-shell
 shell.nix` supplies them.
 
-**A project can restrict the entry module's own authority.** `coral.toml` gains
-`[caps]`, which uses the same vocabulary as a `caps(...)` clause on an `impl`
+**A project can restrict the entry module's own authority.** [`coral.toml`](/getting-started/projects) gains
+[`[caps]`](/language/capabilities), which uses the same vocabulary as a `caps(...)` clause on an `impl`
 line. A clause on one of `main`'s own `impl` lines grants the imported module,
 never `main`, so until now `main` always held everything. A domain omitted from
 `[caps]` is a resolution error at any reference to it in `main`, the same error
 an ungranted imported module gets. No `[caps]` section means exactly the old
 behaviour, so every existing `coral.toml` is unaffected.
 
-**A user module can bind a native symbol.** `coral.toml` gains
-`[extern."<module id>"]`: one of the six existing capability domains, a native
+**A user module can bind a native symbol.** [`coral.toml`](/getting-started/projects) gains
+[`[extern."<module id>"]`](/language/externs): one of the six existing capability domains, a native
 `library`, and an allowlisted `symbols` set, checked and gated exactly like a
-stdlib module. `extern "C"` block syntax, variadics, function-pointer types and
-link vocabulary beyond one library per section are still not there.
+stdlib module.
 
-**`Response` carries the rate-limit headers.** `retry_after()` returns the
+**[`Response`](/stdlib/http) carries the rate-limit headers.** `retry_after()` returns the
 `Retry-After` header's seconds form and `rate_limit()` bundles the
 `X-RateLimit-*` headers. Both are ungated, and the client never sleeps or
 retries on its own: the caller reads the parsed headers and decides.
@@ -696,14 +653,14 @@ already leak-free.
 **The small builtin bodies are inlined.** `Bytes`, `String` and `View`'s `len`,
 `is_empty`, `get`, `set`, `push`, `push_str` and `reserve` were calls into a
 separately linked runtime object, while the C backend splices the same text into
-its own translation unit and lets clang inline it. The LLVM backend now emits
+its own translation unit and lets clang inline it. The [LLVM backend](/compiler/backends) now emits
 those bodies as IR with internal linkage, so its own `-O2` inlines them, and
 crosses into the object only when a buffer really has to grow. The bodies, their
 bounds checks and their panic strings are the runtime file's own, and the
 runtime object and the C backend still define every one of them. The `strings`
 category went from 20.9ms to 9.3ms.
 
-**`Map`'s index is half the size, and `Map.with_capacity(n)` exists.** An index
+**[`Map`](/language/collections)'s index is half the size, and `Map.with_capacity(n)` exists.** An index
 slot was an `i64` under a `4x len` growth policy, which for three million entries
 meant a 134MB index rebuilt about twenty times, with every probe touching that
 footprint. The slot is now `u32`, the container function sets carry internal
@@ -715,7 +672,7 @@ started empty.
 **Small constant-bound loops unroll, `mut` parameters are `noalias`, and `sqrt`
 is the intrinsic.** LLVM's reasons for refusing an N-body pair loop were "call
 instruction cannot be vectorized" and then "unsafe dependent memory operations
-in loop": `std/math`'s `sqrt_raw` is now `llvm.sqrt.f64` in the LLVM backend, a
+in loop": [`std/math`](/stdlib/math)'s `sqrt_raw` is now `llvm.sqrt.f64` in the LLVM backend, a
 parameter an exclusive borrow proves exclusive is marked `noalias` (never the
 `pd` hidden parameter, since a callee holding the global's own address writes
 memory the attribute would claim nobody else touches), and a `while` whose
@@ -738,25 +695,25 @@ keys. The table, the method and the caveats are at
 [Release](https://homelabone.xenoo.dev/gittea/Lilly/kelp/releases/tag/v26.09.3)
 · 15 commits · 203 unit tests, 465 end-to-end green.
 
-**`thread.sleep_ms` and `thread.current_id`.** MK9-S3-M1 stage C2: two ordinary
-functions over `extern fun` bodies rather than checker builtins, a worker-shaped
+**[`thread.sleep_ms`](/stdlib/thread) and `thread.current_id`.** MK9-S3-M1 stage C2: two ordinary
+functions over [`extern fun`](/language/externs) bodies rather than checker builtins, a worker-shaped
 backoff and a stable id distinct between the main thread and any worker.
 
-**A worker that returns `unit` can be joined.** `thread.join` on a
+**A worker that returns `unit` can be joined.** [`thread.join`](/stdlib/thread) on a
 `Thread<unit>` used to fail in codegen on both backends. `Ok`/`Some`
 instantiated with `unit` now lay out payload-less, the same shape `None`
 already had, a general fix that also covers a hand-written `Result<unit, E>`
 or `Option<unit>`.
 
 **Concurrent downloads, and the memory model published.** `examples/download_pool.kp`
-shows four worker threads, each with its own keep-alive `http.Pool` for the
+shows four worker threads, each with its own keep-alive [`http.Pool`](/stdlib/pool) for the
 run's one host, never shared; no language or stdlib change was needed, since a
 `Pool`'s mutable state staying inside its owning thread falls straight out of
 the crossing rule threads already shipped with. The memory model is now
 published as the language's own at
 [Concurrency in v1](/language/concurrency), closing MK9-S3-M1.
 
-**`kelpc check --text`.** Reads the entry file's content from stdin instead of
+**[`kelpc check --text`](/tooling/kelpc-cli).** Reads the entry file's content from stdin instead of
 from disk, so a caller (an editor) can ask about an unsaved buffer and get a
 real diagnostic instead of the last save's. [Lighthouse](/tooling/lighthouse)'s
 debounced re-check uses it.
@@ -767,28 +724,26 @@ debounced re-check uses it.
 · 82 commits · 203 unit tests, 461 end-to-end green.
 
 **Modules are private by default.** A top-level item is private to its module
-unless it is declared `pub`, and an exported signature may not name a type its
+unless it is declared [`pub`](/language/modules), and an exported signature may not name a type its
 ow module does not export: the refusal names the item, the type and the module.
 `pub` is accepted on a top-level `fun`, `extern fun`, `datac`, `enum` or `const`;
 a `pd` is module-scoped by design, and a method's reachability follows its
-declaring type. A compiler-shipped `std/...` module still exports everything,
-transitionally, because the shipped modules import each other without `pub`.
+declaring type.
 
-**A function can hand back two things.** `(A, B)` is a type with positional
+**A function can hand back two things.** [`(A, B)`](/language/types) is a type with positional
 fields and `val (lo, hi) = min_max(xs)` binds one, so a pair no longer needs a
 one-shot `datac`. A tuple owns its elements, is never `Copy`, takes the derived
 deep copy and order position by position, and is read by destructuring only:
 there is no `t.0` and no tuple pattern in `when`.
 
-**Threads exist.** `thread.spawn(entry, arg).R: Thread<T>` starts a real OS
+**Threads exist.** [`thread.spawn(entry, arg).R: Thread<T>`](/stdlib/thread) starts a real OS
 worker and `thread.join(handle).R: Result<T, ThreadErr>` waits for it, on both
 backends. A panic inside a worker ends that worker and arrives at its joiner as
-`Err`, while the rest of the program keeps running; the abandoned frame leaks,
-deliberately, because v1 has no user `Drop`. `std/atomic` ships `Atomic<T>` and
+`Err`, while the rest of the program keeps running. [`std/atomic`](/stdlib/atomic) ships `Atomic<T>` and
 `Ordering` with the one ordering v1 has, and `std/thread` the standalone
 `thread.fence(order)`.
 
-**`std/ws`, and a dial that is a value.** A WebSocket client (RFC 6455) over
+**[`std/ws`](/stdlib/ws), and a dial that is a value.** A WebSocket client (RFC 6455) over
 `ws://`, pure Kelp over `std/net` and `std/encoding`, with `sha1` added for the
 handshake and a grant line of `caps(net = [...], rand = [])` because the
 handshake key and every masking key have to be unpredictable. `net.try_connect`
@@ -796,12 +751,12 @@ and `ws.try_connect` sit beside the panicking `connect` and hand back a reason
 instead of ending the program, the shape `try_run` already has, so a reconnect
 loop can back off and give up.
 
-**A grant can be one word.** `impl "x" caps(*)` hands the imported module every
+**A grant can be one word.** `impl "x"` [`caps(*)`](/language/capabilities) hands the imported module every
 domain's whole resource, the same set the entry module holds. It is not a way to
 acquire authority: a delegator gives only what it holds, so a module granted one
 path or one host cannot use it.
 
-**And the fixes**, several of which were silent: the `llvm` backend declared the
+**And the fixes**, several of which were silent: the [`llvm` backend](/compiler/backends) declared the
 C bodies it calls without the C ABI's `zeroext` on a narrow integer, so a `u16`
 such as a URL's port could be handed over with dirty upper bits and dial a
 garbage port; an owned local a second `var` rebinds is now freed for the value its
@@ -809,7 +764,7 @@ own declaration owns, instead of leaking the first buffer or freeing the wrong
 one; a function owning both a `move` parameter and an owned local frees both; a
 literal that does not fit its context is refused instead of wrapping to `-1`; a
 capability path of about a thousand segments is refused rather than killing the
-process with SIGSEGV; `net.recv` with a length of zero returns at once; a `unit`
+process with SIGSEGV; [`net.recv`](/stdlib/net) with a length of zero returns at once; a `unit`
 value can be bound at last; and a method on a concrete `enum` resolves on a value
 of that enum.
 
@@ -818,7 +773,7 @@ of that enum.
 [Release](https://homelabone.xenoo.dev/gittea/Lilly/kelp/releases/tag/v26.09.1)
 · 130 commits · 179 unit tests, 359 end-to-end green.
 
-**`llvm` is the compiler.** `Backend::DEFAULT` is `Llvm`: `kelpc` lowers its
+**[`llvm`](/compiler/backends) is the compiler.** `Backend::DEFAULT` is `Llvm`: `kelpc` lowers its
 typed IR to LLVM IR and lets LLVM optimize, encode and write the object. There is
 no choice to make and no flag to make it with: `--backend=` and `KELPC_BACKEND`
 are both refused by name, and `--backend=asm`, the retired hand-written track,
@@ -834,7 +789,7 @@ and the same denial text, and the `extern fun` bodies all landed under `llvm`, s
 way needs **`libLLVM-21.so` at runtime**, and `cc` is still the linker, so a C
 compiler and glibc are still required.
 
-**Two spellings are removed, and each fix is one line.** `impl "path" as name` is
+**Two spellings are removed, and each fix is one line.** [`impl "path" as name`](/language/modules) is
 gone: a module's namespace is its own name (`std/path` is `path`,
 `deps/argparse/lib` is `argparse`), so **drop the clause** and rename the call
 sites where the name differed. `impl "..." with caps(...)` is gone: `impl`
@@ -843,10 +798,10 @@ as it is (`impl "std/fs" caps(fs = ["/var/log/**"])`). With both gone the
 deprecation register is empty, so **no program produces an `outdated:` finding any
 more**; the mechanism and `--deny-outdated` stay in place for the next spelling.
 
-**The language gained `[T; N]`**, a fixed-size array held inline with its length
+**The language gained [`[T; N]`](/language/types)**, a fixed-size array held inline with its length
 in the type, so a page table or an IDT buffer exists with no allocator in the
-path; **documentation comments** (`//!`, `///`, and a `[docs(<kind>: <name>)]`
-head for a block that documents something else); and **general `const`**, whose
+path; **[documentation comments](/tooling/kelpc-doc)** (`//!`, `///`, and a `[docs(<kind>: <name>)]`
+head for a block that documents something else); and **general [`const`](/language/passdowns)**, whose
 initializer may use the operators, `if`, a conversion, other `const`s and a call
 to a plain `fun`, so an array length can be an expression
 (`[u64; PAGE_SIZE / ENTRY_SIZE]`). A `List` element takes a derived deep copy and
@@ -857,7 +812,7 @@ statement; and a bare `List.empty()` takes its element type from the first
 operation that has to know it. A raw NUL byte in a string literal is refused by
 the lexer, where the two backends used to disagree about the same source file.
 
-**`kelpc build` takes `-O0` to `-Os`** and `-O2` is the default, so a build with
+**[`kelpc build`](/tooling/kelpc-cli) takes `-O0` to `-Os`** and `-O2` is the default, so a build with
 no flag is what it has always been; one level means one level for both backends,
 and `-Oz` is refused because the C oracle's `cc` may be gcc. The `llvm` backend
 carries **DWARF debug locations**, so a fault in a binary names the `.kp` file and
@@ -867,11 +822,11 @@ backend, and `--json` prints the findings as one document with a range per
 finding, the interface the language server and Coral read instead of parsing a
 message.
 
-**Stdlib.** `std/fs` gains `cwd()`, `is_symlink`, `read_link` and the fallible
+**Stdlib.** [`std/fs`](/stdlib/fs) gains `cwd()`, `is_symlink`, `read_link` and the fallible
 `try_read`/`try_read_text`/`try_open`, which return `Result<_, IoErr>` so a tool
 skips a file it may not read instead of ending its run on the first one;
-`std/io` gains `IoErr` and `errno_text`; `std/path` gains `absolute(base, p)`;
-and `std/fmt` gains `commas_u64`/`commas_i64` and `human_size`.
+[`std/io`](/stdlib/io) gains `IoErr` and `errno_text`; [`std/path`](/stdlib/path) gains `absolute(base, p)`;
+and [`std/fmt`](/stdlib/fmt) gains `commas_u64`/`commas_i64` and `human_size`.
 
 **Runtime.** The capability matcher and the path normalizer are Kelp now
 (`std/rt.kp`), each proven against the C it replaced by a differential corpus, so
@@ -906,27 +861,26 @@ within that month starting at `0`. The version is one text everywhere it
 appears, so `kelpc version` prints `kelpc 26.09.0`, the tag is `v26.09.0`, and
 the asset is `kelpc-26.09.0-linux-x86_64`.
 
-**A module's namespace is the module's own name**: `impl "deps/argparse/lib"` is
+**A module's namespace is the module's own name**: [`impl "deps/argparse/lib"`](/language/modules) is
 `argparse.parse(...)` and `impl "shapes/circle"` is `circle`. The
 `impl "path" as name` clause still compiles and still names the module, and it
-is now **outdated**. **`n.try_to_u64()`** is the fallible twin of `n.to_u64()`: it
+is now **outdated**. **[`n.try_to_u64()`](/language/types)** is the fallible twin of `n.to_u64()`: it
 hands back `Option<T>` for every conversion that can lose a value, where the
-plain conversion panics. **Radix literals** (`0xff`, `0b1010`), **byte
+plain conversion panics. **[Radix literals](/language/lexical)** (`0xff`, `0b1010`), **byte
 literals** (`b'\n'`, a `u8` by construction), the two-digit **`\xNN`** escape,
-and **`elif`** beside `else if`. The capability grant is
+and **[`elif`](/language/control-flow)** beside `else if`. The capability grant is
 `impl "std/fs" caps(fs = ["/var/log/myapp/*"])`, and the `with` it replaces is
 outdated. `List<T>.clone()` copies a list and its elements, and `panic` takes an
 owned `String`.
 
 **Outdated syntax is a register, not a break** (`kelpc/src/deprecated.rs`): a
 retired spelling warns under an `outdated:` label and still builds,
-`--deny-outdated` turns those findings into errors, and every entry is removed on
-the next development cycle. **`kelpc lint <path>...`** reports the comment run,
+`--deny-outdated` turns those findings into errors. **[`kelpc lint <path>...`](/tooling/kelpc-cli)** reports the comment run,
 an `else if` link that `elif` spells better, and a name that does not match the
 project's `naming_case`. The generated C carries a **`#line` directive** before
 every statement, so `cc`'s own diagnostic names the `.kp` line that caused it.
 An owned value can be **interpolated into a template** (`print("w = ${s}")`),
-the assembly backend lowers **`List.sort`/`contains`/`slice`** for the element
+the assembly backend lowers **[`List.sort`](/stdlib/list)/`contains`/`slice`** for the element
 kinds the C backend allows, and a local that shadows a module name is now
 reported as the shadowing it is.
 
@@ -952,13 +906,10 @@ borrow, a capability delegated but never granted, the rejected-template message
 · 84 commits · 112 unit tests, 291 end-to-end green on the C backend, 242 of
 them on the assembly backend.
 
-**The compiler emits its own x86-64 assembly.** `kelpc build --backend=asm`
+**The compiler emits its own x86-64 assembly.** [`kelpc build --backend=asm`](/tooling/kelpc-cli)
 writes assembly itself and finishes it with `as` and `ld`; no C compiler in
 that chain. The C backend stays as the differential oracle, so every fixture is
-built by both and their stdout compared byte for byte. Constructs the new
-backend cannot lower yet are refused **by name** rather than miscompiled: the
-`fs`/`io`/`net`/`path`/`process` extern bodies, closures and function values,
-and a capability-gated call.
+built by both and their stdout compared byte for byte.
 
 What the assembly backend covers: `enum` tagged unions with `when`, `if let`
 and a generated per-`enum` drop; **float fields in aggregates with the real
@@ -998,15 +949,11 @@ longer dropped out of scope; a closure typedef that named a module type's
 typedef before that type existed; and the C backend's warning noise, a doubled
 parenthesis on every comparison and a tautological conversion bound.
 
-**Stdlib.** `str.less` and `str.is_digit`: the byte ordering and decimal digit
+**Stdlib.** [`str.less`](/stdlib/str) and `str.is_digit`: the byte ordering and decimal digit
 predicate the libraries in the catalogue had each written by hand.
 
 **Build.** `kelpc build` with no `-o` writes into `build/` instead of the
 working directory. The crate moved to the 2024 edition.
-
-**Known, not fixed here.** An owned local bound in a loop body is not dropped
-on a path that does not move it, so a program that rebinds one leaks. It
-predates this release and reproduces on the C backend at `-O0`.
 
 ## 0.1.4 (2026-09-19)
 
@@ -1035,12 +982,6 @@ library written with no access to the compiler source, built against 0.1.2 and
   'self' while it is borrowed" about a pointer.
 
 `borrow_provenance_and_arms.kp` pins all five.
-
-**Known, not fixed here**: two code-generation bugs, both with a ~10-line
-reproduction. An owned local in an `if let` block whose body holds a nested
-`if let` with a `return` gets its drop call emitted but not its declaration;
-and a `pd var` written in a function called transitively from another non-`main`
-function passes a value where the callee's hidden parameter is a pointer.
 
 ## 0.1.3 (2026-09-19)
 
@@ -1072,11 +1013,11 @@ missing. Recorded as **MK8-S2-M1**.
 - **`to_f64`/`to_f32` on every integer type**, so widening is one call instead
   of formatting the integer and parsing it back. Operands still must match
   exactly: `n * 1.0` remains a type error.
-- **Character literals**: `'x'`, `'\n'`, `'\u{4e2d}'`. One Unicode scalar
+- **[Character literals](/language/lexical)**: `'x'`, `'\n'`, `'\u{4e2d}'`. One Unicode scalar
   value, taking the integer type its context asks for (so `c == '"'` works when
   `c` is a `u8`) and `char` when nothing constrains it. A code point that does
   not fit is a compile error, not a truncation.
-- **Bitwise operators**: `& | ^ << >> ~`. `&` is bitwise-and infix and the
+- **[Bitwise operators](/language/expressions)**: `& | ^ << >> ~`. `&` is bitwise-and infix and the
   borrow prefix in prefix position; `<<` and `>>` are two adjacent characters,
   so `List<List<i32>>` still closes. Precedence is C's except that the bitwise
   operators bind tighter than the comparisons, so `flags & MASK == 0` means
@@ -1085,13 +1026,13 @@ missing. Recorded as **MK8-S2-M1**.
   argument, a `datac` field, a `List` element, a `Map` key or value, a written
   type, a return, an `if` branch, a `when` arm. The other direction stays
   explicit, because `String` to `str` is a borrow with a lifetime.
-- **`View`**: a length-carrying borrowed text view. `s.view()`, then
+- **[`View`](/language/text)**: a length-carrying borrowed text view. `s.view()`, then
   `len`/`is_empty`/`get`/`slice`/`eq`/`to_string`. A slice costs a pointer and
   a subtraction instead of an allocation. It follows `str`'s rules exactly and
   is never a `datac` field, an `enum` payload, a `List` element or a `Map` key:
   a slice has no NUL after it, and v1 has no lifetime syntax to tie a stored
   borrow to its source.
-- **CLI**: `kelpc version`.
+- **CLI**: [`kelpc version`](/tooling/kelpc-cli).
 - **Docs**: `syntax.md` §22, "Writing a program: the rules that explain most
   errors", with the eight rules behind most diagnostics plus a complete scanner.
 
@@ -1104,27 +1045,23 @@ rebuilt with `-fsanitize=address` and run).
 The first release with a Gitea release attached; `v0.1.0` was left where it was.
 This is the state of `main` after **MK5-S2-M2** and **MK8-S1-M3**.
 
-- **The `for` loop** (MK8-S1-M3). `for x in xs { ... }` walks a `List<T>` front
+- **The [`for` loop](/language/iterators)** (MK8-S1-M3). `for x in xs { ... }` walks a `List<T>` front
   to back, desugared by the parser into an index and a `while`, so no later pass
   knows it exists. The element binding is what `List.get` gives: a copy of a
   `Copy` element, a shared borrow of an owned one. A place iterable is borrowed,
   not moved; anything else is bound to a temporary the loop owns and frees, so it
-  is evaluated once. The loop variable is a `val`; there is no `break` and no
-  `continue`. `for` walks a `List` and nothing else.
+  is evaluated once. The loop variable is a `val`.
 - **MK5-S2-M2, the three stdlib gaps a Coral port hit.**
-  `process.spawn_in(dir, program, args)` and `process.run_in(...)` `chdir` in the
+  [`process.spawn_in(dir, program, args)`](/stdlib/process) and `process.run_in(...)` `chdir` in the
   *child* between `fork` and `exec`, so no capability pattern's meaning moves; a
   child that cannot enter `dir` exits 126. `process.try_run`/`try_run_in` return
   `Result<RunResult, ProcErr>` where `ProcErr` is `NotFound`, `NotExecutable` or
   `DirNotFound`, all decided by a `stat`/`access` pre-check **before** the fork, so
   an `Err` always means the child never started. `process.executable(path)` is
-  that pre-check as public surface. `fs.symlink(target, link)` checks both paths
+  that pre-check as public surface. [`fs.symlink(target, link)`](/stdlib/fs) checks both paths
   against the module's `fs` grant.
 
-**Limits worth knowing.** A capability *denial* cannot be a value yet: the check
-is compiled in per calling module and panics before any Kelp code runs, so
-`ProcErr` has no `Denied` variant. `std/http` speaks `http` only. No threads.
-`kelpc` has no `--version` flag; the release name is the version.
+**Limits worth knowing.**
 
 ## 0.1.0 (no release)
 
@@ -1137,30 +1074,30 @@ at the time (the `M0` to `M9`, `C1`, `S1` to `S8` scheme; the current scheme's
 mapping is in `meta/roadmap.md`):
 
 - **Core language** (`M0` to `M4.5`): scaffold and lexer/parser for the full
-  surface syntax; types and the C backend; `datac` with real per-field
+  surface syntax; types and the C backend; [`datac`](/language/data-types) with real per-field
   mutability and `while`; spans through a typed IR; the syntax rewrite to
   `fun`/`val`/`var`/`datac`/`when`; move checking; borrowing (`&`, `mut T`
   parameters, `*`, aliasing checks); receiver methods.
-- **Modules and compile-time** (`M5.1` to `M5.3`): `impl` imports with
-  module-qualified names, `coral.toml`, `pd` passdowns, string templates, and
+- **Modules and compile-time** (`M5.1` to `M5.3`): [`impl`](/language/modules) imports with
+  module-qualified names, [`coral.toml`](/getting-started/projects), `pd` [passdowns](/language/passdowns), string templates, and
   `%*alias*%` text substitution.
 - **Heap and containers** (`M6.1` to `M6.3`, `M8`, `C1`): owned `Bytes` and
   `String`, `drop`, `extern fun`, `std/mem`, `std/str`, `std/path`, `const`,
-  stdlib-only overloading, `&str` return elision, `Box<T>` and recursive
-  `datac`s, the builtin monomorphized `List<T>`, and `str.split`/`join` and
+  stdlib-only overloading, `&str` return elision, [`Box<T>`](/language/box-dyn) and recursive
+  `datac`s, the builtin monomorphized [`List<T>`](/stdlib/list), and `str.split`/`join` and
   `fs.list` on top of it.
-- **Capabilities** (`M7`): `caps(...)` grants with a real `fs`/`time`/`rand`
+- **Capabilities** (`M7`): [`caps(...)`](/language/capabilities) grants with a real `fs`/`time`/`rand`
   behind them, then `fs.append`/`fs.sync`.
 - **The standard library program** (`S1` to `S5`): growable `String`/`Bytes`,
   `panic`/`assert`, integer conversions, text building and number formatting,
   the `List` ordering surface, `io` and `process`, `net` (sockets, `poll`, name
-  resolution), the `http` client, `Map<K, V>`, and `fs`/`env` breadth.
-- **Errors as values** (`MK5-S6-M1`): `enum` tagged unions with pattern `when`,
+  resolution), the `http` client, [`Map<K, V>`](/language/collections), and `fs`/`env` breadth.
+- **Errors as values** (`MK5-S6-M1`): [`enum`](/language/data-types) tagged unions with pattern `when`,
   generic type declarations and generic functions/methods with explicit type
-  arguments, `Map<K, V>` with a real key type, `if let`, the `?` operator,
-  `std/option` and `std/result`, and the migration of the stdlib off the
+  arguments, `Map<K, V>` with a real key type, `if let`, the [`?` operator](/language/errors),
+  [`std/option`](/stdlib/option) and [`std/result`](/stdlib/result), and the migration of the stdlib off the
   error-`datac` convention.
-- **Function values and closures** (`MK8-S1-M2` phases A to E): `move T`,
+- **[Function values](/language/functions) and closures** (`MK8-S1-M2` phases A to E): `move T`,
   function values, anonymous `fun` literals, the stdlib callbacks that take
   them, and captures, where a literal that captures is a closure.
 - The language was renamed from **X** to **Kelp** in this stretch.
