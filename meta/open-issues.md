@@ -216,6 +216,16 @@ blanket impl (`impl<T: Iterator<Item = i64>> Tr for T`); an impl for one instant
 of a blanket impl; a trait's default method in a generic or blanket impl; operators through a
 generic impl. The rest are unscheduled.
 
+### MISSING-Qk8Rd kelp: the escape analysis that would place shared-pool values in blocks is not called by a build
+
+repo: kelp | found: 2026-10-23 | effort: L
+
+source: `kelpc/src/escape.rs`, whose header says "Nothing in a build calls it". The module
+is compiled (`mod escape;` in `kelpc/src/main.rs`) and no other module names it. Steps 2a
+and 2b (`215eaea0`, `28f97940`) are the analysis and its dry run only. Still open: a call
+from the lowering, and the block placement that follows from it. The Tidepool page
+`memory/tidepool/build-order` says the same.
+
 ### MISSING-Sb5Vq kelp: no specialization
 
 repo: kelp | found: 2026-10-09 | effort: XL
