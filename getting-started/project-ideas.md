@@ -30,7 +30,7 @@ small program looks like in Kelp:
 | A line-numbered printout, like `cat -n` | `fmt.pad_left`, a counter | keeping a running index while you walk a list |
 | A palindrome and anagram checker | `str.char_at`, `List<i32>.sort` | byte against character indices, sorting in place |
 | Collatz lengths for 1 to 100 | `while`, `i64` | integer division and modulo, and finding the longest by hand |
-| Roman numerals, both directions | `String.push_str`, `str.parse_i64` | building text when a template is not allowed |
+| Roman numerals, both directions | `String.push_str`, `str.parse_i64` | building text a piece at a time |
 | A right-aligned multiplication table | `fmt.pad_left`, `fmt.int` | formatting into a `String` rather than printing pieces |
 | A dice roller with a histogram | `rand.below`, `str.repeat` | a capability grant, and a `Map` as a counter |
 | A passphrase from a word list on disk | `fs.read_lines`, `rand.below` | two grants in one program, and resolving a relative path with `fs.cwd` |
@@ -56,7 +56,7 @@ library under `[dependencies]`, and run `coral sync`.
 ## Rung 3: project-shaped
 
 Here the point is not the feature count, it is the shape: more than one module, a
-test task, a pin, a dependency.
+test task, a dependency.
 
 | Idea | Shape | What it teaches |
 | --- | --- | --- |
@@ -124,8 +124,7 @@ parse and the loop right; the tally is the easy part.
 - **Print instead of writing files** when a path rule is in the way. The program
   is still a program.
 - **Start it as a project anyway**, even for one file: `coral init` costs a
-  second, and a `[tasks]` entry, a dependency and a `[toolchain]` pin are one line
-  each when you want them.
+  second, and a `[tasks]` entry and a dependency are one line each when you want them.
 - **Stop at the first version that runs**, then add one thing. Every idea above is
   a complete program in its first form.
 

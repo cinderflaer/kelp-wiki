@@ -36,13 +36,12 @@ report = "src/tasks/report.kp"
 util      = "Lilly/kelp-util"          # a whole repo
 json      = "Lilly/fpl/json"           # one folder inside a repo
 local     = "file:///srv/git/fpl#other"  # a full URL, folder after '#'
-
-[toolchain]
-kelp = "v26.09.0"
 ```
 
-`kelpc` reads only the flat part (`name`, `version`, `entry`) and stops at the
-first `[section]`, so the sections below belong to Coral.
+`kelpc` reads the flat keys (`name`, `version`, `entry`, `http_pool` and
+`naming_case`) and the sections that change what it compiles, such as `[alias]`,
+`[caps]` and `[target]`. It skips the sections that belong to Coral, such as
+`[tasks]` and `[dependencies]`.
 
 ## What a project buys you
 
@@ -60,8 +59,10 @@ building the directory.
 
 ## Dependencies
 
-A dependency is a line you write. `owner/repo` resolves against your Gitea over
-SSH; anything containing `://` or `@` is taken as a full URL and used as written.
+A dependency is a line you write. `owner/repo` resolves against the registry in
+Coral's configuration, the Gitea base URL set by `CORAL_REGISTRY` or the config
+file (see [Coral](/tooling/coral#configuration)); anything containing `://` or `@`
+is taken as a full URL and used as written.
 
 **A folder dependency lands flat**: `Lilly/fpl/json` puts the *contents* of
 `json/` at `src/deps/json/`, so the import is
@@ -75,14 +76,14 @@ neither fetched nor importable.
 
 | Command | What it does |
 | --- | --- |
-| `coral sync` | installs the pinned toolchain and fetches every dependency: **the only command that moves a dependency forward** |
+| `coral sync` | installs the newest Kelp release if the store lacks it, and fetches every dependency: **the only command that moves a dependency forward** |
 | `coral build` | fetches a dependency that is missing, and nothing else; never refreshes one that is present |
 | `coral run` | build, then run, forwarding argv and the exit code |
 | `coral check` | build without keeping the artifact |
 | `coral clean` | remove `build/` |
 | `coral task <name>` | run a `[tasks]` entry |
 | `coral task` | list the tasks declared in the manifest |
-| `coral toolchain kelp …` | `list`, `installed`, `install <ver>`, `use <ver>`, `pin <ver>`, `pin --clear` |
+| `coral toolchain kelp …` | `latest`, `installed`, `update`: the compiler is always the newest release |
 
 `--offline` refuses instead of fetching, and `--dry-run` prints the plan.
 `coral build --offline` after a sync is the assertion "this build did no I/O".
@@ -91,18 +92,13 @@ There is **no dependency version and no registry index**: a dependency is a git
 remote. `coral sync` refreshes each dependency to its remote tip and records the
 commit it checked out in `coral.lock`.
 
-## Pinning the compiler
+## The compiler
 
-```toml
-[toolchain]
-kelp = "v26.09.0"
-```
-
-A pin makes the project build with the compiler it was written against instead of
-whatever `coral toolchain kelp use` last set machine-wide. `coral toolchain kelp
-pin v26.09.0` writes it; `pin --clear` removes it. The store holds **one** version at
-a time, so two projects pinned to different versions cost one reinstall per
-switch.
+There are no per-project compiler pins. Coral builds every project with the newest
+Kelp release it has installed, and `coral toolchain kelp update` installs that
+release. A `[toolchain]` section in `coral.toml` is refused: delete it.
+`[package] kelp` records the release a project was last built with, which Coral
+writes itself.
 
 ## Aliases in `coral.toml`
 

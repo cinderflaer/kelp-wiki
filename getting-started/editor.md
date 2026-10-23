@@ -69,13 +69,15 @@ needs no plugin update to appear in the editor. Beyond that, the plugin adds
 **File ▸ New ▸ Project ▸ Kelp**, which scaffolds a project with `coral init`, and
 a Coral run configuration for every Coral command, with a gutter run icon on
 `fun main()`.
-**Settings ▸ Languages & Frameworks ▸ Kelp** shows the project's `[toolchain]` pin
-and can install that compiler version in the background, so the IDE uses the
-compiler the project names.
+**Settings ▸ Languages & Frameworks ▸ Kelp** shows the installed Kelp compiler and
+the newest release, and its **Update to newest** button installs that release, so
+the IDE and Coral use the same compiler.
 
-Diagnostics run on open, on save and once a change has settled, but `kelpc` reads
-the file on disk: a check after a change reports the last saved text, so save to
-bring the squiggles and the buffer back into step.
+Diagnostics run on open, on save and a moment after a change. A check after a change
+reads the open buffer, through `kelpc check --json --text`. A `kelpc` too old for
+`--text` reads the file on disk instead, so it reports the last saved text, and
+saving brings those squiggles into step. The lint findings only ever see the last
+saved text.
 
 ## Formatting
 
