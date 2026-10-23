@@ -29,8 +29,7 @@ before trusting a squiggle or a completion.
 moment after a document changes (150ms), the server runs `kelpc check --json` on the
 current file's project and turns each finding into a diagnostic, with the span
 `kelpc` reports and the kind it reports it as (`error`, `warning` or `outdated`),
-grouped by the file each finding actually points at. `kelpc` reads the file on
-disk, so a check after a change reports the last saved text. It finds the compiler
+grouped by the file each finding actually points at. After a change, the debounced check reads the open buffer through `kelpc check --json --text`. A `kelpc` too old for `--text` falls back to the file on disk. It finds the compiler
 through `$KELPC` first (`server/src/diagnostics.rs`), which is what makes a
 development build of the compiler usable with a release build of the server.
 
@@ -83,7 +82,7 @@ file's own `fun` declarations plus the free-standing builtins (`print`, `print!`
 | References and rename | workspace-wide and token-aware: a name inside a comment or a string is not a reference, and a rename will not touch one |
 | Inlay hints | the inferred type of a `val`/`var` whose initializer is a call or a field access |
 | Organize imports | sort, de-duplicate and drop unused `impl` lines (`source.organizeImports`) |
-| Its own warnings | an `impl` whose namespace is never used, which `kelpc` does not report; suppressed in a file that uses `alias %*x*%` substitution, where the answer is unknowable |
+| Its own warnings | an `impl` whose namespace is never used, which `kelpc` does not report; suppressed in a file that uses `alias _x` substitution, where the answer is unknowable |
 
 ## The standard library is a snapshot
 

@@ -1,14 +1,15 @@
 ---
 title: "Ownership and borrowing"
-description: "Ownership in Kelp: moves, borrows that end at their last use, cursors, partial moves, and when values are freed."
+description: "Ownership in Kelp: moves, borrows that end at their last use, cursors, partial moves, and when values are dropped."
 isPublished: true
 tags: "language, ownership"
 ---
-Source: [`syntax.md` §10](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §10](/design/syntax).
 
 Owned values (`String`, `Bytes`, `List`, `Map`, `Box`, `datac`, `enum`) have
-exactly one owner. There is no garbage collector: the owner's scope end is the
-free, on every exit path.
+exactly one owner. The owner's scope end is where a resource closes, on every exit
+path. In a hosted build a memory value is not freed at that point: the collector
+reclaims it later. See [Drops](#drops) and [Working with Kelp memory](/memory).
 
 ## Moves
 
@@ -34,7 +35,7 @@ print(name)               // still owned here
 `move T` is the parameter form that *does* take the value:
 
 ```kelp
-fun consume(s: move String).return: usize = s.len()
+fun consume(s: move String) => usize = s.len()
 
 val a = String.from_str("bob")
 print(consume(a))
@@ -42,14 +43,14 @@ print(a)                  // error: use of moved value 'a'
 ```
 
 A temporary is already an owner, so `consume(String.from_str("bob"))` needs no
-binding. A **borrow cannot be moved out of**: `fun forward(s: String).return: usize =
+binding. A **borrow cannot be moved out of**: `fun forward(s: String) => usize =
 consume(s)` is an error, because `s` belongs to the caller.
 
 A tuple is an owned value like any other. A parameter of the tuple's type borrows
 the argument. To take the tuple over, write `move (A, B)`, as in
 `fun take(p: move (String, i32))`.
 
-Assignment to an existing `var` moves the new value in and frees the old value,
+Assignment to an existing `var` moves the new value in and drops the old value,
 which is how a recursive structure is rebuilt in a loop:
 
 ```kelp
@@ -92,12 +93,12 @@ Rules the checker enforces:
   struct (or off a `mut`/`&` parameter) is a path: a field reached through an
   `enum` payload, a `Box`, a trait object or an index is still the whole owner.
 - Dereferencing a `&mut` gives write access; dereferencing a `&` does not.
-- A function whose `.return: T` is a borrow must return something derived from its
+- A function whose `=> T` is a borrow must return something derived from its
   **first reference parameter**, and a payload bound by a pattern counts as
   derived from the scrutinee it came out of:
 
   ```kelp
-  fun as_str(v: &Json).return: &str {
+  fun as_str(v: &Json) => &str {
       if let Str(s) = v {
           return s.as_str()
       }
@@ -124,7 +125,7 @@ fun main() {
 }
 ```
 
-That program prints `alpha` then `2`, on both backends. The order is what
+That program prints `alpha` then `2`. The order is what
 matters: move the `push` before the `print` and the borrow is still used after
 the mutation, so it is refused:
 
@@ -184,7 +185,7 @@ fun main() {
 }
 ```
 
-That prints `6`, on both backends. The same shape works over a `List` by index:
+That prints `6`. The same shape works over a `List` by index:
 `var cur = xs.get(0)`, then `cur = xs.get(i)` in a loop, keeps `xs` pinned for as
 long as `cur` is used. Re-pointing a cursor from one owner to another releases
 the first at the assignment, so the first owner is mutable again.
@@ -220,8 +221,8 @@ fun use(bag: move Bag) {
 }
 ```
 
-The binding is still freed as a whole at the end of its scope, and the moved
-field's slot is cleared at the read, so nothing is freed twice. On a `val` local
+The binding is still dropped as a whole at the end of its scope, and the moved
+field's slot is cleared at the read, so nothing is dropped twice. On a `val` local
 the field is gone for good; on a `var` local a fresh value assigned into the
 field owns it again. A move on one branch of an `if` takes the field only on
 that path, and after the merge only the fields that stayed are read by name.
@@ -233,7 +234,7 @@ also a path into that local, so it may move its final owned field while its
 siblings remain usable:
 
 ```kelp
-fun steal(b: &Bag).return: List<i32> = b.xs
+fun steal(b: &Bag) => List<i32> = b.xs
 // error: cannot move the field 'xs' out of 'b': the value is borrowed
 ```
 
@@ -257,7 +258,7 @@ hold it in a `Box` and `take()` it.
 **A tuple's positions obey the same rule.** A destructuring binding moves its
 initializer into the binding, exactly as `val p = place` takes a place, and then
 reads each position out of that value, which is the partial move. The value's own
-drop frees the positions that stayed, and the source place cannot be bound again:
+drop drops the positions that stayed, and the source place cannot be bound again:
 
 ```kelp
 fun use(p: move (String, String)) {
@@ -288,12 +289,12 @@ enum Held {
     Blank
 }
 
-fun take_word(h: move Held).return: String = when h {
+fun take_word(h: move Held) => String = when h {
     Word(text) -> text        // the payload moves out of the owned `h`
     Blank -> String.from_str(s = "")
 }
 
-fun peek_word(h: &Held).return: usize = when h {
+fun peek_word(h: &Held) => usize = when h {
     Word(text) -> text.len()  // `text` is a `&String` here; nothing moved
     Blank -> 0
 }
@@ -306,10 +307,19 @@ receiver with `move`, so they also work on owned payloads. Examples are
 
 ## Drops
 
-Owned values are freed at the end of the scope that owns them, on every exit path
-including `return` and either branch of an `if`. A `datac` drops its fields, a
-`List` drops its elements and then its buffer, and a `Box` drops what it holds.
-An owned `pd` is freed once at process exit. There is no `free`, no `deinit`, and
+Owned values are dropped at the end of the scope that owns them, on every exit path
+including `return` and either branch of an `if`. What a drop does depends on the
+value:
+
+- A value that holds a resource runs its destructor, or closes, at that point. These
+  need a drop: a `datac` or `enum` with a destructor or a resource field, a `Thread`,
+  a `Mutex`, an `RwLock`, a `Condvar`, a closure, and a `dyn` box.
+- A memory value owes no drop in a hosted build. A `String`, a `Bytes`, a `List` of
+  plain values or a `Box` of plain data is reclaimed by the collector once no path
+  reaches it.
+
+A `datac` drops its fields, a `List` drops its elements, and a `Box` drops what it
+holds. An owned `pd` is freed once at process exit. There is no `free`, no `deinit`, and
 no way to leak deliberately. A type can hook these drop points with its own
 destructor, `fun mut T.drop()`; see [User `Drop`](/language/drop).
 

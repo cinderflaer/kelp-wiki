@@ -10,14 +10,14 @@ which trait's methods it can answer, and knows how to drop what it points at. It
 is the way to keep several different types behind one trait in a `List`, a field
 or a return value.
 
-Source: [`plan/traits.md` §12](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/traits.md).
+Source: [`design/traits` §12](/design/traits).
 
 ## An example
 
 ```kelp
 trait Shape {
-    fun Self.area().return: i64
-    fun Self.name().return: str
+    fun Self.area() => i64
+    fun Self.name() => str
     fun mut Self.grow(by: i64)
 }
 
@@ -25,16 +25,16 @@ datac Square(var side: i64)
 datac Rect(var w: i64, var h: i64)
 
 impl Shape for Square {
-    fun Self.area().return: i64 = self.side * self.side
-    fun Self.name().return: str = "square"
+    fun Self.area() => i64 = self.side * self.side
+    fun Self.name() => str = "square"
     fun mut Self.grow(by: i64) {
         self.side += by
     }
 }
 
 impl Shape for Rect {
-    fun Self.area().return: i64 = self.w * self.h
-    fun Self.name().return: str = "rect"
+    fun Self.area() => i64 = self.w * self.h
+    fun Self.name() => str = "rect"
     fun mut Self.grow(by: i64) {
         self.w += by
         self.h += by
@@ -45,7 +45,7 @@ fun mut Rect.drop() {
     print("drop rect")
 }
 
-fun make(square: bool).return: Box<dyn Shape> {
+fun make(square: bool) => Box<dyn Shape> {
     if square {
         return Box.of(Square(side = 3))
     }
@@ -75,7 +75,7 @@ fun main() {
 }
 ```
 
-It prints, on the LLVM backend and under `KELPC_ORACLE=c` alike:
+It prints:
 
 ```
 19
@@ -141,10 +141,20 @@ reassignment of a `var`, a container's element drop). There is no runtime type
 tag: the box carries a method set and the ownership of the storage, not a dynamic
 type.
 
+**Status on current `main`.** The checker classifies a `Box<dyn Name>` as declared, not as
+memory, so a `Box<dyn Name>` is refused in a `List` element, a `Map` key or value, and a
+thread argument or result. The message has the form `'Box<dyn Shape>' cannot be a List
+element in a hosted build: its declaration was not found, so it cannot be classified as
+memory`. A concrete type with a destructor is a resource, so it is refused as the payload
+of a `Box`, in the form `'Circle' cannot be the payload of a Box in a hosted build:
+'Circle' is a resource, ...`. The examples on this page that put a boxed trait object in a
+`List`, or that box a type with a destructor, do not build on `main`.
+
 ## Threads
 
-A `Box<dyn Name>` is an owned value with no borrow in it, so `thread.spawn` may
-move one into a worker. A `&dyn Name` is a borrow of a frame local and is
+A `Box<dyn Name>` is an owned value with no borrow in it. On current `main`, however,
+the checker refuses it as a thread argument (see the status note above), so a worker
+cannot receive one yet. A `&dyn Name` is a borrow of a frame local and is
 refused:
 
 ```

@@ -4,13 +4,13 @@ description: "std/ops declares Add, Sub, Mul, Div, Rem, Neg and Ord and std/fmt 
 isPublished: true
 tags: "language"
 ---
-Source: [`plan/traits.md` §13](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/traits.md).
+Source: [`design/traits` §13](/design/traits).
 
 A `datac` or `enum` can have the arithmetic operators, the order operators and
 string interpolation by implementing a trait. `std/ops` declares
 one trait per operator and [`std/fmt`](/stdlib/fmt) gains `Display`. Each
 operator is a **desugar in the front end** into an ordinary method call, so the
-borrow checker and both backends see a plain call and a freestanding image may
+borrow checker and the backend sees a plain call and a freestanding image may
 use one. This replaces the old rule that there is "no operator overloading": a
 user type is overloaded by implementing the trait, and the builtin types are
 unchanged.
@@ -19,14 +19,14 @@ unchanged.
 
 | Trait | Method | Gives |
 | --- | --- | --- |
-| `ops.Add` | `fun Self.add(rhs: &Self).return: Self` | `a + b` is `a.add(&b)` |
-| `ops.Sub` | `fun Self.sub(rhs: &Self).return: Self` | `a - b` |
-| `ops.Mul` | `fun Self.mul(rhs: &Self).return: Self` | `a * b` |
-| `ops.Div` | `fun Self.div(rhs: &Self).return: Self` | `a / b` |
-| `ops.Rem` | `fun Self.rem(rhs: &Self).return: Self` | `a % b` |
-| `ops.Neg` | `fun Self.neg().return: Self` | `-a` is `a.neg()` |
-| `ops.Ord` | `fun Self.cmp(other: &Self).return: i32` | `<`, `<=`, `>`, `>=` through the sign of `cmp` |
-| `fmt.Display` | `fun Self.to_text().return: String` | `"${x}"` and `print(x)` |
+| `ops.Add` | `fun Self.add(rhs: &Self) => Self` | `a + b` is `a.add(&b)` |
+| `ops.Sub` | `fun Self.sub(rhs: &Self) => Self` | `a - b` |
+| `ops.Mul` | `fun Self.mul(rhs: &Self) => Self` | `a * b` |
+| `ops.Div` | `fun Self.div(rhs: &Self) => Self` | `a / b` |
+| `ops.Rem` | `fun Self.rem(rhs: &Self) => Self` | `a % b` |
+| `ops.Neg` | `fun Self.neg() => Self` | `-a` is `a.neg()` |
+| `ops.Ord` | `fun Self.cmp(other: &Self) => i32` | `<`, `<=`, `>`, `>=` through the sign of `cmp` |
+| `fmt.Display` | `fun Self.to_text() => String` | `"${x}"` and `print(x)` |
 
 `cmp` returns negative for less, zero for equal and positive for greater, like
 `memcmp`. Each operator trait takes no type parameters and declares exactly the
@@ -52,19 +52,19 @@ impl "std/fmt"
 datac Vec2(val x: i64, val y: i64)
 
 impl ops.Add for Vec2 {
-    fun Self.add(rhs: &Vec2).return: Vec2 = Vec2(x = self.x + rhs.x, y = self.y + rhs.y)
+    fun Self.add(rhs: &Vec2) => Vec2 = Vec2(x = self.x + rhs.x, y = self.y + rhs.y)
 }
 
 impl ops.Sub for Vec2 {
-    fun Self.sub(rhs: &Vec2).return: Vec2 = Vec2(x = self.x - rhs.x, y = self.y - rhs.y)
+    fun Self.sub(rhs: &Vec2) => Vec2 = Vec2(x = self.x - rhs.x, y = self.y - rhs.y)
 }
 
 impl ops.Neg for Vec2 {
-    fun Self.neg().return: Vec2 = Vec2(x = 0 - self.x, y = 0 - self.y)
+    fun Self.neg() => Vec2 = Vec2(x = 0 - self.x, y = 0 - self.y)
 }
 
 impl fmt.Display for Vec2 {
-    fun Self.to_text().return: String {
+    fun Self.to_text() => String {
         var out = String.empty()
         val xs = fmt.int(self.x)
         val ys = fmt.int(self.y)
@@ -80,7 +80,7 @@ impl fmt.Display for Vec2 {
 datac Version(val major: i32, val minor: i32)
 
 impl ops.Ord for Version {
-    fun Self.cmp(other: &Version).return: i32 {
+    fun Self.cmp(other: &Version) => i32 {
         if self.major != other.major {
             return self.major - other.major
         }
@@ -88,7 +88,7 @@ impl ops.Ord for Version {
     }
 }
 
-fun sum_all<T: ops.Add>(a: T, b: T, c: T).return: T = a + b + c
+fun sum_all<T: ops.Add>(a: T, b: T, c: T) => T = a + b + c
 
 fun main() {
     val a = Vec2(x = 1, y = 2)
@@ -107,7 +107,7 @@ fun main() {
 }
 ```
 
-It prints, identically on both backends:
+It prints:
 
 ```
 (10, 21)
@@ -142,7 +142,7 @@ false
 - **A type without the trait is refused, and the message names it:**
 
   ```
-  error: cannot use '+' on 'P': it does not implement 'Add' from 'std/ops' (write 'impl Add for P { fun Self.add(rhs: &Self).return: P }', importing 'std/ops')
+  error: cannot use '+' on 'P': it does not implement 'Add' from 'std/ops' (write 'impl Add for P { fun Self.add(rhs: &Self) => P }', importing 'std/ops')
   ```
 
 - **`Ord` is not equality.** `==` and `!=` still come from a declared `eq`
@@ -150,7 +150,7 @@ false
   `eq` has no `==`:
 
   ```
-  error: cannot compare 'P' values with '==': '==' and '!=' come from a declared 'eq' method, and 'Ord' does not supply one; write 'fun P.eq(other: &P).return: bool'
+  error: cannot compare 'P' values with '==': '==' and '!=' come from a declared 'eq' method, and 'Ord' does not supply one; write 'fun P.eq(other: &P) => bool'
   ```
 
   A type with only `eq` still has no `<`.
@@ -158,7 +158,7 @@ false
   message shows the impl to write:
 
   ```
-  error: cannot interpolate a value of type 'P' into a string template: it does not implement 'Display' (write 'impl fmt.Display for P { fun Self.to_text().return: String }', importing 'std/fmt')
+  error: cannot interpolate a value of type 'P' into a string template: it does not implement 'Display' (write 'impl fmt.Display for P { fun Self.to_text() => String }', importing 'std/fmt')
   ```
 
   The receiver is a borrow, so printing leaves the value owned. `x.to_text()`

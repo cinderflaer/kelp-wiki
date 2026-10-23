@@ -4,7 +4,7 @@ description: "A program cannot read a file, open a socket, spawn a process or re
 isPublished: true
 tags: "language, capability"
 ---
-Source: [`syntax.md` §15](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §15](/design/syntax).
 
 Kelp's headline feature: **a program cannot read a file, open a socket, spawn a
 process or read the clock unless the module making the call was granted that
@@ -230,10 +230,9 @@ pointer is **born** at, so an offset applied afterwards (`p.byte_offset(n)`,
 `p.offset(n)`, `p.cast<U>()`) is not revisited, and a granted range admits any
 address reachable from it by arithmetic; there is no runtime check and no
 provenance model; and `mmio` says nothing about what is at the address (a fault
-taken on a probe page is granted like a device register). Freestanding is
-LLVM-only by design, so the C oracle never sees the check. See
+taken on a probe page is granted like a device register). Freestanding is LLVM-only by design. See
 [Kernel 0](/language/kernel) for the grants the examples carry and
-[`plan/device-caps.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/device-caps.md)
+[`language/capabilities.md`](/language/capabilities)
 for the design.
 
 ### `irq` and `frames`: interrupt lines and physical frames
@@ -357,9 +356,7 @@ the one to change.
 
 ## Why this is checkable
 
-The capability matcher exists twice on purpose: in Kelp (the compiler's own
-runtime module, `std/rt`) and in C in `kelpc/runtime/`, with differential tests
-comparing the two on a corpus. A grant is checked statically *and* enforced at
+The capability matcher is written in Kelp, in the compiler's own runtime module, `std/rt`. The runtime crate `kelp-rt` declares its entry points as weak imports. A grant is checked statically *and* enforced at
 runtime against the pattern list, at every call site that names a resource: a
 wrapper, the primitive behind it, a receiver method, a closure body and a `pd`
 initializer are each checked against the grant of the module they are written
@@ -373,7 +370,7 @@ a call through the pointer has no check to emit and no place to put one. The
 compiler therefore refuses the value by name, for the wrapper spelling and the
 `extern fun` one alike, and whether or not the naming module holds the domain
 (`kelpc/src/infer.rs::function_value_at`). A function *literal*
-over a gated call (`val f = fun(p: &str).return: Bytes = fs.read(p)`) is a different
+over a gated call (`val f = fun(p: &str) => Bytes = fs.read(p)`) is a different
 shape: its body is a direct call in the module that wrote it, so it is checked at
 run time like any other. Nothing in the shipped stdlib or in the examples uses a gated item as a
 value.
@@ -391,7 +388,7 @@ below still works and is the simpler option for a quick test:
 impl "std/fs" caps(fs = ["/srv/data/**"])
 impl "std/str"
 
-fun read(name: &str).return: String = fs.read_text(str.concat("/srv/data/", name))
+fun read(name: &str) => String = fs.read_text(str.concat("/srv/data/", name))
 ```
 
 Anything outside `/srv/data/**` is refused at the call, and the caller sees the

@@ -8,7 +8,7 @@ Kelp has **no exceptions and no `try`**. A failure is a value. Use `Option<T>` w
 the failure carries nothing, and `Result<T, E>` when it carries a reason. A
 condition that cannot be handled becomes a `panic`, which ends the process.
 
-Source: [`syntax.md` §18](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §18](/design/syntax).
 
 ## `Option` and `Result`
 
@@ -53,11 +53,11 @@ enclosing function. Otherwise the expression's value is the success payload.
 impl "std/result"
 impl "std/str"
 
-fun half(n: i64).return: result.Result<i64, str.ParseErr> {
+fun half(n: i64) => result.Result<i64, str.ParseErr> {
     return result.Result.Ok(value = n / 2)
 }
 
-fun quarter(n: i64).return: result.Result<i64, str.ParseErr> {
+fun quarter(n: i64) => result.Result<i64, str.ParseErr> {
     val h = half(n = n)?
     return half(n = h)
 }
@@ -79,14 +79,15 @@ fun quarter(n: i64).return: result.Result<i64, str.ParseErr> {
 - `?` moves the payload out of its operand, so **a borrow cannot be the operand**.
 - `?` applies to the expression it is written on. When the success payload is a
   tuple, `?` works on the `Result` and hands the tuple back. With
-  `fun mk(n: i32).return: result.Result<(i32, i32), String>`, the line
+  `fun mk(n: i32) => result.Result<(i32, i32), String>`, the line
   `val (a, b) = mk(n)?` binds the tuple and takes it apart. Writing `?` on the tuple
   itself is an error, because a tuple is not an `enum` ([Types](/language/types)).
 
 ## `panic` and `assert`
 
-`panic(message)` ends the program with a non-zero status. `assert(cond)` is the
-checked form, and it panics with `assertion failed`. The message is a `str` or an
+`panic(message)` ends the program with a non-zero status. In a worker thread it ends
+that thread instead, and its joiner sees the panic as an `Err` ([`std/thread`](/stdlib/thread#the-panic-policy)).
+`assert(cond)` is the checked form, and it panics with `assertion failed`. The message is a `str` or an
 owned `String`, so a message built in the failing branch needs no binding and no
 `.as_str()`:
 
@@ -131,7 +132,7 @@ is how a "this cannot happen" accessor is written:
 ```kelp
 impl "std/option"
 
-fun unwrap<T>(o: &option.Option<T>).return: T {
+fun unwrap<T>(o: &option.Option<T>) => T {
     if let Some(v) = o {
         return v
     }

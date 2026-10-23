@@ -11,12 +11,12 @@ the same `core.kp`, the same `backends/soft/soft/` rasterizer, the same `soft_ba
 the same application program into an image with no libc, boot under QEMU, and
 print a checksum per frame. The claim is narrow and total: they draw the **same
 pixels** as the hosted run. The original design is
-[`plan/polyp-v3.md`](https://homelabone.xenoo.dev/gitea/Lilly/kelp/src/branch/main/plan/polyp-v3.md),
+[`design/polyp-v3`](/design/polyp-v3),
 stage 4, with the display stretch in
-[`plan/polyp-ramfb-status.md`](https://homelabone.xenoo.dev/gitea/Lilly/kelp/src/branch/main/plan/polyp-ramfb-status.md).
+[`libraries/polyp-freestanding.md`](/libraries/polyp-freestanding).
 The v4 hosted demo is also checked against both freestanding kernels when the
 corresponding QEMU and linker are available; see
-[`plan/polyp-v4.md`](https://homelabone.xenoo.dev/gitea/Lilly/kelp/src/branch/main/plan/polyp-v4.md).
+[`libraries/polyp.md`](/libraries/polyp).
 Freestanding mode itself is [its own language page](/language/freestanding); this
 stage is LLVM-only, as every freestanding build is.
 
@@ -161,7 +161,7 @@ the worked example (about two hundred lines of project code;
    platform's clock or a fake one, and `poll_event` returns `None` or the next
    queued event.
 3. **`[target] alloc` and `dealloc`** with the fixed signatures
-   (`fun alloc(size: usize, align: usize).return: Ptr<u8>`,
+   (`fun alloc(size: usize, align: usize) => Ptr<u8>`,
    `fun dealloc(p: Ptr<u8>, size: usize, align: usize)`). The bump arena is the
    smallest one that works; a real allocator implements a better bump or a free
    list against the same two names.
@@ -222,7 +222,7 @@ allowed set. None is a compiler change:
   real `hash`/`eq` pair, which makes the compiler skip the derived one, and
   `soft_backend.find_text` writes into a caller's `String` instead of returning
   an `Option<String>`. The pairs are hand-written with `str.len`/`str.byte`, so
-  `Map` still works on both backends. The freestanding compiler half (emit a body
+  `Map` still works. The freestanding compiler half (emit a body
   for `kelp_map_key_eq`, or emit the derived pair only for a type a `Map` really
   keys) is recorded as a gap, not fixed here.
 - **Two language shapes the code works around**, both already in the gap list: a

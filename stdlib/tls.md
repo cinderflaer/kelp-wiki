@@ -181,23 +181,23 @@ reaches `std/tls`, and hosted only. Verification stays on in both directions (se
 [below](#certificate-verification-is-not-optional)).
 
 ```
-tls.server_config_pem(cert_chain_pem: Bytes, key_pem: Bytes).return: Result<ServerConfig, TlsError>
-tls.server_config_pem_with(cert, key, opts: &ServerOptions).return: Result<ServerConfig, TlsError>
+tls.server_config_pem(cert_chain_pem: Bytes, key_pem: Bytes) => Result<ServerConfig, TlsError>
+tls.server_config_pem_with(cert, key, opts: &ServerOptions) => Result<ServerConfig, TlsError>
 
-tls.server_options().return: ServerOptions
+tls.server_options() => ServerOptions
 ServerOptions.min_version(v: TlsVersion) -> ServerOptions       // Tls12 (default) | Tls13
 ServerOptions.alpn(protocols: &List<String>) -> ServerOptions   // the server's preference order
 ServerOptions.require_client_cert_pem(ca_pem: Bytes) -> ServerOptions
 ServerOptions.handshake_timeout_ms(ms: u64) -> ServerOptions    // default 10000, 0 waits forever
 ServerConfig.free()
 
-tls.accept(config: &ServerConfig, s: net.Socket).return: Result<TlsStream, TlsError>
-TlsStream.alpn().return: Option<String>                // negotiated protocol, server and client streams
-TlsStream.peer_cert_subject().return: Option<String>   // RFC 2253 subject of the peer's certificate
+tls.accept(config: &ServerConfig, s: net.Socket) => Result<TlsStream, TlsError>
+TlsStream.alpn() => Option<String>                // negotiated protocol, server and client streams
+TlsStream.peer_cert_subject() => Option<String>   // RFC 2253 subject of the peer's certificate
 
 // std/tlsfile
-tlsfile.read_pem(path: &str, what: &str).return: Result<Bytes, TlsError>
-tlsfile.ca_pem(path: &str).return: Result<Bytes, TlsError>   // read_pem with the role "CA certificate"
+tlsfile.read_pem(path: &str, what: &str) => Result<Bytes, TlsError>
+tlsfile.ca_pem(path: &str) => Result<Bytes, TlsError>   // read_pem with the role "CA certificate"
 ```
 
 - **A configuration is built once from PEM bytes and never changes.** The
@@ -262,7 +262,21 @@ that wants a CA from a file needs `std/tlsfile`, which needs an `fs` grant; a
 module with no `fs` grant is refused at compile time ("needs the 'fs'
 capability"), and a path outside the grant is the ordinary `fs` denial and is
 never opened. A directory of CAs (`ca_dir`) has no bytes form; read the
-certificates you want and concatenate the PEM text. The old spellings are compile errors on both backends (checked on 2026-10-04):
+certificates you want and concatenate the PEM text. `tlsfile.ca_dir_pem(dir)` does that
+for a directory: it reads every `.pem` and `.crt` file directly inside `dir`, each through the
+`fs` gate, and returns the joined PEM text for `with_ca_pem`. Other files in the directory are
+never opened. A directory with no `.pem` or `.crt` file is `TlsError.Io` (`tls: the directory
+<dir> holds no .pem or .crt CA certificate`), so a wrong path never falls back to the system
+store silently:
+
+```kelp
+impl "std/tlsfile" caps(fs = ["/etc/myapp/ca.d/**"])
+
+val ca = tlsfile.ca_dir_pem("/etc/myapp/ca.d")?
+val opts = tls.client_options().with_ca_pem(ca)
+```
+
+The old spellings are compile errors (checked on 2026-10-04):
 
 ```text
 error: datac 'std.tls.TlsClientOptions' has no method 'with_ca_file'
@@ -357,7 +371,7 @@ it passes to the handshake, so connect to `localhost`, not to the address.
 ### Configuration errors are values, with fixed sentences
 
 A bad configuration is a typed error and never a panic, and **the key never
-appears in an error text**: the C code reports a fixed sentence for key
+appears in an error text**: the runtime reports a fixed sentence for key
 problems and clears OpenSSL's error queue after those calls instead of passing
 OpenSSL's own text along. This program feeds `server_config_pem` a good pair, a
 key from a different certificate, a file that is not PEM as the key, a file that
@@ -402,7 +416,7 @@ fun main() {
 
 I ran this program with the directory replaced by a scratch directory holding the
 files above (`other.key` being a second key, `junk.pem` the text `this is not a
-PEM file`), on the LLVM backend and under `KELPC_ORACLE=c`. Both print:
+PEM file`), on the LLVM backend. It prints:
 
 ```text
 config ok
@@ -446,12 +460,12 @@ impl "std/result"
 impl "std/option"
 impl "std/str"
 
-fun show(o: move option.Option<String>).return: String = when o {
+fun show(o: move option.Option<String>) => String = when o {
     Some(v) -> v
     None -> String.from_str("-")
 }
 
-fun make_config().return: result.Result<tls.ServerConfig, tls.TlsError> {
+fun make_config() => result.Result<tls.ServerConfig, tls.TlsError> {
     val cert = tlsfile.read_pem("/etc/myapp/certs/server.pem", "certificate chain")?
     val key = tlsfile.read_pem("/etc/myapp/certs/server.key", "private key")?
     val ca = tlsfile.read_pem("/etc/myapp/certs/ca.pem", "client CA")?
@@ -462,7 +476,7 @@ fun make_config().return: result.Result<tls.ServerConfig, tls.TlsError> {
     return tls.server_config_pem_with(cert, key, &opts)
 }
 
-fun serve_one(fd: i32).return: String {
+fun serve_one(fd: i32) => String {
     val l = net.Listener(fd = fd)
     return when make_config() {
         Err(_) -> String.from_str("server: config failed")
@@ -495,7 +509,7 @@ fun serve_one(fd: i32).return: String {
     }
 }
 
-fun client(port: u16, with_cert: bool).return: String {
+fun client(port: u16, with_cert: bool) => String {
     var opts = tls.client_options().with_timeout_ms(10000)
     when tlsfile.ca_pem("/etc/myapp/certs/ca.pem") {
         Ok(pem) -> opts = opts.with_ca_pem(pem)
@@ -558,7 +572,7 @@ fun main() {
 }
 ```
 
-I ran it on both backends with `/etc/myapp/certs` replaced by the scratch
+I ran it with `/etc/myapp/certs` replaced by the scratch
 directory (the real `caps(fs = [...])` pattern must be an absolute path, so the
 grant carries the same directory). With a certificate (`./prog cert`) both
 backends print:
@@ -581,7 +595,7 @@ The server picked `h2`, its own first choice, although the client listed
 
 ## Failures a server sees
 
-These are the outcomes `kelpc/tests/tls_server.rs` pins on both backends (client
+These are the outcomes `kelpc/tests/tls_server.rs` pins (client
 line, then server line):
 
 | Scenario | Client | Server |
@@ -616,7 +630,9 @@ complete.
 handshake starts, so a silent peer is `Err(Timeout)` instead of a hang. The
 settings stay on the socket for the reads and writes that follow, and
 `set_timeout` changes them later. `0` is "no timeout", which is `SO_RCVTIMEO`'s
-own meaning; there is no silent default deadline.
+own meaning; there is no silent default deadline. A write that stalls past the
+deadline, because the peer stopped reading, is `Err(Timeout)` from `try_write` and
+`try_write_all`; the same deadline covers the reads.
 
 ## Certificate verification is not optional
 
@@ -660,21 +676,19 @@ wss
 
 ## Linking
 
-The system OpenSSL (`-lssl -lcrypto`) is linked, and OpenSSL's headers are
-included in the program's extern object, **only when a program reaches
+The system OpenSSL (`-lssl -lcrypto`) is linked, **only when a program reaches
 `std/tls`**. `std/http` and `std/ws` import it, so a program that uses either
 gets it too; a program that never touches TLS does not need either the library
 or the development output.
 
 ```sh
-# a program that reaches std/tls: its <out>.externs.c includes openssl/ssl.h
-# a program that does not: the file carries no openssl include and the link
-# line carries no -lssl
+# a program that reaches std/tls: its link line carries -lssl and -lcrypto
+# a program that does not: its link line carries neither
 ```
 
-When it is needed, the linker has to find `libssl` and `libcrypto`, and the
-OpenSSL headers have to be on the include path. `nix-shell shell.nix` provides
-both; [Install and build](/getting-started/install#requirements) lists them for
+When it is needed, the linker has to find `libssl` and `libcrypto`. No OpenSSL
+header is read, because kelpc compiles no C. `nix-shell shell.nix` provides the
+libraries; [Install and build](/getting-started/install#requirements) lists them for
 every other setup.
 
 ## See also
@@ -683,3 +697,117 @@ every other setup.
 - [`std/ws`](/stdlib/ws)
 - [`std/net`](/stdlib/net)
 - [Capability patterns](/reference/capability-patterns)
+
+
+## Stable TLS, part 2: the hostile-conditions matrix
+
+Moved here from the retired `plan/tls-hardening.md`. The text is kept as the record it was.
+
+*Release goal 1 (`kelp issue #246`). Part 1 shipped the typed `try_` API, truncation detection,
+timeouts, the private CA and `wss` ([`meta/milestones.md`](/meta/milestones)). This file is part 2: a local hostile-conditions matrix
+against `std/tls`, `std/http` and `std/ws`, and every bug it found, fixed in the module or the compiler.*
+
+Every case dials **127.0.0.1 only**. The Rust test server mints a throwaway self-signed certificate per
+server (`openssl` crate, not a CLI), and the compiled program is pointed at it through `SSL_CERT_FILE`, so no
+machine trust store is touched. The fixtures and the servers live in `kelpc/tests/compile_and_run.rs`; every
+one of them runs on the default `llvm` backend and on the `c` oracle (`KELPC_ORACLE=c`), because
+`compile_and_run.rs` is backend-agnostic by construction.
+
+The finding table starts below the matrix. Each row names the case, the observable failure, the cause and the
+fix (or why it was left).
+
+### The matrix
+
+| Case | Fixture / project | Server condition | Assertion |
+|------|-------------------|------------------|-----------|
+| (a) 10 MiB body, small and large reads | `tls_big_body.kp` | `CannedTlsServer`, 10 MiB body, then clean `close_notify` | length and SHA-1 match the bytes the server sent, both chunk sizes |
+| (b) partial reads and writes | `tls_partial.kp` | server reads 1 MiB one byte at a time, writes its own body one byte at a time | client's `write_all` sent 1 MiB; both SHA-1s match |
+| (c) alert mid-stream | `tls_bad_record.kp`, `https_get` project | partial body then a `close_notify`, and (separately) a record that fails authentication | the short body is refused by `std/http`; the bad record is an error, never a clean EOF |
+| (d) TCP reset during the handshake | `tls_reset_handshake.kp` | accept, no read, close with the ClientHello unread | `try_handshake` is an error, not a hang |
+| (d) TCP reset during a read | `tls_reset_read.kp` | handshake, no read of the request, close | the read is an error |
+| (e) 64 concurrent clients | `tls_concurrent.kp` | one TLS echo connection per client, a thread each | every echo is its own request, no fd delta |
+| (f) silent peer, with `set_timeout` | `tls_handshake_socket_timeout.kp` | never answers the ClientHello | `Timeout` |
+| (f) silent peer, without | `tls_handshake_no_timeout.kp` | never answers, then closes after a hold | `PeerClosedUncleanly` (proves no silent default deadline) |
+| (g) SNI | `tls_sni.kp` | `DnsLocalhost` certificate, server records `SSL_get_servername` | the recorded name equals the host given to `handshake` |
+| (h) `https` redirect to another local port | `https_redirect` project | port A `301` -> port B, both TLS | both hops, body from B |
+| (i) `Connection: close` vs keep-alive | `http_close_vs_keepalive` project | first connection says close, the next is kept | exactly two accepted connections, pool counts |
+| (j) 100 KiB header block | `https_big_headers` project | one `X-Big` header of 100 000 bytes | header length and body survive `std/http` |
+
+The handshake-leak gate is `tls_handshakes_free_everything_under_address_sanitizer`, which rebuilds the C
+backend's generated `.c` with `cc -fsanitize=address` (there is no valgrind on this machine; `memory_gate.rs`
+is the same idea for a machine that has it) and runs one success and every failure path against the servers,
+including the pooled path drained with `Pool.close_all`. It is the one place a fixture is built through
+`KELPC_ORACLE=c` explicitly, because AddressSanitizer only sees the backend that emits C.
+
+### Findings
+
+#### F1. A TLS write to a peer that had reset the connection killed the process with SIGPIPE
+
+*Case (d), the reset during a read.* `tls_reset_read` died with `unix_wait_status(13)` (SIGPIPE)
+and printed nothing on the C backend, while the LLVM build usually won the race and reported the
+error the test expected. That difference was timing: whichever direction the RST reached the client
+first.
+
+**Cause.** `net.send_raw`/`net.send_all_raw` pass `MSG_NOSIGNAL` so a plain socket write to a dead
+peer becomes `EPIPE`. OpenSSL's socket BIO writes with a plain `write()`, which a library call cannot
+ask to change, so a TLS write to a socket the peer has reset raised SIGPIPE and the default action
+took the process down before `SSL_write` could return the error the typed path already handles.
+
+**Fix, first version (rejected).** `runtime/kelp_rt.c` ignored SIGPIPE once, process-wide, in a constructor.
+That fixed TLS and broke every other program: with the signal ignored, a Kelp program piped into `head` kept writing
+to a closed pipe forever instead of being ended like any Unix tool (`yes`-style producers never stopped; checked by
+running an endless `print` loop through `| head -1`: exit 141 before, a run to the 5 s cap after).
+
+**Fix, as shipped.** SIGPIPE is blocked on the calling thread only for the duration of each OpenSSL call that can
+write (`SSL_connect`, `SSL_write`, `SSL_read`, `SSL_shutdown`), through the `KELP_NO_SIGPIPE(call)` helper in
+`codegen_c::C_HEADERS` (shared by both backends). A SIGPIPE that the call itself raised is consumed before the mask is
+restored, one that was already pending is left alone, and `errno` is preserved for `SSL_get_error`. The default
+action stays in force everywhere else. Regressions: `a_tcp_reset_during_a_read_is_a_typed_error` (TLS) and
+`a_program_is_ended_by_sigpipe_when_its_reader_closes_the_pipe` (the process-wide behaviour).
+
+#### F2. The truncation and read-timeout fixtures leaked the `SSL*`, and the whole trust store with it
+
+*The AddressSanitizer gate.* `tls_truncated` leaked 92 428 bytes in 466 allocations. The roots were
+the `SSL*` a successful handshake had allocated; the "indirect" leaks included the certificate store
+`SSL_CTX_set_default_verify_paths` had loaded, because `SSL_new` keeps its own reference to the
+`SSL_CTX`, so losing the `SSL*` loses the context too.
+
+**Cause.** After a failed read those fixtures closed the socket without ending the session. `std/tls`
+documents that nothing is freed on drop and that `try_shutdown` is the only call that frees the
+handle, so this was the fixture's omission, not a leak inside the module: the handshake's own error
+paths free the `SSL_CTX` and the `SSL*` on every branch, which the ASan gate now exercises for the
+untrusted, timeout, reset and bad-record handshakes, and which the 64-thread fixture exercises for
+success.
+
+**Fix.** `tls_truncated.kp`, `tls_timeout_read.kp` and every new fixture call `try_shutdown` on every
+path where a `TlsStream` exists, including after a read error. The typed-handle follow-up in
+`kelp issue #246` landed ([`stdlib/tls.md`](/stdlib/tls)): `TlsStream.handle` is the opaque `tls.TlsHandle`
+rather than a `usize`, so the handle can no longer be confused with an address or a length. It is a `Copy`
+handle that owns nothing, though, so the contract stands unchanged: nothing frees the `SSL*` on a `TlsStream`'s
+drop, `try_shutdown` is still the call that does, and that is what the leak gate checks.
+
+#### F3. The helper cannot send a fatal alert, so case (c) is split in two
+
+Not an implementation bug. `rust-openssl` exposes no `SSL_send_alert`, and after the handshake every
+record is authenticated, so a raw alert written into the socket is read as a failed AEAD record (TLS
+1.2) or a bad record type (TLS 1.3) rather than as an alert. Case (c) is therefore two tests:
+`a_close_notify_mid_body_is_not_a_complete_response` (the alert a peer can send, checked through
+`std/http`'s framing) and
+`a_record_that_fails_authentication_mid_stream_is_not_a_clean_end_of_stream` (checked at `std/tls`).
+Both assert the same observable rule: a peer that stops mid-body is never a clean end of stream.
+
+#### What the matrix did not find
+
+No bug in `std/http` or `std/ws`: the `https` redirect to a second local port, `Connection: close`
+against keep-alive, and the 100 KiB header block all behave as documented, and the 10 MiB body, the
+1 MiB `write_all` against a dribbling peer and the 64 concurrent clients all preserve every byte with
+no descriptor delta. `try_handshake` failing halfway (untrusted, timeout, reset, bad record) frees the
+`SSL_CTX` and the `SSL*` on every branch, which is what the AddressSanitizer gate now pins.
+
+#### Left as a documented contract, not fixed
+
+- **A pooled connection nobody drains.** Nothing frees a `Conn`'s `SSL*` on drop, so a program that exits
+  with idle pooled connections leaves them to process teardown; `Pool.close_all` is the call that ends them,
+  and `tls_pool_close.kp` is the leak gate's proof that draining works. This is the same "nothing closes on
+  drop" rule `std/tls`, `std/http` and `std/ws` all state, and the typed handle plus `Drop` (release goal 3)
+  is what would make it unrepresentable.

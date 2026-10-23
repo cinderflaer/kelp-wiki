@@ -4,7 +4,7 @@ description: "const is a file-level value computed by the compiler. pd is a file
 isPublished: true
 tags: "language, ownership"
 ---
-Source: [`syntax.md` §14](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §14](/design/syntax).
 
 Two declarations live at file scope and are not statements. `const` is a value
 folded at compile time. `pd` (passdown) is a value every function in the module can
@@ -21,7 +21,7 @@ const PAGE_SIZE: usize = 4096
 const ENTRY_SIZE: usize = 8
 const TABLE_ENTRIES: usize = entries_for(pages = 64)
 
-fun entries_for(pages: usize).return: usize {
+fun entries_for(pages: usize) => usize {
     var total: usize = 0
     var i: usize = 0
     while i < pages {

@@ -8,6 +8,14 @@ A fixed pool of worker threads that run closures from one first-in first-out
 queue. Written in Kelp over [`Mutex`, `Condvar`](/stdlib/sync) and
 [`thread.spawn`](/stdlib/thread). Hosted only.
 
+> **Status on current `main`.** `std/pool` builds and runs on `main`. The test
+> `a_pool_runs_a_thousand_jobs` in `kelpc/tests/compile_and_run/atomics.rs` runs
+> `kelpc/tests/fixtures/pool_sum.kp`, which queues 1000 jobs on four workers and prints
+> `499500` and `0`. Other pool fixtures cover a panicking job, a zero-worker pool and a
+> spawn after the join. A `Pool` value is a resource with a destructor, so it stays in
+> the thread that made it and does not cross to a worker.
+
+
 ```kelp
 impl "std/pool"
 ```
@@ -18,10 +26,10 @@ call its own builtins (`thread.spawn`) by name.
 ## Surface
 
 ```
-fun pool.new(workers: i32).return: Pool
+fun pool.new(workers: i32) => Pool
 fun Pool.spawn(job: move closure())
 fun Pool.join()
-fun Pool.panicked().return: i32
+fun Pool.panicked() => i32
 ```
 
 | Call | Returns | Notes |
@@ -73,7 +81,7 @@ fun main() {
 }
 ```
 
-Both backends print:
+It prints:
 
 ```
 51

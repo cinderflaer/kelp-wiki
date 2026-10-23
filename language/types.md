@@ -4,7 +4,7 @@ description: "Kelp's type table: Copy, owned and borrowed types, tuples, explici
 isPublished: true
 tags: "language"
 ---
-Source: [`syntax.md` §3](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §3](/design/syntax).
 
 Kelp's types fall into three kinds, and the kind decides what assignment means:
 a `Copy` value is copied, an owned value is *moved*, and a borrowed value is only
@@ -20,8 +20,8 @@ valid inside the scope that lent it.
 | `char` | Copy | one Unicode scalar value, written `'x'`. A code point, **not** an integer |
 | `str` | borrowed | NUL-terminated UTF-8 view into storage owned elsewhere. No length: deriving one costs a `strlen` |
 | `View` | borrowed | a **length-carrying** borrowed text view: pointer *and* length. Slices without allocating, scans without `strlen` |
-| `String` | owned | UTF-8 text, validated on construction, freed at scope exit |
-| `Bytes` | owned | raw byte buffer, freed at scope exit |
+| `String` | owned | UTF-8 text, validated on construction, dropped at scope exit; its memory is reclaimed by the hosted collector |
+| `Bytes` | owned | raw byte buffer, dropped at scope exit; its memory is reclaimed by the hosted collector |
 | `List<T>` | owned | growable sequence, one instantiation per element type |
 | `Map<K, V>` | owned | keyed container, keeps insertion order; `Map<V>` means a `String` key |
 | `Box<T>` | owned | one heap cell holding a `T` or nothing |
@@ -35,10 +35,10 @@ valid inside the scope that lent it.
 | `datac` name | owned | record with per-field `val`/`var`, optionally with type parameters |
 | `enum` name | owned | tagged union: exactly one variant is live |
 | `(A, B)` | owned | a tuple: two or more element values held in **position order**. Not `Copy`, and it takes the derived deep copy and the derived order a `datac` takes, position by position. Read by destructuring or by position `t.0` ([Bindings and assignment](/language/bindings)) |
-| `fun(T, U).return: V` | Copy | a function value: a function pointer, with the parameters it takes and what it returns |
-| `closure(T, U).return: V` | owned | a function value **plus** the environment its captures were moved into |
+| `fun(T, U) => V` | Copy | a function value: a function pointer, with the parameters it takes and what it returns |
+| `closure(T, U) => V` | owned | a function value **plus** the environment its captures were moved into |
 
-There is no `void`. A function with no `.return: T` returns `unit`, which has no
+There is no `void`. A function with no `=> T` returns `unit`, which has no
 representation, so a binding of one holds nothing ([Returns](/language/returns)).
 
 ## Tuples
@@ -47,7 +47,7 @@ A tuple is two or more values held in **position order**, and it is a type:
 `(i32, i32)` is a pair of `i32`s, written wherever a type is written.
 
 ```kelp
-fun min_max(xs: &List<i32>).return: (i32, i32) {
+fun min_max(xs: &List<i32>) => (i32, i32) {
     // ...
     return (lo, hi)
 }
@@ -57,10 +57,11 @@ val (lo, hi) = min_max(xs)      // a tuple value is read by destructuring
 
 - **Two or more elements.** `(T)` is not a one-element tuple. It is the
   parenthesized type `T`, exactly as `(e)` is the parenthesized expression `e`,
-  so `val x = (5)` binds an `i32`. `()` as a type is refused by name, because the
-  absent value's type is spelled `unit`. `()` as a value is the absent value. It
-  can be returned, passed and bound, and it is the success payload of a
-  `Result<unit, E>` ([Result](/stdlib/result)).
+  so `val x = (5)` binds an `i32`. `()` is the absent value, and its type is
+  `unit`: `()` as a type and `unit` name the same type, so `Result<(), E>` and
+  `Result<unit, E>` are one type. `()` as a value can be returned, passed and
+  bound, and it is the success payload of a `Result<unit, E>`
+  ([Result](/stdlib/result)).
 - **A tuple owns its elements.** There is nothing to declare: the compiler
   derives one record per element list, and an element is stored by value where
   the tuple sits. An element is field-like, so a borrow, a `str` or a `View`
@@ -160,7 +161,7 @@ val p: Pair<i32, String> = Pair(first = 1, second = "one")
   borrowed. A tuple is concrete, so it is a legal type argument: `List<(i32, i32)>`
   and `Box<(String, u64)>` both work.
 - A generic type may refer to itself **through a `Box` or a `List`**.
-- A `fun` may declare type parameters too (`fun identity<T>(x: T).return: T`), and a
+- A `fun` may declare type parameters too (`fun identity<T>(x: T) => T`), and a
   call site instantiates them, by inference or by writing them
   (`identity<i32>(x = 5)`).
 

@@ -45,7 +45,7 @@ fun report(file: &str, lines: usize) {
 // A relative argument is resolved against the working directory, so the gated
 // call still receives an absolute path: `fs` patterns are absolute, and the
 // capability check normalizes before it matches.
-fun absolute_or_here(name: &str, here: &str).return: String {
+fun absolute_or_here(name: &str, here: &str) => String {
     if path.is_absolute(name) {
         return String.from_str(name)
     }

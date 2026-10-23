@@ -8,9 +8,9 @@ A raw pointer is a machine address, and the language cannot check what is at
 one. `unsafe` is how a program says it will do that checking itself. It is
 opt-in twice: a module may contain `unsafe` only if `coral.toml` lists that
 module under `[unsafe] modules`, and the program author has to write the clause.
-The design is [`plan/unsafe-and-pointers.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/unsafe-and-pointers.md),
+The design is [`language/unsafe.md`](/language/unsafe),
 and the catalogue of behaviour it does not check is
-[`plan/kernel-ub-notes.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/kernel-ub-notes.md).
+[`language/unsafe-ub-catalogue.md`](/language/unsafe-ub-catalogue).
 
 ## The `[unsafe] modules` gate
 
@@ -144,8 +144,9 @@ binding ('val p: Ptr<i32> = Ptr.null()')
 | `p.read_unaligned()` | a `Copy` element at any alignment |
 | `p.write_unaligned(v)` | a store at any alignment |
 | `Ptr.alloc<T>(count)` | hosted `malloc`; unavailable in a freestanding build |
-| `Ptr.try_alloc<T>(count)` | the same allocation without the panic: the null `Ptr<T>` on failure, the byte count checked for wrap on both backends; freestanding it needs an `[target] alloc`/`dealloc` pair |
+| `Ptr.try_alloc<T>(count)` | the same allocation without the panic: the null `Ptr<T>` on failure, the byte count checked for wrap; freestanding it needs an `[target] alloc`/`dealloc` pair |
 | `p.free()` | hosted `free`; unavailable in a freestanding build |
+| `p.free_count(count)` | freestanding only, with the `[target] alloc`/`dealloc` pair: the project's `dealloc` gets `count * size_of<T>` bytes and `align_of<T>`, the pair `Ptr.alloc<T>(count)` used; a wrapping count panics, a null pointer is not passed on |
 
 ```kelp project
 fun main() {
@@ -215,7 +216,7 @@ true
 false
 ```
 
-Hosted it is libc's `malloc` on both backends. Freestanding it is the project's
+Hosted it is libc's `malloc`. Freestanding it is the project's
 own `[target] alloc`, admitted only when the manifest names `alloc`/`dealloc`;
 without the pair the refusal is the same one `List` gets and names both keys:
 
@@ -223,7 +224,7 @@ without the pair the refusal is the same one `List` gets and names both keys:
 error: 'Ptr#try_alloc' is unavailable in a freestanding build: it needs an allocator: set '[target] alloc' and '[target] dealloc' to the project's own functions
 ```
 
-On both backends the byte count `count * size_of::<T>()` is checked for wrap
+The byte count `count * size_of::<T>()` is checked for wrap
 before the call, so a request whose product would overflow `usize` answers the
 null pointer instead of asking the allocator for a small block. That is the one
 place `try_alloc` is deliberately stricter than `Ptr.alloc`, whose product can
@@ -232,8 +233,7 @@ reaches for: a bump region the caller owns, no allocator and no libc.
 
 ### Volatile access
 
-A volatile access is emitted as one: the C backend writes a `volatile`-qualified
-access and the LLVM backend sets the instruction's volatile flag
+A volatile access is emitted as one: the LLVM backend sets the instruction's volatile flag
 (`LLVMSetVolatile`). The compiler never merges two volatile accesses, never
 reorders one against another, and never elides one. That is what a device
 register needs, and it is the whole promise: volatile says nothing about the
@@ -259,10 +259,10 @@ one is a parse error.
 | `repr(packed)` | every field at alignment 1, no padding anywhere, the whole type's alignment 1 |
 | `repr(align(N))` | the C field layout with the type's own alignment raised to `N`, a power of two literal. The size rounds up to a multiple of `N`, and a type that embeds it places it at an `N`-aligned offset |
 
-Both backends write the same layout byte for byte, and the C compiler is the
-judge: `tests/projects/ffi_layout` builds a `repr(packed)` `datac` in Kelp, passes
-its address through a user `extern fun` to a project-local C helper, and prints
-C's `sizeof`/`_Alignof`/`offsetof` beside Kelp's own queries.
+The layout is the one a C compiler gives the same declaration, and the C compiler is the
+judge: `tests/projects/ffi_layout` builds a `repr(packed)` `datac` in Kelp and checks
+its size, alignment and field offsets against literal values written in `main.kp`.
+No C compiler is involved.
 
 `repr(packed)` and `repr(align(N))` are refused **on an enum**: an enum's only
 layout knob here is the tag's storage type.
@@ -369,9 +369,7 @@ plus the two static forms written on the type name, `u32.from_be(x)` and
 Kelp type.
 
 The direction is a property of the *target*, asked rather than assumed: the LLVM
-backend reads the target's byte order from its data layout, and the C backend
-compiles the direction through `__BYTE_ORDER__`. On a big-endian target
-`to_le` swaps and `to_be` does not, on both backends, with no source change.
+backend reads the target's byte order from its data layout. On a big-endian target `to_le` swaps and `to_be` does not, with no source change.
 
 ```kelp
 impl "std/fmt"
@@ -459,7 +457,7 @@ release, so a pointer is a plain integer-shaped address and `from_addr` can name
 any of them. `AtomicPtr`, `transmute` and non-`Copy` reads are not here either.
 `Ptr.try_alloc`'s null check, the `base`/`cap` an arena is handed, and whether a
 `free` is ever called are the caller's promises too.
-[`plan/kernel-ub-notes.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/kernel-ub-notes.md)
+[`language/unsafe-ub-catalogue.md`](/language/unsafe-ub-catalogue)
 is the growing catalogue of what that leaves to the program.
 
 ## See also

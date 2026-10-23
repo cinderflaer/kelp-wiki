@@ -46,7 +46,7 @@ pattern `listx`'s `Chunk<T>` uses.
 ## Parse
 
 ```kelp
-fun parse(text: &str).return: result.Result<List<Row>, ParseErr>
+fun parse(text: &str) => result.Result<List<Row>, ParseErr>
 ```
 
 Rules:
@@ -63,9 +63,9 @@ Rules:
 ## Write
 
 ```kelp
-fun write(rows: &List<Row>).return: String
+fun write(rows: &List<Row>) => String
 fun write_field(s: &str, out: mut String)
-fun field_needs_quote(s: &str).return: bool
+fun field_needs_quote(s: &str) => bool
 ```
 
 - Every row is terminated with CRLF, including the last.

@@ -41,7 +41,7 @@ impl "std/option"
 impl "std/str"
 
 // A separate function, so the arithmetic stays out of `main`.
-fun power_of_two(exponent: u32).return: bigint.BigInt {
+fun power_of_two(exponent: u32) => bigint.BigInt {
     val two = bigint.from_i64(2)
     var result = bigint.from_i64(1)
     var i: u32 = 0
@@ -167,7 +167,7 @@ every run, which is the property `std/rand` deliberately does not have.
 
 - **A `BigInt` is a `sign` plus base-2³² limbs, and every operation returns a new
   value.** `result = bigint.mul(&result, &two)` reads like an in-place multiply but
-  allocates; the assignment moves the new value in and frees the old.
+  allocates; the assignment moves the new value in and drops the old.
   There is no division, so `to_string` is the only decimal way out.
 - **Explicit `&` is only allowed on a place.** `bigint.mul(&result, &two)` works
   because both are bindings; `&bigint.from_i64(2)` would be refused, which is why

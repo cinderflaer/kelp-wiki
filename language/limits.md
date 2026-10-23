@@ -8,8 +8,8 @@ Kelp leaves some things out on purpose. Other things are not built yet. This pag
 lists both, plus the fixed limits the compiler enforces. Each item links to the
 page that explains the rule.
 
-Source: [`syntax.md` §17](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
-The [roadmap](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/roadmap.md)
+Source: [`syntax.md` §17](/design/syntax).
+The [roadmap](/meta/roadmap)
 tracks the items that are planned.
 
 ## Left out on purpose
@@ -19,7 +19,7 @@ These are design decisions. None of them is planned.
 | Missing | Use instead |
 | --- | --- |
 | Exceptions and `try`/`catch` | `Option`, `Result`, `?`, and `panic` for failures with no way to recover ([Errors](/language/errors)) |
-| A garbage collector | Ownership, with each value freed at the end of its owner's scope ([Ownership](/language/ownership)) |
+| A tracing collector for every value | Owners and drops for resources, and a collector only for memory values in a hosted build ([Ownership](/language/ownership), [Memory](/memory)) |
 | Macros | Text substitution with `alias` ([Modules](/language/modules#aliases)) |
 | `goto` | `break`, `continue`, labels and `return` ([Control flow](/language/control-flow)) |
 | `derive` | Write the impl by hand ([Operator traits](/language/operator-traits)) |
@@ -72,10 +72,11 @@ See [Traits](/language/traits), [Generic traits](/language/generic-traits),
 
 ### Concurrency
 
-- Select over several channels, and rendezvous channels with zero capacity.
-- Thread-local storage.
-- A panic does not unwind. A panicking worker's owned values are not dropped, and
-  a thread handle that nobody joins leaks its result slot.
+- A select case names its channel as a variable or a field
+  ([`std/sync`](/stdlib/sync#select)).
+- A panic does not unwind. A panicking worker drops its owned locals and its user
+  `Drop` thread arguments, newest first, but not the temporaries it holds, and a
+  thread handle that nobody joins leaks its result slot.
 - Memory orders other than `SeqCst`. `Relaxed`, `Acquire` and `Release` are reserved.
 
 See [Concurrency](/language/concurrency).
@@ -121,7 +122,7 @@ See [Front-end fuzzing and parser limits](/tooling/fuzzing) for the parser limit
 
 ## Compile time
 
-The compiler's scaling tests build large generated programs on both backends:
+The compiler's scaling tests build large generated programs:
 long method chains, deeply nested calls, 300-arm `elif` ladders, 200-field
 `datac`s and 5,000-element list literals. A step that takes over 20 seconds fails
 the test.

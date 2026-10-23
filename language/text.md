@@ -4,7 +4,7 @@ description: "Kelp's text types, str, View, String and Bytes: conversions, print
 isPublished: true
 tags: "language"
 ---
-Source: [`syntax.md` §11](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §11](/design/syntax).
 
 Kelp has four text types, and the difference between them is where the bytes live
 and whether the length is known.
@@ -13,7 +13,7 @@ and whether the length is known.
 | --- | --- | --- |
 | `str` | borrowed | a NUL-terminated UTF-8 pointer. No length: deriving one costs a `strlen` |
 | `View` | borrowed | a pointer **and** a length. Slices without allocating, scans without `strlen` |
-| `String` | owned | UTF-8 text, validated on construction, freed at scope end |
+| `String` | owned | UTF-8 text, validated on construction, dropped at scope end; its memory is reclaimed by the hosted collector |
 | `Bytes` | owned | a raw byte buffer |
 
 ## The one implicit conversion
@@ -64,8 +64,8 @@ is not a value.
 
 A template interpolates **any** scalar or text value, owned or borrowed, so
 `print("w = ${s}")` works with `s` a `String`, a `Bytes` or a `View` as well as
-with a `str` or a number. An owned piece is freed once the line is printed; a
-borrow and a `View` are not freed at all.
+with a `str` or a number. An owned piece is dropped once the line is printed; a
+borrow and a `View` are not dropped at all.
 
 `std/io` adds `print_bare`, `eprint` and `eprint_bare` for control over the
 newline and the stream, plus `File` writes. See

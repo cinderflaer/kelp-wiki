@@ -20,9 +20,9 @@ enum Shape {
     Empty
 }
 
-fun Point.shifted(dx: i32).return: Point = Point(x = self.x + dx, y = self.y)
+fun Point.shifted(dx: i32) => Point = Point(x = self.x + dx, y = self.y)
 
-fun area(s: &Shape).return: f64 = when s {
+fun area(s: &Shape) => f64 = when s {
     Circle(r) -> 3.0 * r * r
     Rect(w, h) -> w * h
     Empty -> 0.0
@@ -75,8 +75,10 @@ explains what `mut` means.
 ## Who owns a value
 
 Every value in Kelp has exactly one owner at a time. When the owner goes out of
-scope, the value is freed. That rule is what lets Kelp free memory without a
-garbage collector, and it has two effects you will see in every program.
+scope, the value's life ends: a resource is closed, and a value with a destructor runs
+it. In a hosted build the collector reclaims the memory of a text or a list once no
+path reaches it. The one-owner rule is what lets the compiler say which name a value
+belongs to, and it has two effects you will see in every program.
 
 **Passing a value to a function borrows it.** A parameter declared as a plain
 type, such as `name: String`, is a borrow: the function can read the value, but
@@ -105,7 +107,7 @@ the value, give it the value with a `move` parameter. A `move` parameter takes
 ownership at the call:
 
 ```kelp
-fun keep(name: move String).return: i32 = 1
+fun keep(name: move String) => i32 = 1
 ```
 
 Use a plain parameter when the function only reads the value, and `move` when it

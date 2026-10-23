@@ -4,7 +4,7 @@ description: "Type parameters on datac, enum and fun, how each use site instanti
 isPublished: true
 tags: "language, collections"
 ---
-Source: [`syntax.md` §3 and §9.3](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §3 and §9.3](/design/syntax).
 
 `datac`, `enum` and `fun` may take type parameters. Each use site instantiates them
 into a concrete type, and two instantiations of one template are two different
@@ -20,7 +20,7 @@ enum Maybe<T> {
     None
 }
 
-fun identity<T>(x: T).return: T = x
+fun identity<T>(x: T) => T = x
 ```
 
 - The parameter list sits between the name and the `(` or `{`, written as
@@ -89,7 +89,7 @@ a non-generic function, or a method, whose parameters come from its receiver.
 A receiver method on a generic type writes the type's own parameters, in order:
 
 ```kelp
-fun Pair<A, B>.first_of().return: A = first
+fun Pair<A, B>.first_of() => A = first
 fun mut Pair<A, B>.replace_second(v: B) { second = v }
 ```
 
@@ -99,7 +99,7 @@ fun mut Pair<A, B>.replace_second(v: B) { second = v }
   `Pair<i32, String>` is instantiated once for `A = i32, B = String`. There is no
   inference to do, and no way to call a method on the template itself.
 - **A method may add type parameters of its own** (26.10.3), written after its
-  name: `fun Pair<A, B>.map_first<C>(f: fun(A).return: C).return: Pair<C, B>`. They
+  name: `fun Pair<A, B>.map_first<C>(f: fun(A) => C) => Pair<C, B>`. They
   are inferred at the call from the arguments (and the expected type), may carry
   bounds (`<T: Named>`), and work on a plain type too (`fun Box2.map<U>(...)`). A
   name that repeats one of the receiver type's parameters is refused, and a
@@ -116,8 +116,8 @@ A `fun` may take type parameters after its name, and each call site instantiates
 them:
 
 ```kelp
-fun identity<T>(x: T).return: T = x
-fun empty_of<T>().return: List<T> = List.empty()
+fun identity<T>(x: T) => T = x
+fun empty_of<T>() => List<T> = List.empty()
 ```
 
 - A parameter or a return type that names `T` is resolved for each instantiation.
@@ -128,7 +128,7 @@ fun empty_of<T>().return: List<T> = List.empty()
   inside it. A generic function that is never called is never checked.
 - `main` may not take type parameters.
 - A parameter of a non-`Copy` type is a shared borrow, exactly as it is in a
-  non-generic function, so `fun first<T>(xs: List<T>).return: T` cannot return an owned
+  non-generic function, so `fun first<T>(xs: List<T>) => T` cannot return an owned
   element: `get` borrows it, and only a `Copy` value can come back out of a borrow
   ([Ownership and borrowing](/language/ownership)).
 
@@ -138,8 +138,8 @@ A type parameter may carry one or more **bounds** after a `:`, separated by
 `+`. The bound names a `trait` ([Traits and static dispatch](/language/traits)):
 
 ```kelp
-fun area_of<T: Shape>(s: &T).return: f64 = s.area()
-fun describe<T: Shape + Named>(s: &T).return: f64 = s.area() + s.name_length()
+fun area_of<T: Shape>(s: &T) => f64 = s.area()
+fun describe<T: Shape + Named>(s: &T) => f64 = s.area() + s.name_length()
 ```
 
 - At every call, the type argument must implement every bound, and a call that
@@ -159,10 +159,10 @@ fun describe<T: Shape + Named>(s: &T).return: f64 = s.area() + s.name_length()
 
   ```kelp
   trait Name {
-      fun Self.name_len().return: i32
+      fun Self.name_len() => i32
   }
 
-  fun show<T>(x: &T).return: i32 where T: Name {
+  fun show<T>(x: &T) => i32 where T: Name {
       return x.name_len()
   }
   ```

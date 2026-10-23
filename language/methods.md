@@ -4,7 +4,7 @@ description: "How methods are declared with Type.name, when a receiver is shared
 isPublished: true
 tags: "language"
 ---
-Source: [`syntax.md` §8](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §8](/design/syntax).
 
 A method is a function whose first parameter is its receiver. You write it as
 `Type.name`:
@@ -12,7 +12,7 @@ A method is a function whose first parameter is its receiver. You write it as
 ```kelp
 datac Counter(val id: i32, var count: i32)
 
-fun Counter.total().return: i32 = id + count   // shared receiver
+fun Counter.total() => i32 = id + count   // shared receiver
 fun mut Counter.bump() {                   // exclusive receiver
     count += 1
 }
@@ -66,13 +66,13 @@ print(c.total())
 
 ## Return types that borrow
 
-A function whose `.return: T` is a borrow must return something derived from its
+A function whose `=> T` is a borrow must return something derived from its
 **first reference parameter**. For a method that means the receiver, which is why
 accessors like these are written as methods:
 
 ```kelp
-fun Row.get(i: usize).return: &str = fields.get(i).as_str()
-fun Json.as_str().return: &str {
+fun Row.get(i: usize) => &str = fields.get(i).as_str()
+fun Json.as_str() => &str {
     if let Str(s) = self {
         return s.as_str()
     }
@@ -84,7 +84,7 @@ A *payload bound by a pattern* counts as derived from the scrutinee it came out
 of, which is why the second function above type-checks.
 
 One consequence to know about: **a call that returns a borrow of its receiver
-cannot be made on a temporary**, because the temporary would be freed before the
+cannot be made on a temporary**, because the temporary would be dropped before the
 borrow could be used.
 
 ```kelp
@@ -117,7 +117,7 @@ A receiver method on a generic type writes the type's own parameters, in order:
 ```kelp
 datac Pair<A, B>(val first: A, var second: B)
 
-fun Pair<A, B>.first_of().return: A = first
+fun Pair<A, B>.first_of() => A = first
 fun mut Pair<A, B>.replace_second(v: B) { second = v }
 ```
 

@@ -4,7 +4,7 @@ description: "The surface tokens of Kelp: comments and doc comments, line rules,
 isPublished: true
 tags: "language"
 ---
-Source: [`syntax.md` §2](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §2](/design/syntax).
 
 ## Comments
 
@@ -36,12 +36,12 @@ they are comments like any other, so nothing about them changes what a program
 does:
 
 ```kelp
-//! The buffer owns its bytes and frees them once, at the end of the owning
+//! The buffer owns its bytes and drops them once, at the end of the owning
 //! scope. Nothing here is a view: every getter copies.
 datac Buffer(val bytes: Bytes)
 
 /// How many characters a `&str` has, continuation bytes counted once.
-fun char_count(s: &str).return: usize
+fun char_count(s: &str) => usize
 ```
 
 `//!` is read as the header of a block, so it has to start a line: consecutive

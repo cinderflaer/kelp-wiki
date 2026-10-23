@@ -1,229 +1,168 @@
 ---
 title: "Tests"
-description: "The suite is built on one idea - compile a program, run it, compare what it printed. Nothing asserts on generated C, so a test says what the language does rather than how a backend does it, and..."
+description: "The compiler test suite compiles programs, runs them and compares their output. Covers the fixture harness, the backend gates, the fuzzers, and which tests are ignored by default."
 isPublished: true
 tags: "compiler, testing"
 ---
-The suite is built on one idea: **compile a program, run it, compare what it
-printed**. Nothing in the language suite asserts on generated C, so a test says
-what the language does rather than how a backend does it, and that is what lets
-the same suite validate a backend. Three tests read the generated file on
-purpose, because the property under test *is* the generated C: the capability
-check has to call the Kelp matcher (`cap_matcher.rs`), every statement has to be
-mapped back to its `.kp` line (`compile_and_run.rs`'s
-`the_generated_c_maps_statements_back_to_their_kp_lines`), and a build with no
-`-o` has to leave the running backend's own intermediate beside the artifact
-(`.c` for `c`, `.ll` for `llvm`; `a_build_with_no_output_path_lands_in_build`).
+Most compiler tests compile a program, run it and compare what it printed.
+A test therefore states what the language does, not how a backend does it.
+The tests run against the LLVM backend, the only code generator.
 
 ```sh
-cargo test                                   # unit tests + the fixture suite
+cargo test                                   # unit tests and the fixture suite
 cargo test --test fmt                        # the formatter's corpus and properties
-./kelpc/tests/run-all-backends.sh            # the suite once per implemented backend
 ```
 
-## The fixture suite (`kelpc/tests/compile_and_run.rs`)
+There is one backend, so there is no script that runs the suite once per backend.
 
-357 tests (measured 2026-09-21, after the `asm` backend was removed), driving the
-real `kelpc` binary over two corpora:
+## The fixture suite (`tests/compile_and_run/`)
 
-| Corpus | Count | Shape |
-| --- | --- | --- |
-| `kelpc/tests/fixtures/*.kp` | 367 files | one loose file per single-file test |
-| `kelpc/tests/projects/<name>/` | 61 directories | multi-file: a module graph needs a directory, and a granted module needs an importer |
+The harness runs the real `kelpc` binary on two sets of inputs.
 
-The C backend passes every one of them, and so does the `llvm` backend: it lowers
-the whole language, so `./kelpc/tests/run-all-backends.sh` runs the whole suite
-under both (its `BACKENDS` list is `c llvm` by default), which it could not do
-while one test asserted the C backend's own `.c` sat beside the artifact. The
-differential sweep below finds no
-target the C backend builds that it does not.
-The per-slice gates that follow still name the fixtures they carry.
-The `asm` rows left the suite with the backend on 2026-09-21: its counts, its
-refusal ranking and the fixture-by-fixture detail are history rather than a live
-measurement.
-One of them,
-`the_host_port_denial_names_the_host_as_written_and_its_own_port`, is a loopback
-test that fails intermittently in a full run: a run that includes it reads 340 and
-18, and it passes in isolation and on a re-run.
-
-Every fixture lands in exactly one of three groups, because the harness does three
-different things with them:
-
-| Group | What the harness asserts |
+| Input | Shape |
 | --- | --- |
-| Compiled and run | stdout matches an exact expected value |
-| Compiled and run, expected to fail | the program panics with a specific message: the panic texts are golden |
-| Rejected by the compiler | specific compiler diagnostics: moves, borrows, escapes, unsupported types, a bad grant, a bad `impl` path |
+| `tests/fixtures/*.kp` | One loose file for each single-file test. |
+| `tests/projects/<name>/` | A directory for each multi-file test, such as a module graph or a grant. |
 
-The rejected group is the real proof that the move/borrow checker works rather
-than merely that well-behaved programs compile. The multi-file projects carry the
-capability cases: a granted path, a path outside the grant, a symlink escape, an
-over-delegation that must be refused, a `..` pattern refused at the `impl` line,
-the `net` host as written, a program path under `process`, and the HTTP projects
-that exercise pooling and redirects against a loopback server the harness binds on
-port 0 and passes to the program through argv. The four capability-gate bypasses
-the compiler closed this round each have a project of their own: a gated module's
-`extern fun` primitive, a gated item named as a function value, a receiver method
-and a `pd` initializer, each refused in a module that holds no grant and exercised
-in one that does (`caps_raw_ungranted`, `caps_raw_granted`, `caps_raw_positions`,
-`caps_raw_denied`, `caps_value_ungranted`, `caps_raw_value_ungranted`,
-`caps_method_*`, `pd_gated_*`). The granted-function-value route is a test file of
-its own (`cap_function_value.rs`, four tests, because the construct is refused at
-inference, before any backend) and the project it replaced,
-`caps_raw_value_granted`, went with it.
+Each fixture falls into one of three groups.
 
-Two gates run inside this file:
+| Group | What the harness checks |
+| --- | --- |
+| Compiled and run | The output on stdout matches an exact value. |
+| Compiled and run, expected to fail | The program panics with a specific message. |
+| Rejected by the compiler | The compiler reports a specific diagnostic. |
 
-- **AddressSanitizer.** `heap_fixtures_are_double_free_and_leak_clean` rebuilds
-  every fixture that owns memory with `-fsanitize=address -O1` and runs it, so a
-  double free, a use-after-free or a leak fails the suite. This is what turns
-  "drops happen" into a test result. It skips itself where `cc` has no
-  AddressSanitizer, and a fixture that panics *on purpose* is excluded, because it
-  is expected to leave its buffers behind.
-- **A loopback HTTP server**, because an HTTP client blocks inside `send` and so
-  cannot be both client and server in one process. The helper asserts how many
-  connections were accepted, which is how "the pool reused the socket" becomes a
-  direct assertion rather than a timing inference.
+The rejected group is what shows that the move and borrow checker works.
+The projects cover the capability cases: a granted path, a path outside the grant, a symlink that leads outside it, an over-delegation that must be refused, and a `..` pattern refused at the `impl` line.
+
+Two checks run inside this file:
+
+- **A loopback HTTP server.** The HTTP tests bind a server on port 0 in the harness and pass the port to the program.
+  The server counts the accepted connections, so a test can check that a pool reused a socket.
 
 ## Backend gates
 
-| Test file | What it does | Default run |
-| --- | --- | --- |
-| `kelpc/tests/run-all-backends.sh` | runs the fixture suite once per backend (`BACKENDS`, default `c llvm`: the default `llvm` backend and, through the project's internal switch, the `c` oracle) | a shell script, not a cargo test |
-| `kelpc/tests/run-llvm-scalar-subset.sh` | the scalar-subset gate: runs the closed scalar-subset fixtures on the default `llvm` backend and asserts byte-identical stdout | a shell script, not a cargo test |
-| `kelpc/tests/run-llvm-datac-subset.sh` | the datac gate: runs the S1 fixtures and the closed `datac` slice (28 tests) on the default `llvm` backend and asserts byte-identical stdout | a shell script, not a cargo test |
-| `kelpc/tests/run-llvm-strings-drops.sh` | the heap gate: runs the S1 and S2A fixtures and the heap slice (`Bytes`/`String` through the runtime, an owned field, the drop plan, `panic`/`assert`) on the default `llvm` backend and asserts byte-identical stdout (40 tests) | a shell script, not a cargo test |
-| `kelpc/tests/run-llvm-enum-subset.sh` | the tagged-union gate: runs the S1, S2A and S2B fixtures and the tagged-union slice (`enum` at the C `{ tag, union }` layout, `when`, `if let`, `?`) on the default `llvm` backend, asserts byte-identical stdout (58 tests), and reads the tag and payload offsets back out of the `<out>.ll` the backend wrote to assert three SysV layouts | a shell script, not a cargo test |
-| `kelpc/tests/run-llvm-containers.sh` | the container gate: runs the S1, S2A, S2B and S2C fixtures and the container slice (`List`, `Map`, `Box` and `[T; N]` at the C backend's header layouts, construction, the method surfaces, `for` over a list, a container as a field and an element, the bounds checks and one drop per container type) on the default `llvm` backend and asserts byte-identical stdout (103 tests); it also reads the container header and entry layouts back out of the `<out>.ll` the backend wrote and asserts no runtime declaration passes a container header by value | a shell script, not a cargo test |
-| `kelpc/tests/run-llvm-references.sh` | the reference gate: runs the S1, S2A, S2B, S2C and S2D fixtures and the reference slice (`&T` to a scalar, a borrow of a field, the read, the write, a `&T` parameter and a `&T` return) on the default `llvm` backend and asserts byte-identical stdout (109 tests); it also reads the borrowed-parameter signatures back out of the `<out>.ll` the backend wrote to assert they take `kelp_origin(ptr)`-style pointers, and asserts a `panic` tail ends in `unreachable` | a shell script, not a cargo test |
-| `kelpc/tests/run-llvm-closures.sh` | the closure gate: runs the S1, S2A, S2B, S2C, S2D and S2F fixtures and the closure and function-value slice (a declared `fun` as a value, a `fun` literal with and without captures, a call through a value, a closure's heap environment and its drop, and the two widening shapes) on the default `llvm` backend and asserts byte-identical stdout (120 tests); it also reads the fat pointer's shape back out of the `<out>.ll` the backend wrote as `{ ptr, ptr, ptr }`, that a `fun` parameter and a `fun` return are both `ptr`, that a call through a closure passes the environment first, and the shape of a two-field environment | a shell script, not a cargo test |
-| `kelpc/tests/run-llvm-externs.sh` | the extern fun gate: runs the S1, S2A, S2B, S2C, S2D, S2F and S2E fixtures and the `extern fun` slice (the raw allocator, `str`'s byte reads, the `malloc`-shaped `String`/`Bytes` construction, `sqrt`, `clock_gettime` and a raw `read`) on the default `llvm` backend and asserts byte-identical stdout (138 tests); it also reads each extern's declaration back out of the `<out>.ll` the backend wrote to assert it matches its body's C signature, asserts that no `declare %kelp_(Bytes|String)` line exists, and asserts `llvm.sqrt.f64` where the C `sqrt_raw` declaration used to be. The signature assertions in this gate, the reference gate and the closure gate also expect `noalias` on a parameter an exclusive borrow proves exclusive | a shell script, not a cargo test |
-| `kelpc/tests/run-llvm-pd-caps.sh` | the `pd` globals, the capability check and the last three refusals (38 tests); it pins the exact deny text and exit status against the C backend's own and asserts the owned `pd` is freed at exit | a shell script, not a cargo test |
-| `llvm_debug_info.rs` | the debug-info gate: builds `kelpc/tests/llvm-debug/fault.kp` with the default backend, reads the decoded line table back out of the binary with `readelf` and asserts it names the fixture's `.kp` file and statement lines, then runs the binary, whose run-time division by zero traps, and asserts `gdb` places the fault at `fault.kp:16` with its caller at `fault.kp:21`. The fixture sits outside `tests/fixtures/` on purpose: the coverage sweep treats a run that dies from a signal as a failure, which is right for the corpus and wrong for the one program whose job is to crash | a cargo test, and it fails by name when `gdb` or `readelf` is missing |
-| `kelpc/tests/differential_fuzz.rs` | the differential fuzzer and the conformance corpus: one seed generates one valid Kelp program (SplitMix64, no new dependency), written to a file before it is built, built with both backends and compared byte for byte on stdout and exit status. The default run pins one seed and asserts every corpus file byte-equals the generator's output for its seed; the 256-seed run and the corpus run are `#[ignore]`d | the default run is cheap; the heavy runs are ignored |
-| `memory_gate.rs` | valgrind (`--leak-check=full --show-leak-kinds=all`, diagnostics to `--log-file`) over the built binaries, asserting no findings in any process; a spawned child inherits valgrind, so it writes into the same log | ignored; the default run only checks that valgrind is discoverable |
+Each `run-llvm-*.sh` script runs one slice of the fixtures on the LLVM backend, and compares stdout with the expected output.
+Some of them also read the generated `.ll` file to check an instruction or a layout.
+The scripts are `run-llvm-scalar-subset.sh`, `run-llvm-datac-subset.sh`, `run-llvm-strings-drops.sh`, `run-llvm-enum-subset.sh`, `run-llvm-containers.sh`, `run-llvm-references.sh`, `run-llvm-closures.sh`, `run-llvm-externs.sh` and `run-llvm-pd-caps.sh`.
+`run-llvm-levels.sh` builds each corpus target at `-O0` and at each higher level, and requires the same output at every level. Its full sweep is an ignored test in `level_differential.rs`.
 
-The differential sweep is `backend_coverage.rs`, rebuilt after the `asm` rows went
-with the backend on 2026-09-21. It is the sweep the project had been missing: it
-always builds *both* backends, so the C backend is an oracle rather than a second
-opinion. Every target the C backend builds is built with `llvm` too; for every
-target both build, both binaries are run and their stdout and exit status must be
-byte-identical. A target the `llvm` backend cannot build is recorded with its
-refusal message rather than failed, and a crash or a diagnostic that is not a
-named refusal fails the run. It also ratchets a coverage count, `LLVM_BUILT_BASELINE`,
-which may only rise. On `main` the constant is 404, and the gate is that no target
-the C oracle builds is a mismatch or a crash. Refusals are recorded, not failed,
-so a refusal is visible in the report rather than hidden. The ranking
-report still prints any refusal grouped by its exact message, so a refusal that
-arrived with a new fixture names the slice it waits on. The sweep compiles the
-whole corpus twice, so it is `#[ignore]`d:
+The ABI check for by-value aggregates is a Rust witness, `abi_aggregate.rs`. It links a Rust caller and callee with `repr(C)` structs against the Kelp object. It replaces the C fixture that was compiled before.
 
-```sh
-cargo test --release --test backend_coverage -- --ignored --nocapture
-```
+`llvm_debug_info.rs` builds `tests/llvm-debug/fault.kp`, which divides by a run-time zero.
+It reads the line table of the binary and checks that the fault is reported at the `.kp` line.
 
-It is what caught the silent miscompile in `borrow_returned.kp` (a borrow returned
-through the value position of an `if`, and a returned `&String`) that the container
-slice's reference-place handling closed.
+## The backend coverage sweep (`backend_coverage.rs`)
 
-A curated corpus only covers the shapes its author thought of, so
-`kelpc/tests/differential_fuzz.rs` generates programs instead. One seed is one
-valid program over the landed surface, drawn by a hand-written SplitMix64 PRNG
-(no new dependency), so the same seed always produces the same text and a
-mismatch has a name a reader can quote. Each program is written to a file *before*
-it is built, then built with both backends and compared byte for byte on stdout
-and exit status, with the failing seed, the file and both outputs printed.
-`FUZZ_SEED_START` and `FUZZ_SEED_COUNT` select the seed list; the default run pins
-one seed and the 256-seed run is `#[ignore]`d. 256 seeds were generated and 256
-built by both backends and agreed, 0 refused and 0 mismatches, and a 512-seed run
-agreed too. `kelpc/tests/fuzz-corpus/` holds a conformance corpus of 24 frozen
-seeds, union-covering all sixteen shapes, run differentially by an ignored test; a
-default-suite test asserts every file byte-equals the generator's own output for
-its seed, so it cannot drift. **A mismatch is a defect in a backend and is
-diagnosed, never answered by deleting a shape from the generator.** The fuzzer
-found two real defects, both `llvm`-confined and each now a fixture: a float
-`List`'s
-`contains` fell through to an integer compare, which is invalid IR
-(`list_float_element.kp`), and an unread owned `pd` made the generated `atexit`
-drop reference a container set that was never declared (`pd_owned_container.kp`).
+`backend_coverage.rs` covers the `llvm` backend alone: the coverage of the fixtures, the refusal ranking and the crash check.
+It was written to compare two backends. The C backend that was the second side was removed on 2026-10-10, so the comparison is gone.
+The frozen golden set in `kelpc/tests/golden/` is the reference for the corpus that remains (`golden_corpus.rs`).
 
-```sh
-cargo test --release --test differential_fuzz -- --ignored --nocapture  # the fuzzer and the corpus
-cargo test --test memory_gate    -- --ignored                 # valgrind over the binaries
-```
+## Fuzzing (`differential_fuzz.rs`, `frontend_fuzz.rs`)
 
-The memory gate exists because the AddressSanitizer gate cannot cover a backend
-that writes its own object: it instruments the *generated C*, and there is none
-once `kelpc` emits code itself. Valgrind runs any binary.
+`differential_fuzz.rs` generates a Kelp program from a seed.
+The generator uses a fixed pseudo-random number generator, so the same seed always gives the same program.
+Each program is written to a file and built. There is no second backend to compare it with.
+`FUZZ_SEED_START` and `FUZZ_SEED_COUNT` choose the seeds.
+The default run uses one seed, and the larger runs are ignored.
+`tests/fuzz-corpus/` holds frozen seeds that are run the same way.
 
-## Differential corpora for the runtime
+A mismatch is a defect in a backend.
+The fix is in the backend, not in the generator.
 
-Four corpora pin the behaviour of the runtime pieces that moved from C to Kelp,
-and each one
-compares one implementation against another over generated cases:
+`frontend_fuzz.rs` mutates fixtures and runs `kelpc check` on them.
+It checks that nothing panics, aborts or hangs.
 
-| Test file | Compares | Assertion |
-| --- | --- | --- |
-| `cap_matcher.rs` | `kelpc/runtime/cap_matcher_ref.c` against `std/rt.kp`'s matcher | identical verdict for every case, both drivers generated from one case list |
-| `path_normalize.rs` | `kelpc/runtime/path_normalize_ref.c` against `std/rt.kp`'s `path_normalize` | identical bytes in the buffer *and* identical verdict, case by case |
-| `dns_parse.rs` | `kelpc/runtime/dns_parse_ref.c` against `kelpc/runtime/dns_parse.kp` | identical verdict for every case, one line per case, both drivers generated from one case list (1990 cases) |
-| `resolver_conf.rs` | `kelpc/runtime/resolver_conf_ref.c` against `kelpc/runtime/resolver_conf.kp` | identical verdict for every case, one line per case, both drivers generated from one case list (2612 cases) |
+## Memory checks (`memory_gate.rs`)
 
-The C files are kept as files rather than as `const`s inside the compiler so the
-tests can compile them directly. See [Runtime](/compiler/runtime) for why the duplication
-is deliberate.
+`memory_gate.rs` runs valgrind over the built binaries and checks the log for findings.
+It is ignored by default.
+Valgrind runs on any binary.
 
-```sh
-cargo test --test cap_matcher   -- --ignored
-cargo test --test path_normalize
-cargo test --test dns_parse
-cargo test --test resolver_conf
-```
+## Runtime reference tests
 
-## The formatter's corpus (`kelpc/tests/fmt.rs`)
+Older runtime tests compared a Kelp port with a C reference file. No C file is in the tree, so those comparisons have no second side now.
+The `kelpc/runtime/` folder keeps `dns_parse.kp` and `resolver_conf.kp`.
 
-29 tests, plus `kelpc/tests/fmt_corpus/` (28 input/expected pairs). `kelpc fmt` is a
-token-level whitespace reformatter, so its interesting behaviour is a set of
-**properties** rather than a set of hand-written outputs:
+## The formatter and the linter
 
-| Property | Meaning |
-| --- | --- |
-| Idempotence | `kelpc fmt --check` on a formatted file exits zero, i.e. `F(F(x)) == F(x)` |
-| Token fidelity | the sequence of `(kind, source slice)` pairs is identical before and after, so identifiers, literals and operators are byte-equal rather than merely well-typed |
-| Comment preservation | comments survive, which the AST cannot even represent |
+`fmt.rs` tests the formatter with the corpus in `tests/fmt_corpus/` and with properties.
+Formatting an already formatted file changes nothing.
+The token kinds and their text are the same before and after.
+Comments survive.
 
-The corpus covers the whitespace decisions, and the properties are asserted over
-the repository's own Kelp sources.
+`lint.rs` and `doc.rs` test the linter and the documentation generator.
+`check.rs` tests the output of `kelpc check`, including the JSON form.
 
 ## Benchmarks
 
-The kernels below are the compiler's own speed gates, written in Kelp, Rust, C++
-and Python. The thirteen-program C, Rust and Kelp suite is a different thing, and
-it lives at [Benchmarks](/tooling/benchmarks).
-
-Two benchmarks under `bench/`, each with a recorded `results.txt`:
-
-| Benchmark | What it measures |
-| --- | --- |
-| `bench/speed/` | four CPU-bound workloads (`collatz`, `float`, `mix`, `fib`) with the same algorithm and op counts in Rust, Kelp, C++ and Python; every program times itself and prints a checksum, and the harness keeps the fastest of three trials |
-| `bench/write_20gb/` | writing 20 GiB in the same four languages, which is entirely device-bound |
-
-The checksums are the point: equal checksums are what make the timings comparable,
-because they prove the four programs did the same work. In the recorded run Kelp,
-C++ and Rust are level to within about 1% on all four workloads, and Python is 27x
-to 87x slower depending on the workload, with one caveat the README records: an
-unconstrained naive `fib` is rewritten into a loop by LLVM at 0.5 ns/op, so the
-call-cost workload needs a side-effecting counter to measure anything at all.
-
-The `bench/speed` gate is also where the retired hand-written backend's numbers
-were measured, and the plan's annex records the caveats: it compiled a subset of
-the kernels at that measurement, and the follow-up list of what must be true
-before the number is trustworthy is longer than the number itself. The retired
-track's call-cost measurement is the measurement the LLVM decision rests on.
+The speed and write benchmarks are described on the [Benchmarks](/compiler/benchmarks) page.
 
 ## See also
 
 - [Pipeline](/compiler/architecture)
 - [Backends](/compiler/backends)
 - [Runtime](/compiler/runtime)
-- [Install and build](/getting-started/install): the commands, quoted from here
+- [Install and build](/getting-started/install)
+
+
+## Compile-time scaling
+
+Moved here from the retired `plan/scaling.md`. The text is kept as the record it was.
+
+`kelpc/tests/scaling.rs` generates large programs (method chains, nested
+calls, nested generics, nested blocks and function literals, long `+`/`&&`
+chains, a 5,000-element list literal, long templates, a 300-arm `elif` ladder,
+a 200-field datac, 300 statements) and runs `check`, `fmt`, `lint`, `doc` and
+`build` on both backends over each, then runs both binaries. A step over 20 s
+fails the test.
+
+### The bug that was fixed
+
+Type checking a method call inferred its receiver twice: once with no
+expectation, to learn the receiver's type for method lookup, and again as the
+`self` argument. In `a.f().f().f()...` each link therefore doubled the work of
+the link below it (0.4 s at 16 links, 21 s at 22, a chain of 400 never ended).
+Calls of generic functions and generic `datac`/`enum` constructions did the
+same with their arguments (arguments probed for type inference, then checked
+again against the instantiated signature), so `id(id(id(...)))` and
+`W(v = W(v = ...))` were exponential too.
+
+`Ctx::probes` now keeps the first result; `check_call_arg` reuses it when the
+type is exactly the type the argument is expected to have, and checks again
+(the old behaviour) otherwise. Entries are keyed by expression address and
+span, consumed on use, and dropped whenever the checking that made them fails,
+so a retry (the scoped-block exclusive-capture retry, a swallowed error) never
+sees a stale one. No accepted or refused program and no diagnostic changed.
+
+### Measured after the fix (debug build, this machine)
+
+Nothing else was super-linear in `check`, `fmt`, `lint`, `doc`, or the C
+backend. Every shape finishes each step in about a second or less except:
+
+| input | step | time |
+| --- | --- | --- |
+| list literal, 5,000 elements | `build`, LLVM, -O2 | 4.0-4.6 s |
+| list literal, 2,500 elements | `build`, LLVM, -O2 | 1.0 s |
+| list literal, 1,250 elements | `build`, LLVM, -O2 | 0.5 s |
+| 150 chained closures `val f_i = fun(x) = f_(i-1)(x) + 1` | `build`, C oracle | 1.6-2.2 s |
+| 50 nested generic enum constructions | `build`, LLVM | 1.1-1.5 s |
+| 150 chained closures | `build`, LLVM | 1.0 s |
+
+Only the first row is super-linear: the time is quadratic in the length and
+sits inside LLVM's optimizer, which is given the literal as one first-class
+`[N x i32]` aggregate value (-O0 takes 0.85 s for 5,000 elements). The all
+constant literal is now emitted as a single constant array instead of N
+`insertvalue`s, which halved -O0 and left -O2 unchanged. Emitting a constant
+array as a private global plus a copy would remove the rest; it was left alone
+because it changes the shape of the IR every array literal produces.
+
+The other rows scale linearly (the 150-closure and generic-enum timings double
+when the size does).
+
+### Limits that bound the rest
+
+The parser refuses more than 800 links in a chain and more than 200 levels of
+nesting ([`tooling/fuzzing.md`](/tooling/fuzzing)), so a 400-link chain, 90 nested calls and 60 nested
+`if` blocks are about the largest shapes a program can reach; both limits were
+kept.

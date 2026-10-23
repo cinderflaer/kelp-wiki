@@ -8,7 +8,7 @@ A trait can name a **type** that each impl supplies. The trait can promise "I
 produce a `next` value" without saying what that value is. The impl binds the
 type, and generic code reaches it through the bound as `I::Item`.
 
-Source: [`plan/traits.md` §10](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/traits.md).
+Source: [`design/traits` §10](/design/traits).
 
 Dispatch does not change. `I::Item` is a concrete type at every instantiation,
 just as a type parameter is, so nothing new is lowered and a freestanding image
@@ -20,7 +20,7 @@ is the main user.
 ```kelp
 trait Source {
     type Item
-    fun mut Self.next().return: option.Option<Self::Item>
+    fun mut Self.next() => option.Option<Self::Item>
 }
 ```
 
@@ -41,14 +41,14 @@ impl "std/option"
 
 trait Source {
     type Item
-    fun mut Self.next().return: option.Option<Self::Item>
+    fun mut Self.next() => option.Option<Self::Item>
 }
 
 datac Countdown(var n: i32)
 
 impl Source for Countdown {
     type Item = i32
-    fun mut Self.next().return: option.Option<i32> {
+    fun mut Self.next() => option.Option<i32> {
         if self.n <= 0 {
             return option.Option.None
         }
@@ -61,7 +61,7 @@ datac Words(var left: i32)
 
 impl Source for Words {
     type Item = String
-    fun mut Self.next().return: option.Option<String> {
+    fun mut Self.next() => option.Option<String> {
         if self.left <= 0 {
             return option.Option.None
         }
@@ -70,7 +70,7 @@ impl Source for Words {
     }
 }
 
-fun first_of<S: Source>(s: mut S).return: option.Option<S::Item> {
+fun first_of<S: Source>(s: mut S) => option.Option<S::Item> {
     return s.next()
 }
 
@@ -90,7 +90,7 @@ fun main() {
 }
 ```
 
-It prints, on the LLVM backend and under `KELPC_ORACLE=c` alike:
+It prints:
 
 ```
 3
@@ -135,7 +135,7 @@ An equality constraint pins an associated type in a bound on a **function's** or
 an **impl's** type parameter:
 
 ```kelp
-fun total<I: iter.Iterator<Item = i64>>(it: I).return: i64 { ... }
+fun total<I: iter.Iterator<Item = i64>>(it: I) => i64 { ... }
 ```
 
 It is refused on a supertrait and on an associated type's own bound, where it is

@@ -8,7 +8,7 @@ A kernel keeps per-CPU state: a current-task pointer, a run queue, a scratch
 area that must not be shared. **Per-CPU storage** is the storage class for one
 copy of a value per CPU, plus the two intrinsics that say which copy the running
 CPU is looking at. The design is
-[`plan/percpu.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/percpu.md);
+[`language/percpu.md`](/language/percpu);
 the bare-metal build around it is [Freestanding mode](/language/freestanding).
 
 ## The scalar names
@@ -62,7 +62,7 @@ error: coral.toml value for '[target] cpus' must be between 1 and 64, found 0
 ```
 
 `cpu_count() -> usize` is the manifest's `cpus` folded to a `usize` literal at
-check time, so it is the same constant to both backends and costs nothing at run
+check time, so it is the same constant to the backend and costs nothing at run
 time.
 
 `cpu_index() -> usize` is the running CPU's index, read from the register the
@@ -171,3 +171,16 @@ $ llvm-nm scratch/kp-percpu.elf | grep kelp_SLOT
   `_start` stub
 - [Kernel 0](/language/kernel): the examples that boot under QEMU, with their
   real serial output
+
+## Where it is tested
+
+- The layout is checked on the object file: `freestanding_percpu_static_is_one_cache_line_at_cpus_1`
+  and `freestanding_percpu_statics_are_four_aligned_copies_at_cpus_4` in
+  `kelpc/tests/compile_and_run/asm_freestanding.rs` read the `.percpu` section size and
+  alignment.
+- The refusals each have a project under `kelpc/tests/projects/`: a hosted build,
+  a missing `mut`, a use outside `unsafe`, a non-constant initializer, and a `cpus`
+  outside `1..=64`.
+- The boot is `examples/kernel0-percpu` under QEMU with two harts:
+  `kernel0_percpu_boots_with_two_harts_and_shows_the_other_copy` in the same file
+  asserts `cpu0 4`, `cpu1 7`, `idx 1` and `count 2`.

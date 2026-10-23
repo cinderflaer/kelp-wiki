@@ -25,7 +25,6 @@ the language, the stdlib and the libraries is then one `rg` from the parent fold
 ```sh
 cargo build --release -p kelpc
 cargo test                                   # unit tests + the fixture suite
-./kelpc/tests/run-all-backends.sh            # the suite once per implemented backend
 ```
 
 The fixture suite compiles a fixture, runs the result and compares stdout, so it
@@ -34,11 +33,10 @@ default run stays fast:
 
 ```sh
 cargo test --test memory_gate      -- --ignored               # valgrind over the binaries
-cargo test --test cap_matcher      -- --ignored               # the matcher vs its C reference
 ```
 
-`bench/run.sh` times the thirteen-program suite in C, Rust and Kelp and checks
-their output. `bench/speed/run.sh` times a smaller four-workload set.
+`bench/run.sh` times the thirteen-program suite in Rust and Kelp and checks
+their output against the Rust output. `bench/speed/run.sh` times a smaller four-workload set.
 
 ## What a change should carry
 
@@ -52,7 +50,7 @@ their output. `bench/speed/run.sh` times a smaller four-workload set.
   lists.
 - **A green differential run** for a backend change: `kelpc/tests/backend_coverage.rs`
   compares the whole corpus and `kelpc/tests/differential_fuzz.rs` generates
-  programs from seeds and compares both backends byte for byte on each. A
+  programs from seeds and checks the `llvm` backend on each. A
   mismatch is a defect to diagnose in a backend, never a shape removed from the
   generator or a fixture removed from the corpus.
 - **A test in the corpus** for a capability-matcher or path-normalizer change:
@@ -101,10 +99,10 @@ the case rule and the two style findings a formatter cannot make.
 
 When a spelling is replaced or deleted it goes through the register rather than
 straight out (`syntax.md` 23, `kelpc/src/deprecated.rs`). The register holds
-**one entry today**, the return marker `.R:` (replaced by `.return:` in 26.10.3 and
-removed in the next development cycle). Its two earlier entries, the `as name`
-clause on an `impl` line and the `with` in front of a capability grant, were
-removed once their deadline passed. The steps for an entry:
+**no entries today**. Its last entry, the `.R:` return marker, was removed with
+the `=>` return arrow. The two entries before it, the `as name` clause on an
+`impl` line and the `with` in front of a capability grant, were removed once
+their deadline passed. The steps for an entry:
 
 1. Migrate the compiler's own sources first. A deprecation in the shipped stdlib
    would warn every program that imports that module about a file its reader
@@ -127,11 +125,9 @@ removed once their deadline passed. The steps for an entry:
 A useful defect report has:
 
 1. the smallest program that shows it: three lines beats a paragraph;
-2. the exact command and the exact error, including the file `cc` named if the
-   failure came from `cc`;
+2. the exact command and the exact error;
 3. what you expected instead, in one sentence;
-4. whether it is `llvm`-only or backend-independent (a build compared against the
-   `c` oracle is the test).
+4. whether it is `llvm`-only or backend-independent (the `llvm` backend is the only one).
 
 ## Working on this site
 
@@ -192,9 +188,8 @@ to be updated when that source moves:
 | --- | --- |
 | [Standard library index](/reference/stdlib-index) | `kelpc/std/*.kp` |
 
-The [roadmap page](/meta/roadmap) names `plan/roadmap.md` in the `kelp` repository as the
-authority. It carries one status table, copied by hand from that file, and it says when the copy was
-taken, so a reader can tell when it has gone stale.
+The [roadmap page](/meta/roadmap) is the authority for the marks, the open items and the
+backlog. Its status table sits at the top of the page, and a reader should check that table first.
 
 Mermaid diagrams are not checked by any build: Wiki.js copies a diagram's text
 without judging it, so an invalid one shows up in the browser as an error box.

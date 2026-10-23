@@ -32,7 +32,7 @@ fun usage() {
 // A relative argument is resolved against the working directory, so the gated
 // call still receives an absolute path: `fs` patterns are absolute, and the
 // capability check normalizes before it matches.
-fun absolute_or_here(name: &str, here: &str).return: String {
+fun absolute_or_here(name: &str, here: &str) => String {
     if path.is_absolute(name) {
         return String.from_str(name)
     }
@@ -40,7 +40,7 @@ fun absolute_or_here(name: &str, here: &str).return: String {
 }
 
 // `None` means "not a usable count", and the caller keeps the default.
-fun count_from(text: &str).return: option.Option<i64> {
+fun count_from(text: &str) => option.Option<i64> {
     val parsed = str.parse_i64(text)
     if let Ok(n) = parsed {
         if n > 0 {

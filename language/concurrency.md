@@ -7,7 +7,7 @@ tags: "language, concurrency"
 This page defines the memory model: what a data race is, why one does not
 compile, what a thread may share, and what happens when a thread panics.
 
-The design record is [`plan/mk9-memory-model.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/mk9-memory-model.md). The syntax is in `syntax.md` §12.5 and §12.6.
+The design record is [`kelp issue #245`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/issues/245). The syntax is in `syntax.md` §12.5 and §12.6.
 
 v1 has one ordering and real threads. What ships is a memory model with a
 single ordering, an atomic cell, a `Mutex<T>`, a fence, and
@@ -52,7 +52,8 @@ keeping on record:
   (a Miri-style checker) that gives evidence about the checker,
   not the enforcement mechanism.
 - **Not channels-only.** A channel is a value type a program may use (it
-  ships, in [`std/sync`](/stdlib/sync#channels)), but it cannot be *the*
+  is in [`std/sync`](/stdlib/sync#channels), and it builds on current `main`), but it
+  cannot be *the*
   mechanism: a
   channel-only model still lets two threads hold a `&mut T` to one location if
   nothing refuses it. The rule above is what makes the race unwritable; a
@@ -66,7 +67,10 @@ keeping on record:
 one scalar takes one. It also holds the channels, which move owned values
 between threads instead of sharing a location, and [`std/pool`](/stdlib/pool)
 is a fixed pool of workers over one queue. The limits of both are on their pages:
-hosted only, an owned element, one thread created per pool job.
+hosted only, an owned element, one thread created per pool job. On current `main`,
+a channel builds on current `main`, inside one thread or across threads: a channel end may
+be a thread's argument or result. A pool is a resource with a destructor, so it stays in
+the thread that made it.
 
 ## One ordering: `SeqCst`
 
@@ -165,15 +169,33 @@ program that spawns nothing: a panic in `main`, or in a worker nothing joins
 before the process ends, still ends the process with `exit(1)`.
 
 **v1 has no unwinding, and the consequence is admitted rather than hidden.**
-Kelp has no exceptions and no `catch`, so a panicking worker's frame is
-abandoned: the owned values it held are never dropped. That
-is a deliberate trade against the two alternatives, both worse here: real
-unwinding needs a `Drop` story the language does not have, and aborting the
-whole process is exactly what this policy removes. A handle nobody joins is
+Kelp has no exceptions and no `catch`, so a panicking worker does not unwind.
+Its frames still drop what they own: each owned local and each user `Drop`
+thread argument runs its destructor, newest first, as on a normal return. A
+temporary the worker holds at the moment of the panic is not dropped. That is a
+deliberate trade against the two alternatives, both worse here: full unwinding
+needs a landing pad on every call, and aborting the whole process is exactly
+what this policy removes. A handle nobody joins is
 the same shape: dropping it detaches the worker, which keeps running, and its
 result slot is leaked rather than freed out from under it. Until a panic can
 unwind, a program that spawns threads accepts these leaks as the cost of
 surviving a single worker's failure.
+
+## Thread-local storage
+
+A `tl` declaration gives each thread its own copy of a scalar. Each copy starts
+from the literal in the declaration on first access, so a worker that reads
+`tl var hits: i64 = 0` sees `0` whatever the main thread has stored:
+
+```kelp
+tl var hits: i64 = 0
+```
+
+Each worker counts into its own `hits` with no lock, and each join returns that
+worker's count. A borrow of a `tl` never crosses to a worker, because it names
+the spawning thread's copy. In this release a `tl` holds a scalar: a heap-owning
+type, a `Drop` type, or an initializer that is not a literal is refused by name.
+Thread-local values do not run destructors at thread exit.
 
 ## A worked example: concurrent downloads
 
@@ -211,12 +233,13 @@ than decided speculatively; none of them blocks anything above:
   as well as a memory-model one. It waits for the capability design to cover it.
 - **`Relaxed`, `Acquire` and `Release`** are reserved argument values, not
   shipped: see "One ordering" above.
-- **Channels and a pool shipped without changing the rule above.** They are
-  built on it: a channel is a `Mutex`-guarded queue whose two ends share one
-  runtime record through `Mutex.share()`, and a pool is the same queue of
-  closures ([`std/sync`](/stdlib/sync), [`std/pool`](/stdlib/pool)). What is
-  still absent is a `select` over several channels and a rendezvous
-  (capacity 0) channel.
+- **Channels and a pool are built on the rule above.** A channel is a
+  `Mutex`-guarded queue whose two ends share one runtime record through
+  `Mutex.share()`, and a pool is the same queue of closures
+  ([`std/sync`](/stdlib/sync), [`std/pool`](/stdlib/pool)). On current `main` a channel
+  builds, and a channel end may cross to a worker as a thread's argument or result. The
+  `select` form over receive, send and timeout arms is built
+  ([`std/sync`, Select](/stdlib/sync#select)).
 
 ## See also
 

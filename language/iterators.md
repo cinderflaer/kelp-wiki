@@ -4,7 +4,7 @@ description: "for x in it walks any type that implements std/iter's Iterator. A 
 isPublished: true
 tags: "language"
 ---
-Source: [`plan/iterators.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/iterators.md) and [`plan/iterators-status.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/iterators-status.md).
+Source: [`language/iterators.md`](/language/iterators) and [`language/iterators.md`](/language/iterators).
 
 `for` has two meanings, chosen by the type of what it walks:
 
@@ -23,7 +23,7 @@ control in both forms and in a written `while`.
 ```kelp
 pub trait Iterator {
     type Item
-    fun mut Self.next().return: option.Option<Self::Item>
+    fun mut Self.next() => option.Option<Self::Item>
 }
 ```
 
@@ -44,7 +44,7 @@ datac Fib(var a: i64, var b: i64)
 
 impl iter.Iterator for Fib {
     type Item = i64
-    fun mut Self.next().return: option.Option<i64> {
+    fun mut Self.next() => option.Option<i64> {
         val v = self.a
         self.a = self.b
         self.b = v + self.b
@@ -92,7 +92,7 @@ fun main() {
 }
 ```
 
-It prints, identically on both backends:
+It prints:
 
 ```
 0 1 2 3 4 
@@ -134,10 +134,19 @@ Reading it line by line:
 
   An iterator that is a function parameter has to be bound to a `var` first,
   because a parameter is an immutable binding.
+- **`xs.iter()` over a `List<T>` or `[T; N]`** is the same walk as `for x in xs`,
+  and the element reads the same way. The loop borrows `xs` for its whole run: the
+  body may read `xs` and may change a different list, and `xs` may change again
+  after the loop. A mutator of `xs` inside the loop (`push`, `set`, `remove`,
+  `clear`, an assignment, a move, `&mut xs`), including one in a nested
+  `xs.iter()`, is refused with `cannot mutate 'xs' while iterating over it`.
+  `xs.iter()` is a `for` form only: `val it = xs.iter()` is refused with
+  `List<i32> has no method 'iter'`, because an iterator value cannot keep the
+  borrow (see [What is not there yet](#what-is-not-there-yet)).
 - **Anything else** is refused, and the message names the trait:
 
   ```
-  error: 'for' walks a 'List<T>' or a type that implements 'Iterator', and 'i32' is neither: implement 'std.iter.Iterator' for it ('type Item' and 'fun mut Self.next().return: option.Option<Self::Item>'), or walk a 'List' by index
+  error: 'for' walks a 'List<T>' or a type that implements 'Iterator', and 'i32' is neither: implement 'std.iter.Iterator' for it ('type Item' and 'fun mut Self.next() => option.Option<Self::Item>'), or walk a 'List' by index
   ```
 
   A `Map` is walked with a pattern instead: see below.
@@ -202,7 +211,7 @@ done 7
   on any exit from its block, which is why `done 1`, `done 3`, `done 5` and
   `done 7` print once per odd pass. The passes that `continue` before reaching
   the `defer` print nothing.
-- A `break` or `continue` frees every owned local declared inside the loop it
+- A `break` or `continue` drops every owned local declared inside the loop it
   leaves, and only those.
 - Outside every loop they are refused, naming the statement:
 
@@ -264,7 +273,7 @@ with `break` or `return`. A label is written before a loop, as `'name:`, and
   function, a `fun` literal or a block passed to a call.
 - `loop` is read as the keyword only at the start of a statement and only when a
   `{` follows, so a function called `loop` is still a name everywhere else.
-- Every owned local of every loop an exit leaves is freed, as for a plain `break`.
+- Every owned local of every loop an exit leaves is dropped, as for a plain `break`.
   The compiler writes a labelled exit as a hidden flag and ordinary `break`s, so
   nothing else about loops changed.
 
@@ -286,16 +295,16 @@ costs no libc: `Range.next` is an ordinary method and the loop is an ordinary
 ```kelp
 pub trait Iterator {
     type Item
-    fun mut Self.next().return: option.Option<Self::Item>
+    fun mut Self.next() => option.Option<Self::Item>
 }
 
 pub datac Range(var lo: i64, val hi: i64, val step: i64)
-pub fun range(a: i64, b: i64).return: Range
-pub fun range_step(a: i64, b: i64, step: i64).return: Range
+pub fun range(a: i64, b: i64) => Range
+pub fun range_step(a: i64, b: i64, step: i64) => Range
 
-pub fun count<I: Iterator>(it: move I).return: usize
-pub fun sum_i64<I: Iterator>(it: move I).return: i64
-pub fun collect_list<I: Iterator>(it: move I).return: List<I::Item>
+pub fun count<I: Iterator>(it: move I) => usize
+pub fun sum_i64<I: Iterator>(it: move I) => i64
+pub fun collect_list<I: Iterator>(it: move I) => List<I::Item>
 ```
 
 | Item | Notes |
@@ -331,7 +340,7 @@ fun main() {
 }
 ```
 
-Output, on both backends:
+Output:
 
 ```
 0 1 2 3 4 
@@ -378,12 +387,102 @@ whole set of consumers.
 
 ## What is not there yet
 
-- **A borrowing `List.iter()`** that yields `&T`: a borrow into a list cannot outlive the
-  iterator that hands it out without a way to say how long it lives. `iter.into_iter`
-  moves the list in and yields owned items, and `iter.cloned(&xs)` walks a copy.
+- **A borrowing iterator value.** `xs.iter()` borrows the list only as a `for`
+  loop (above). A value that yields `&T` into `iter.map`, `iter.filter` and the
+  other adapters would have to keep the list's borrow with the iterator, and a
+  `datac` holds owned data only: a field cannot be a reference, and a constructor
+  refuses a borrow. The language has no way yet to tie a borrow to an iterator
+  value. Until it does, `iter.into_iter(move xs)` walks the owned items and
+  `iter.cloned(&xs)` walks a copy.
 
 ## See also
 
 - [Control flow](/language/control-flow)
 - [Associated types](/language/associated-types)
 - [Limits in v1](/language/limits)
+
+
+## `std/iter` status: what shipped, what is missing
+
+Moved here from the retired `plan/iterators-status.md`. The text is kept as the record it was.
+
+The shipped half is the protocol itself, and every fixture and test named in
+[`language/iterators.md`](/language/iterators) 8 passes on both backends:
+
+- `std/iter` declares `pub trait Iterator { type Item  fun mut
+  Self.next() => option.Option<Self::Item> }`, ships `Range` with `range`/
+  `range_step`, and the drain helpers `count`/`sum_i64`/`collect_list`;
+- `for x in <expr>` keeps the index walk for a `List`/`[T; N]` and becomes a
+  `next()` loop for an `Iterator`; anything else is refused naming the trait;
+- `break`/`continue` are ordinary loop control, refused outside every loop and
+  free of the iterated place's mutation rule, with their inside-the-loop drops
+  planned by `borrowck.rs` and emitted by both backends;
+- the freestanding project `tests/projects/freestanding_iter` boots scope:
+  it builds through LLVM and `ld.lld` with `llvm-nm` clean.
+
+### What is missing, and exactly why
+
+The generic adapters the task asks for, `take`, `skip`, `enumerate`, `zip`,
+`chain`, and the association `List.into_iter()` that `enumerate` is tested
+over, are **not** delivered. They are blocked on one language feature:
+
+**Generic trait impls.** Each adapter is a generic `datac` implementing
+`Iterator`:
+
+```kelp
+datac Take<I>(val inner: I, val remaining: usize)
+
+impl<I: Iterator> Iterator for Take<I> {
+    type Item = I::Item
+    fun mut Self.next() => option.Option<I::Item> { ... }
+}
+```
+
+Neither half of that is accepted today:
+
+- `impl<I: ...> ...` is a parse error (the parser expects `impl Trait for Type`
+  with no parameter list), and
+- `impl Iterator for Take<I>` is refused by name: "implementing a trait for a
+  generic instantiation is not in this slice", because the `for` type is read
+  as a dotted name with no argument list.
+
+Without the impl, a composed adapter cannot even be built: `take(skip(range(0,
+100), 10), 5)` has `I = Skip<Range>` in `take`, and `take`'s own bound
+(`I: Iterator`) then fails because `Skip<Range>` implements nothing. The item
+projection `Skip<Range>::Item` also has no impl binding to resolve, so the
+adapter's own `next` return type cannot be written. The same missing feature
+blocks a `ListIter<T>` for `List.into_iter()` and the closure adapters'
+`I::Item` field.
+
+A second, smaller gap is visible in the same place: `datac Take<I: Iterator>`
+(a bound on a *type declaration's* parameter) is refused too, so even a
+structural adapter that forwarded `next` without naming the trait could not
+write `I::Item` in its method's return type. If a follow-up adds only the
+generic impl, the closure adapters (`map`/`filter`) still need the bound on the
+impl's parameter list, which the `impl<I: Iterator>` spelling provides, so the
+one feature is likely enough for both.
+
+### What was deliberately not done
+
+- No eager stand-in (`take` returning a `List<T>`) was added: it would make a
+  finite range behave, but it drains an infinite iterator, so it is a different
+  feature with the same name. Refusing the shape and naming the missing feature
+  keeps the surface honest.
+- No test was weakened or deleted to make the gap look smaller; the existing
+  `for_*` fixtures are untouched, and the three adapter tests are simply absent
+  rather than passing for the wrong reason.
+
+### The follow-up slice
+
+Generic trait impls, in the shape `design/traits` 10 already sketches:
+
+1. `parser.rs`: parse `impl<TypeParams> Trait for Type<Args>` and record the
+   parameters, their bounds, and the `for` type's arguments.
+2. `resolve.rs`: substitute `Self` with the generic instance (`Take<I>`) and
+   `Self::Item` with the impl's binding (`I::Item`), and carry the impl's bounds
+   onto the method's type scope.
+3. `infer.rs`: `implements_trait` for an instance (base name plus a bound check
+   on the arguments), the assoc bindings as templates instantiated per use, and
+   the impl-signature check against the trait with a generic `Self`.
+4. Then the adapters, `List.into_iter()`, and `map`/`filter` are ordinary
+   `std/iter` code with no further compiler work.

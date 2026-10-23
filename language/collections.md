@@ -4,7 +4,7 @@ description: "The builtin containers: List<T>, Map<K, V>, Box<T> and the fixed-s
 isPublished: true
 tags: "language"
 ---
-Source: [`syntax.md` §12](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §12](/design/syntax).
 
 Three containers are compiler builtins: `List<T>`, `Map<K, V>` and `Box<T>`. They
 are owned values with the same move and drop rules as everything else, and each
@@ -141,12 +141,19 @@ print(runs.get(key = 7))
   that the derivation refuses needs both of these, with exactly these signatures:
 
   ```kelp
-  fun T.hash().return: u64
-  fun T.eq(other: &T).return: bool
+  fun T.hash() => u64
+  fun T.eq(other: &T) => bool
   ```
 
   The map then calls these two in place of a derived pair. Declare both or neither.
   The key is still cloned into the entry, so the type must also be deep-copyable.
+- An enum can be a `Map` key: a `Map<Kind, i32>` with `Kind` an enum is checked by the compiler. An enum
+  cannot be a `Map` value. The checker refuses an enum value: `'Status' cannot be a 'Map' value: a hosted build cannot describe an 'enum'
+  inside a map's entry yet, and a 'datac' that holds the enum is refused the same way. Keep
+  the values in a `List<Status>` and store each value's index in the map instead`. A
+  `Map<Kind, i32>` key was refused in a build before that check, with `a hosted build
+  describes the enum 'Kind' only as a heap object (a Box payload or a List element); an enum
+  stored inside a datac is not described yet`.
 - A `Bytes`, container, view, borrow, or a `datac`/`enum` with a field outside the
   keyable set is refused. The message names the field, or the missing half of the
   pair.
@@ -247,7 +254,7 @@ print(grid.get(i = 2).get(i = 1))
   or another array. It may not be a borrow or a `List`/`Map`/`Box`.
 - The array is `Copy` when the element is. `[i32; 3]` is a value you can assign
   freely; `[String; 3]` owns its three strings, so assigning it moves it, and
-  `set` frees the element it replaces.
+  `set` drops the element it replaces.
 - `[x; N]` copies `x` into every slot, so `x` has to own nothing: a scalar, or a
   `datac` whose fields are all scalars. A `String` element is refused by name,
   because `[s; 4]` would be four owners of one buffer.

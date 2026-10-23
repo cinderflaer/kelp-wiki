@@ -4,7 +4,7 @@ description: "How Kelp branches and loops: if, elif, if let, while, for, when wi
 isPublished: true
 tags: "language"
 ---
-Source: [`syntax.md` §6](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §6](/design/syntax).
 
 Kelp has `if`/`else` (with `if let`), `for`, `while`, `when` and `return`. Inside
 a loop, `break` leaves it and `continue` starts its next pass. `loop { ... }` is
@@ -87,7 +87,7 @@ if let Rect(w, h) = shape {
   Ok(v) = json.parse(text)` is legal at all, and that hidden local is an owned
   place like any other. A field chain over a temporary stages its **root**:
   `if let Word(w) = mk().t` binds `mk()` and matches its `t`, so the whole `mk()`
-  result is freed when the block ends rather than the field being read out of a
+  result is dropped when the block ends rather than the field being read out of a
   value that has no storage of its own.
 - A payload binds as a **copy** when it is `Copy`, **by value** when it is owned
   and the scrutinee is an owned place (a `val`/`var` binding or a `move T`
@@ -168,7 +168,7 @@ for x in xs {
 `when` is a chain of conditions that reads as a value:
 
 ```kelp
-fun classify(n: i32).return: &str = when {
+fun classify(n: i32) => &str = when {
     n > 0 -> "pos"
     n < 0 -> "neg"
     else -> "zero"
@@ -182,7 +182,7 @@ when a value is produced, and `when` desugars to nested `if`/`else if`/`else`.
 With a **scrutinee**, `when` becomes pattern matching over an `enum`:
 
 ```kelp
-fun area(s: &Shape).return: f64 = when s {
+fun area(s: &Shape) => f64 = when s {
     Circle(r) -> 3.14159 * r * r
     Rect(w, h) -> w * h
     Empty -> 0.0
@@ -194,9 +194,9 @@ fun area(s: &Shape).return: f64 = when s {
   matched payload is copied, borrowed, or (an owned payload of an owned place)
   moved out. A **temporary** (a call's result, a literal) is bound to a hidden
   local first, because a payload borrow has to outlive the arm it is bound in;
-  the local is freed once the match ends, and it is an owned place like any
+  the local is dropped once the match ends, and it is an owned place like any
   other. A chain over a temporary stages its **root**: `when mk().t { ... }`
-  binds `mk()` and matches its `t`, so the whole temporary is freed exactly once,
+  binds `mk()` and matches its `t`, so the whole temporary is dropped exactly once,
   never the field alone.
 - Matching must be exhaustive: either every variant has an arm, or an `else ->`
   arm is present.
@@ -214,7 +214,7 @@ a tuple pattern:
 ```kelp
 impl "std/option"
 
-fun combine(a: &option.Option<i32>, b: &option.Option<i32>).return: i32 = when (a, b) {
+fun combine(a: &option.Option<i32>, b: &option.Option<i32>) => i32 = when (a, b) {
     (Some(x), Some(y)) -> x + y
     (Some(x), None) -> x
     (None, y) -> 0
@@ -241,7 +241,7 @@ fun combine(a: &option.Option<i32>, b: &option.Option<i32>).return: i32 = when (
   matching name moves out of an owned position exactly as a payload does.
 
 ```kelp
-fun classify(a: i32, b: i32).return: i32 = when (a, b) {
+fun classify(a: i32, b: i32) => i32 = when (a, b) {
     (0, 0) -> 100
     (0, y) -> y
     (x, 0) -> x * 10
@@ -252,7 +252,7 @@ fun classify(a: i32, b: i32).return: i32 = when (a, b) {
 ## `return`
 
 ```kelp
-fun sum_to(n: i32).return: i32 {
+fun sum_to(n: i32) => i32 {
     var acc = 0
     var i = 1
     while i <= n {
@@ -263,7 +263,7 @@ fun sum_to(n: i32).return: i32 {
 }
 ```
 
-`return` with no value is allowed in a function with no `.return: T`. An
+`return` with no value is allowed in a function with no `=> T`. An
 expression-bodied function does not use `return` at all.
 
 A block whose **last statement is `panic(...)`** diverges, so it satisfies any
@@ -273,7 +273,7 @@ declared return type, including a borrowed one. That rule is what makes a
 ```kelp
 impl "std/option"
 
-fun unwrap<T>(o: &option.Option<T>).return: T {
+fun unwrap<T>(o: &option.Option<T>) => T {
     if let Some(v) = o {
         return v
     }

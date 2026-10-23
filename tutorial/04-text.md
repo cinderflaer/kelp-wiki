@@ -13,7 +13,7 @@ how to read a number out of text.
 impl "std/fmt"
 impl "std/str"
 
-fun shout(s: &str).return: String {
+fun shout(s: &str) => String {
     var out = String.empty()
     out.push_str(s)
     out.push_str("!")
@@ -71,7 +71,7 @@ Kelp has two text types you will use every day:
 - **`str`** is text that someone else owns. A string literal such as `"Kelp"` is
   a `str`, and so is a parameter declared `&str`. You can read it, but it must be
   built somewhere else.
-- **`String`** is text that your variable owns. It is freed when the variable
+- **`String`** is text that your variable owns. It is dropped when the variable
   goes out of scope. `String.from_str(s = "...")` makes one from a literal.
 
 A `String` becomes a `str` with `.as_str()`, a borrow, so the `String` keeps
@@ -90,7 +90,7 @@ type you have.
 a value you can store, return or pass on:
 
 ```kelp
-fun label(n: i32).return: String {
+fun label(n: i32) => String {
     return "n is ${n}"
 }
 ```
@@ -105,7 +105,7 @@ To build text that you keep, use `str.concat`, the `fmt` functions, or a `String
 `fmt.int(42)` turns a number into a `String`. Pass a borrow of it on with
 `.as_str()`, and bind it to a variable first, as the program does. A call that
 returns a borrow of a temporary value is refused, because the temporary would be
-freed before the borrow is used.
+dropped before the borrow is used.
 
 ## Parsing a number
 
@@ -116,7 +116,7 @@ read the success case with `if let Ok(v) = n`, and the failure case with
 
 ## Try it
 
-1. Write a function `fun twice(s: &str).return: String` that returns `s` joined
+1. Write a function `fun twice(s: &str) => String` that returns `s` joined
    with itself, using `String.empty()`, `push_str` twice, and `return`.
 2. Split `"red,green,blue"` with `str.split` and print the second item.
 

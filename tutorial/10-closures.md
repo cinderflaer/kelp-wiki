@@ -17,7 +17,7 @@ datac Countdown(var n: i32)
 
 impl iter.Iterator for Countdown {
     type Item = i32
-    fun mut Self.next().return: option.Option<i32> {
+    fun mut Self.next() => option.Option<i32> {
         if self.n == 0 {
             return option.Option.None
         }
@@ -27,11 +27,11 @@ impl iter.Iterator for Countdown {
     }
 }
 
-fun make_scaler(step: i32).return: closure(i32).return: i32 {
-    return fun(x: i32).return: i32 = x * step
+fun make_scaler(step: i32) => closure(i32) => i32 {
+    return fun(x: i32) => i32 = x * step
 }
 
-fun sum_with(xs: List<i32>, f: scoped fun(i32).return: i32).return: i32 {
+fun sum_with(xs: List<i32>, f: scoped fun(i32) => i32) => i32 {
     var total = 0
     var i: usize = 0
     while i < xs.len() {
@@ -78,12 +78,12 @@ seen 3
 
 ## Function literals
 
-`fun(x: i32).return: i32 = x * step` is a function written in place. It can be
+`fun(x: i32) => i32 = x * step` is a function written in place. It can be
 passed around like any function value, which is why `make_scaler` can return one.
 
 A literal that uses a value from the function around it keeps that value. This is
 a closure. `triple` remembers `step = 3` after `make_scaler` has returned, and
-`triple(7)` gives 21. The closure type is written `closure(i32).return: i32`.
+`triple(7)` gives 21. The closure type is written `closure(i32) => i32`.
 
 ## Scoped blocks
 
@@ -110,7 +110,7 @@ and 4, and stops before 5. `iter.sum_i64` adds up an iterator's values.
 ## Try it
 
 1. Change `Countdown` so it stops at 1 rather than 0. What does the loop print?
-2. Write `fun make_offset(d: i32).return: closure(i32).return: i32` that adds `d`
+2. Write `fun make_offset(d: i32) => closure(i32) => i32` that adds `d`
    to its argument. Print `make_offset(10)(5)`, then try it again with the closure
    stored in a `val` first. Which form compiles?
 

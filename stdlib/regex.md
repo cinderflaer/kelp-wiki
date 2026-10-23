@@ -14,7 +14,7 @@ impl "std/regex"
 
 The pattern is data, not syntax: the language itself still has no regular
 expression literal, so a pattern is a `&str` handed to `regex.compile`. The
-engine was specified in `plan/regex.md`.
+engine was specified in `stdlib/regex.md`.
 
 ## Engine
 
@@ -101,22 +101,22 @@ datac Captures(val text: String, val slots: List<i32>)
 ```
 
 ```kelp
-regex.compile(pattern: &str).return: result.Result<Regex, RegexErr>
-regex.is_match(pattern: &str, text: &str).return: bool          // panics on a bad pattern
-Regex.is_match(&str).return: bool
-Regex.find(&str).return: option.Option<Match>
-Regex.find_at(&str, start: usize).return: option.Option<Match>
-Regex.captures(&str).return: option.Option<Captures>
-Regex.find_all(&str).return: List<Match>
-Regex.replace(&str, replacement: &str).return: String
-Regex.replace_all(&str, replacement: &str).return: String
-Regex.split(&str).return: List<String>
-Regex.steps().return: i64
+regex.compile(pattern: &str) => result.Result<Regex, RegexErr>
+regex.is_match(pattern: &str, text: &str) => bool          // panics on a bad pattern
+Regex.is_match(&str) => bool
+Regex.find(&str) => option.Option<Match>
+Regex.find_at(&str, start: usize) => option.Option<Match>
+Regex.captures(&str) => option.Option<Captures>
+Regex.find_all(&str) => List<Match>
+Regex.replace(&str, replacement: &str) => String
+Regex.replace_all(&str, replacement: &str) => String
+Regex.split(&str) => List<String>
+Regex.steps() => i64
 Regex.reset_steps()
-Regex.group_count().return: usize
-Captures.get(i: usize).return: option.Option<String>
-Captures.span(i: usize).return: option.Option<Match>
-Captures.len().return: usize                                    // groups including group 0
+Regex.group_count() => usize
+Captures.get(i: usize) => option.Option<String>
+Captures.span(i: usize) => option.Option<Match>
+Captures.len() => usize                                    // groups including group 0
 ```
 
 The matching methods take the `Regex` **exclusively** (`fun mut`): the scratch
@@ -185,7 +185,7 @@ impl "std/option"
 impl "std/result"
 impl "std/str"
 
-fun compile_or_die(pat: &str).return: regex.Regex {
+fun compile_or_die(pat: &str) => regex.Regex {
     val r = regex.compile(pat)
     if let Ok(re) = r {
         return re
@@ -193,7 +193,7 @@ fun compile_or_die(pat: &str).return: regex.Regex {
     panic("bad pattern in the example")
 }
 
-fun repeated(unit: &str, times: usize, tail: &str).return: String {
+fun repeated(unit: &str, times: usize, tail: &str) => String {
     var s = String.with_capacity(str.len(unit) * times + str.len(tail))
     var i: usize = 0
     while i < times {

@@ -1,6 +1,6 @@
 ---
 title: "Changelog"
-description: "Every release of Kelp, newest first: what the language gained and what the compiler that implements it gained with it. Entries are short; plan/done.md keeps the full milestone record."
+description: "Every release of Kelp, newest first: what the language gained and what the compiler that implements it gained with it. Entries are short; meta/milestones.md keeps the full milestone record."
 isPublished: true
 tags: "language, compiler"
 ---
@@ -33,11 +33,12 @@ later release build their own asset from their own tag.
 
 These entries are deliberately short. The authority for what a milestone
 actually contained is
-[`plan/done.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/done.md);
+[`meta/milestones.md`](/meta/milestones);
 this page is the index to it.
 
 | Version | Date | Headline |
 | --- | --- | --- |
+| [26.10.6](#26106-2026-10-23) | 2026-10-23 | portable Linux packages (`.deb`, `.rpm`, pacman, NixOS flake) with an embedded collector archive; `block name: T { ... }` manual memory; the first kernel and OS stack (`interrupt fun`, freestanding stack guards, `std/os`); `let`-else, `errdefer`, `derive(eq, hash)`; `select` over channels; the C backend and C runtime removed |
 | [26.10.5](#26105-2026-10-09) | 2026-10-09 | `for x in xs.iter()` and `for (k, v) in m.iter()` walk in place; `sync.rendezvous` and `sync.select2`/`select3`; Unicode simple case mapping and byte-offset `str.slice`; faster search, split, base64/base32 and float formatting; `[alias]` in `coral.toml` replaces `alias.kpconf` |
 | [26.10.4](#26104-2026-10-09) | 2026-10-09 | Polyp HTML output (`[build] emit = "html"`); Polyp v5 impl ids in the examples |
 | [26.10.3](#26103-2026-10-08) | 2026-10-08 | `.return:` replaces `.R:`; tuple positions, patterns and `const`s, `for (k, v)` over a `Map`; `loop`, labels and `break value`; disjoint field borrows; methods with type parameters, generic impls and `where`; `std/iter` adapters; float literals, `f32` math, line continuation |
@@ -56,6 +57,134 @@ this page is the index to it.
 | [0.1.2](#012-2026-09-19) | 2026-09-19 | `View`, `char` literals, bitwise operators, `str` to `String` coercion |
 | [0.1.1](#011-2026-09-19) | 2026-09-19 | the `for` loop, `spawn_in`/`run_in`, fallible `try_run`, `fs.symlink` |
 | [0.1.0](#010-no-release) | 2026-09-19 | first tag: the core language, modules, containers, capabilities, stdlib |
+
+## 26.10.6 (2026-10-23)
+
+[Release](https://homelabone.xenoo.dev/gittea/Lilly/kelp/releases/tag/v26.10.6)
+
+446 commits since 26.10.5, the portable-packages and kernel-start release. It closes
+the three release goals of the 26.10 plan: stable TLS, the bugfix pass, and the first
+kernel and OS stack. The suite passes (1983 tests, 50 ignored by default) except three
+`gc_descr` tests that were already failing before this release: the container lowering
+and hosted identity checks against the goldens, and the node descriptor test for two box
+slots. No other test fails.
+
+**Portable Linux packages.** `build/release-packages.sh` in the kelp repository builds
+kelpc in one container per distro and installs each package into a fresh container of
+its own distro, which runs `kelpc run` on hello.kp and `kelpc build` on download.kp.
+Packages are a `.deb` for Debian 13 and Ubuntu 24.04, an `.rpm` for Fedora, a pacman
+package for Arch and a `flake.nix` for NixOS. The Debian packages bundle LLVM 21
+because apt.llvm.org is not in a standard install. The `kelpc` launcher sets
+`ld.lld`, and the packages carry no collector archive, since kelpc embeds it. The
+README has a Without Nix section with the install and source build steps.
+
+**Embedded collector and linker.** `kelpc` embeds the collector archive it builds from
+`kelpc/gc`, as it embeds the runtime, so a managed build needs no `KELP_GC_LIB`. The
+link step uses `ld.lld` rather than `cc`, so a build with no `cc` can link, and
+`KELPC_LLD` selects another linker. A hosted program records the standard loader path
+and sets `RUNPATH` to `$ORIGIN/lib`, so a `.ckp` package runs on any machine whose glibc
+is at least the one its files need. A `.ckp` manifest has a `[requires]` table, and
+`coral run` and `coral inspect` refuse a package whose glibc is newer than the host's.
+`build --package` bundles the libraries the executable needs into `lib/` and refuses a
+package that needs `libstdc++` by name. `llvm-readelf` must be on `PATH` to build a
+package.
+
+**The C backend and the C runtime are gone.** The C backend is removed (2026-10-10):
+`kelpc` builds every program with the LLVM backend. `kelp-rt/`, a Rust `no_std` crate
+built by `kelpc/build.rs`, replaces the C runtime, and the hosted build compiles no C.
+`--sanitize=` and `[build] sanitize` are refused, since the sanitizers were built by the
+C backend. The retired `--backend`, `KELPC_BACKEND` and `KELPC_ORACLE` names are refused
+by name. The `managed` target mode is removed: a `[target] mode = "managed"` line is
+refused with the reason. The compiler and the examples write no em or en dashes in
+messages or comments.
+
+**Standard library.** `std/os` is a new module: the target (`os()`, `arch()`), process
+facts (`pid`, `parent_pid`), and `make_temp_dir(template)` and `make_temp_file(template)`,
+which return a fresh path. `std/sys` re-exports `os()` and `arch()`, so existing programs
+build as before. `std/tlsfile.ca_dir_pem(dir)` reads every `.pem` and `.crt` file in a
+directory as CA certificates. `std.http` keeps only plain connections in its pool. `str.split`
+checks the first byte of the separator before comparing the whole separator. The `fs`,
+`io`, `arena`, `path`, `fmt`, `process`, `str`, `encoding`, `pool`, `net`, `thread`,
+`tlsfile`, `trace`, `frame`, `ops`, `sync`, `mem`, `atomic`, `rand`, `convert`, `irq`,
+`http`, `iter`, `ws`, `tls`, `regex` and `tz` modules have doc comments on their public
+items. `()` is accepted as a type and means `unit`, so `Result<(), E>` is the same type as
+`Result<unit, E>`. A `String` argument is accepted where a `str` parameter is expected.
+
+**Manual memory blocks.** `block name: T { ... }` frees the values it makes when the block
+ends, on every exit (`return`, `break`, `continue`, `?`). Inside it, `name.box()?` makes
+one zeroed element of the block's type in its own chunk, counted against `heap_max`, and
+the block's value is `Result<T, BlockError>`. A block value cannot leave its block, be
+stored in a shared container, a static, a closure or a thread.
+
+**Kernel and OS stack (first cut, release goal 3).** A freestanding build can call
+`Ptr.alloc` through the `[target] alloc`/`dealloc` pair and has the sized free
+`Ptr.free_count(count)`. `interrupt fun` declares a CPU handler on riscv64 and x86-64.
+Freestanding stack guards cover the kernel stack and the trap stack, and a panic runs no
+defer or `Drop` on that path, a rule that is written down and tested. The `kernel0-vm`
+example maps its pages through a `vm.Space` owner, and the `kernel0-user` syscall layer
+names its refusals as a `SysErr` value. The `mmio`, `irq` and `frames` capabilities are in.
+
+**Language.** `let Some(user) = find(id) else { return Err("missing") }` binds the
+variant or returns from the else block. `errdefer EXPR` runs its action only when the
+function leaves through its `Err`. `derive(eq, hash)` on a `datac` or `enum` writes its
+`eq` and `hash` methods field by field. A function's return type is written `=>`, as in
+`fun f(a: i32) => i32`, and `=>` is the same arrow as `->` in `when` arms. `else if` is the
+preferred spelling of a chain link. `for x in xs.iter()` borrows a `List` and reads every
+element once; a mutator of that list during the loop is refused. A string template outside
+`print` is a `String` value. A word from another language used as a keyword or type name
+gets its Kelp word in a `help:` line. A `&` on a `List` or `str` parameter is redundant.
+
+**Threads, channels and the collector.** A `select` form over receive, send, timeout and
+closed arms waits on several channel cases with no polling; a `default` arm runs at once
+when nothing is ready. A hosted build accepts channels that close when their senders or
+receiver drop. `tl var NAME: T = LITERAL` gives each thread its own scalar copy. A
+panicking worker runs the user `Drop` of each owned local and each user `Drop` thread
+local, and frees its select waiter. A hosted build accepts `thread.spawn` with a closure
+that captures values, and refuses a spawn once 256 threads are open. `[target] heap_max = N`
+sets a hosted program's heap cap in MiB (1 to 65536, default 256). `KELP_GC_VERIFY=1`
+poisons dead objects, and `KELP_GC_STATS=1` prints one counter line at exit. The root table
+has no fixed limit, and a hosted program's collector starts with 10 percent headroom.
+
+**Tooling.** `kelpc caps <project>` prints each module's capabilities, sorted for CI
+diffs. `kelpc repl` reads one expression or statement per line and runs under a resumable
+memory guard. `kelpc doc --format json` writes the documentation as JSON, and
+`kelpc stdlib --json --dir <dir>` writes the shipped std sources. `[package]` in
+`coral.toml` takes `author`, `description`, `license`, `repository` and `keywords`.
+`[build] obfuscate = "names"` keeps a hosted build's IR and objects free of source names.
+`[build] emit = "html"` writes a Polyp view as a static HTML file. A misspelled Tidepool
+section is refused by name. `else if` and `elif` are both accepted.
+
+**Bugfix pass (issue 240, release goal 2).** A resolve test that had no `#[test]` attribute
+now runs and passes. The compiler's dead code (a duplicate runtime helper, two never-read
+or test-only items, an unused import) is removed, and no behaviour changed. A hosted
+worker that panics no longer stalls the next collection, a `Mutex` or `RwLock` may hold a
+`List`, `String`, `Box`, `Map`, `Bytes` or a struct with those in it, and a hosted build
+refuses an `Atomic` as a container element. The golden corpus index and the `std/fs`
+tests write scratch files under a directory unique to each test.
+
+**Limits.** A-11 (full borrow checking) is not finished. A thread argument that is a file,
+a socket or a closure value is still refused in a hosted build, and so is a `Mutex` of a
+resource. A hosted worker that panics while it evaluates a resource temporary (inside a
+struct literal field, as a method receiver, or as a later argument of a call) leaks that
+resource, so a receiver waiting on its channel may block. A hosted build refuses an enum
+stored inside a `datac`, and a `Map` whose value is an enum is refused at the `Map` type;
+keep such values in a `List`. The Tidepool M7 gate times the root scan with one live root
+only. The poison sweep runs only under `KELP_GC_VERIFY=1`. The kernel and OS stack is not
+finished: the syscall ABI with untrusted-pointer checks and address-space management are
+not in this release.
+
+**Deferred to a later release.** `mem.release`, which would end an owned value before its
+scope ends (issue 197). Project-wide capability grants (issue 19): a grant is still written
+per module, in that module's `impl` line. Call-site borrow inference and a single text
+parameter type (issue 12). Issues 6 to 15, 18, 218 to 229, 238 and 247, and plans 184 to
+203: user `extern fun` with variadics, function pointers or its own linkage; const generics
+beyond plain integer and `bool` parameters; Unicode case mapping and codepoint-aware `str`
+slicing; a client-only `std/ws` and an HTTP/1.1-only `std/http`; blanket impls and impls
+for one instantiation; async, coroutines and weaker atomic orderings; named nested
+functions, lifetime syntax and borrows in containers; capability narrowing and revocation
+through a module in the middle; a verification duty with no UB catalogue. The syntax items
+digit separators, multi-line string literals, `orExit` on `Result`, field shorthand and
+implicit `String` to `str` at call arguments are deferred too.
 
 ## 26.10.5 (2026-10-09)
 
@@ -185,8 +314,8 @@ overload.
 **Fixed.** `f -= 1` on a function name was an internal compiler error and is a
 diagnostic.
 
-**Design notes and decisions.** `plan/generic-trait-impls.md` (what is built and what
-is not) and `plan/capability-narrowing.md` (forwarding a narrowed grant, runtime
+**Design notes and decisions.** `kelp issue #243` (what is built and what
+is not) and `kelp issue #241` (forwarding a narrowed grant, runtime
 capability values) are written. `kelpc fmt` never re-wraps: it keeps the author's
 line breaks.
 
@@ -1005,7 +1134,7 @@ apart from a deleted `rebrand.md`. No Gitea release was attached to it.
 
 Everything up to that point, in the older milestone numbering the repository used
 at the time (the `M0` to `M9`, `C1`, `S1` to `S8` scheme; the current scheme's
-mapping is in `plan/roadmap.md`):
+mapping is in `meta/roadmap.md`):
 
 - **Core language** (`M0` to `M4.5`): scaffold and lexer/parser for the full
   surface syntax; types and the C backend; `datac` with real per-field
@@ -1054,7 +1183,7 @@ the way `0.1.5` above is cut: the version and date, a link to the Gitea release,
 the numbers (unit tests, end-to-end tests per backend), then what changed,
 grouped so a reader can skip what they do not care about.
 
-Keep it short. Link to `plan/done.md` for the full story rather than copying it.
+Keep it short. Link to `meta/milestones.md` for the full story rather than copying it.
 
 Write the page without em dashes. Use a colon or a comma for an aside, a
 semicolon or a full stop between clauses, and a plain hyphen in a range.

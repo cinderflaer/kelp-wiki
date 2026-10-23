@@ -4,18 +4,18 @@ description: "Declaring functions, named arguments, function values, closures, s
 isPublished: true
 tags: "language"
 ---
-Source: [`syntax.md` §7](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §7](/design/syntax).
 
 ## Declaration
 
 ```kelp
-fun add(a: i32, b: i32).return: i32 = a + b        // expression body, requires .return
+fun add(a: i32, b: i32) => i32 = a + b        // expression body, requires =>
 
-fun greet(name: &str) {                       // no .return: returns unit
+fun greet(name: &str) {                       // no => returns unit
     print(str.concat("hello, ", name))
 }
 
-fun abs_diff(a: i32, b: i32).return: i32 {         // block body
+fun abs_diff(a: i32, b: i32) => i32 {         // block body
     if a > b {
         return a - b
     }
@@ -23,15 +23,14 @@ fun abs_diff(a: i32, b: i32).return: i32 {         // block body
 }
 ```
 
-- The keyword is `fun`; the return type is written `.return: T` **after** the
-  parameter list. There is no `->`, no trailing type, and no inferred return type
-  for a block body. No `.return` means `unit`.
-- **`.R:` is an outdated spelling** of the same marker (outdated since 26.10.3). It still
-  compiles, `kelpc build` and `kelpc run` print an `outdated:` finding for each
-  one, and `--deny-outdated` turns the findings into errors; it is removed in the
-  next development cycle. The two mean exactly the same thing and both are
-  accepted on a declaration, a `fun` literal and a function type.
-- An expression body (`= expr`) requires `.return: T`; a block body ends with
+- The keyword is `fun`; the return type is written `=> T` **after** the
+  parameter list. `->` is accepted as an alias of `=>`. There is no trailing type,
+  and no inferred return type for a block body. No return type means `unit`.
+- **The `.return:` spelling is refused.** The compiler stops with an error that names
+  `=>`, as in `fun f(a: i32) => i32`. The `.R:` spelling was removed before it.
+  `=>` and `->` are both accepted on a declaration, a `fun` literal and a function
+  type.
+- An expression body (`= expr`) requires `=> T`; a block body ends with
   `return expr`.
 - Parameters are `name: T`. A parameter is a **shared borrow** of its argument.
   `name: mut T` is an exclusive borrow: the only spelling for mutation in
@@ -63,18 +62,18 @@ two or more fields.
   library, and only for `abs`, `min`, `max`, `clamp`, which is how `math.min`
   accepts `i32`, `i64` and `f64`.
 - Recursion is unrestricted, including mutual recursion.
-- A function may take type parameters: `fun first<T>(xs: List<T>).return: T`. Each
+- A function may take type parameters: `fun first<T>(xs: List<T>) => T`. Each
   call site is instantiated for the types it uses.
 
 ## Function values
 
-A bare name of a declared `fun` is a value, typed `fun(T, U).return: V`: the `fun`
-keyword, the parameter types, and the same `.return:` clause a declaration uses:
+A bare name of a declared `fun` is a value, typed `fun(T, U) => V`: the `fun`
+keyword, the parameter types, and the same `=> T` clause a declaration uses:
 
 ```kelp
-fun double(x: i32).return: i32 = x * 2
+fun double(x: i32) => i32 = x * 2
 
-fun apply(f: fun(i32).return: i32, x: i32).return: i32 = f(x)     // takes a callback
+fun apply(f: fun(i32) => i32, x: i32) => i32 = f(x)     // takes a callback
 
 val f = double                     // a function value
 print(f(21))
@@ -92,11 +91,11 @@ returned, and be called with ordinary call syntax wherever it is held.
 A `fun` literal is an anonymous function. A literal that names a binding from the
 enclosing scope **captures** it, and that makes the literal a *closure*: a
 function value plus the environment those captures were moved into. Its type is
-written `closure(T, U).return: V`.
+written `closure(T, U) => V`.
 
 ```kelp
-fun make(step: i32).return: closure(i32).return: i32 {
-    return fun(x: i32).return: i32 = x * step
+fun make(step: i32) => closure(i32) => i32 {
+    return fun(x: i32) => i32 = x * step
 }
 
 val f = make(3)
@@ -114,14 +113,15 @@ Capture rules:
 - Inside the body a capture is read *through a borrow of the environment*, so an
   owned capture can be used in place (a method called on it, a field read, passed
   to a parameter) but cannot be handed out by value.
-- A closure owns its environment and frees it where the closure dies.
+- A closure owns its environment. A resource in the environment is dropped where the
+  closure dies, and a hosted build's collector reclaims the environment's memory.
 
-In practice, a stdlib or library callback is written `closure(&T).return: U`, and a
+In practice, a stdlib or library callback is written `closure(&T) => U`, and a
 `Copy` element is used **directly** inside the literal: `acc + x`, not
 `acc + *x`:
 
 ```kelp
-val total = listx.fold(xs, 0, fun(acc: i32, x: &i32).return: i32 = acc + x)
+val total = listx.fold(xs, 0, fun(acc: i32, x: &i32) => i32 = acc + x)
 ```
 
 > **Anonymous functions are not named nested functions**
@@ -137,7 +137,7 @@ their types come from the function type of the parameter the block is passed to.
 A block whose body ends in an expression returns it when the expected return type
 is non-unit.
 
-A parameter written `scoped fun(T).return: U` accepts **only** a `fun` literal or a
+A parameter written `scoped fun(T) => U` accepts **only** a `fun` literal or a
 trailing block written at the call site, never a stored value. Because the callee
 may only call it during the call, the literal may capture an enclosing binding
 **by borrow**, which an ordinary closure cannot do. The mode of each parameter
@@ -145,7 +145,7 @@ follows the expected type, so `scoped fun(mut Counter)` binds a block parameter 
 an exclusive borrow.
 
 ```kelp
-fun sum(xs: List<i32>, f: scoped fun(i32).return: i32).return: i32 {
+fun sum(xs: List<i32>, f: scoped fun(i32) => i32) => i32 {
     var total = 0
     var i: usize = 0
     while i < xs.len() {
@@ -191,8 +191,7 @@ only reads.
 
 A needs-exclusive capture is accepted when the enclosing binding is an owned
 `var` (a `datac`, a collection, a `String`, or a `Copy` scalar) or a `mut`
-parameter, which the block reborrows for the call only. This program runs on
-both backends:
+parameter, which the block reborrows for the call only. This program runs:
 
 ```kelp
 impl "std/sync"
@@ -250,8 +249,7 @@ pointer and the new values are visible after the call. `tally` reborrows its
 Inside the block an exclusive capture behaves like a `mut` parameter, so it can be
 passed on to a function that takes `mut`, which is what lets an Elm-style drain
 loop write the model without threading it through the callback (this is the body
-of `pump` in the `excl_capture_drain` fixture, which prints `1`, `6`, `8`, `8` on
-both backends):
+of `pump` in the `excl_capture_drain` fixture, which prints `1`, `6`, `8`, `8`):
 
 ```text
 q.drain { msg ->
@@ -331,7 +329,7 @@ can update a local accumulator. Its remaining limits are listed under
 one used as a statement, with the result thrown away, is a compile error:
 
 ```kelp refused
-must_use fun check(n: i32).return: bool = n > 0
+must_use fun check(n: i32) => bool = n > 0
 
 fun main() {
     check(1)             // error: the result of 'check' must be used

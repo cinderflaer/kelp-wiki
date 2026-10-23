@@ -19,8 +19,8 @@ fun check(ok: bool) {
 }
 ```
 
-- `source.file().return: str` is the path Kelp compiled for the call site.
-- `source.line().return: usize` is the call site's 1-based line number.
+- `source.file() => str` is the path Kelp compiled for the call site.
+- `source.line() => usize` is the call site's 1-based line number.
 
 Both values are resolved by the compiler at each call site. They are useful for
 test reports and diagnostics; they are not generated-C or LLVM locations.

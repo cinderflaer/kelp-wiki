@@ -51,25 +51,25 @@ is, so both halves share one type.
 ## Duplicates
 
 ```kelp
-fun default_options().return: Options
-fun keeps(e: &Entry, o: &Options).return: bool
-fun filter(entries: &List<Entry>, o: &Options).return: List<Entry>
+fun default_options() => Options
+fun keeps(e: &Entry, o: &Options) => bool
+fun filter(entries: &List<Entry>, o: &Options) => List<Entry>
 fun duplicates(
     entries: &List<Entry>,
     o: &Options,
-    hash: closure(&Entry).return: u64,
-    equal: closure(&str, &str).return: bool
-).return: Report
-fun wasted(g: &Group).return: u64
-fun group_bytes(g: &Group).return: u64
-fun total_wasted(groups: &List<Group>).return: u64
-fun total_files(groups: &List<Group>).return: usize
-fun copy_entry(e: &Entry).return: Entry
-fun copy_digest(d: &Digest).return: Digest
-fun copy_group(g: &Group).return: Group
-fun group_digests(xs: &List<Digest>).return: List<Group>
-fun confirm(g: &Group, equal: closure(&str, &str).return: bool).return: Group
-fun candidates(files: &List<Entry>, o: &Options).return: List<Entry>
+    hash: closure(&Entry) => u64,
+    equal: closure(&str, &str) => bool
+) => Report
+fun wasted(g: &Group) => u64
+fun group_bytes(g: &Group) => u64
+fun total_wasted(groups: &List<Group>) => u64
+fun total_files(groups: &List<Group>) => usize
+fun copy_entry(e: &Entry) => Entry
+fun copy_digest(d: &Digest) => Digest
+fun copy_group(g: &Group) => Group
+fun group_digests(xs: &List<Digest>) => List<Group>
+fun confirm(g: &Group, equal: closure(&str, &str) => bool) => Group
+fun candidates(files: &List<Entry>, o: &Options) => List<Entry>
 ```
 
 `duplicates` is the whole pipeline in one call: apply the size window in `o`,
@@ -100,10 +100,10 @@ read. On a real tree it is most of them.
 datac Snapshot(val root: String, val generated: i64, val records: List<Digest>)
 datac Drift(val unchanged: usize, val changed: List<String>, val missing: List<String>, val added: List<String>)
 
-fun record(entries: &List<Entry>, hash: closure(&Entry).return: u64).return: List<Digest>
-fun snapshot(root: &str, generated: i64, entries: &List<Entry>, hash: closure(&Entry).return: u64).return: Snapshot
-fun drift(s: &Snapshot, entries: &List<Entry>, hash: closure(&Entry).return: u64).return: Drift
-fun drifted(d: &Drift).return: bool
+fun record(entries: &List<Entry>, hash: closure(&Entry) => u64) => List<Digest>
+fun snapshot(root: &str, generated: i64, entries: &List<Entry>, hash: closure(&Entry) => u64) => Snapshot
+fun drift(s: &Snapshot, entries: &List<Entry>, hash: closure(&Entry) => u64) => Drift
+fun drifted(d: &Drift) => bool
 ```
 
 `drift` decides in three steps: size first, then the recorded modification time
@@ -127,14 +127,14 @@ impl "deps/fsx/lib" caps(fs = ["/tmp/dedupdemo/**"])
 impl "deps/hash/lib"
 
 // The two closures are the whole interface to the filesystem.
-fun file_hash(e: &dedup.Entry).return: u64 {
+fun file_hash(e: &dedup.Entry) => u64 {
     val data = fs.read(e.path.as_str())
     return hash.fnv1a_64(data = &data)
 }
 
-fun file_equal(a: &str, b: &str).return: bool = fsx.files_equal(a = a, b = b)
+fun file_equal(a: &str, b: &str) => bool = fsx.files_equal(a = a, b = b)
 
-fun entry_of(p: &fsx.PathInfo).return: dedup.Entry = dedup.Entry(
+fun entry_of(p: &fsx.PathInfo) => dedup.Entry = dedup.Entry(
     path = p.path.clone(),
     size = p.size,
     mtime = p.mtime

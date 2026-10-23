@@ -1,65 +1,30 @@
 ---
 title: "Compiler"
-description: "kelpc is a Rust program that takes .kp sources through lexing, preprocessing, parsing, type checking, move and borrow checking, and code generation. This page maps each stage to its source file."
+description: "kelpc turns .kp sources into a program through a fixed pipeline: front end, module resolution, type checking, ownership, LLVM code generation and an `ld.lld` link. These pages map each stage."
 isPublished: true
 tags: "compiler"
 ---
-How `kelpc` turns `.kp` sources into a program: the pipeline, the backend and the test gates.
+How `kelpc` turns `.kp` sources into a program: the stages, the files that implement them and the gates that test them.
 
 ## Pages
 
-- [Pipeline](/compiler/architecture): each stage, and what it is responsible for.
-- [Incremental builds](/compiler/incremental): per-module compilation units, the content-addressed object cache, parallel workers and the measured numbers.
-- [Backends](/compiler/backends): `llvm`, the one backend, and why `c` stays the oracle.
-- [Runtime](/compiler/runtime): the C that is still C, and the capability matcher.
-- [Tests](/compiler/tests): the fixture suite, the differential sweeps and the memory gate.
-- [Benchmarks](/compiler/benchmarks): what the C, Rust and Kelp suite says about the compiler.
-
-`kelpc` is a Rust program that takes `.kp` sources through lexing, preprocessing,
-parsing, type checking, move/borrow checking and code generation, then hands the
-result to a backend. The compiler is a single pipeline in a single crate, and the
-standard library ships **inside the binary** as Kelp sources rather than as files
-next to it.
-
-```sh
-cargo build --release -p kelpc
-./target/release/kelpc run examples/hello.kp
-```
-
-## Stages
-
-| Stage | File | Job |
-| --- | --- | --- |
-| CLI | `main.rs` | `build`, `run`, `check`, `fmt`, `lint`, `doc`, `cache`, `version`; resolves the optimization level and the backend |
-| Lexing | `lexer.rs` | source to span-carrying tokens; newline-sensitive; UTF-8 in literals |
-| Preprocessing | `preprocess.rs` | `%*alias*%` text substitution, before the parser |
-| Parsing | `parser.rs` | recursive descent plus a Pratt expression parser; `if let` and `for` are desugared here |
-| Module loading | `resolve.rs` | `impl` imports, module ids, aliases, capability gating |
-| Type checking | `infer.rs` | types, generics, stdlib overload resolution; fills in implicit borrows |
-| Typed IR | `tir.rs` | every node carries its resolved type and span |
-| Move/borrow checking | `borrowck.rs` | moves, borrows, and the drop plan the code generators read |
-| Code generation | `codegen_c.rs`, `codegen_llvm.rs` | typed IR to C source text, or to LLVM IR covering the whole language (MK7; one guard remains for an owned temporary at a place the lowering did not stage) |
-| Backend | `backend.rs` | the one backend, `llvm`, and the project's internal oracle switch that reaches the C backend |
-| Finishing | `driver.rs` | writes the artifact and invokes the C compiler |
-| Diagnostics | `diag.rs` | a span is one file's byte range; this maps a module id back to `file:line:col` |
-| Stdlib sources | `stdlib.rs` | the `kelpc/std/*.kp` text, embedded with `include_str!`, and the capability domains |
-| C bodies for `extern fun` | `externs.rs` | the operations that cannot be written in Kelp at all: written into every generated C program, and compiled per program from `<out>.externs.c` into the object the `llvm` path links |
-| C runtime text | `kelpc/runtime/kelp_rt.c` | `kelpc`'s own C runtime: the `Bytes`/`String` routines, the panic path and the allocation helpers. `codegen_c.rs` emits it into every C-oracle program, and `build.rs` compiles it into the object the `llvm` path links |
-| Formatting | `fmt.rs` | `kelpc fmt`, token-level |
-| Documentation | `doc.rs` | `kelpc doc`: reads the `///` and `//!` comments from the token trivia |
-| Linting | `lint.rs` | `kelpc lint`: warnings for the style rules a formatter cannot enforce |
-
-The design authority for this chapter is
-[`plan/architecture.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/architecture.md),
-with the MK7 backend record, and the retired hand-written track it replaced,
-archived in
-[`plan/done.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/done.md).
+- [Pipeline](/compiler/architecture): the stages in order, and what each one hands to the next.
+- [Front end](/compiler/frontend): lexing, text aliases, parsing and the desugarings the parser does.
+- [Modules and capabilities](/compiler/resolve): module loading, `impl` imports, visibility and the capability gate.
+- [Types](/compiler/types): type checking, expected types, generics and traits.
+- [Ownership and drops](/compiler/ownership): `defer`, moves, borrows and the drop plan.
+- [Backends](/compiler/backends): the LLVM backend, the only code generator.
+- [Driver](/compiler/driver): the commands, the build steps, linking and diagnostics.
+- [Runtime](/compiler/runtime): the standard library sources, `extern fun` bodies and the Rust runtime crate `kelp-rt`.
+- [Incremental builds](/compiler/incremental): per-module units, the object cache and parallel workers.
+- [Tests](/compiler/tests): the fixture suite, the backend gates and the fuzzers.
+- [Benchmarks](/compiler/benchmarks): what the speed and write benchmarks measure.
 
 ## See also
 
 - [Install and build](/getting-started/install): building `kelpc` and running a file
 - [Language](/language): the surface syntax these stages implement
-- [Capabilities](/language/capabilities): the model the checker enforces
+- [Capabilities](/language/capabilities): the model the resolver and the checker enforce
 - [Changelog](/changelog): what each release changed in the language and in these stages
 
 [Back to the home page](/)

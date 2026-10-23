@@ -15,6 +15,7 @@ language.md
 stdlib.md
 libraries.md
 tooling.md
+tooling/coral-signing.md
 compiler.md
 examples.md
 family.md

@@ -156,7 +156,7 @@ works on one file that is not part of a project yet:
 $ coral docs get std/str.kp
 /// How many characters a `&str` has: bytes that do not continue a UTF-8
 /// sequence.
-fun char_count(s: &str).return: usize
+fun char_count(s: &str) => usize
 ```
 
 The point is shape rather than content: a reader (or an agent) facing a
@@ -293,6 +293,39 @@ Sections are not closed: an unrecognised section such as `[bogus]` is accepted a
 ignored, which is how Coral stays compatible with a manifest carrying sections it
 does not know yet.
 
+### `[package]`: project metadata
+
+`[package]` also holds the keys that describe the project. Coral reads and checks
+them. `kelpc` skips the whole section, so they never change a build.
+
+| Key | Shape | Notes |
+| --- | --- | --- |
+| `author` | a string, or an array of strings | each author is `"Name <email>"`, for example `author = ["Ada Lovelace <ada@example.org>", "Grace Hopper <grace@example.org>"]`; a single string is one author |
+| `description` | one line | a summary of the project; it must not be empty |
+| `license` | a string | the license name, for example `"MIT"`; it must not be empty |
+| `repository` | one word, no spaces | the source URL |
+| `homepage` | one word, no spaces | the project's web page |
+
+An author needs a name, then a space, then an address in angle brackets that
+holds an `@` with a character on each side. None of these values may contain a
+quote or a backslash. A refusal names the key and the fix, for example:
+
+```text
+coral.toml author 'Ada' must be written "Name <email>", for example "Ada Lovelace <ada@example.org>"
+```
+
+`coral init` writes these keys when it is given `--author "Name <email>"`
+(repeatable) and `--description "..."`. `coral info` prints the project's name and
+version, then each metadata key that is set:
+
+```text
+demo 0.1.0
+author: Ada Lovelace <ada@example.org>
+description: A demo project
+```
+
+Package archives made by `coral build --package` do not carry these keys yet.
+
 ### Sections
 
 | Section | Shape | Notes |
@@ -302,7 +335,7 @@ does not know yet.
 | `[unsafe]` | `modules = ["<module id>", ...]` | read by `kelpc`, not Coral: the modules allowed to contain `unsafe`, an `unsafe fun`, a `static mut` access or an `asm`; see [below](#unsafe-modules-that-may-leave-the-checked-language) |
 | `[target]` | `mode`, `triple`, `entry`, `linker_script`, `panic`, `alloc`, `dealloc`, `realloc`, `cpus` | read by `kelpc`, not Coral: a bare-metal build; see [below](#target-a-freestanding-build) |
 | `[tasks]` | `name = "path/to/file.kp"` | each task compiles as its own unit, and `src/tasks/` is where `init` puts them |
-| `[alias]` | `name = "module/path"` | read by `kelpc`, not Coral: text aliases for `%*name*%`; see [Aliases in coral.toml](/getting-started/projects#aliases-in-coraltoml) |
+| `[alias]` | `_name = "module/path"` | read by `kelpc`, not Coral: text aliases for `_name`; see [Aliases in coral.toml](/getting-started/projects#aliases-in-coraltoml) |
 | `[dependencies]` | `name = "owner/repo[/folder]"` | see [Dependencies](#dependencies) |
 | `[toolchain]` | `kelp = "v26.10.4"` | written by `coral toolchain kelp pin`, a line edit that leaves comments and section order alone |
 
@@ -425,7 +458,7 @@ symbols = ["getpid"]
 
 ```kelp
 // src/sys.kp
-pub extern fun getpid().return: i32
+pub extern fun getpid() => i32
 ```
 
 ```kelp project
@@ -444,25 +477,25 @@ fun main() {
 - **`domain`** must be one of the seven existing names; an unknown one is the
   same error an unknown domain gives on a `caps(...)` clause. `ui` is the
   display domain, and it accepts only the wildcard.
-- **`library`** is linked (`-l<library>`) on both backends' link lines, the same
+- **`library`** is linked (`-l<library>`) on the link line, the same
   "an unused library is free to link" reasoning `-lm`/`-lssl` already use.
 - **`symbols`** is the allowlist: an `extern fun` in that module typechecks only
   if its bare name is in the list. An entry may rename it,
   `"kelp_name=c_symbol"`, so the Kelp function and the C symbol can differ and
   two libraries that share a symbol name are both bindable.
-- **`header`** names one C header, emitted as `#include <header>` after the
-  runtime preamble (deduplicated and sorted across sections). The generated C
-  does not invent a prototype: the header is what gives the symbol its real
-  signature.
-- **`include_dirs`** and **`library_dirs`** add `-I`/`-L`, resolved against the
-  directory holding `coral.toml`. **`pkg_config`** names a package whose
-  `pkg-config --cflags --libs` output reaches the compile and the link line of
-  both backends; a package `pkg-config` cannot resolve fails the build.
+- **`header`** is checked for its form (a quoted name with no quote, angle bracket,
+  newline or `..`), and then nothing reads it: kelpc compiles no C, so no header is
+  included.
+- **`include_dirs`** is checked and then not used. **`library_dirs`** adds `-L`,
+  resolved against the directory holding `coral.toml`. **`pkg_config`** names a
+  package whose `pkg-config --cflags --libs` output reaches the link line; a package
+  `pkg-config` cannot resolve fails the build.
 - **A module gets at most one `[extern.*]` entry**, and it must appear before
   any other section that isn't `[caps]` (the same manifest-ordering rule
   `[caps]` follows).
 - **What's not here yet**: `extern "C"` block syntax, import/export linkage
-  attributes, and a `repr(C)` struct crossing by value. A typed plain
+  attributes, and by-value struct, `Bytes`, `String` or `List` arguments and results,
+  which are refused by name for now. A typed plain
   `fun(...)` parameter or return is a C function pointer for a callback the
   native side borrows for one call. `extern type` handles (with parents,
   `null()` and `cast()`), `...` variadics and `move closure(...)` callbacks all
@@ -728,8 +761,8 @@ than a path git is asked to check out.
 
 - **A library has no version, on purpose.** There is no version constraint, no
   registry index, and no lockfile that pins a version. A dependency is a git
-  remote, and what makes a build reproducible is that `src/deps/<name>/` **is** the
-  tree it built with and stays that way until something refreshes it.
+  remote. `coral sync` records each dependency's commit and caps in `coral.lock`,
+  and `src/deps/<name>/` **is** the tree the build used until something refreshes it.
 - **Only `coral sync` moves a dependency forward.** `coral build` fetches a
   dependency that is missing and leaves one that is present alone, which is why a
   warm tree builds offline and identically.

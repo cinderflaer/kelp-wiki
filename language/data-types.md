@@ -4,7 +4,7 @@ description: "datac is a record where every field exists in every value. enum is
 isPublished: true
 tags: "language"
 ---
-Source: [`syntax.md` §9](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §9](/design/syntax).
 
 Kelp has two ways to declare a type: a **record** (`datac`), where every field
 exists in every value, and a **tagged union** (`enum`), where exactly one variant
@@ -93,13 +93,13 @@ enum Shape {
 `when` with a scrutinee is the only pattern match, and it must be exhaustive:
 
 ```kelp
-fun area(s: &Shape).return: f64 = when s {
+fun area(s: &Shape) => f64 = when s {
     Circle(r) -> 3.14159 * r * r
     Rect(w, h) -> w * h
     Empty -> 0.0
 }
 
-fun label(s: &Shape).return: &str = when s {
+fun label(s: &Shape) => &str = when s {
     Circle(_) -> "circle"
     Rect(_, _) -> "rect"
     Empty -> "empty"
@@ -114,7 +114,7 @@ fun label(s: &Shape).return: &str = when s {
   moved out. A **temporary** is bound to a hidden local first, so the arm has a
   place to read the payload out of, and a non-`Copy` payload borrow has something
   to point at for the length of the arm. A chain over a temporary stages its
-  **root**, so `when mk().t { ... }` binds `mk()` and frees the whole value once.
+  **root**, so `when mk().t { ... }` binds `mk()` and drops the whole value once.
 - A payload binds as a **copy** when it is `Copy`, **by value** when it is owned
   and the scrutinee is an owned place (a `val`/`var` binding or a `move T`
   parameter), and as a **shared borrow** otherwise: `r` above is an `f64`, while a
@@ -165,7 +165,7 @@ enum Shape {
     Empty
 }
 
-fun Shape.label().return: str = "shape"
+fun Shape.label() => str = "shape"
 
 fun main() {
     val s = Shape.Empty

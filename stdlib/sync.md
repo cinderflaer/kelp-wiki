@@ -1,6 +1,6 @@
 ---
 title: "`std/sync`"
-description: "`Mutex<T>`, `RwLock<T>` and `Condvar` through scoped blocks, plus bounded and unbounded channels (`sync.bounded`, `Sender`, `Receiver`, `for v in rx`) and `Mutex.share`/`swap`. Hosted only. The thread pool is `std/pool`."
+description: "`Mutex<T>`, `RwLock<T>` and `Condvar` through scoped blocks, bounded, unbounded and zero-capacity channels, the `select` form over channel cases, and `Mutex.share`/`swap`. Hosted only. The thread pool is `std/pool`."
 isPublished: true
 tags: "stdlib, concurrency"
 ---
@@ -10,6 +10,18 @@ releases the lock around the sleep. On top of them sit channels
 (`sync.bounded`, `sync.unbounded`, `Sender<T>`, `Receiver<T>`) and the two
 small operations they are built from, `share` and `swap`. A thread pool is
 [`std/pool`](/stdlib/pool). Hosted only.
+
+> **Status on current `main`.** The collector roots the values a thread or a lock holds,
+> so a `Mutex` or `RwLock` may hold a `List` or a `String`. Channels build on `main`. A
+> channel used inside one thread builds and runs, for example `var (tx, rx) =
+> sync.bounded<i64>(2)` with two sends and a `try_recv` in `main`. A channel end
+> (`SendEnd`, `RecvEnd`, `Sender` and `Receiver`) is a resource, so it may not be stored in
+> shared-pool memory: `'std.sync.Sender<i64>' cannot be a List element in a hosted build:
+> 'std.sync.Sender<i64>' is a resource, ...`, and a `Mutex` or `RwLock` value refuses it
+> the same way. A channel end may cross to a worker as a thread's argument or result, and a
+> `datac` that holds one may too. A `fun` literal written as the `thread.spawn` entry may
+> capture one. A `Mutex` or `RwLock` holding a `List` or a `String` builds. The zero-capacity
+> channel (`sync.rendezvous`) and the `select` form are built; see [Select](#select).
 
 ```kelp
 impl "std/sync"
@@ -25,15 +37,15 @@ program declares the module's surface it is using. It is ungated, like
 ## Surface
 
 ```
-fun Mutex.new(value: move T).return: Mutex<T>
-fun Mutex<T>.lock(block: scoped fun(mut T).return: R).return: R
-fun Mutex<T>.into_inner().return: T
+fun Mutex.new(value: move T) => Mutex<T>
+fun Mutex<T>.lock(block: scoped fun(mut T) => R) => R
+fun Mutex<T>.into_inner() => T
 ```
 
 | Call | Returns | Notes |
 | --- | --- | --- |
 | `Mutex.new(value: move T)` | `Mutex<T>` | takes the guarded value by move |
-| `Mutex<T>.lock(block: scoped fun(mut T).return: R)` | `R` | runs the block while the lock is held; the block's tail is the call's value |
+| `Mutex<T>.lock(block: scoped fun(mut T) => R)` | `R` | runs the block while the lock is held; the block's tail is the call's value |
 | `Mutex<T>.into_inner()` | `T` | consumes the mutex and hands the value out |
 
 `Mutex<T>` also has `wait_while` and `wait_while_timeout`, which pair it with a
@@ -71,14 +83,14 @@ The second call's `return` ends the block, the lock is released, and the later
 
 ## The scoped lock block
 
-- `m.lock { v -> ... }` passes `v: mut T` to a `scoped fun(mut T).return: R`, so the
+- `m.lock { v -> ... }` passes `v: mut T` to a `scoped fun(mut T) => R`, so the
   mutable borrow is the existing non-escaping one: it cannot be stored in a
   `datac`, returned, put in a container, or captured by an ordinary closure,
   because those are all ordinary type mismatches. The block's tail is the call's
   value.
 - The block's return type is inferred from the block. `R` is not known before
   the block is checked (`m.lock { v -> *v }` writes no type), so the literal is
-  checked with its parameter types from the expected `scoped fun(mut T).return: R`
+  checked with its parameter types from the expected `scoped fun(mut T) => R`
   and its return from the body's tail. When the call site names a type
   (`return m.lock { v -> ... }` in a function returning `Result<_, _>`), that
   type is used instead, which is what lets a `?` inside the block propagate the
@@ -117,7 +129,7 @@ impl "std/result"
 
 pd val counter: Mutex<i64> = Mutex.new(0)
 
-fun bump(c: &Mutex<i64>).return: i64 {
+fun bump(c: &Mutex<i64>) => i64 {
     c.lock { v -> *v = *v + 1 }
     0
 }
@@ -136,12 +148,12 @@ A reader/writer lock in the same shape as `Mutex<T>`: a compiler builtin, not
 is reached only through a scoped block.
 
 ```
-fun RwLock.new(value: move T).return: RwLock<T>
-fun RwLock<T>.read(block: scoped fun(&T).return: R).return: R
-fun RwLock<T>.write(block: scoped fun(mut T).return: R).return: R
-fun RwLock<T>.try_read(block: scoped fun(&T).return: R).return: Option<R>
-fun RwLock<T>.try_write(block: scoped fun(mut T).return: R).return: Option<R>
-fun RwLock<T>.into_inner().return: T
+fun RwLock.new(value: move T) => RwLock<T>
+fun RwLock<T>.read(block: scoped fun(&T) => R) => R
+fun RwLock<T>.write(block: scoped fun(mut T) => R) => R
+fun RwLock<T>.try_read(block: scoped fun(&T) => R) => Option<R>
+fun RwLock<T>.try_write(block: scoped fun(mut T) => R) => Option<R>
+fun RwLock<T>.into_inner() => T
 ```
 
 | Call | Returns | Notes |
@@ -152,8 +164,7 @@ fun RwLock<T>.into_inner().return: T
 | `try_read(block)` / `try_write(block)` | `Option<R>` | the block runs only if the lock was free; `None` means it was busy and the block did not run |
 | `into_inner()` | `T` | consumes the lock |
 
-This program shares one lock between the main thread and a worker. It prints, on
-the LLVM backend and under `KELPC_ORACLE=c` alike:
+This program shares one lock between the main thread and a worker. It prints:
 
 ```kelp
 impl "std/thread"
@@ -162,7 +173,7 @@ impl "std/option"
 
 pd val config: RwLock<i64> = RwLock.new(10)
 
-fun bump(c: &RwLock<i64>).return: i64 {
+fun bump(c: &RwLock<i64>) => i64 {
     c.write { v -> *v += 5 }
     c.read { v -> *v }
 }
@@ -227,7 +238,7 @@ impl "std/result"
 
 pd val rw: RwLock<i64> = RwLock.new(0)
 
-fun boom(r: &RwLock<i64>).return: i64 {
+fun boom(r: &RwLock<i64>) => i64 {
     r.write { v ->
         *v = 99
         panic("writer exploded")
@@ -245,7 +256,7 @@ fun main() {
 ```
 
 Standard output carries the worker's panic text, standard error carries the
-second panic, and the exit status is 1, on both backends:
+second panic, and the exit status is 1:
 
 ```
 writer exploded
@@ -262,11 +273,11 @@ sleep, which a scoped guard cannot express, so the wait is a method **on the
 mutex** that takes the `Condvar`:
 
 ```
-fun Condvar.new().return: Condvar
+fun Condvar.new() => Condvar
 fun Condvar.notify_one()
 fun Condvar.notify_all()
-fun Mutex<T>.wait_while(cv: &Condvar, pred: fun(&T).return: bool, block: scoped fun(mut T).return: R).return: R
-fun Mutex<T>.wait_while_timeout(cv: &Condvar, pred: fun(&T).return: bool, millis: i64, block: scoped fun(mut T).return: R).return: Option<R>
+fun Mutex<T>.wait_while(cv: &Condvar, pred: fun(&T) => bool, block: scoped fun(mut T) => R) => R
+fun Mutex<T>.wait_while_timeout(cv: &Condvar, pred: fun(&T) => bool, millis: i64, block: scoped fun(mut T) => R) => Option<R>
 ```
 
 `m.wait_while(&cv, pred) { v -> ... }` sleeps while `pred(&v)` is true, re-tests
@@ -286,9 +297,9 @@ pd val shared: Shared = Shared(
 datac Mailbox(var ready: bool, var value: i64)
 datac Shared(val box: Mutex<Mailbox>, val cv: Condvar)
 
-fun not_ready(m: &Mailbox).return: bool = !m.ready
+fun not_ready(m: &Mailbox) => bool = !m.ready
 
-fun consumer(s: &Shared).return: i64 {
+fun consumer(s: &Shared) => i64 {
     s.box.wait_while(&s.cv, not_ready) { m -> m.value }
 }
 
@@ -306,7 +317,7 @@ fun main() {
 }
 ```
 
-It prints `42` on both backends:
+It prints `42`:
 
 ```
 42
@@ -324,7 +335,7 @@ block did not run.
 ```kelp
 impl "std/option"
 
-fun not_ready(v: &i64).return: bool = v == 0
+fun not_ready(v: &i64) => bool = v == 0
 
 fun main() {
     val m: Mutex<i64> = Mutex.new(0)
@@ -350,13 +361,13 @@ value changes the predicate is already false and the second returns `Some(7)`.
 Two small builtin operations carry everything a channel or a pool needs.
 
 ```
-fun Mutex<T>.share().return: Mutex<T>
-fun Condvar.share().return: Condvar
-fun Mutex<T>.swap(value: move T).return: T
+fun Mutex<T>.share() => Mutex<T>
+fun Condvar.share() => Condvar
+fun Mutex<T>.swap(value: move T) => T
 ```
 
 - `share()` returns **another owned handle to the same runtime record**. The
-  record has a reference count, and the last handle's drop frees it. It is how
+  record has a reference count, and the last handle's drop releases it. It is how
   two threads each own a mutex without a `pd`. `into_inner` on a mutex whose
   record is still shared panics, because the value is still reachable through
   the other handle.
@@ -383,8 +394,7 @@ fun main() {
 ```
 
 `bump` takes a handle by `move` and drops it on return; the other two handles
-still see the value. It prints, on the LLVM backend and under `KELPC_ORACLE=c`
-alike:
+still see the value. It prints:
 
 ```
 6
@@ -399,13 +409,13 @@ Both ends are ordinary Kelp values written in `std/sync` over `Mutex`, `Condvar`
 `share` and `swap`; there is no new runtime record.
 
 ```
-fun sync.bounded<T>(cap: usize).return: (Sender<T>, Receiver<T>)
-fun sync.unbounded<T>().return: (Sender<T>, Receiver<T>)
-fun Sender<T>.send(value: move T).return: option.Option<T>
-fun Sender<T>.clone().return: Sender<T>
-fun Receiver<T>.recv().return: result.Result<T, RecvErr>
-fun Receiver<T>.try_recv().return: option.Option<T>
-fun Receiver<T>.recv_timeout(millis: i64).return: result.Result<T, RecvTimeout>
+fun sync.bounded<T>(cap: usize) => (Sender<T>, Receiver<T>)
+fun sync.unbounded<T>() => (Sender<T>, Receiver<T>)
+fun Sender<T>.send(value: move T) => option.Option<T>
+fun Sender<T>.clone() => Sender<T>
+fun Receiver<T>.recv() => result.Result<T, RecvErr>
+fun Receiver<T>.try_recv() => option.Option<T>
+fun Receiver<T>.recv_timeout(millis: i64) => result.Result<T, RecvTimeout>
 for v in rx { ... }
 ```
 
@@ -422,9 +432,10 @@ for v in rx { ... }
 
 The pair is a tuple, so it is taken apart with a destructuring binding. Write
 `var (tx, rx) = ...` when a `for` over `rx` needs a mutable place, and `val`
-otherwise. `thread.spawn` takes one argument, so a worker that needs a sender
-gets it inside a `datac`. Two producers and one consumer, the producers
-`send`ing three values each through a channel of capacity 2:
+otherwise. `thread.spawn` takes one argument, and a `datac` that holds a sender may be that
+argument. The program below hands a sender to each of two workers. Two producers and
+one consumer, the producers `send`ing three values each through a channel of capacity 2.
+It has the same shape as `chan_string_producers.kp`, which the test suite runs:
 
 ```kelp
 impl "std/thread"
@@ -466,17 +477,7 @@ fun main() {
 }
 ```
 
-The loop ends by itself: `main`'s own `tx` was moved into the second job, so
-the channel closes when both workers have returned and dropped their senders.
-Both backends print:
-
-```
-6
-96
-```
-
-The six values sum to 10 + 11 + 12 + 20 + 21 + 22 = 96; their order depends on
-the threads, so the program prints only the count and the sum.
+The program prints `6`, the number of values received, and then `96`, their sum.
 
 ### `try_recv` and `recv_timeout`
 
@@ -485,7 +486,7 @@ impl "std/result"
 impl "std/option"
 impl "std/sync"
 
-fun show(o: move option.Option<i64>).return: i64 = when o {
+fun show(o: move option.Option<i64>) => i64 = when o {
     Some(v) -> v
     None -> -1
 }
@@ -593,20 +594,20 @@ back
   error: in 'std.sync.bounded<Mutex<i64>>': in 'std.sync.Sender<Mutex<i64>>': 'Mutex<i64>' cannot be a 'List' element: a mutex owns a runtime record and is reached by borrowing it, while a container's own routines move and drop an element like a plain location. Keep the mutex in a local or a field ('val m = Mutex.new(0)') and lock it there
   ```
 
-- **No zero-capacity (rendezvous) channel.** `sync.bounded<i64>(0)` panics with
-  `sync.bounded: the capacity must be at least 1`.
+- **`sync.bounded(0)` panics** with `sync.bounded: the capacity must be at least 1`.
+  The zero-capacity channel is `sync.rendezvous<T>()`: each send waits until a
+  receive takes its value.
 - **`send` returns `Option<T>`, not `Result<(), E>`**, because no expression
   produces `unit` to put in an `Ok`. `None` is success. The compiler does **not**
   force you to look at the result (v1 has no `must_use`), so `tx.send(1)` on its
   own line compiles and silently drops the value that comes back when the
   receiver is gone. The examples bind it (`val back = tx.send(v)`) to say so.
-- **No `select`** over several channels, no `try_send`, and no receive with a
-  deadline on more than one channel. A receiver has one owner: it is not
-  cloneable, so there is no multi-consumer queue (use a [pool](/stdlib/pool)).
+- **A receiver has one owner.** It is not cloneable, so there is no
+  multi-consumer queue (use a [pool](/stdlib/pool)).
 - **`for v in rx` needs a mutable place**, so bind the pair with `var`. A trait
   impl cannot name a generic instantiation, so `Receiver<T>` is not an
   `Iterator` implementor: the compiler's `for` accepts a generic `datac` whose
-  template declares `fun mut Receiver<T>.next().return: option.Option<T>`, which is
+  template declares `fun mut Receiver<T>.next() => option.Option<T>`, which is
   an ordinary `next()` call underneath.
 - **Hosted only.** `std/sync` is a hosted module, so a freestanding build names
   the module:
@@ -615,10 +616,103 @@ back
   error: the module 'std/sync' is unavailable in a freestanding build: it needs a hosted runtime (libc or the 'kelp_rt' helpers); the std modules a freestanding project may implement are std/arena, std/atomic, std/convert, std/frame, std/irq, std/iter, std/list, std/math, std/ops, std/option, std/regex, std/result, std/str
   ```
 
-  The same program passes on the LLVM backend and under `KELPC_ORACLE=c`; the
+  The same program passes on the LLVM backend; the
   tests are `chan_bounded_mpsc` (four producers, one consumer, sum 124500),
   `chan_close`, `chan_recv_timeout`, `chan_zero_capacity`, `chan_non_sendable`
   and `chan_send_a_lock`.
+
+## Select
+
+`select` waits on several channel cases at once and runs the arm of the first
+case that is ready. It is an expression: its value is the value of the arm that
+ran, so every arm gives the same type.
+
+```
+select {
+    recv(rx) as v -> handle(v),
+    send(tx, x) -> sent(),
+    timeout(250) -> give_up(),
+    closed -> stop(),
+}
+```
+
+The arms are:
+
+| Arm | Ready when | Inside the arm |
+| --- | --- | --- |
+| `recv(rx) as v -> e` | `rx` holds a value, or is closed and empty | `v` is the value taken from `rx` |
+| `send(tx, x) -> e` | `tx` has room, or it is a zero-capacity channel with a receiver blocked on it | `x` has been sent |
+| `timeout(ms) -> e` | the deadline (`ms` milliseconds from the start) passes with nothing else ready | |
+| `closed -> e` | the chosen receive case is closed and empty | |
+| `default -> e` | no other arm is ready at the first look; the select does not wait | |
+
+Each arm is separated from the next by a comma or a newline. The channel of a
+case is a variable or a field (`rx`, `self.rx`), because every poll reads it
+again. `ms` is an `i64`, and a negative `ms` ends the wait at once.
+
+Rules:
+
+- A select with a receive arm needs a `closed` arm, and a `closed` arm needs a
+  receive arm. At most one `timeout`, one `closed` and one `default` arm are
+  allowed. A `default` arm cannot be combined with a `timeout` arm, because the
+  select would then both wait and not wait.
+- When several arms are ready, the first one in source order wins.
+- The select does not poll in a loop. When nothing is ready it blocks until a
+  channel it watches changes, or until its deadline passes, and then looks
+  again.
+- A value is moved into the select when it starts, so a value that is sent in
+  two cases is refused by name. A value whose case was not chosen is dropped
+  when the select ends.
+- A send to a channel whose receiver is gone is ready at once, and the value is
+  dropped, as `try_send` drops it. A caller that needs the value back uses
+  `send`, which returns it.
+- A send arm on a zero-capacity channel is ready only while a receiver is
+  blocked on that channel. Once the send arm is chosen, the select waits until
+  that receiver takes the value.
+- A receive case counts as a waiting receiver only while its select is blocked,
+  so a select never hands a value to one of its own cases.
+- A worker that panics inside a select releases the select and its cases, and
+  the senders the worker owns close, so a receiver on those channels sees
+  `Closed` (the panic path, as for any local).
+
+```
+impl "std/sync"
+
+fun main() {
+    val (tx, rx) = sync.bounded<i64>(1)
+    val sent = select {
+        send(tx, 7) -> "sent",
+        recv(rx) as v -> "received",
+        closed -> "closed",
+    }
+    print(sent)
+}
+```
+
+This prints `sent`: the channel has room, and nothing is queued to receive yet.
+
+### Limits of select
+
+- **A rendezvous send can wait after it is chosen.** The chosen send arm waits
+  for its receiver to take the value. If that receiver's own select picks
+  another arm first, the sender waits for the next receive, and its other arms
+  do not run in the meantime.
+- **The channel of a case is a place.** `recv(make_rx())` is refused, because the
+  case would call it again at every poll. Bind the channel to a variable first.
+
+### Refusals
+
+The parser names the form that is missing:
+
+```
+error: a 'select' with a receive case needs a 'closed -> e' arm: it runs when the chosen receive case is closed and empty
+error: a 'select' with a default arm does not wait, so it cannot also have a timeout arm: keep one of them
+error: the value 'x' is sent in two cases of this select: a value can be sent in one case only, so send a copy or a second value in the other case
+error: a select case names its channel as a variable or a field (`rx`, `self.rx`), because the case reads it again at every poll
+```
+
+A `select` needs `impl "std/sync"` in the module, as the channel functions do.
+A freestanding build refuses the module by name, so a `select` is refused there too.
 
 ## The thread pool
 
@@ -657,8 +751,7 @@ by design, and neither backend can lower a mutex without the hosted runtime.
 
 - A try-lock or timed lock on `Mutex<T>` itself (`RwLock<T>` has `try_read` and
   `try_write`), and an ordering slot.
-- A `select` over several channels, a rendezvous (capacity 0) channel and a
-  multi-consumer receiver (see [Limits of channels](#limits-of-channels)).
+- A multi-consumer receiver (see [Limits of channels](#limits-of-channels)).
 - A `lock` that returns a guard value: the scoped block is the whole reason the
   borrow cannot escape, and a returned guard would reintroduce the escape.
 - A blocking `Condvar.wait` that hands back a guard; `wait_while` is the shape.

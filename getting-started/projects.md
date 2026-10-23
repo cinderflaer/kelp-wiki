@@ -87,9 +87,9 @@ neither fetched nor importable.
 `--offline` refuses instead of fetching, and `--dry-run` prints the plan.
 `coral build --offline` after a sync is the assertion "this build did no I/O".
 
-There is **no version, no lockfile and no registry index**: a dependency is a git
-remote, and what makes a build reproducible is that `src/deps/<name>/` *is* the
-tree it built with until something refreshes it.
+There is **no dependency version and no registry index**: a dependency is a git
+remote. `coral sync` refreshes each dependency to its remote tip and records the
+commit it checked out in `coral.lock`.
 
 ## Pinning the compiler
 
@@ -108,23 +108,23 @@ switch.
 
 Alias substitution is textual and runs before parsing, so it can rewrite an import
 path.
-Declare the alias in the `[alias]` section of `coral.toml`, one `name = "path"` per line:
+Declare the alias in the `[alias]` section of `coral.toml`, one `_name = "path"` per line:
 
 ```toml
 [alias]
-db = "storage/postgres"
+_db = "storage/postgres"
 ```
 
 Use the alias inside a string, because the value is a plain module path:
 
 ```kelp
-impl "%*db*%"
+impl "_db"
 ```
 
 The path must be relative, with no leading `/` and no `..` component.
 The project-root `alias.kpconf` file is no longer read.
 
-An inline `alias %*name*% = <raw text to end of line>` works too.
+An inline `alias _name = <raw text to end of line>` works too.
 There is no scoping and no hygiene.
 
 ## See also

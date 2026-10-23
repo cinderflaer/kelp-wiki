@@ -26,10 +26,10 @@ There is no published version number. **v2** added the keyed patch, `scrolled`,
 **v3** split the library into a core and one module per backend, and added the
 display-free path; the application surface is unchanged apart from the tree's
 type, which is `core.Node<M>` now that it lives in the core. The design is
-[`plan/polyp-v3.md`](https://homelabone.xenoo.dev/gitea/Lilly/kelp/src/branch/main/plan/polyp-v3.md).
+[`design/polyp-v3`](/design/polyp-v3).
 **v4** adds timers and integer animation, UTF-8 text in the soft backend, an
 on-demand accessibility tree, and memoised pure subtrees. Its implementation
-record is [`plan/polyp-v4.md`](https://homelabone.xenoo.dev/gitea/Lilly/kelp/src/branch/main/plan/polyp-v4.md).
+record is [`libraries/polyp.md`](/libraries/polyp).
 
 ## The layering
 
@@ -58,7 +58,7 @@ edit, a string.
 What changed between two renders is a pure function of two trees:
 
 ```kelp
-pub fun diff<M>(old: &Node<M>, new: &Node<M>).return: List<Patch>
+pub fun diff<M>(old: &Node<M>, new: &Node<M>) => List<Patch>
 pub fun diff_into<M>(old: &Node<M>, new: &Node<M>, out: mut List<Patch>)
 
 pub enum Patch {
@@ -85,15 +85,15 @@ pub trait Backend {
     fun mut Self.drop_widget(path: &Path)
     fun mut Self.place_widget(path: &Path, to_index: i32)
     fun mut Self.pump()
-    fun mut Self.poll().return: Event
-    fun Self.path_of(id: i32).return: option.Option<Path>
-    fun Self.focus().return: option.Option<i32>
+    fun mut Self.poll() => Event
+    fun Self.path_of(id: i32) => option.Option<Path>
+    fun Self.focus() => option.Option<i32>
     fun mut Self.set_focus(id: i32)
     fun mut Self.set_entry_text(id: i32, text: &str)
-    fun Self.entry_text(id: i32).return: String
-    fun Self.entry_ids().return: List<i32>
-    fun Self.entries_built().return: i32
-    fun Self.stats().return: Stats
+    fun Self.entry_text(id: i32) => String
+    fun Self.entry_ids() => List<i32>
+    fun Self.entries_built() => i32
+    fun Self.stats() => Stats
 }
 ```
 
@@ -120,7 +120,7 @@ application writes three things and Polyp owns the rest:
 
 - `State`: any type the application likes.
 - `Msg`: an `enum` of the things a user can do.
-- `view`: `fun(State).return: Node<Msg>`, a pure function of the state.
+- `view`: `fun(State) => Node<Msg>`, a pure function of the state.
 - `update`: `fun(mut State, Msg)`, where the application writes one exhaustive
   `when`.
 
@@ -132,8 +132,8 @@ allow:
   application state behind.
 - So no callback captures the state at all. A button's handler is a closure
   whose entire environment is one small integer. It posts that integer to the
-  backend's event queue (the GTK backend's is the fixed-size C queue in
-  `include/polyp_queue.h`; the headless and soft backends queue it in Kelp), and
+  backend's event queue (the GTK backend's is a fixed-size ring written in Kelp,
+  `backends/gtk/queue.kp`, as the headless and soft backends' queues are), and
   the loop, which **does** own the state, reads it back, resolves the id to the
   node it names, takes that node's `Msg` from a fresh `view`, calls `update`,
   re-runs `view` and patches the widgets.
@@ -180,14 +180,14 @@ The consumer then does two things by hand.
 
    The facade holds `ui`, and `main` never names a GTK call.
 
-2. **Paste the `[extern.*]` sections into `coral.toml`.** The native symbols, headers and `pkg-config`
-   package live in the consumer's manifest. The section ids are the `impl` paths the library uses:
-   `deps/polyp/backends/gtk/gtk` (GTK, `pkg_config = "gtk4"`) and `deps/polyp/backends/gtk/queue`
-   (the message ring, `include_dirs = ["src/deps/polyp/backends/gtk/include"]`). The complete block is
+2. **Paste the `[extern.*]` sections into `coral.toml`.** The native symbols and the `pkg-config`
+   package live in the consumer's manifest. The section id is the `impl` path the library uses:
+   `deps/polyp/backends/gtk/gtk` (GTK, `pkg_config = "gtk4"`). The complete block is
    in the Polyp README under "Add Polyp to a project", and is kept there so it has one source.
 
-   `header` is one key per section, which is why the queue is its own module: `polyp_queue.h` is a header
-   of the library and `gtk/gtk.h` is GTK's, and a section names one. See
+   The `extern fun` declarations in the binding carry the signatures. The README block
+   still has a `header` key, which is accepted and not read, because kelpc compiles no
+   C. The message queue is plain Kelp, so it has no section. See
    [Coral: the manifest](/tooling/coral#user-modules-that-bind-a-native-symbol-extern).
 
 ## API
@@ -210,13 +210,13 @@ pub datac Opts(var margin: i32, var expand: bool, var align: i32, var classes: L
 pub datac Child<M>(val key: Key, val node: Node<M>, val opts: Opts)
 
 // The tree type lives in `core.kp` now, so a view is written
-// `fun (S).return: core.Node<M>` and the example imports `deps/polyp/core` too.
+// `fun (S) => core.Node<M>` and the example imports `deps/polyp/core` too.
 pub enum Node<M> {
     Column(val children: List<Child<M>>, val spacing: i32)
     Row(val children: List<Child<M>>, val spacing: i32)
     Text(val text: String, val size: i32, val bold: bool)
     Spacer(val height: i32)
-    Entry(val text: String, val on_change: fun (String).return: M)
+    Entry(val text: String, val on_change: fun (String) => M)
     Button(val label: String, val on_click: M)
     Checkbox(val label: String, val checked: bool, val on_toggle: M)
     Progress(val permille: i32)
@@ -226,13 +226,13 @@ pub enum Node<M> {
 
 // The builder. `column`/`row` take the trailing block; the methods on
 // `Children` are the leaf and nested constructors the block calls.
-pub fun column<M>(block: scoped fun(mut Children<M>)).return: Node<M>
-pub fun row<M>(block: scoped fun(mut Children<M>)).return: Node<M>
+pub fun column<M>(block: scoped fun(mut Children<M>)) => Node<M>
+pub fun row<M>(block: scoped fun(mut Children<M>)) => Node<M>
 fun mut Children<M>.text(t: str)
 fun mut Children<M>.text_styled(t: str, size: i32, bold: bool)
 fun mut Children<M>.spacer(height: i32)
 fun mut Children<M>.button(label: str, on_click: move M)
-fun mut Children<M>.entry(value: str, on_change: fun (String).return: M)
+fun mut Children<M>.entry(value: str, on_change: fun (String) => M)
 fun mut Children<M>.checkbox(label: str, checked: bool, on_toggle: move M)
 fun mut Children<M>.progress(permille: i32)
 fun mut Children<M>.separator()
@@ -255,20 +255,20 @@ fun mut Children<M>.class(name: str)
 // their builder twins are methods (a separate namespace); `column`/`row` are
 // the builder's free functions, and Kelp has no overloading, so the plain pair
 // carries a `plain_` prefix.
-pub fun plain_column<M>(children: move List<Node<M>>).return: Node<M>
-pub fun plain_row<M>(children: move List<Node<M>>).return: Node<M>
-pub fun text<M>(text: move String).return: Node<M>
-pub fun button<M>(label: move String, on_click: move M).return: Node<M>
+pub fun plain_column<M>(children: move List<Node<M>>) => Node<M>
+pub fun plain_row<M>(children: move List<Node<M>>) => Node<M>
+pub fun text<M>(text: move String) => Node<M>
+pub fun button<M>(label: move String, on_click: move M) => Node<M>
 
 pub fun run<S, M>(title: str, width: i32, height: i32, init: move S,
-                  view: fun(S).return: Node<M>, update: fun(mut S, M)).return: S
+                  view: fun(S) => Node<M>, update: fun(mut S, M)) => S
 
 pub datac Stats(val created: i32, val updated: i32, val removed: i32, val live: i32)
-pub fun stats().return: Stats
-pub fun focus_present().return: bool
-pub fun focus_survived().return: bool
-pub fun entries_built().return: i32
-pub fun entry_text(index: i32).return: String
+pub fun stats() => Stats
+pub fun focus_present() => bool
+pub fun focus_survived() => bool
+pub fun entries_built() => i32
+pub fun entry_text(index: i32) => String
 pub fun css(text: str)
 pub const QUIT_ID: i32
 pub fun schedule_post(delay_ms: u32, id: i32)
@@ -283,7 +283,7 @@ pub fun schedule_focus_entry(delay_ms: u32, index: i32)
   how the caller reads what the run left behind).
 - `fun(S)` in `view`'s type is "view borrows the state": a parameter of an owned
   type is a shared borrow, so an application writes
-  `fun view(state: Counter).return: Node<Msg>` with no `&` anywhere. `update` is
+  `fun view(state: Counter) => Node<Msg>` with no `&` anywhere. `update` is
   written `fun update(state: mut Counter, msg: Msg)`.
 - `text` is a label. `text_styled(text, size, bold)` sets Pango markup after
   escaping the text, so a `&` or `<` is shown, not parsed; `size` is points and
@@ -291,7 +291,7 @@ pub fun schedule_focus_entry(delay_ms: u32, index: i32)
 - `entry(value, on_change)` is a text field. `value` seeds the text the first
   time the widget is built; a patch rewrites it only when the model's text
   differs **and** the entry is not where the focus is, so a user's cursor and
-  selection are not fought. `on_change` is a plain `fun(String).return: M` (called
+  selection are not fought. `on_change` is a plain `fun(String) => M` (called
   with a borrowed `String`) that turns the live text into the application's
   `Msg`.
 - `checkbox(label, checked, on_toggle)` posts `on_toggle` on `toggled`; the
@@ -369,9 +369,9 @@ enum Msg {
     Changed(val text: String)
 }
 
-fun changed(text: String).return: Msg = Msg.Changed(text = String.from_str(text.as_str()))
+fun changed(text: String) => Msg = Msg.Changed(text = String.from_str(text.as_str()))
 
-fun view(s: Counter).return: core.Node<Msg> {
+fun view(s: Counter) => core.Node<Msg> {
     return polyp.column { k ->
         k.text_styled("a counter", 0, true)
         val shown_count = fmt.int(s.count.to_i64())
@@ -402,7 +402,7 @@ fun update(state: mut Counter, msg: Msg) {
     }
 }
 
-fun smoke_enabled().return: bool {
+fun smoke_enabled() => bool {
     val value = env.get("POLYP_SMOKE")
     return str.eq(value.as_str(), "1")
 }
@@ -450,7 +450,7 @@ one `keyed` child whose key is the item's own id, never its index, so a row is
 the same row after a move or a removal above it. Its `view` is:
 
 ```kelp
-fun view(s: Model).return: core.Node<Msg> {
+fun view(s: Model) => core.Node<Msg> {
     return polyp.column { k ->
         k.spacing(8)
         k.margin(12)
@@ -512,6 +512,11 @@ class on each row follows `done`, and the app installs
 
 ## Headless testing with Xvfb
 
+**Status on current `main`.** The GTK backend compiles and links on `main`. Its
+runtime has not been verified on the build host, which has no display, so the smoke
+runs below have not been run on `main` for this page. The smoke scripts are the
+procedure for a host with a display.
+
 Each example is proved by its `smoke.sh`, which re-enters `dev-gtk.nix` (the
 shell beside the compiler repository; override with `POLYP_DEV_GTK`), compiles
 the example with the **default** (`llvm`) backend, and runs the binary under
@@ -543,9 +548,6 @@ not guesses:
   cleared its draft;
 - a final `end` marker, so the empty draft line is not lost to a shell that
   strips trailing newlines.
-
-**Both** smoke runs build the todo again with `KELPC_ORACLE=c` and check the same
-output, so the C backend and the default one behave identically.
 
 ```sh
 examples/polyp-counter/smoke.sh
@@ -681,6 +683,11 @@ v5 is a layout and packaging release. The library's behaviour is the v4 behaviou
   face, no images, no GPU, no stylesheet parser or screen-reader bridge; the full list
   is on
   [Polyp on a framebuffer](/libraries/polyp-soft#what-the-display-free-path-does-not-do).
+- **GTK widgets are found by position.** The GTK backend's records hold no GTK
+  handles: a `gtk.Widget` is a resource, and a `List` of resources is refused. Each
+  widget is found by its position among its parent's children, which GTK keeps in
+  tree order, so a lookup costs one step per sibling at each level. A child appended
+  to a container lands last. A scalar handle table would need a compiler decision.
 - **A display is required to *draw* with GTK.** The GTK smoke tests run a real
   window under Xvfb, and the focus tests read the toplevel's focus widget rather
   than `gtk_widget_has_focus`, which needs a window manager to hand over global
@@ -703,5 +710,5 @@ v5 is a layout and packaging release. The library's behaviour is the v4 behaviou
 - [User FFI](/language/externs)
 - [Functions](/language/functions#trailing-blocks-and-scoped-parameters)
 - [Capabilities](/language/capabilities)
-- [`plan/polyp-v3.md`](https://homelabone.xenoo.dev/gitea/Lilly/kelp/src/branch/main/plan/polyp-v3.md):
+- [`design/polyp-v3`](/design/polyp-v3):
   the design record

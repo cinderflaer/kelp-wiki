@@ -108,7 +108,7 @@ fun main() {
 ```
 
 Why the two `val`s in the middle instead of `fmt.int(c).as_str()`: `.as_str()` on a
-temporary is refused, because the temporary would be freed before the view could
+temporary is refused, because the temporary would be dropped before the view could
 be used. Bind it to a local first. That one rule explains a large share of the
 text errors you will meet, and [Pitfalls](/language/pitfalls) lists the rest.
 

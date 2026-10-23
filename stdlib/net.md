@@ -175,7 +175,7 @@ every attempt dials something nothing owns:
 impl "std/net"
 impl "std/result"
 
-fun dead_port().return: u16 {
+fun dead_port() => u16 {
     val l = net.listen(0)
     val port = l.port()
     l.close()
@@ -298,7 +298,7 @@ fun main() {
   a bounded wait.
 - `std/net` itself is plain TCP; TLS lives one layer up in
   [`std/tls`](/stdlib/tls), which `http.parse_url` uses for `https`
-  (MK5-S4b-M1) and `ws.parse_url` uses for `wss` (`plan/done.md`). A `wss`
+  (MK5-S4b-M1) and `ws.parse_url` uses for `wss` (`meta/milestones.md`). A `wss`
   connection is the same WebSocket client over a `TlsStream`.
 - Errors panic rather than returning `Result`, except `try_connect` and the
   `try_send_all`/`try_recv`/`try_recv_into` trio, whose failure is the `Err`

@@ -49,8 +49,7 @@ kelpc run .                  # build and run the project in this directory
 kelpc build . -o mytool      # keep the binary
 ```
 
-`kelpc` hands its output to `cc`, so a C compiler must be on `PATH`. If `kelpc` prints
-`could not invoke 'cc'`, that is the cause; on NixOS use `nix-shell -p gcc openssl --run '…'`.
+`kelpc` links with `ld.lld` and needs no C compiler. On NixOS, where `ld.lld` is not on `PATH` by default, use `nix-shell -p lld openssl --run '…'`.
 
 ## Errors you will meet
 
@@ -60,7 +59,7 @@ kelpc build . -o mytool      # keep the binary
 out.push_str(str.concat("a", "b").as_str())     // error
 ```
 
-`.as_str()` on a value that has no name is refused, because the `String` would be freed
+`.as_str()` on a value that has no name is refused, because the `String` would be dropped
 before the borrow was used. Bind it first:
 
 ```kelp

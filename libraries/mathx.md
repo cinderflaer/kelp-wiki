@@ -35,7 +35,7 @@ Constants: `I64_MAX` (`9223372036854775807`), `I64_MIN` (`-9223372036854775808`)
 
 ## Checked and saturating `i64`
 
-Kelp's integer `+`/`-`/`*` overflow is unchecked ([syntax.md](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md) §5): it silently
+Kelp's integer `+`/`-`/`*` overflow is unchecked ([syntax.md](/design/syntax) §5): it silently
 wraps. There is no
 overflow flag to read, so these detect it by inspecting signs (add/sub) or by
 dividing the product back out (mul).

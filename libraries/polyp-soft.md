@@ -10,8 +10,8 @@ integer software rasterizer into a framebuffer and links no GTK, no display serv
 and no libc. It is the half a custom operating system, a test harness or a
 bare-metal image uses, and it is what makes a whole Polyp program testable with no
 display at all. The original design is
-[`plan/polyp-v3.md`](https://homelabone.xenoo.dev/gitea/Lilly/kelp/src/branch/main/plan/polyp-v3.md),
-stages 2, 3 and 5; [`plan/polyp-v4.md`](https://homelabone.xenoo.dev/gitea/Lilly/kelp/src/branch/main/plan/polyp-v4.md)
+[`design/polyp-v3`](/design/polyp-v3),
+stages 2, 3 and 5; [`libraries/polyp.md`](/libraries/polyp)
 adds clocks, animation, UTF-8, accessibility and memoisation.
 
 The layering, from the application down:
@@ -131,10 +131,10 @@ version.
 ```kelp
 pub trait Platform {
     fun mut Self.present(fb: fb.Fb, dirty: &damage.Damage)
-    fun Self.now_ms().return: u64
-    fun mut Self.now_us().return: u64
-    fun mut Self.poll_event().return: option.Option<event.Event>
-    fun Self.framebuffer().return: fb.Fb
+    fun Self.now_ms() => u64
+    fun mut Self.now_us() => u64
+    fun mut Self.poll_event() => option.Option<event.Event>
+    fun Self.framebuffer() => fb.Fb
 }
 ```
 
@@ -184,9 +184,9 @@ pub fun frame<P: platform.Platform, S, M>(
     platform: mut P,
     tree: move core.Node<M>,
     state: mut S,
-    view: fun (S).return: core.Node<M>,
+    view: fun (S) => core.Node<M>,
     update: fun (mut S, M),
-).return: core.Tick<M>
+) => core.Tick<M>
 ```
 
 It takes the platform's framebuffer, resizes the backend's layout to it, lays out,
@@ -298,13 +298,12 @@ would need a retained view model; see the limits below.
   `polyp: frame patch list exceeds MAX_FRAME_PATCHES` rather than growing without
   bound.
 - The retained tree grows by one node and one parent insertion per `Create` and
-  never shrinks; it is freed only when the backend is dropped.
+  never shrinks; it is released only when the backend is dropped.
 
 ## The work-budget test and the benchmark
 
 `examples/polyp-budget-test/` drives the backend directly and prints one number
-per line. The Rust test `polyp_soft_work_budgets_hold` pins the whole output, so
-the numbers are the same on the LLVM backend and on the C oracle. It is the
+per line. The Rust test `polyp_soft_work_budgets_hold` pins the whole output. It is the
 program behind the table above.
 
 `examples/polyp-bench/` runs five scenarios (200-row scroll, type 100 characters,
@@ -319,7 +318,7 @@ nix-shell shell.nix --run 'cd kelpc && ../target/release/kelpc build ../examples
 ```
 
 On the development host (7.8 GiB, LLVM backend, release `kelpc`), a full run of
-`plan/polyp-v3.md`'s benchmark table:
+`design/polyp-v3`'s benchmark table:
 
 | Scenario | frames | pixels | rects | allocs | median us/frame | worst us/frame |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -332,8 +331,7 @@ On the development host (7.8 GiB, LLVM backend, release `kelpc`), a full run of
 Those are the design note's numbers on one host at one moment, not a portable
 guarantee: the frame counts, pixels, rectangles and allocations are exact and
 machine-independent, the microseconds are not. The note records that the debug
-`kelpc` build gives the same counts and times within a few percent, and that the C
-oracle's generated code is roughly three times slower, so the test suite sets
+`kelpc` build gives the same counts and times within a few percent. The test suite sets
 `POLYP_BENCH_QUICK`, which shortens every scenario to one frame per run and keeps
 the same counts per frame; the table above is a full run.
 
@@ -373,5 +371,5 @@ the same counts per frame; the table above is a full run.
   framebuffer equivalence proof
 - [Freestanding mode](/language/freestanding): the `[target]` section, the
   admitted `std` subset and the linker script
-- [`plan/polyp-v3.md`](https://homelabone.xenoo.dev/gitea/Lilly/kelp/src/branch/main/plan/polyp-v3.md):
+- [`design/polyp-v3`](/design/polyp-v3):
   the design record, stages 2, 3 and 5

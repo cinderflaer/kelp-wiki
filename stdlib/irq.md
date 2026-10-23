@@ -14,7 +14,7 @@ impl "std/irq"
 The module is gated on the `irq` domain (`kelpc/src/stdlib.rs::domain_of`), so
 importing it is not enough: the `impl` line, or the importing module's `[caps]`
 section, has to delegate `irq` with a pattern list. The design is
-[`plan/irq-frame-caps.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/irq-frame-caps.md).
+[`stdlib/irq.md`](/stdlib/irq).
 
 ## Types
 
@@ -97,7 +97,7 @@ backends see the same refusal.
 
 The value, not the name, is the receipt for a grant, and `claim` is the only way
 one enters a program. A shipped module exports every item (the transitional rule
-in `plan/syntax.md` 13.4) and Kelp has no field-level `pub`, so a bare
+in `design/syntax` 13.4) and Kelp has no field-level `pub`, so a bare
 `datac Line(val n: u32)` would be constructible from another module as
 `irq.Line(n = 3)`. The compiler therefore carries a short list of sealed
 capability types (`stdlib::SEALED_TYPES`) and refuses that spelling wherever the

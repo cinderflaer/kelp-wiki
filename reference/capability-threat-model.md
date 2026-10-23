@@ -4,11 +4,13 @@ description: "What the capability system protects, who it assumes the attacker i
 isPublished: true
 tags: "reference, capability"
 ---
+> **Note:** The C oracle that some runs below compare against, and the `KELPC_ORACLE=c` switch, were removed on 2026-10-10. Every `KELPC_ORACLE` setting is now refused by name. Read the runs marked with that switch as a record of the time they were made.
+
 [Capabilities](/language/capabilities) say what a module may do. This page says
 what that promise is worth: what is being protected, against whom, what the
 compiler and runtime actually check, and where the promise stops. The design
 notes are
-[`plan/threat-model.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/threat-model.md)
+[`reference/capability-threat-model.md`](/reference/capability-threat-model)
 and the attacks are
 [`kelpc/tests/threat_model.rs`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/kelpc/tests/threat_model.rs):
 75 tests, most of them one per numbered attack, each playing an author who holds
@@ -44,7 +46,7 @@ and externs, and the manifest validators.
 
 **Out of scope**, and so not something a grant can promise:
 
-- The C compiler, the linker, the operating system and other processes.
+- The LLVM toolchain, the linker (`ld.lld`), the operating system and other processes.
 - Native code reached through a granted FFI section or a granted program. A
   `process` grant for a shell is a grant of everything the shell can run.
 - Races with another process that changes the filesystem between the check and
@@ -69,8 +71,7 @@ and delegation. `irq` and `frames` are covered by their own suite
 ## The nine fixed holes
 
 Each of these let a module do something its grant did not allow, or (item 8) behaved differently on the two backends. Each is a
-behaviour change a program can see; items 1 to 7 were built and run on
-both backends on 2026-10-03 with `kelpc 26.09.5`, items 8 and 9 on 2026-10-04 with the compiler built from main, and the output is quoted as
+behaviour change a program can see; items 1 to 7 were built and run on 2026-10-03 with `kelpc 26.09.5`, items 8 and 9 on 2026-10-04 with the compiler built from main, and the output is quoted as
 printed (paths shortened to the scratch directory they ran in, and the output
 was the same from the LLVM backend and from `KELPC_ORACLE=c` unless stated).
 
@@ -125,7 +126,7 @@ panic: process.kill: not a child this program started
 rc=1
 ```
 
-Both backends print the same line. A hand-built `Child(pid = ...)` goes through
+It prints the same line. A hand-built `Child(pid = ...)` goes through
 the same primitive and fails the same way.
 
 ### 3. A loopback grant binds `127.0.0.1`
@@ -179,7 +180,7 @@ rc=1
 ```
 
 The literal resolves (to one address); the name is refused before any lookup.
-Both backends print the same.
+It prints the same.
 
 ### 5. Descriptor handles cannot be built from numbers without a grant
 
@@ -206,7 +207,7 @@ error: 'std.io.File' wraps an operating-system descriptor, so building one from 
   --> .../e/util.kp:4:13
 ```
 
-It is a compile error, and the C oracle prints the identical message. For
+It is a compile error. The removed C oracle printed the identical message in the runs made before 2026-10-10. For
 `net.Socket` and `net.Listener` the message names the `net` capability.
 
 ### 6. `unsafe` in a trait default method is audited
@@ -242,13 +243,12 @@ rc=1
 
 Freestanding mode is LLVM-only, so this one has no C-oracle run.
 
-### 8. Shifts of any width are checked, on both backends
+### 8. Shifts of any width are checked
 
 A shift by the type's width or more was poison on LLVM and `0` or garbage in C
 (the plan recorded `1u32 << 33` printing garbage on one backend and `0` on the
 other), and the `irq` and `frames` constant folder masked to 64 bits rather than
-the operand's width. It is now one rule on both backends, hosted and
-freestanding: an amount outside `0..width` (negative included) panics with
+the operand's width. It is now one rule, hosted and freestanding: an amount outside `0..width` (negative included) panics with
 `shift amount out of range`, a constant amount out of range is a compile error
 naming the type and the amount, and `wrapping_shl`/`wrapping_shr` mask the
 amount. A `u32` line now folds at 32 bits, as the program computes it. No attack
@@ -263,7 +263,7 @@ error: a shift by 33 is not defined for a 'u32', whose width is 32 bits: the amo
   --> .../shift_const_too_wide.kp:5:11
 ```
 
-Both backends print the same (rerun on 2026-10-04: `u32`, `u64`, `u8 >>` and a
+It prints the same (rerun on 2026-10-04: `u32`, `u64`, `u8 >>` and a
 negative `i32` amount all panic with that line and exit with status 1, under the
 LLVM backend and `KELPC_ORACLE=c`).
 

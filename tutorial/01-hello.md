@@ -10,8 +10,7 @@ and how to read a compiler error.
 ## Get the compiler
 
 Kelp's compiler is `kelpc`. [Install](/getting-started/install) describes how to
-get it, either from a release binary or by building it. The C compiler that Kelp
-links with is part of that page too. Once `kelpc` is on your `PATH`, check it:
+get it, either from a release binary or by building it. Once `kelpc` is on your `PATH`, check it:
 
 ```text
 $ kelpc version

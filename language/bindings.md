@@ -7,7 +7,7 @@ tags: "language, ownership"
 A `val` or `var` statement binds a name inside a function body. Top-level names
 are `const` and `pd` instead ([Constants and passdowns](/language/passdowns)).
 
-Source: [`syntax.md` §4](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §4](/design/syntax).
 
 ```kelp
 val n: i64 = 10              // immutable binding, explicit type
@@ -72,7 +72,7 @@ Assigning to an owned binding moves the new value in and drops the old one:
 
 ```kelp
 var name = String.from_str(s = "first")
-name = String.from_str(s = "second")   // the first String is freed here
+name = String.from_str(s = "second")   // the first String is dropped here
 ```
 
 That is how a recursive structure is rebuilt in a loop, and it is why the left
@@ -108,7 +108,7 @@ val ((x, y), z) = corners()     // a nested tuple takes a nested pattern
 - The pattern must name as many positions as the tuple has. A pattern written for
   another arity is refused, and the message gives both counts.
 - `_` ignores a position instead of binding it. The ignored value stays in the
-  tuple that was destructured, so an owned element that `_` ignores is freed by
+  tuple that was destructured, so an owned element that `_` ignores is dropped by
   that tuple's own drop.
 - `val` and `var` apply to every position: `var (a, b) = ...` makes both `a` and
   `b` assignable.
@@ -129,6 +129,31 @@ val ((x, y), z) = corners()     // a nested tuple takes a nested pattern
 - An initializer that is a borrow of a tuple binds every `Copy` position and
   refuses an owned one, the same rule a field of a borrow follows. The initializer
   must be a tuple: `val (a, b) = 7` is refused.
+
+## Let-else: bind a variant, or leave
+
+`let` with a variant pattern binds the variant's payload for the rest of the block
+when the value matches. When it does not match, the `else` block runs, and that block
+must leave the enclosing code.
+
+```kelp
+fun user_name(id: i32) => Result<String, String> {
+    let Some(user) = find(id) else { return Err("missing") }
+    return Ok(user.name)     // `user` is bound from here to the end of the block
+}
+```
+
+- The pattern is an enum variant, written the way `if let` writes one. `_` ignores a
+  payload field.
+- The `else` block must end in `return`, `break`, `continue` or `panic(...)`. Any
+  other ending is refused, and the message names the fix.
+- A plain name, such as `let user = find(id) else { ... }`, is refused because it always
+  matches. A tuple pattern is refused for the same reason. Use `val` with no `else` for
+  either.
+- Without an `else`, a `let` with a variant pattern is refused. Use `if let` when the
+  no-match case needs no exit.
+
+Use [`if let`](/language/control-flow) when the no-match case does nothing.
 
 ## See also
 

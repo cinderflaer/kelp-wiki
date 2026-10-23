@@ -1,24 +1,24 @@
 ---
 title: "Return types and `return`"
-description: "The .return: T clause, expression and block bodies, what return does, the divergence rule for panic, and the rule that a returned borrow must come from a parameter."
+description: "The => T clause, expression and block bodies, what return does, the divergence rule for panic, and the rule that a returned borrow must come from a parameter."
 isPublished: true
 tags: "language"
 ---
-Source: [`syntax.md` §7.1 and §6.4](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §7.1 and §6.4](/design/syntax).
 
-## The `.return: T` clause
+## The `=> T` clause
 
-The return type is written **after** the parameter list, introduced by `.return`:
+The return type is written **after** the parameter list, introduced by `=>`:
 
 ```kelp
-fun add(a: i32, b: i32).return: i32 = a + b     // expression body, requires .return
-fun greet(name: &str) {                    // no .return: returns unit
+fun add(a: i32, b: i32) => i32 = a + b     // expression body, requires =>
+fun greet(name: &str) {                    // no => returns unit
     print(str.concat("hello, ", name))
 }
 ```
 
-- `.return` marks "this returns". There is no `->` return marker and no trailing type.
-- **No `.return` means `unit`.** A function with no return clause returns the
+- `=>` marks "this returns". There is no `->` return marker and no trailing type.
+- **No `=>` means `unit`.** A function with no return clause returns the
   absent value.
 - There is no inferred return type for a block body. The signature always says
   what comes back, and the body has to agree with it.
@@ -28,19 +28,19 @@ fun greet(name: &str) {                    // no .return: returns unit
   nowhere for `?` to propagate to, and that includes `main`
   ([Errors and panics](/language/errors)).
 - A generic function may write a type parameter in the return type
-  (`fun identity<T>(x: T).return: T`). `main` may not take type parameters
+  (`fun identity<T>(x: T) => T`). `main` may not take type parameters
   ([Generics and type parameters](/language/generics)).
 
 ## Bodies
 
-An **expression body** is `= expr`, and it requires `.return: T`:
+An **expression body** is `= expr`, and it requires `=> T`:
 
 ```kelp
-fun double(x: i32).return: i32 = x * 2
+fun double(x: i32) => i32 = x * 2
 ```
 
-Writing `= expr` with no `.return` is refused with
-`expression-bodied function requires a '.return: T' return type`.
+Writing `= expr` with no return type is refused with
+`expression-bodied function requires a '=> T' return type`.
 
 A **block body** is `{ ... }`, and its value comes from one of two places:
 
@@ -49,14 +49,14 @@ A **block body** is `{ ... }`, and its value comes from one of two places:
    block.
 
 ```kelp
-fun abs_diff(a: i32, b: i32).return: i32 {
+fun abs_diff(a: i32, b: i32) => i32 {
     if a > b {
         return a - b
     }
     return b - a
 }
 
-fun max2(a: i32, b: i32).return: i32 {
+fun max2(a: i32, b: i32) => i32 {
     if a > b { a } else { b }      // the last expression is the value
 }
 ```
@@ -65,12 +65,12 @@ There are no semicolons, so "the last statement is an expression" is the only
 signal for tail-expression status. An expression-bodied function does not use
 `return` at all.
 
-`return` with no value is allowed in a function with no `.return: T`.
+`return` with no value is allowed in a function with no `=> T`.
 
 ## What `return` does
 
 - `return expr` delivers the value the signature promises. A mismatch between
-  `expr` and `.return` is an error: `return type mismatch: expected 'i32', found 'str'`.
+  `expr` and `=>` is an error: `return type mismatch: expected 'i32', found 'str'`.
 - `return` can appear anywhere in the block, so it is how a function leaves early.
 - Returning drops the frame's locals on the way out, exactly as reaching the end
   of the body does ([Ownership and borrowing](/language/ownership)).
@@ -86,7 +86,7 @@ happen" accessor expressible:
 ```kelp
 impl "std/option"
 
-fun unwrap<T>(o: &option.Option<T>).return: T {
+fun unwrap<T>(o: &option.Option<T>) => T {
     if let Some(v) = o {
         return v
     }
@@ -100,13 +100,13 @@ value the `if` produces.
 
 ## Returning a borrow: the elision rule
 
-A function whose `.return: T` is a borrow must return something derived from its
+A function whose `=> T` is a borrow must return something derived from its
 **first reference parameter**:
 
 ```kelp
-fun head(text: View, n: usize).return: View = text.slice(0, n)
+fun head(text: View, n: usize) => View = text.slice(0, n)
 
-fun as_str(v: &Json).return: &str {
+fun as_str(v: &Json) => &str {
     if let Str(s) = v {
         return s.as_str()
     }
@@ -116,7 +116,7 @@ fun as_str(v: &Json).return: &str {
 
 - A payload bound by a pattern counts as derived from the scrutinee it came out
   of, which is why the second function type-checks.
-- `.return: View` therefore means "a view of one of my parameters". A view of a
+- `=> View` therefore means "a view of one of my parameters". A view of a
   local is refused by name:
   `cannot return a borrow of 'local': 'View' borrows from its first reference parameter 'text', so the returned value must be derived from 'text'`.
   Return an owned `String`, or take the view as a parameter.
@@ -132,8 +132,8 @@ fun as_str(v: &Json).return: &str {
   ```kelp refused
   impl "std/str"
 
-  // error: a temporary would be freed before the borrow is used
-  fun bad().return: str = String.from_str(s = "x").as_str()
+  // error: a temporary would be dropped before the borrow is used
+  fun bad() => str = String.from_str(s = "x").as_str()
 
   fun main() {
       val ok = String.from_str(s = "x").as_str()

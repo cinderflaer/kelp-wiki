@@ -18,9 +18,9 @@ documentation, which the `doc` command reads later:
 
 ```kelp
 /// Doubles a number.
-pub fun double(n: i64).return: i64 = n * 2
+pub fun double(n: i64) => i64 = n * 2
 
-pub fun is_even(n: i64).return: bool = n % 2 == 0
+pub fun is_even(n: i64) => bool = n % 2 == 0
 ```
 
 And a test file, `tests.kp`, that imports it:
@@ -83,7 +83,7 @@ in place, and with `--check` it only reports whether the file is already formatt
 Here is a file with unusual spacing:
 
 ```kelp
-fun double(n: i64).return: i64 {
+fun double(n: i64) => i64 {
 return n*2
 }
 
@@ -95,7 +95,7 @@ print("ok")
 
 ```text
 $ kelpc fmt messy.kp
-fun double(n: i64).return: i64 {
+fun double(n: i64) => i64 {
     return n * 2
 }
 

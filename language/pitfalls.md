@@ -5,7 +5,7 @@ isPublished: true
 tags: "language"
 ---
 The rules that explain most compile errors, with the message each one produces and
-the fix. Source: [`syntax.md` §18 and §22](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
+the fix. Source: [`syntax.md` §18 and §22](/design/syntax).
 
 ## Ownership
 
@@ -54,9 +54,9 @@ and [Cursors and provenance](/language/ownership#cursors-and-provenance).
 
 | Message | What happened | Fix |
 | --- | --- | --- |
-| `cannot compare 'P' values with '=='` | a `datac`/`enum` gets `==`/`!=` only from a declared `eq`, and nothing is derived | declare `fun P.eq(other: &P).return: bool`, which `a == b` lowers to (`a.eq(&b)`); or compare the fields directly, or match with `when` |
+| `cannot compare 'P' values with '=='` | a `datac`/`enum` gets `==`/`!=` only from a declared `eq`, and nothing is derived | declare `fun P.eq(other: &P) => bool`, which `a == b` lowers to (`a.eq(&b)`); or compare the fields directly, or match with `when` |
 | `cannot compare 'P' values with '<'` | `<`/`<=`/`>`/`>=` are refused on a `datac`/`enum` with no `Ord` impl, whether or not it has `eq` | implement `ops.Ord` (see [Operator traits](/language/operator-traits)), or compare the fields you mean |
-| `'P.eq' takes exactly one parameter, a shared borrow of 'P'` | the `eq` method has the wrong signature | write `fun P.eq(other: &P).return: bool`: one parameter, a shared borrow of the type, returning `bool` |
+| `'P.eq' takes exactly one parameter, a shared borrow of 'P'` | the `eq` method has the wrong signature | write `fun P.eq(other: &P) => bool`: one parameter, a shared borrow of the type, returning `bool` |
 | `cannot compare 'A' with 'B'` | the two operands are different types | make both sides the same type |
 
 ## Characters and integers
@@ -96,7 +96,6 @@ and [Cursors and provenance](/language/ownership#cursors-and-provenance).
 | `element 2 of the tuple is 'unit'` | `unit` is the absent value and cannot be stored | produce a value, or leave the position out |
 | `'Later' is declared after this type` | a tuple element is a by-value field, so it may only name a type declared earlier | declare the element type first, or hold it behind a `Box` or a `List` |
 | `cannot pass a value of type '(i32, i32)' to 'print'` | a tuple is a record, and `print` takes a scalar, a `str` or a `String` | print each position |
-| `'()' is not a type` | a tuple has two or more elements, and the absent value's type is `unit` (the value `()` itself is valid) | write `unit`, or two or more elements |
 
 ## Arrays and constants
 

@@ -38,9 +38,9 @@ another module: it reaches `calc`'s items only where `calc` exports them (A-13).
 Three files. First, the code under test, in `src/shapes/calc.kp`:
 
 ```kelp
-pub fun double(n: i64).return: i64 = n * 2
+pub fun double(n: i64) => i64 = n * 2
 
-pub fun is_even(n: i64).return: bool = n % 2 == 0
+pub fun is_even(n: i64) => bool = n % 2 == 0
 ```
 
 Then `src/tasks/test.kp`:
@@ -136,7 +136,7 @@ Three details that follow from the language rather than from the library:
 Before reaching for `testkit`, `assert` is built in and checked on every build:
 
 ```kelp
-fun double(n: i64).return: i64 = n * 2
+fun double(n: i64) => i64 = n * 2
 
 fun main() {
     assert(double(21) == 42)

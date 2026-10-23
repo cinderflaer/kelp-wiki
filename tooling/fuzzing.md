@@ -9,13 +9,11 @@ A compiler should answer junk with a diagnostic, never with a crash. The front e
 type inference, borrow check and the diagnostic renderers) is fuzzed for exactly
 that, and what the fuzzer found turned into two parser limits that a program can
 meet. The plan is
-[`plan/fuzzing.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/fuzzing.md).
+[`tooling/fuzzing.md`](/tooling/fuzzing).
 
 ## The two fuzzers
 
-1. `kelpc/tests/differential_fuzz.rs` generates valid programs from a seed and
-   compares the C oracle with the LLVM backend byte for byte. It asks whether the
-   backends agree, never whether the compiler survives junk.
+1. `kelpc/tests/differential_fuzz.rs` generates valid programs from a seed. Its comparison was with the removed C oracle, so there is no second backend to compare with. It does not test whether the compiler survives junk.
 2. `kelpc/tests/frontend_fuzz.rs` mutates the 800-odd fixtures in
    `kelpc/tests/fixtures/` and feeds the result to `kelpc check`. The property is
    **survival**: no panic, abort, stack overflow, hang or memory blowup. The
@@ -31,7 +29,7 @@ three are stacked per mutant. Each mutant runs as a subprocess under
 `ulimit -v 2097152; ulimit -t 20` and a 40 s wall clock, half of them with
 `--json`, because the renderer's column arithmetic is a classic panic site.
 
-Not fuzzed: LLVM IR validity beyond the verifier, the linker and `cc`, `kelpc
+Not fuzzed: LLVM IR validity beyond the verifier, the linker (`ld.lld`), `kelpc
 build` option parsing, `coral.toml` parsing, `fmt` and `lint`, and the
 incremental cache. Only survival is checked, not that the diagnostic is a good one.
 
@@ -118,6 +116,5 @@ construct is the parser's business and can change.
 
 - [Limits in v1](/language/limits), including how long chains and large literals
   scale in compile time
-- [Sanitizer builds](/tooling/sanitizers), which cover runtime behavior of the
-  compiled programs
+- [Sanitizer builds](/tooling/sanitizers), which are removed
 - [`kelpc` CLI](/tooling/kelpc-cli)

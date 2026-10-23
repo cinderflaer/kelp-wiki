@@ -7,6 +7,19 @@ tags: "stdlib, concurrency"
 `spawn`, `join`, `fence(order)`, `sleep_ms` and `current_id`: real threads, the
 shared borrow that may cross one, and the per-thread panic policy. Ungated.
 
+> **Status on current `main`.** A `thread.spawn` closure may capture values, and a thread's
+> argument and result may hold collected memory. The runtime registers the closure
+> environment, the argument and the result as collector roots, so numbers and memory
+> values cross. A thread's argument may be a number or a `List`: an `i64` argument and a
+> `List<i32>` argument both run. A channel end crosses as well, as do a `Mutex`, an `RwLock`
+> and a `Condvar` (see [`std/sync`](/stdlib/sync)). A file, a socket, a process or another
+> value with a destructor does not cross. The checker refuses it by name, for
+> example `'Mutex<i64>' cannot be a thread's argument in a hosted build: 'Mutex<i64>' is a
+> resource, ...`. A `Box<dyn Trait>` does not cross either: `'Box<dyn Shape>' cannot be a
+> thread's argument in a hosted build: its declaration was not found, so it cannot be
+> classified as memory`.
+
+
 ```kelp
 impl "std/thread"
 ```
@@ -15,11 +28,11 @@ impl "std/thread"
 functions, and one `datac`.
 
 ```kelp
-fun spawn(entry: <a declared `fun`, a `fun` literal, or a capturing closure, taking one parameter>, arg: move A).return: Thread<T>
-fun join(handle: move Thread<T>).return: Result<T, ThreadErr>
+fun spawn(entry: <a declared `fun`, a `fun` literal, or a capturing closure, taking one parameter>, arg: move A) => Thread<T>
+fun join(handle: move Thread<T>) => Result<T, ThreadErr>
 fun fence(order: Ordering)
 fun sleep_ms(ms: u64)
-fun current_id().return: u64
+fun current_id() => u64
 
 datac ThreadErr(val message: String)
 ```
@@ -31,7 +44,7 @@ call site. Neither call, and not the fence either, can be written in Kelp, so
 declares none of them: its header documents the surface, exactly as
 `std/atomic` documents the atomic methods it declares nowhere. The compiler
 lowers `spawn` and `join` through the pthread machinery of
-`kelpc/runtime/kelp_rt.c` and one generated worker body per call signature.
+`kelp-rt` and one generated worker body per call signature.
 
 `ThreadErr` is the module's **only `.kp` declaration**: a plain `datac` with one
 owned `String` field, built by the worker's panic and read by whoever joins it.
@@ -65,7 +78,7 @@ impl "std/result"
 
 pd val counter: AtomicI64 = AtomicI64.new(0)
 
-fun bump(c: &AtomicI64).return: i64 {
+fun bump(c: &AtomicI64) => i64 {
     c.fetch_add(value = 1, order = atomic.Ordering.SeqCst)
     0
 }
@@ -140,15 +153,17 @@ The rule is "a panic ends the thread it happened in", and the process ends when
 
 ## The two admitted leaks
 
-v1 has no unwinding, no user `Drop` and no `must_use`, and two leaks follow from
-that. Both are deliberate, and both are recorded in
-[`plan/mk9-memory-model.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/mk9-memory-model.md)
+v1 has no unwinding and no `must_use`, and two leaks follow from that. Both are
+deliberate, and both are recorded in
+[`kelp issue #245`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/issues/245)
 section 5:
 
-- **A panicking worker's frame is abandoned.** A panic ends the worker by
-  `pthread_exit`, so the owned values the abandoned frame held are never
-  dropped. Unwinding needs the `Drop` story the language does not have, and
-  aborting the process is what the panic policy removes.
+- **A panicking worker's temporaries are not dropped.** A panic ends the worker
+  without unwinding. The worker still runs the user `Drop` of each owned local and
+  each `Drop` thread argument, newest first, before its joiner sees the panic
+  (commit `658fb86c`, [Drop](/language/drop)). A value the frame holds only as a
+  temporary is not dropped, and that is the part still open
+  ([Limits in v1](/language/limits)).
 - **A handle nobody joins is detached.** Dropping a handle whose worker is
   still running cannot free the worker record, the argument slot or the result
   slot, because the worker writes through them, so the drop detaches the worker,
@@ -193,8 +208,7 @@ A fence orders **no location**: it joins the total order without naming an
 atomic, so there is no cell for it to read or write. That is why it is
 `thread.fence(order)`, free, rather than an `Atomic<T>` method: a method would
 say the fence is an operation on that one cell. It also means the fence emits one
-instruction and holds no cell of its own, `__atomic_thread_fence(__ATOMIC_SEQ_CST)`
-on the C backend and `fence seq_cst` on the LLVM one, and a single-threaded
+instruction and holds no cell of its own, `fence seq_cst` on the LLVM backend, and a single-threaded
 program cannot observe it at all.
 
 The fence lives in this module rather than beside the atomic cell so that the
@@ -261,7 +275,7 @@ impl "std/thread"
 impl "std/atomic"
 impl "std/result"
 
-fun work(x: move i64).return: i64 = x + 1
+fun work(x: move i64) => i64 = x + 1
 
 // A fence is the one operation that joins the total order without naming a
 // location, so it has no receiver, takes nothing but the ordering, and returns
@@ -309,16 +323,18 @@ fun main() {
 - **A worker is a real OS thread.** `thread.spawn` starts one and `thread.join`
   waits for it; nothing here is green, pooled or scheduled by the language.
   [Limits in v1](/language/limits) records what the thread surface still does
-  not have: no `Relaxed`/`Acquire`/`Release`, no thread-local storage, and no
-  async or coroutines. `Mutex<T>`, `RwLock<T>`, `Condvar` and channels are in
+  not have: no `Relaxed`/`Acquire`/`Release` and no async or coroutines. A `tl`
+  declaration gives each thread a scalar of its own, as described in
+  [Concurrency](/language/concurrency#thread-local-storage). `Mutex<T>`, `RwLock<T>`, `Condvar` and channels are in
   [`std/sync`](/stdlib/sync), and a thread pool is [`std/pool`](/stdlib/pool).
 - **The thread pool is a module of its own.** [`std/pool`](/stdlib/pool)
   (`pool.new`, `Pool.spawn`, `Pool.join`) is built on `thread.spawn`, but a
   module cannot call its own builtins by name, so it is not part of
   `std/thread`. A program that wants a handle to each worker still spawns and
   joins them itself, as `examples/download_pool.kp` does. `spawn` takes one
-  argument, so a worker that needs several values (a channel's `Sender` and a
-  number, say) is handed a `datac` that holds them.
+  argument, so a worker that needs several values is handed a `datac` that holds
+  them. A `datac` that holds a channel's `Sender` may be that argument, as the
+  producer example in [`std/sync`](/stdlib/sync) shows.
 - **`current_id` names a thread, not a pool slot.** v1 hands out no sequential
   worker numbers; a program that wants "worker 3 of 8" has to track that itself,
   keyed by the id if it needs a stable key.

@@ -4,7 +4,7 @@ description: "A module is a file. impl names it and can grant it authority. Cove
 isPublished: true
 tags: "language"
 ---
-Source: [`syntax.md` §13](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md).
+Source: [`syntax.md` §13](/design/syntax).
 
 A module **is** a file. `impl` names it, and optionally grants it authority.
 
@@ -55,8 +55,8 @@ another reaches only the items that module exports with `pub`:
 pub const LIMIT: i32 = 10
 pub datac Point(val x: i32, val y: i32)
 pub enum Shape { Circle(val r: f64) Empty }
-pub fun scale(v: f64, k: f64).return: f64 = v * k
-pub extern fun clock_ticks().return: u64
+pub fun scale(v: f64, k: f64) => f64 = v * k
+pub extern fun clock_ticks() => u64
 ```
 
 - `pub` is accepted only on a top-level `fun`, `extern fun`, `extern type`,
@@ -93,7 +93,7 @@ pub extern fun clock_ticks().return: u64
   datac`'s field types, a `pub enum`'s variant payload types and a `pub const`'s
   written type must all be names a consumer can reach. The check walks a written
   type to the bottom, so it recurses through `List<T>`, `Box<T>`, `Map<K, V>`,
-  `[T; N]`, generic arguments, borrows and function types. `pub fun make().return:
+  `[T; N]`, generic arguments, borrows and function types. `pub fun make() =>
   Hidden` is refused when `Hidden` is private, even though a caller could still
   read `make().x` without naming the type. A private declaration may name
   anything, because nothing outside its module can name it either, and a type
@@ -119,7 +119,7 @@ pub extern fun clock_ticks().return: u64
 
 ```kelp
 impl "std/fs"          // 1. imports
-alias %*debug*% = true // 2. aliases, anywhere a statement can start
+alias _debug = true // 2. aliases, anywhere a statement can start
 const LIMIT: i32 = 10  // 3. constants and passdowns, in any mix
 pd val app = "demo"
 datac Point(val x: i32, val y: i32)   // 4. types and functions, in any mix
@@ -215,18 +215,18 @@ anywhere in the tree. See [Projects and coral.toml](/getting-started/projects).
 
 ## Aliases
 
-`alias %*name*% = <raw text to end of line>` is textual substitution, and it runs
+`alias _name = <raw text to end of line>` is textual substitution, and it runs
 before parsing. It can rewrite an import path:
 
 ```kelp
-alias %*db*% = "storage/postgres"
-impl %*db*%
+alias _db = "storage/postgres"
+impl _db
 ```
 
 Aliases also come from the `[alias]` section of the project's `coral.toml`, one
-`name = "path"` per line. Write the reference inside a string, as in `impl "%*db*%"`,
+`_name = "path"` per line. Write the reference inside a string, as in `impl "_db"`,
 because the value is a plain module path. The project-root `alias.kpconf` file is no longer read. Substitution has no parameters, no scoping
-and no hygiene: `%*a*%` defined as `%*b*% * 2` with `%*b*%` defined as `40 + 2`
+and no hygiene: `_a` defined as `_b * 2` with `_b` defined as `40 + 2`
 prints `84`, because precedence is whatever the expanded text happens to produce.
 
 ## See also

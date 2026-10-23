@@ -10,7 +10,6 @@ Four things can stop you, and the prefix tells you which one spoke.
 | --- | --- | --- |
 | `coral: ...` | Coral, the project tool | progress, `up to date`, or a manifest problem |
 | `error: ...` with a `--> file:line:col` below | `kelpc`, the compiler | a problem in your source, at that span |
-| `error: cc failed:` | the C compiler, on `kelpc`'s output | a compiler bug, not your program |
 | `panic: ...` | your program, at run time | it ran and aborted |
 
 Errors go to stderr and the process exits non-zero, so a shell script and a
@@ -35,7 +34,7 @@ mentions `option.Option` without importing `std/option`:
 ```kelp
 impl "std/str"
 
-fun count_from(text: &str).return: option.Option<i64> {
+fun count_from(text: &str) => option.Option<i64> {
     return option.Option.None
 }
 ```
@@ -92,16 +91,7 @@ the whole language today, so it refuses no corpus construct; one guard remains i
 the lowering for an owned temporary at a place it did not stage, and its message
 says the shortfall is the compiler's rather than sending you to a backend you
 cannot choose. There is no `--backend=` flag: `kelpc build --backend=c` is refused
-with the message that names the one backend and the C oracle.
-
-`error: cc failed:` is different: the C compiler refused something `kelpc` handed
-it, which is a `kelpc` bug. On the `c` oracle path that is the generated C, which
-carries a `#line` directive before every statement, so the `cc` message already
-names the `.kp` file and line the failing C came from; the generated file itself
-is in `build/` (`build/<name>.c`) when you need to see it. Under the default
-`llvm` backend the `cc` step is the link and the per-program objects, and the
-message names the file it refused. That file, the source, and the command are
-exactly what a report needs.
+with a message that says the choice is gone.
 
 ## Make a refusal happen on purpose
 
@@ -113,7 +103,7 @@ files, one grant, one call outside it:
 impl "std/fs" caps(fs = ["/tmp/kelp-sandbox/vault/**"])
 impl "std/str"
 
-fun read(name: &str).return: String {
+fun read(name: &str) => String {
     val path = str.concat("/tmp/kelp-sandbox/vault/", name)
     return fs.read_text(path.as_str())
 }
@@ -134,11 +124,11 @@ attached.
 
 ## Where to report a bug
 
-- The program must be valid per [`plan/syntax.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/syntax.md),
+- The program must be valid per [`design/syntax`](/design/syntax),
   which is the language authority. A construct that is refused by design belongs
   on [Limits in v1](/language/limits), not in a report.
 - Include `kelpc version`, the optimization level, the source, the command, and
-  the output verbatim. For a `cc failed:`, include the file it named.
+  the output verbatim.
 - [Contributing](/meta/contributing) has the workflow.
 
 ## See also

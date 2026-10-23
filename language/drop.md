@@ -1,14 +1,15 @@
 ---
 title: "User `Drop`"
-description: "fun mut T.drop() gives a user datac or enum a destructor. It runs at every drop point, before the fields drop. A moved value is not dropped, a partial move is refused, and a panic runs no destructor."
+description: "fun mut T.drop() gives a user datac or enum a destructor. It runs at every drop point, before the fields drop. A moved value is not dropped, a partial move is refused, and a panic runs no destructor except on a hosted worker thread."
 isPublished: true
 tags: "language, ownership, kernel"
 ---
-Owned values are already freed at the end of their scope, on every exit path
-([Ownership and borrowing](/language/ownership)). A user **`Drop`** lets a type
+Owned values are already dropped at the end of their scope, on every exit path
+([Ownership and borrowing](/language/ownership)). A memory value in a hosted build
+has no drop to run: the collector reclaims it. A user **`Drop`** lets a type
 run its own code at each of those drop points, so a lock flag can be coupled to
 the value that holds it. The design is
-[`plan/drop.md`](https://homelabone.xenoo.dev/gittea/Lilly/kelp/src/branch/main/plan/drop.md).
+[`language/drop.md`](/language/drop).
 
 ## The surface
 
@@ -43,7 +44,7 @@ The drop points are the ones the plan already had:
 - the end of the owning block,
 - before a `return`,
 - reassignment of an owned `var`,
-- an element a container frees,
+- an element a container drops,
 - the drop of a containing `datac`/`enum`,
 - the `atexit` drop of an owned `pd`.
 
@@ -112,7 +113,7 @@ leaf
 1
 ```
 
-Reassigning an owned `var` frees the value it replaces first:
+Reassigning an owned `var` drops the value it replaces first:
 
 ```kelp
 datac Leaf(val tag: i32)
@@ -140,7 +141,7 @@ leaf
 An `enum` runs its own body for every variant before the live variant's payload
 drops (a payload-less variant still runs the body; only the field drop is
 skipped). `drop_enum` prints `body`, then `maybe` twice, then `leaf 1`. A loop
-body frees one value per iteration, and a `return` frees the frame's live locals
+body drops one value per iteration, and a `return` drops the frame's live locals
 after the returned value is read (`drop_control_flow` prints `leaf 1`, the
 returned `9`, `leaf 2`, `leaf 1`, the returned `0`, then `loop`, `leaf 10`,
 `loop`, `leaf 11`).
@@ -188,7 +189,7 @@ error: cannot move field 'leaf' out of 'h' by value: it is a type with a destruc
 ```
 
 - **An explicit destructor call.** `g.drop()` is refused, because the value's
-  drop already runs when the value dies and a second run would free a live
+  drop already runs when the value dies and a second run would close a live
   resource twice.
 
 ```text
@@ -201,7 +202,7 @@ error: 'Leaf.drop' cannot be called: an explicit destructor call is an error, be
   fail. This avoids two owners of one resource.
 
 ```text
-error: List<Leaf>.clone is not defined: 'Leaf' declares 'fun mut Leaf.drop()', and a type with a destructor is not `Copy`, so a second owner of the same resource would be freed twice
+error: List<Leaf>.clone is not defined: 'Leaf' declares 'fun mut Leaf.drop()', and a type with a destructor is not `Copy`, so a second owner of the same resource would be dropped twice
 ```
 
 - **A declaration that is not the right shape.** A shared receiver, a parameter,
@@ -215,9 +216,14 @@ error: method 'Leaf.drop' is defined more than once
 
 ## A panic runs no destructor
 
-There is still **no unwinding**. A `panic` abandons the frame: neither a
-`defer` nor a destructor of any value in it runs, and the leak is the same one
-the memory model already admits. On an ordinary exit a `defer` is spliced before
+There is still **no unwinding**, with one exception. A `panic` abandons the
+frame: neither a `defer` nor a destructor of any value in it runs, and the leak
+is the same one the memory model already admits. The exception is a hosted
+worker thread: when its panic ends the thread, the user `Drop` of each owned
+local runs, newest first, before its joiner sees the panic
+([Concurrency in v1](/language/concurrency)). A `defer` does not run on that
+path, and a freestanding image never has it. A freestanding panic runs no
+destructor at all, so a kernel cleans up in its panic handler, not in a `Drop`. On an ordinary exit a `defer` is spliced before
 the block's ordinary drops, so a deferred action runs before the destructor of a
 value in the same block.
 
@@ -254,4 +260,5 @@ the drop point, and with no unwinding the remaining drops of the frame are skipp
 - [Statics and `defer`](/language/statics-and-defer): `defer`, which runs before
   the destructors of its block
 - [Concurrency in v1](/language/concurrency): a value moved into a worker
-- [Errors and panics](/language/errors): the panic path, which runs no drop
+- [Errors and panics](/language/errors): the panic path. A worker's panic runs the
+  `Drop` of its owned locals, and the main thread's panic runs none
