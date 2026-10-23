@@ -1,6 +1,6 @@
 ---
 title: "Install and hello world"
-description: "Run a Kelp program, build an executable and read a compile error, with the real output of kelpc 26.10.4."
+description: "Run a Kelp program, build an executable and read a compile error, with the real output of kelpc 26.10.6."
 isPublished: true
 tags: "tutorial, getting-started"
 ---
@@ -14,7 +14,7 @@ get it, either from a release binary or by building it. Once `kelpc` is on your 
 
 ```text
 $ kelpc version
-kelpc 26.10.4
+kelpc 26.10.6
 ```
 
 ## Hello, world
