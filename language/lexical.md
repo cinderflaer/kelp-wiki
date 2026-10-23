@@ -161,7 +161,7 @@ val i = b'x'            // byte literal
 - **Integer literals** are decimal, hexadecimal after `0x`, or binary after `0b`:
   `0xff`, `0b1010`. A radix literal is the same value as its decimal
   spelling (`0xff` is `255`), and like any literal it has no width of its own:
-  it takes the integer type its context requires, and `int` (64-bit) when nothing
+  it takes the integer type its context requires, and `int` (the target's native width, 64-bit here) when nothing
   determines it, so `val mask: u8 = 0xff` and `val mask: u64 = 0xff` both work.
   A literal that does not fit the type its context asks for is refused at its own
   line, with a message naming a type that holds it: `val big = 18446744073709551615` is an

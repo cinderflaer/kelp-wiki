@@ -14,8 +14,8 @@ valid inside the scope that lent it.
 
 | Type | Kind | Notes |
 | --- | --- | --- |
-| `int` | Copy | the default integer type: the 64-bit signed integer, the type an unannotated integer literal takes. `int` is `i64`, the same type under a second name |
-| `i32` `i64` `u8` `u16` `u32` `u64` `usize` `isize` | Copy | integers; all widths are distinct |
+| `int` | Copy | the default integer type, the type an unannotated integer literal takes. A distinct integer of the target's native width (64-bit on a 64-bit target). It does not mix with `i32` or `i64` without `as` |
+| `i32` `i64` `u8` `u16` `u32` `u64` `usize` `isize` | Copy | integers; all widths are distinct, and each is distinct from `int` |
 | `f32` `f64` | Copy | IEEE floats |
 | `bool` | Copy | `true` / `false` |
 | `char` | Copy | one Unicode scalar value, written `'x'`. A code point, **not** an integer |
