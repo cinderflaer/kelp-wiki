@@ -32,7 +32,7 @@ A value that is not a whole number prints a notice and is ignored
 | `KELP_GC_STATS=1` | prints the counter line at exit, and before a fatal exit | `lib.rs`, `sys.rs` |
 | `KELP_GC_STRESS=n` | runs a clearing every `n` allocations | `lib.rs` (`alloc_common`) |
 | `KELP_GC_STOP_TIMEOUT_MS=n` | how long a collection waits for a thread to stop, in ms, at least 1; the default is 10000 | `lib.rs`, `threads.rs` |
-| `KELP_GC_TEST_SPAWN_PAUSE=1` | a test hook: a spawn holds its worker before the worker attaches, and runs a clearing in that window | `lib.rs` (`spawn_pause`), `state.rs` |
+| `KELP_GC_TEST_SPAWN_PAUSE=1` | a test hook: a new worker is held before it attaches, so a test can run a clearing in that window | `lib.rs` (`spawn_pause`), `kelp-rt/src/thread.rs` |
 
 Verify mode is the one to use when a program reads freed memory and gives a wrong answer.
 A read through a stale pointer then sees `0xA5` bytes, not the old contents. The program
