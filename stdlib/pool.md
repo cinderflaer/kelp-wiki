@@ -179,9 +179,9 @@ job. The honest consequences:
 - **One thread is created per job.** A pool does not save thread creation; it
   limits how many run at once and gives them a queue.
 - `thread.current_id()` differs between two jobs run by the same worker.
-- A panicking job's frame is abandoned, exactly as in a plain `thread.spawn`:
-  values it owned are not dropped, and a `Mutex` it held inside `lock` is
-  released and poisoned, so a later `lock` on it panics.
+- A panicking job's owned locals are dropped on the way out, as in a plain
+  `thread.spawn` worker (see [Concurrency in v1](/language/concurrency)). A `Mutex` it
+  held inside `lock` is released and poisoned, so a later `lock` on it panics.
 - A thread-local jump back to the worker was rejected because it would skip the
   cleanup handlers a `lock` block registers, leaving the mutex locked.
 

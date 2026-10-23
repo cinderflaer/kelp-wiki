@@ -104,13 +104,12 @@ The second call's `return` ends the block, the lock is released, and the later
 - `lock` lowers to the runtime's `kelp_mutex_run(record, body, code, env, out)`,
   which acquires the lock, checks the poison flag, calls the generated block
   body with the `&mut T`, and releases the lock on the normal way out.
-- A panic inside the block is the one exit the ordinary call cannot see. The
-  block body calls `kelp_panic`, which in a worker ends the thread with
-  `pthread_exit`. The runtime registers a cleanup handler before the body runs,
-  so `pthread_exit` runs it: the lock is released and the mutex is marked
-  **POISONED**. A later `lock` panics with `mutex poisoned`. There is no
-  unwinding, so the panicking frame's owned values are still abandoned; the
-  mutex itself is not, which is the point of the cleanup handler.
+- A panic inside the block is the one exit the ordinary call cannot see. The block body
+  calls `kelp_panic`, which in a worker ends the thread with `pthread_exit`. The runtime
+  registers a cleanup handler before the body runs, so `pthread_exit` runs it: the lock is
+  released and the mutex is marked **POISONED**. A later `lock` panics with `mutex
+  poisoned`. The panic does not unwind, but the worker's owned locals are dropped on the
+  way out, as [Concurrency in v1](/language/concurrency) describes.
 - `into_inner` is the only other way out, and it consumes the whole mutex.
 
 ## Crossing a thread boundary
@@ -597,11 +596,12 @@ back
 - **`sync.bounded(0)` panics** with `sync.bounded: the capacity must be at least 1`.
   The zero-capacity channel is `sync.rendezvous<T>()`: each send waits until a
   receive takes its value.
-- **`send` returns `Option<T>`, not `Result<(), E>`**, because no expression
-  produces `unit` to put in an `Ok`. `None` is success. The compiler does **not**
-  force you to look at the result (v1 has no `must_use`), so `tx.send(1)` on its
-  own line compiles and silently drops the value that comes back when the
-  receiver is gone. The examples bind it (`val back = tx.send(v)`) to say so.
+- **`send` returns `Option<T>`, not `Result<(), E>`.** `None` is success, and `Some(value)`
+  hands the value back because the receiver is gone. `send` is `must_use`
+  (`kelpc/std/sync.kp`): a call whose result is dropped is refused, with a message that
+  asks for the result to be branched on, or bound to `val _r = ...` to discard it on
+  purpose. `try_send` is `must_use` too.
+
 - **A receiver has one owner.** It is not cloneable, so there is no
   multi-consumer queue (use a [pool](/stdlib/pool)).
 - **`for v in rx` needs a mutable place**, so bind the pair with `var`. A trait
@@ -729,8 +729,8 @@ example:
 error: the binding 'm' has type 'Mutex', whose runtime half is a pthread mutex: a freestanding program has no threads and no libc, so a kernel would use a spin lock over an `Atomic<T>` instead
 ```
 
-The message names the alternative a kernel would use. Freestanding is LLVM-only
-by design, and neither backend can lower a mutex without the hosted runtime.
+The message names the alternative a kernel would use. A freestanding build uses
+the LLVM backend, which cannot lower a mutex without the hosted runtime.
 
 ## Refusals
 
@@ -756,7 +756,8 @@ by design, and neither backend can lower a mutex without the hosted runtime.
   borrow cannot escape, and a returned guard would reintroduce the escape.
 - A blocking `Condvar.wait` that hands back a guard; `wait_while` is the shape.
 - Cross-process semaphores, and a `select` over several waits.
-- A spin-lock `Mutex` for freestanding (named in the refusal, not built).
+- A spin-lock `Mutex` for freestanding. A freestanding program takes the lock from an
+  `Atomic<T>` instead, as the refusal above says.
 
 ## See also
 
