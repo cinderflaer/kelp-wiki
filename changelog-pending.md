@@ -22,6 +22,10 @@ Keep each line short and factual: what changed, and why it matters to someone
 writing Kelp. Group under the headings below; delete the headings that stay
 empty on release.
 
+## added
+
+- A digit separator, `_` between two digits, may be written in an integer or float literal: `1_000_000`, `0x1000_0000`, `0b1010_1010`, `1_000.000_5`. It changes no value. A `_` first, last or doubled in a literal (`0x_ff`, `1_`, `1__000`) is refused by name, at the `_`.
+
 ## Documentation
 
 - The Coral, Polyp, fpl and Lighthouse pages match their `main` branches: Coral has no version pins and records `coral.lock`, Polyp exports no `QUIT_ID` and its API lists the v4 and v5 nodes, fpl has 32 libraries, and Lighthouse has a Kelp port of the server in progress.

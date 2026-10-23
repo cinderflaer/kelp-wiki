@@ -154,6 +154,7 @@ val e = 'x'             // character literal
 val f = "n = $a, sum = ${a + 1}"   // string template
 val g = 0xff            // integer literal, hexadecimal
 val h = 0b1010          // integer literal, binary
+val j = 1_000_000       // integer literal, digit separators
 val i = b'x'            // byte literal
 ```
 
@@ -170,10 +171,15 @@ val i = b'x'            // byte literal
   `u64` range; a literal above it is refused by name rather than truncated. The same applies to a literal receiver,
   where the call supplies no expected type: `4294967295.to_u64()` is refused.
   There is no suffix (`5u8` is an error: the width comes from where the literal
-  sits) and no digit separator, and there is no octal form. A malformed one is
+  sits) and there is no octal form. A malformed one is
   refused by name: `0b12` is "invalid digit '2' in a binary literal".
+- **Digit separators**: a `_` may sit between two digits of an integer or float
+  literal, in any radix: `1_000_000`, `0x1000_0000`, `0b1010_1010`. It is spelling
+  only, and the value is the same without it. A `_` first (`0x_ff`), last (`1_`)
+  or doubled (`1__000`) is refused by name, at the `_`. A number after a tuple dot
+  (`t.1_0`) takes no separator.
 - **Float literals** are `digits.digits`, and are `f64` unless the context
-  requires `f32`.
+  requires `f32`. A digit separator may appear in either part (`1_000.000_5`).
 - A **character literal** is one Unicode scalar value in single quotes: `'x'`,
   `' '`, `'"'`, `'é'`, `'中'`. It takes the integer type its context requires and
   is `char` when nothing determines one, which is why byte-level code reads the
