@@ -47,7 +47,8 @@ The measured numbers on [Performance](/memory/performance) are for the 26.10.5
 release, which had no collector. Current `main` has not been measured on that page.
 Tidepool steps 1 and 2 are on `main`: the collector roots the values that threads and
 locks hold, and `[tidepool]` in `coral.toml` sets the start guesses, the headroom and
-the trigger rule. The later steps are in design. See [Tidepool](/memory/tidepool).
+the trigger rule. Manual block regions (`block name: T { ... }`) are on `main` too. See
+[Tidepool](/memory/tidepool).
 
 ## Pages
 
@@ -62,8 +63,8 @@ In reading order:
   mistakes everyone makes first, each with its fix.
 - [Performance](/memory/performance): the recorded numbers for the 26.10.5 hosted
   build on four benchmarks, with their spread and the C reference, and what they show.
-- [Tidepool](/memory/tidepool): the memory design. Steps 1 and 2 are on `main`. The later
-  steps are in design, and most of its pages are placeholders.
+- [Tidepool](/memory/tidepool): the memory design. Steps 1 and 2 and the manual block
+  regions are on `main`. Its pages describe what is built and cite the code for it.
 
 The programs in this section were compiled with the 26.10.5 release compiler and
 run, and the output shown is the output of that run. They have not been rerun on
