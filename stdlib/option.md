@@ -30,10 +30,10 @@ writes `val x = f(...)?`. Nothing in the compiler knows this module exists: the
 | `unwrap<T>(o: move Option<T>)` | `T` | the option is consumed; panics on `None` |
 | `unwrap_or<T>(o: move Option<T>, fallback: move T)` | `T` | the option and the fallback are consumed |
 | `expect<T>(o: move Option<T>, message: &str)` | `T` | the option is consumed; panics with the message |
-| `map<T, U>(o, f: closure(&T) => U)` | `Option<U>` | |
-| `and_then<T, U>(o, f: closure(&T) => Option<U>)` | `Option<U>` | |
+| `map<T, U>(o, f: closure fun(&T) => U)` | `Option<U>` | |
+| `and_then<T, U>(o, f: closure fun(&T) => Option<U>)` | `Option<U>` | |
 | `or_else<T>(o, f: fun() => Option<T>)` | `Option<T>` | **`T` must be `Copy`**: the receiver is a borrow |
-| `each<T>(o, f: closure(&T))` | `Unit` | |
+| `each<T>(o, f: closure fun(&T))` | `Unit` | |
 
 Every combinator is a free function that takes the option as its first argument.
 Since 26.10.3 the ones that only borrow it are also **methods**: `o.is_some()`,

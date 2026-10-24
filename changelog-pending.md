@@ -49,6 +49,8 @@ empty on release.
 
 ## Changed
 
+- One spelling of a function type (issue #293): `fun(T) => U` is the function pointer and `closure fun(T) => U` is the owned closure, with the `closure` marker in front of `fun`. The old `closure(T) => U` spelling is refused, and the message names the new one. Every example, library and page is written with the new spelling. Breaking: a `closure(...)` type in a program must become `closure fun(...)`. No meaning changes.
+
 - The kernel examples write their field-wise `Pair` with `derive(eq, hash)` instead of a hand-written `eq` (issue #291). `derive` itself is unchanged, and no program changes.
 - A group of exports may be written in one block: `pub { const LIMIT: i32 = 10 ... fun scale(...) ... }` exports each item in it, as if `pub` were written in front of it (issue #290). The block holds declarations only, each item keeps its own doc comment, and a `pub` written again inside the block is refused. No existing program changes.
 - Numeric conversions take the everyday names (issue #279): `to_byte()` and `try_to_byte()` convert to `u8` on an integer. `to_u8()` and `try_to_u8()` still compile and print an `outdated:` finding naming the fix; they are removed in the next development cycle. `to_int()` and `to_float()` are unchanged, and the fixed-width names (`to_i64()`, `to_f64()`, `to_usize()` and the rest) keep their names.

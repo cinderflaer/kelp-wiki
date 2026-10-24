@@ -27,7 +27,7 @@ call its own builtins (`thread.spawn`) by name.
 
 ```
 fun pool.new(workers: i32) => Pool
-fun Pool.spawn(job: move closure())
+fun Pool.spawn(job: move closure fun())
 fun Pool.join()
 fun Pool.panicked() => i32
 ```
@@ -35,7 +35,7 @@ fun Pool.panicked() => i32
 | Call | Returns | Notes |
 | --- | --- | --- |
 | `pool.new(workers)` | `Pool` | starts `workers` threads. Fewer than 1 panics |
-| `p.spawn(job)` | - | queues a `move closure()`; it runs on some worker, in queue order. A job owns what it captured |
+| `p.spawn(job)` | - | queues a `move closure fun()`; it runs on some worker, in queue order. A job owns what it captured |
 | `p.join()` | - | stops accepting work, runs everything still queued, and waits until every worker has exited. Safe to call twice |
 | `p.panicked()` | `i32` | how many jobs have panicked so far |
 

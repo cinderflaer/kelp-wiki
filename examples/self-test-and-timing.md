@@ -108,7 +108,7 @@ The nanoseconds differ run to run; the shape of the line does not.
 - **`time_many` runs warmup iterations first,** untimed, and then one timed
   iteration per sample. Two warmup runs and five samples is a reasonable default
   for a fast function; a slower one wants fewer samples.
-- **The closure is `closure()`,** a value that returns nothing. `work()` exists
+- **The closure is `closure fun()`,** a value that returns nothing. `work()` exists
   because a closure that must return a value does not match that type. The
   nanoseconds are per call, so a workload smaller than the clock's own overhead
   should loop inside the closure instead.

@@ -51,11 +51,11 @@ tuple element, a `datac` field or a container element ([Types](/language/types))
 | `unwrap_err<T, E>(r)` | `E` | **`E` must be `Copy`**; panics on `Ok` |
 | `expect<T, E>(r, message: &str)` | `T` | **`T` must be `Copy`**; panics with the message on `Err` |
 | `expect_err<T, E>(r, message: &str)` | `E` | **`E` must be `Copy`**; panics with the message on `Ok` |
-| `map<T, U, E>(r: move Result<T, E>, f: closure(&T) => U)` | `Result<U, E>` | the result is consumed; the rebuilt side may be owned |
-| `map_err<T, E, F>(r: move Result<T, E>, f: closure(&E) => F)` | `Result<T, F>` | the result is consumed; the rebuilt side may be owned |
-| `and_then<T, U, E>(r, f: closure(&T) => Result<U, E>)` | `Result<U, E>` | **`E` must be `Copy`**: the receiver is a borrow |
-| `or_else<T, E, F>(r, f: closure(&E) => Result<T, F>)` | `Result<T, F>` | **`T` must be `Copy`**: the receiver is a borrow |
-| `each<T, E>(r, f: closure(&T))` | `Unit` | |
+| `map<T, U, E>(r: move Result<T, E>, f: closure fun(&T) => U)` | `Result<U, E>` | the result is consumed; the rebuilt side may be owned |
+| `map_err<T, E, F>(r: move Result<T, E>, f: closure fun(&E) => F)` | `Result<T, F>` | the result is consumed; the rebuilt side may be owned |
+| `and_then<T, U, E>(r, f: closure fun(&T) => Result<U, E>)` | `Result<U, E>` | **`E` must be `Copy`**: the receiver is a borrow |
+| `or_else<T, E, F>(r, f: closure fun(&E) => Result<T, F>)` | `Result<T, F>` | **`T` must be `Copy`**: the receiver is a borrow |
+| `each<T, E>(r, f: closure fun(&T))` | `Unit` | |
 
 These are free functions. Since 26.10.3 the ones that only borrow the result are
 also **methods**: `r.is_ok()`, `r.is_err()`, `r.and_then(f)`, `r.or_else(f)` and

@@ -12,12 +12,12 @@ impl "std/list"
 
 | Function | Returns | Notes |
 | --- | --- | --- |
-| `map<T, U>(xs, f: closure(&T) => U)` | `List<U>` | one new element per element |
-| `filter<T>(xs, f: closure(&T) => bool)` | `List<T>` | **`T` must be `Copy`** |
-| `each<T>(xs, f: closure(&T))` | `Unit` | for the side effect |
-| `find_index<T>(xs, f: closure(&T) => bool)` | `option.Option<int>` | the first match |
-| `any<T>(xs, f: closure(&T) => bool)` | `bool` | |
-| `all<T>(xs, f: closure(&T) => bool)` | `bool` | |
+| `map<T, U>(xs, f: closure fun(&T) => U)` | `List<U>` | one new element per element |
+| `filter<T>(xs, f: closure fun(&T) => bool)` | `List<T>` | **`T` must be `Copy`** |
+| `each<T>(xs, f: closure fun(&T))` | `Unit` | for the side effect |
+| `find_index<T>(xs, f: closure fun(&T) => bool)` | `option.Option<int>` | the first match |
+| `any<T>(xs, f: closure fun(&T) => bool)` | `bool` | |
+| `all<T>(xs, f: closure fun(&T) => bool)` | `bool` | |
 
 These are free functions rather than `List` methods because methods on a builtin
 are compiler-generated, and a generic closure method is not something the builtin

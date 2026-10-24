@@ -57,8 +57,8 @@ fun filter(entries: List<Entry>, o: &Options) => List<Entry>
 fun duplicates(
     entries: List<Entry>,
     o: &Options,
-    hash: closure(&Entry) => u64,
-    equal: closure(&str, &str) => bool
+    hash: closure fun(&Entry) => u64,
+    equal: closure fun(&str, &str) => bool
 ) => Report
 fun wasted(g: &Group) => u64
 fun group_bytes(g: &Group) => u64
@@ -68,7 +68,7 @@ fun copy_entry(e: &Entry) => Entry
 fun copy_digest(d: &Digest) => Digest
 fun copy_group(g: &Group) => Group
 fun group_digests(xs: List<Digest>) => List<Group>
-fun confirm(g: &Group, equal: closure(&str, &str) => bool) => Group
+fun confirm(g: &Group, equal: closure fun(&str, &str) => bool) => Group
 fun candidates(files: List<Entry>, o: &Options) => List<Entry>
 ```
 
@@ -100,9 +100,9 @@ read. On a real tree it is most of them.
 datac Snapshot(val root: String, val generated: i64, val records: List<Digest>)
 datac Drift(val unchanged: usize, val changed: List<String>, val missing: List<String>, val added: List<String>)
 
-fun record(entries: List<Entry>, hash: closure(&Entry) => u64) => List<Digest>
-fun snapshot(root: str, generated: i64, entries: List<Entry>, hash: closure(&Entry) => u64) => Snapshot
-fun drift(s: Snapshot, entries: List<Entry>, hash: closure(&Entry) => u64) => Drift
+fun record(entries: List<Entry>, hash: closure fun(&Entry) => u64) => List<Digest>
+fun snapshot(root: str, generated: i64, entries: List<Entry>, hash: closure fun(&Entry) => u64) => Snapshot
+fun drift(s: Snapshot, entries: List<Entry>, hash: closure fun(&Entry) => u64) => Drift
 fun drifted(d: Drift) => bool
 ```
 

@@ -22,8 +22,8 @@ impl "deps/benchkit/lib" caps(time = [])
 
 | Function | Returns | Notes |
 | --- | --- | --- |
-| `time_once(f: closure())` | `i64` | nanoseconds for one call, monotonic clock |
-| `time_many(f: closure(), warmup: usize, runs: usize)` | `List<i64>` | `warmup` untimed runs, then `runs` timed ones, one entry each |
+| `time_once(f: closure fun())` | `i64` | nanoseconds for one call, monotonic clock |
+| `time_many(f: closure fun(), warmup: usize, runs: usize)` | `List<i64>` | `warmup` untimed runs, then `runs` timed ones, one entry each |
 | `median_ns(xs: &List<i64>)` | `i64` | the middle value; **the lower of the two middles** on an even count (cheap: no averaging, no float rounding). **Panics** on an empty list |
 | `percentile_ns(xs: &List<i64>, p: f64)` | `i64` | nearest-rank: the smallest sample such that at least `p` percent of the batch is no larger. **Panics** on empty, or `p` outside `[0, 100]` |
 | `sorted_copy(xs: &List<i64>)` | `List<i64>` | a sorted copy (the builtin `List<i64>.sort()` is usable, which is why `median_ns`/`percentile_ns` need no sort of their own) |

@@ -397,7 +397,7 @@ An unannotated integer literal takes `int` (2.4). `int` is a type of its own (is
 | `enum` name | owned | tagged union: one variant is live, and patterns match on it (9.2), optionally with type parameters (9.3) |
 | `(A, B)` | owned | a tuple: two or more element types held in **position order** (3.1). Not `Copy`, and it takes the derived deep copy and the derived order a `datac` takes, position by position |
 | `fun(T, U) => V` | Copy | a function value: a function pointer, with the parameters it takes and what it returns (7.4) |
-| `closure(T, U) => V` | owned | a *closure*: a function value plus the environment its captures were moved into (7.4). What a `fun` literal becomes when it names a binding from the enclosing scope |
+| `closure fun(T, U) => V` | owned | a *closure*: a function value plus the environment its captures were moved into (7.4). What a `fun` literal becomes when it names a binding from the enclosing scope |
 | `Unit` | Copy | absent value, the implicit return type |
 
 Rules that follow from the table:
@@ -413,7 +413,7 @@ Rules that follow from the table:
   it is the success payload of a `Result<unit, E>` (6.4). A `Unit` cannot be stored in a
   tuple, a `datac` field or a container, and an enum payload of type `unit` occupies no storage.
 - A function type is Copy and owns nothing: a function value is a plain function pointer, so copying one is copying a pointer. It cannot be borrowed (`&`/`mut`), stored in a container, or used as a type argument's *element*, the placements 7.4 lists.
-- A closure type is **not** Copy: it owns the environment its captures were moved into, and dropping it frees that environment. A parameter of the closure type borrows it (as an owned type's parameter does), and `move closure(...)` takes it over. It cannot be borrowed with `&`, cannot be a `List`/`Map` element, and *may* be a `Box` element (`Box<closure(...)>`, the optional-callback shape) or a `datac`/`enum` field.
+- A closure type is **not** Copy: it owns the environment its captures were moved into, and dropping it frees that environment. A parameter of the closure type borrows it (as an owned type's parameter does), and `move closure fun(...)` takes it over. It cannot be borrowed with `&`, cannot be a `List`/`Map` element, and *may* be a `Box` element (`Box<closure fun(...)>`, the optional-callback shape) or a `datac`/`enum` field.
 - `Atomic<T>` is not Copy either, but for the opposite reason to every other owned type: it owns nothing (so it needs no drop), and a copy would be a second handle to one location. Every one of its operations takes a **shared** borrow, `store` included, which is what leaves the type no `&mut` path at all and lets a `&Atomic<T>` be shared rather than moved (12.5). Its element set is closed: `bool` and the integer types.
 
 ### 3.1 Tuples
@@ -1067,10 +1067,10 @@ A body is required (`= expr` or `{ ... }`), and everything else is a declaration
 
 ### Captures, and the closure type
 
-A literal that names a binding from the enclosing scope **captures** it, and that makes the literal a *closure*: a function value plus the environment those captures were moved into. Its type is written `closure(T, U) => V`, the function type under the `closure` keyword, called exactly the same way.
+A literal that names a binding from the enclosing scope **captures** it, and that makes the literal a *closure*: a function value plus the environment those captures were moved into. Its type is written `closure fun(T, U) => V`: the function type with the `closure` marker in front of `fun`, called exactly the same way. There is one spelling of a function type. `fun(T, U) => V` is the function pointer, and the marker alone makes the closure form. The old `closure(T, U) => V` spelling is refused.
 
 ```kelp
-fun make(step: i32) => closure(i32) => i32 {
+fun make(step: i32) => closure fun(i32) => i32 {
     return fun(x: i32) => i32 = x * step
 }
 
@@ -1097,15 +1097,15 @@ print(k)
 
 A literal whose body captures nothing is *not* a closure: it stays a plain `fun` value, `Copy`, no environment, no drop, so nothing about the phase before this one changes. The two types are separate, and one widening connects them:
 
-- A plain **function value used where a closure is expected** (`val f: closure(i32) => i32 = double`, `Holder(cb = fun(x: i32) => i32 = x)`, `list.map(xs, inc)`) is wrapped in a one-field environment holding the pointer, with a generated thunk calling through it. When the value *names* a function, a declared `fun`, or a literal that captured nothing, the wrapper needs no environment at all, so the compiler generates a shim with the ignored hidden parameter and the conversion allocates nothing; only a function value whose identity is known at the call (`val g = pick(true)` then `list.map(xs, g)`) pays for the heap wrapper. The signatures must match, and there is no conversion in the other direction, because a closure carries an environment a `fun` value has no room for.
+- A plain **function value used where a closure is expected** (`val f: closure fun(i32) => i32 = double`, `Holder(cb = fun(x: i32) => i32 = x)`, `list.map(xs, inc)`) is wrapped in a one-field environment holding the pointer, with a generated thunk calling through it. When the value *names* a function, a declared `fun`, or a literal that captured nothing, the wrapper needs no environment at all, so the compiler generates a shim with the ignored hidden parameter and the conversion allocates nothing; only a function value whose identity is known at the call (`val g = pick(true)` then `list.map(xs, g)`) pays for the heap wrapper. The signatures must match, and there is no conversion in the other direction, because a closure carries an environment a `fun` value has no room for.
 
 What a literal still cannot do:
 
 - **Read a passdown.** A passdown is a hidden argument of the function that names it, and a closure's generated function has no room for one. Pass the value as a parameter, or capture it.
 - **Return a borrow.** The elision rule that says which argument a borrow comes from has nowhere to be written for a value called through a pointer.
 - **Capture a field of the receiver it was written in.** Reading a field out of a borrowed receiver by value is a move out of a borrow, refused (9): bind a `Copy` field to a local first, or take the whole receiver as a `move` parameter.
-- **Be a `List` or `Map` element.** A closure owns its environment and those elements are held inline; a `Box<closure(...)>` (the optional-callback shape) or a one-field `datac` holds it instead.
-- **Be borrowed with `&`.** A closure is an owned value, so a parameter of its type already borrows it and `move closure(...)` takes it over.
+- **Be a `List` or `Map` element.** A closure owns its environment and those elements are held inline; a `Box<closure fun(...)>` (the optional-callback shape) or a one-field `datac` holds it instead.
+- **Be borrowed with `&`.** A closure is an owned value, so a parameter of its type already borrows it and `move closure fun(...)` takes it over.
 
 A literal nested in another literal can copy a `Copy` capture out of the enclosing closure's environment. An owned one cannot be *moved* out of it: the environment is not a local of this frame, and a partial move needs a local the frame owns.
 
@@ -1115,7 +1115,7 @@ Rules and limits of this phase:
 - **A call's result cannot be called directly.** `pick(true)(4)` is not the grammar; bind it (`val p = pick(true)`) and call `p(4)`.
 - **A module's item is named with its qualified spelling**, `val f = math.sqrt`, and a bare name means a function of the current module. An *overloaded* item (`math.abs`, which is `i32`/`i64`/`f64`) is refused: its parameter types are part of its name, so it is several functions, not one.
 - **A declared `fun` is always a plain function value.** A generic function (no single signature), a function that reads a passdown (its C signature has a hidden argument), and `main` are each refused with a message that says which. A receiver method is not reachable as a value at all, and an overloaded standard-library name (`math.abs`) is refused because its parameter types are part of its name.
-- **Placements with no C spelling are refused**: a function type may not return a function type and may not be borrowed. A function type *is* fine as a parameter, a `val`/`var`, a `datac`/`enum` field, a passdown, a function's return type, and a type argument. A closure type is fine in all of those as well, plus `Box<closure(...)>`.
+- **Placements with no C spelling are refused**: a function type may not return a function type and may not be borrowed. A function type *is* fine as a parameter, a `val`/`var`, a `datac`/`enum` field, a passdown, a function's return type, and a type argument. A closure type is fine in all of those as well, plus `Box<closure fun(...)>`.
 - There is no `print` for a function value or a closure.
 
 ## 8. Methods and receivers
@@ -2835,15 +2835,15 @@ fun unwrap_or<T>(o: move Option<T>, fallback: move T) => T
 fun unwrap<T>(o: move Option<T>) => T               // panics on None
 fun expect<T>(o: move Option<T>, message: &str) => T   // panics with `message`
 
-fun map<T, U>(o: &Option<T>, f: closure(&T) => U) => Option<U>
-fun and_then<T, U>(o: &Option<T>, f: closure(&T) => Option<U>) => Option<U>
+fun map<T, U>(o: &Option<T>, f: closure fun(&T) => U) => Option<U>
+fun and_then<T, U>(o: &Option<T>, f: closure fun(&T) => Option<U>) => Option<U>
 fun or_else<T>(o: &Option<T>, f: fun() => Option<T>) => Option<T>   // `T` must be Copy
-fun each<T>(o: &Option<T>, f: closure(&T))
+fun each<T>(o: &Option<T>, f: closure fun(&T))
 ```
 
 The enum is the point: `Some`/`None` is one of the two shapes `?` (5) and `if let` (6.1) understand, so a function that can fail one way returns `Option<T>` and its caller writes `val x = f(...)?`. Nothing in the compiler knows this module exists, the *shape* is the contract, so a program's own `Option` works identically.
 
-The **callbacks borrow the payload** (`closure(&T) => U`, so a plain function value is widened into one), which is what makes the combinators work at every instantiation: a `when` arm copies a `Copy` payload and auto-borrows it at the call, and an owned one is auto-borrowed out of the owned option the helper took with `move`, so the callback still never takes ownership:
+The **callbacks borrow the payload** (`closure fun(&T) => U`, so a plain function value is widened into one), which is what makes the combinators work at every instantiation: a `when` arm copies a `Copy` payload and auto-borrows it at the call, and an owned one is auto-borrowed out of the owned option the helper took with `move`, so the callback still never takes ownership:
 
 ```kelp
 val text = option.Option.Some(value = String.from_str("hello"))
@@ -2867,11 +2867,11 @@ fun unwrap_or<T, E>(r: &Result<T, E>, fallback: T) => T   // `T` must be Copy
 fun unwrap<T, E>(r: &Result<T, E>) => T                   // `T` must be Copy; panics on Err
 fun unwrap_err<T, E>(r: &Result<T, E>) => E               // `E` must be Copy; panics on Ok
 
-fun map<T, U, E>(r: move Result<T, E>, f: closure(&T) => U) => Result<U, E>
-fun map_err<T, E, F>(r: move Result<T, E>, f: closure(&E) => F) => Result<T, F>
-fun and_then<T, U, E>(r: &Result<T, E>, f: closure(&T) => Result<U, E>) => Result<U, E>
-fun or_else<T, E, F>(r: &Result<T, E>, f: closure(&E) => Result<T, F>) => Result<T, F>
-fun each<T, E>(r: &Result<T, E>, f: closure(&T))
+fun map<T, U, E>(r: move Result<T, E>, f: closure fun(&T) => U) => Result<U, E>
+fun map_err<T, E, F>(r: move Result<T, E>, f: closure fun(&E) => F) => Result<T, F>
+fun and_then<T, U, E>(r: &Result<T, E>, f: closure fun(&T) => Result<U, E>) => Result<U, E>
+fun or_else<T, E, F>(r: &Result<T, E>, f: closure fun(&E) => Result<T, F>) => Result<T, F>
+fun each<T, E>(r: &Result<T, E>, f: closure fun(&T))
 ```
 
 `Ok`/`Err` is the shape that carries a reason. The operand's failure payload type and the enclosing function's may differ when an `impl From<Source> for Target` exists, which `?` calls; when they are the same no call is emitted. `std/convert` ships the `From` and `Into` traits (9.5).
@@ -2883,12 +2883,12 @@ The `Copy` requirements left here are on the side a helper has to **rebuild** th
 The element-wise API of `List<T>` (`len`, `get`, `push`, `sort`, …) is builtin, because a list is monomorphized and its methods are generated C per element type (12.1). The operations that need a **callback** cannot be generated without knowing what the callback returns, so they are free functions in a module, `list.map(xs, f)`, the same shape `str.*` and `math.*` have.
 
 ```kelp
-fun map<T, U>(xs: &List<T>, f: closure(&T) => U) => List<U>
-fun filter<T>(xs: &List<T>, f: closure(&T) => bool) => List<T>          // `T` must be Copy
-fun each<T>(xs: &List<T>, f: closure(&T))
-fun find_index<T>(xs: &List<T>, f: closure(&T) => bool) => Option<usize>
-fun any<T>(xs: &List<T>, f: closure(&T) => bool) => bool
-fun all<T>(xs: &List<T>, f: closure(&T) => bool) => bool
+fun map<T, U>(xs: &List<T>, f: closure fun(&T) => U) => List<U>
+fun filter<T>(xs: &List<T>, f: closure fun(&T) => bool) => List<T>          // `T` must be Copy
+fun each<T>(xs: &List<T>, f: closure fun(&T))
+fun find_index<T>(xs: &List<T>, f: closure fun(&T) => bool) => Option<usize>
+fun any<T>(xs: &List<T>, f: closure fun(&T) => bool) => bool
+fun all<T>(xs: &List<T>, f: closure fun(&T) => bool) => bool
 ```
 
 Every callback borrows the element, so nothing is ever moved out of the list and the same functions work for a `Copy` and an owned element type:
@@ -3166,7 +3166,7 @@ Compiler diagnostics print as `file:line:col`, a message, and often a note with 
 | `unknown escape '\q' in a character literal` | the escapes are `\n`, `\t`, `\r`, `\0`, `\'`, `\"`, `\\`, `\u{...}` |
 | `a character literal holds exactly one character` / `cannot be empty` / `cannot span lines` | `'ab'`, `''` and a raw newline are not character literals; write `'a'` or `'\n'` |
 | `argument 's' has type '&String', but this call moves its argument in` | the callee is a `move T` parameter (or a container's `push`-shaped builtin): a borrow cannot be moved out of, so pass an owned value, `Box.take()` moves one out of a box |
-| `'move' cannot be written on the borrowed type 'str'` | a `str`/`&T` is already borrowed, so there is nothing to own: write the owned type (`move String`). A `fun` value is already `Copy` for the same reason; `move closure(...)` *is* legal, because a closure owns its environment |
+| `'move' cannot be written on the borrowed type 'str'` | a `str`/`&T` is already borrowed, so there is nothing to own: write the owned type (`move String`). A `fun` value is already `Copy` for the same reason; `move closure fun(...)` *is* legal, because a closure owns its environment |
 | `'mut' and 'move' cannot be combined on one parameter` | `mut T` is an exclusive borrow, `move T` takes ownership, pick the one the callee needs |
 | `'move' cannot be written on a receiver` | a receiver is always borrowed; a move-taking parameter is `name: move T` |
 | `'first' is a generic function` (as a value) | a function value needs one concrete signature; wrap the call in a small non-generic function |
@@ -3182,10 +3182,10 @@ Compiler diagnostics print as `file:line:col`, a message, and often a note with 
 | `a 'fun' literal cannot capture 'n': it is a field of 'Counter'` | a receiver is a borrow, and a field cannot be moved out of a borrow; bind a `Copy` field to a local first, or take the receiver as a `move` parameter |
 | `cannot capture 'text' into this literal: it belongs to the enclosing closure's environment` | an environment is read through a borrow, so an owned capture cannot be moved out of it; capture it from the frame that owns it, or copy a `Copy` one |
 | `cannot read a captured value out of the closure's environment by value` | a capture is read through a borrow; use it in place, or capture a `Copy` value |
-| `this is a closure: its body captured a binding from the enclosing scope` | the parameter's type has to say `closure(...)`; a `fun(...)` value has no room for an environment |
+| `this is a closure: its body captured a binding from the enclosing scope` | the parameter's type has to say `closure fun(...)`; a `fun(...)` value has no room for an environment |
 | `this is a plain function value, not a closure` | the literal captured nothing, so it has no environment; write the expected type as `fun(...)`, or name a binding to capture |
-| `'&' cannot be written on the closure type` | a closure is an owned value; a parameter of that type already borrows it, and `move closure(...)` takes it over |
-| `'closure() => i32' cannot be a 'List' element yet` | a closure owns its environment and a list's elements are inline; use `Box<closure(...)>` or a one-field `datac` |
+| `'&' cannot be written on the closure type` | a closure is an owned value; a parameter of that type already borrows it, and `move closure fun(...)` takes it over |
+| `'closure fun() => i32' cannot be a 'List' element yet` | a closure owns its environment and a list's elements are inline; use `Box<closure fun(...)>` or a one-field `datac` |
 | `a 'fun' literal cannot read passdown 'base'` | a passdown is a hidden argument; pass the value as a parameter |
 | `a 'fun' literal cannot return a borrow ('&str')` | an indirect call has no parameter an elided lifetime could bind to; return an owned value |
 | `a 'fun' literal needs a body` | write `= expr` or `{ ... }` |
@@ -3603,7 +3603,7 @@ fun area(s: &Shape) => f64 = when s {
 ```
 
 - `when` is exhaustive: leave a variant out and the message names it. `else ->` is the catch-all and must come last.
-- A payload binds as a copy when it is `Copy`, as an **owned value** when it is owned and the scrutinee is an owned place (a `val`/`var` binding or a `move` parameter), and as a shared borrow otherwise, which is why the stdlib callbacks take `closure(&T)`. Reading an owned payload out of an owned place moves it (9.2, 22.2); reading one out of a borrow does not, and stays a borrow.
+- A payload binds as a copy when it is `Copy`, as an **owned value** when it is owned and the scrutinee is an owned place (a `val`/`var` binding or a `move` parameter), and as a shared borrow otherwise, which is why the stdlib callbacks take `closure fun(&T)`. Reading an owned payload out of an owned place moves it (9.2, 22.2); reading one out of a borrow does not, and stays a borrow.
 - `if let Some(x) = opt { }` is the one-arm form, and `?` is the propagate form. Both need the enum to be `Ok`/`Err`- or `Some`/`None`-shaped, and `?` needs the enclosing function to return the *same* shape with the *same* failure type.
 - A function that can fail more than one way returns your own error `datac`; a `datac` with a `message: String` and a position is the convention (see `str.ParseErr`).
 

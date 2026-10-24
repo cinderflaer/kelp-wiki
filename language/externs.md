@@ -191,9 +191,9 @@ generic: nothing would specialize the wrapper's signature per instantiation.
 
 A variadic extern needs its native symbol in a linked library.
 
-## Callbacks: `move closure(...)`
+## Callbacks: `move closure fun(...)`
 
-A user `extern fun` parameter written `move closure(P0, P1, ...) => T` expands in
+A user `extern fun` parameter written `move closure fun(P0, P1, ...) => T` expands in
 place to three C-ABI arguments `(thunk, env, destroy)`, the shape GLib's
 `(func, user_data, destroy_notify)` uses. `thunk` is a generated function in the
 program's externs object that reorders the native `(args..., user_data)` into the
@@ -219,7 +219,7 @@ for the call. For example, `fun(i32) => i32` maps to `int (*)(int)`: the
 `ffi_fn_pointer` regression passes one to a native function and receives one back.
 
 The pointer carries no captured environment and the native side must not retain
-it beyond the call. Use `move closure(...)` instead when the native API needs a
+it beyond the call. Use `move closure fun(...)` instead when the native API needs a
 callback it owns after the call returns, because its thunk, environment and
 destructor make that ownership explicit.
 

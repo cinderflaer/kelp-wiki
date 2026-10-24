@@ -672,12 +672,12 @@ Functions:
 
 Functions:
 
-- `fun map<T, U>(xs: &List<T>, f: closure(&T) => U) => List<U>`
-- `fun filter<T>(xs: &List<T>, f: closure(&T) => bool) => List<T>`
-- `fun each<T>(xs: &List<T>, f: closure(&T))`
-- `fun find_index<T>(xs: &List<T>, f: closure(&T) => bool) => option.Option<int>`
-- `fun any<T>(xs: &List<T>, f: closure(&T) => bool) => bool`
-- `fun all<T>(xs: &List<T>, f: closure(&T) => bool) => bool`
+- `fun map<T, U>(xs: &List<T>, f: closure fun(&T) => U) => List<U>`
+- `fun filter<T>(xs: &List<T>, f: closure fun(&T) => bool) => List<T>`
+- `fun each<T>(xs: &List<T>, f: closure fun(&T))`
+- `fun find_index<T>(xs: &List<T>, f: closure fun(&T) => bool) => option.Option<int>`
+- `fun any<T>(xs: &List<T>, f: closure fun(&T) => bool) => bool`
+- `fun all<T>(xs: &List<T>, f: closure fun(&T) => bool) => bool`
 
 ## `std/option`
 
@@ -692,16 +692,16 @@ Functions:
 - `fun unwrap_or<T>(o: move Option<T>, fallback: move T) => T`
 - `fun unwrap<T>(o: move Option<T>) => T`
 - `fun expect<T>(o: move Option<T>, message: &str) => T`
-- `fun map<T, U>(o: &Option<T>, f: closure(&T) => U) => Option<U>`
-- `fun and_then<T, U>(o: &Option<T>, f: closure(&T) => Option<U>) => Option<U>`
-- `fun or_else<T>(o: &Option<T>, f: closure() => Option<T>) => Option<T>`
-- `fun each<T>(o: &Option<T>, f: closure(&T))`
+- `fun map<T, U>(o: &Option<T>, f: closure fun(&T) => U) => Option<U>`
+- `fun and_then<T, U>(o: &Option<T>, f: closure fun(&T) => Option<U>) => Option<U>`
+- `fun or_else<T>(o: &Option<T>, f: closure fun() => Option<T>) => Option<T>`
+- `fun each<T>(o: &Option<T>, f: closure fun(&T))`
 - `fun Option<T>.is_some() => bool`
 - `fun Option<T>.is_none() => bool`
-- `fun Option<T>.map<U>(f: closure(&T) => U) => Option<U>`
-- `fun Option<T>.and_then<U>(f: closure(&T) => Option<U>) => Option<U>`
-- `fun Option<T>.or_else(f: closure() => Option<T>) => Option<T>`
-- `fun Option<T>.each(f: closure(&T))`
+- `fun Option<T>.map<U>(f: closure fun(&T) => U) => Option<U>`
+- `fun Option<T>.and_then<U>(f: closure fun(&T) => Option<U>) => Option<U>`
+- `fun Option<T>.or_else(f: closure fun() => Option<T>) => Option<T>`
+- `fun Option<T>.each(f: closure fun(&T))`
 
 ## `std/result`
 
@@ -718,16 +718,16 @@ Functions:
 - `fun unwrap_err<T, E>(r: &Result<T, E>) => E`
 - `fun expect<T, E>(r: &Result<T, E>, message: &str) => T`
 - `fun expect_err<T, E>(r: &Result<T, E>, message: &str) => E`
-- `fun map<T, U, E>(r: move Result<T, E>, f: closure(&T) => U) => Result<U, E>`
-- `fun map_err<T, E, F>(r: move Result<T, E>, f: closure(&E) => F) => Result<T, F>`
-- `fun and_then<T, U, E>(r: &Result<T, E>, f: closure(&T) => Result<U, E>) => Result<U, E>`
-- `fun or_else<T, E, F>(r: &Result<T, E>, f: closure(&E) => Result<T, F>) => Result<T, F>`
-- `fun each<T, E>(r: &Result<T, E>, f: closure(&T))`
+- `fun map<T, U, E>(r: move Result<T, E>, f: closure fun(&T) => U) => Result<U, E>`
+- `fun map_err<T, E, F>(r: move Result<T, E>, f: closure fun(&E) => F) => Result<T, F>`
+- `fun and_then<T, U, E>(r: &Result<T, E>, f: closure fun(&T) => Result<U, E>) => Result<U, E>`
+- `fun or_else<T, E, F>(r: &Result<T, E>, f: closure fun(&E) => Result<T, F>) => Result<T, F>`
+- `fun each<T, E>(r: &Result<T, E>, f: closure fun(&T))`
 - `fun Result<T, E>.is_ok() => bool`
 - `fun Result<T, E>.is_err() => bool`
-- `fun Result<T, E>.and_then<U>(f: closure(&T) => Result<U, E>) => Result<U, E>`
-- `fun Result<T, E>.or_else<F>(f: closure(&E) => Result<T, F>) => Result<T, F>`
-- `fun Result<T, E>.each(f: closure(&T))`
+- `fun Result<T, E>.and_then<U>(f: closure fun(&T) => Result<U, E>) => Result<U, E>`
+- `fun Result<T, E>.or_else<F>(f: closure fun(&E) => Result<T, F>) => Result<T, F>`
+- `fun Result<T, E>.each(f: closure fun(&T))`
 
 ## `std/arena`
 
@@ -820,7 +820,7 @@ Types:
 Functions:
 
 - `fun new(workers: i32) => Pool`
-- `fun Pool.spawn(job: move closure())`
+- `fun Pool.spawn(job: move closure fun())`
 - `fun Pool.join()`
 - `fun Pool.panicked() => i32`
 
@@ -831,8 +831,8 @@ Types:
 - `trait Iterator`
 - `datac Range(var lo: i64, val hi: i64, val step: i64)`
 - `datac ListIter<T>(var rest: List<T>)`
-- `datac MapIter<I, T, U>(var inner: I, val f: closure(&T) => U)`
-- `datac FilterIter<I, T>(var inner: I, val pred: closure(&T) => bool)`
+- `datac MapIter<I, T, U>(var inner: I, val f: closure fun(&T) => U)`
+- `datac FilterIter<I, T>(var inner: I, val pred: closure fun(&T) => bool)`
 - `datac TakeIter<I, T>(var inner: I, var left: usize)`
 - `datac SkipIter<I, T>(var inner: I, var left: usize)`
 - `datac EnumerateIter<I, T>(var inner: I, var index: usize)`
@@ -850,9 +850,9 @@ Functions:
 - `fun into_iter<T>(xs: move List<T>) => ListIter<T>`
 - `fun cloned<T>(xs: &List<T>) => ListIter<T>`
 - `fun mut MapIter<I, T, U>.next() => option.Option<U>`
-- `fun map<I: Iterator, U>(it: move I, f: move closure(&I::Item) => U) => MapIter<I, I::Item, U>`
+- `fun map<I: Iterator, U>(it: move I, f: move closure fun(&I::Item) => U) => MapIter<I, I::Item, U>`
 - `fun mut FilterIter<I, T>.next() => option.Option<T>`
-- `fun filter<I: Iterator>(it: move I, pred: move closure(&I::Item) => bool) => FilterIter<I, I::Item>`
+- `fun filter<I: Iterator>(it: move I, pred: move closure fun(&I::Item) => bool) => FilterIter<I, I::Item>`
 - `fun mut TakeIter<I, T>.next() => option.Option<T>`
 - `fun take<I: Iterator>(it: move I, n: int) => TakeIter<I, I::Item>`
 - `fun mut SkipIter<I, T>.next() => option.Option<T>`
@@ -863,11 +863,11 @@ Functions:
 - `fun zip<A: Iterator, B: Iterator>(a: move A, b: move B) => ZipIter<A, B, A::Item, B::Item>`
 - `fun mut ChainIter<A, B, T>.next() => option.Option<T>`
 - `fun chain<A: Iterator, B: Iterator>(a: move A, b: move B) => ChainIter<A, B, A::Item>`
-- `fun any<I: Iterator>(it: move I, pred: closure(&I::Item) => bool) => bool`
-- `fun all<I: Iterator>(it: move I, pred: closure(&I::Item) => bool) => bool`
-- `fun find<I: Iterator>(it: move I, pred: closure(&I::Item) => bool) => option.Option<I::Item>`
+- `fun any<I: Iterator>(it: move I, pred: closure fun(&I::Item) => bool) => bool`
+- `fun all<I: Iterator>(it: move I, pred: closure fun(&I::Item) => bool) => bool`
+- `fun find<I: Iterator>(it: move I, pred: closure fun(&I::Item) => bool) => option.Option<I::Item>`
 - `fun last<I: Iterator>(it: move I) => option.Option<I::Item>`
-- `fun fold<I: Iterator, A>(it: move I, init: move A, f: closure(&A, &I::Item) => A) => A`
+- `fun fold<I: Iterator, A>(it: move I, init: move A, f: closure fun(&A, &I::Item) => A) => A`
 
 ## `std/ops`
 

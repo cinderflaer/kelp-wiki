@@ -33,7 +33,7 @@ The checker accepts the declaration only when the compiler has a body for it.
 2. The checker asks `externs::has_body` (`infer.rs`).
    A project may declare its own extern only with a `[extern."<module>"]` section in `coral.toml`, and the checker checks that allowlist.
 3. A user extern that names a native symbol gets a trampoline in the program's externs object (`lower_externs_object`, `extern_object.rs`).
-   The trampoline calls the native symbol directly. A `move closure(...)` parameter is boxed and handed over with a thunk and a destructor.
+   The trampoline calls the native symbol directly. A `move closure fun(...)` parameter is boxed and handed over with a thunk and a destructor.
    A user extern that takes or returns by value a struct, `Bytes`, `String`, `View`, `List`, `Box`, `Map`, an array or a closure is refused by name. The message says the llvm backend cannot pass it to a native symbol yet, and asks for a pointer or a handle instead.
 
 The trampolines are lowered to LLVM IR for each program, not shipped as one fixed object, because each names the native symbols that program allowlisted.

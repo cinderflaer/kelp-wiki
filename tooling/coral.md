@@ -528,7 +528,7 @@ fun main() {
   which are refused by name for now. A typed plain
   `fun(...)` parameter or return is a C function pointer for a callback the
   native side borrows for one call. `extern type` handles (with parents,
-  `null()` and `cast()`), `...` variadics and `move closure(...)` callbacks all
+  `null()` and `cast()`), `...` variadics and `move closure fun(...)` callbacks all
   ship; use the closure form when the native side retains the callback. See
   [User FFI](/language/externs).
 

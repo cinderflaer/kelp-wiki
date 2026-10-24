@@ -27,7 +27,7 @@ impl iter.Iterator for Countdown {
     }
 }
 
-fun make_scaler(step: i32) => closure(i32) => i32 {
+fun make_scaler(step: i32) => closure fun(i32) => i32 {
     return fun(x: i32) => i32 = x * step
 }
 
@@ -83,7 +83,7 @@ passed around like any function value, which is why `make_scaler` can return one
 
 A literal that uses a value from the function around it keeps that value. This is
 a closure. `triple` remembers `step = 3` after `make_scaler` has returned, and
-`triple(7)` gives 21. The closure type is written `closure(i32) => i32`.
+`triple(7)` gives 21. The closure type is written `closure fun(i32) => i32`.
 
 ## Scoped blocks
 
@@ -110,7 +110,7 @@ and 4, and stops before 5. `iter.sum_i64` adds up an iterator's values.
 ## Try it
 
 1. Change `Countdown` so it stops at 1 rather than 0. What does the loop print?
-2. Write `fun make_offset(d: i32) => closure(i32) => i32` that adds `d`
+2. Write `fun make_offset(d: i32) => closure fun(i32) => i32` that adds `d`
    to its argument. Print `make_offset(10)(5)`, then try it again with the closure
    stored in a `val` first. Which form compiles?
 

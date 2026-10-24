@@ -141,10 +141,10 @@ returned, and be called with ordinary call syntax wherever it is held.
 A `fun` literal is an anonymous function. A literal that names a binding from the
 enclosing scope **captures** it, and that makes the literal a *closure*: a
 function value plus the environment those captures were moved into. Its type is
-written `closure(T, U) => V`.
+written `closure fun(T, U) => V`. The marker goes before `fun`. A plain `fun(T, U) => V` is the function pointer, and the `closure` marker alone makes the owned closure form.
 
 ```kelp
-fun make(step: i32) => closure(i32) => i32 {
+fun make(step: i32) => closure fun(i32) => i32 {
     return fun(x: i32) => i32 = x * step
 }
 
@@ -166,7 +166,7 @@ Capture rules:
 - A closure owns its environment. A resource in the environment is dropped where the
   closure dies, and a hosted build's collector reclaims the environment's memory.
 
-In practice, a stdlib or library callback is written `closure(&T) => U`, and a
+In practice, a stdlib or library callback is written `closure fun(&T) => U`, and a
 `Copy` element is used **directly** inside the literal: `acc + x`, not
 `acc + *x`:
 

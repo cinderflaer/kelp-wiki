@@ -224,7 +224,7 @@ pub enum Node<M> {
     Row(val children: List<Child<M>>, val spacing: i32)
     Text(val text: String, val size: i32, val bold: bool)
     Spacer(val height: i32)
-    Entry(val text: String, val on_change: closure(String) => M)
+    Entry(val text: String, val on_change: closure fun(String) => M)
     Button(val label: String, val on_click: M)
     Checkbox(val label: String, val checked: bool, val on_toggle: M)
     Progress(val permille: i32)
@@ -244,7 +244,7 @@ fun mut Children<M>.text(t: str)
 fun mut Children<M>.text_styled(t: str, size: i32, bold: bool)
 fun mut Children<M>.spacer(height: i32)
 fun mut Children<M>.button(label: str, on_click: move M)
-fun mut Children<M>.entry(value: str, on_change: closure(String) => M)
+fun mut Children<M>.entry(value: str, on_change: closure fun(String) => M)
 fun mut Children<M>.checkbox(label: str, checked: bool, on_toggle: move M)
 fun mut Children<M>.progress(permille: i32)
 fun mut Children<M>.separator()
@@ -313,7 +313,7 @@ pub fun schedule_focus_entry(delay_ms: u32, index: i32)
 - `entry(value, on_change)` is a text field. `value` seeds the text the first
   time the widget is built; a patch rewrites it only when the model's text
   differs **and** the entry is not where the focus is, so a user's cursor and
-  selection are not fought. `on_change` is a closure, `closure(String) => M` (called
+  selection are not fought. `on_change` is a closure, `closure fun(String) => M` (called
   with a borrowed `String`) that turns the live text into the application's
   `Msg`.
 - `checkbox(label, checked, on_toggle)` posts `on_toggle` on `toggled`; the

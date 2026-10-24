@@ -355,8 +355,8 @@ Output:
 ```kelp
 iter.into_iter(xs: move List<T>) -> ListIter<T>      // owned items, front to back
 iter.cloned(xs: &List<T>) -> ListIter<T>             // a copy of a borrowed list
-iter.map(it, f)        -> MapIter<..>     // f: closure(&Item) -> U
-iter.filter(it, pred)  -> FilterIter<..>  // pred: closure(&Item) -> bool
+iter.map(it, f)        -> MapIter<..>     // f: closure fun(&Item) -> U
+iter.filter(it, pred)  -> FilterIter<..>  // pred: closure fun(&Item) -> bool
 iter.take(it, n)       -> TakeIter<..>    // at most the first n
 iter.skip(it, n)       -> SkipIter<..>    // the items after the first n
 iter.enumerate(it)     -> EnumerateIter<..>   // (int, Item), from 0

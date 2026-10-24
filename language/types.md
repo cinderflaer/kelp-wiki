@@ -38,7 +38,7 @@ valid inside the scope that lent it.
 | `enum` name | owned | tagged union: exactly one variant is live |
 | `(A, B)` | owned | a tuple: two or more element values held in **position order**. Not `Copy`, and it takes the derived deep copy and the derived order a `datac` takes, position by position. Read by destructuring or by position `t.0` ([Bindings and assignment](/language/bindings)) |
 | `fun(T, U) => V` | Copy | a function value: a function pointer, with the parameters it takes and what it returns |
-| `closure(T, U) => V` | owned | a function value **plus** the environment its captures were moved into |
+| `closure fun(T, U) => V` | owned | a function value **plus** the environment its captures were moved into |
 
 There is no `void`. A function with no `=> T` returns `unit`, which has no
 representation, so a binding of one holds nothing ([Returns](/language/returns)).
