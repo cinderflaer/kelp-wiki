@@ -11,7 +11,10 @@ The syntax file is the authority. `View` is a builtin type name, like `str` or
 
 ```
 program      := line* EOF
-line         := impl | trait | traitimpl | const | pd | datac | enum | fun
+line         := impl | trait | traitimpl | const | pd | datac | enum | fun | statement
+                // a line that is none of these is a statement of a script, which runs as
+                // `main` (issue #288). A file with statements cannot also declare `main`, and
+                // only the entry file may hold statements.
 
 impl         := "impl" string [ "caps" "(" ( grant ( "," grant )* | "*" ) ")" ]
                 // `caps(*)` (15.2) delegates the whole resource of every domain and

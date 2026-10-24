@@ -51,6 +51,29 @@ fun abs_diff(a: i32, b: i32) => i32 {         // block body
 - `mut` and `move` are mutually exclusive, `move` is refused on a `str` or a
   `&T`, and a receiver is always borrowed (there is no `fun move Type.name()`).
 
+## Script files
+
+A file whose top level holds statements and no `fun main` runs those statements as its `main` (issue #288). Declarations may come before, between or after the statements:
+
+```kelp
+print("start")
+val n = twice(21)
+print(n)
+greet("Kelp")
+
+twice(x: i32) => i32 = x * 2
+
+greet(name: str) {
+    print("hello, ${name}")
+}
+```
+
+- The statements run in source order. A line is a declaration when it is a declaration keyword, a modifier, or a function header as in the section above, and any other line is a statement. So `print("start")` and `c.bump()` are statements, and `greet(name: str) {` is a declaration.
+- The script's `main` takes no arguments and returns unit, as `fun main()` does. So `?` is refused in a script, with the same message it has in `fun main()`.
+- A top-level `val` is a local of the script's `main`. Functions do not see it.
+- A file with statements cannot also declare `main`: the refusal names both. The statements may only be in the entry file, so a statement in another module of the program is refused.
+- A `let ... else` at the top level takes the statements after it as its rest, so no declaration may follow it.
+
 ## Named arguments
 
 A call with more than one parameter can name its arguments. Names are matched
