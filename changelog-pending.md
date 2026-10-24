@@ -24,6 +24,7 @@ empty on release.
 
 ## added
 
+- A `fun Type.name()` whose body writes `self` is exclusive with no `mut` written: the receiver mode is inferred from the body, so `fun mut` is not needed. A shared borrow cannot call such a method, and the refusal names the rule. Inside a datac block the mode is still written (`mut name()`), and a block method that writes `self` without it is refused with that fix named (issue #286).
 - The type of a `const` is optional: `const LIMIT = 10` takes the type of its value, so an integer is `int`, a float `f64`, and a typed const keeps its type. A use never changes it, so a `const` used as a `usize` address or length keeps its annotation (`const BASE: usize = 0x1000`). An array, a tuple or a `section(...)` array still needs the type.
 - A digit separator, `_` between two digits, may be written in an integer or float literal: `1_000_000`, `0x1000_0000`, `0b1010_1010`, `1_000.000_5`. It changes no value. A `_` first, last or doubled in a literal (`0x_ff`, `1_`, `1__000`) is refused by name, at the `_`.- The `val` on a `datac` or enum-payload field is optional: `datac Point(x: i32, y: i32)` is the same as `datac Point(val x: i32, val y: i32)`. A bare field is immutable, and `var` is still written, so a misused `var` keeps its message (issue #284).
 

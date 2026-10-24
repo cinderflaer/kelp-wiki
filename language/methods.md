@@ -60,7 +60,34 @@ datac Counter(val id: i32, var count: i32) {
 - Inside the method, fields are read and written **by their bare names**. `self`
   is the whole receiver, for a method that needs to pass the value on.
 - `fun Type.name()` takes a **shared** borrow of the receiver, so it may be
-  called on a `val` binding.
+  called on a `val` binding, unless its body writes `self`.
+- A method's receiver mode is inferred from its body. A `fun Type.name()` whose
+  body writes `self` is exclusive without `mut` written. A body writes `self` when
+  it assigns to a field of `self`, takes a `&mut` of a part of it, or passes it or
+  a part of it to an exclusive parameter (a builtin such as `List.push`, or a
+  `fun mut` method). A call on `self` to another method that writes counts too.
+
+  ```kelp
+  fun Counter.bump() { count += 1 }            // exclusive, inferred
+  fun Counter.bump_twice() {                   // exclusive, inferred through bump
+      self.bump()
+      self.bump()
+  }
+  fun Counter.total() => i32 = id + count      // shared
+  ```
+
+  The mode is part of the method's contract, but the signature does not show it.
+  Write `fun mut Type.name()` when the signature should say the method writes its
+  receiver. Both forms mean the same.
+- A shared borrow cannot call an exclusive method, whichever way its mode was
+  written. The refusal says that the method writes its receiver, so a call needs
+  an exclusive borrow.
+- Inside a datac block the mode is written and never inferred: a block method
+  that writes `self` needs `mut` before its name, and without it the refusal names
+  `mut name()` as the fix.
+- A method in an `impl` or `trait` block keeps the written mode, because its
+  receiver has to match the trait's declaration, and `fun mut T.drop()` is written
+  as before.
 - `fun mut Type.name()` takes an **exclusive** borrow, so the receiver must be
   reachable mutably: a `var` binding, a `mut` parameter, or a field of one.
   Calling it on a `val` binding fails with `cannot assign to 'c': not declared
@@ -81,7 +108,7 @@ datac Counter(val id: i32, var count: i32) {
   that is still live when the exclusive borrow starts is refused. For example,
   `p.copy_from(p)` fails with `cannot borrow 'p' as exclusive: already borrowed as
   shared`.
-- Inside `fun mut T.m()`, `self` is a `&mut T`. It is a pointer and it is `Copy`,
+- Inside an exclusive method, `self` is a `&mut T`. It is a pointer and it is `Copy`,
   so you can name a field and then call another method on `self`.
 - A **concrete `enum`** may declare a receiver method too, and a call on a value of
   the enum type resolves it: `val s = Shape.Empty`, then `s.label()`. A receiver
