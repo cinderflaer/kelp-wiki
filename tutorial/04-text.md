@@ -13,7 +13,7 @@ how to read a number out of text.
 impl "std/fmt"
 impl "std/str"
 
-fun shout(s: &str) => String {
+fun shout(s: str) => String {
     var out = String.empty()
     out.push_str(s)
     out.push_str("!")

@@ -12,7 +12,7 @@ The return type is written **after** the parameter list, introduced by `=>`:
 
 ```kelp
 fun add(a: i32, b: i32) => i32 = a + b     // expression body, requires =>
-fun greet(name: &str) {                    // no => returns unit
+fun greet(name: str) {                    // no => returns unit
     print(str.concat("hello, ", name))
 }
 ```

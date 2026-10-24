@@ -26,7 +26,7 @@ impl "std/str"
 // Count the words in a text file and print each one with its count, sorted.
 // Words are separated by spaces, and case is ignored.
 
-fun count_words(path: &str, counts: mut Map<String, i64>) {
+fun count_words(path: str, counts: mut Map<String, i64>) {
     val lines = fs.read_lines(path)
     var i: int = 0
     while i < lines.len() {

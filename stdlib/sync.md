@@ -296,9 +296,9 @@ pd val shared: Shared = Shared(
 datac Mailbox(var ready: bool, var value: i64)
 datac Shared(val box: Mutex<Mailbox>, val cv: Condvar)
 
-fun not_ready(m: &Mailbox) => bool = !m.ready
+fun not_ready(m: Mailbox) => bool = !m.ready
 
-fun consumer(s: &Shared) => i64 {
+fun consumer(s: Shared) => i64 {
     s.box.wait_while(&s.cv, not_ready) { m -> m.value }
 }
 

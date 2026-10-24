@@ -22,7 +22,7 @@ impl "std/result"
 pub datac Item(val name: String, val count: i64)
 pub enum ParseErr { Empty Bad(val offset: usize) }
 
-pub fun parse(text: &str) => result.Result<List<Item>, ParseErr> { ... }
+pub fun parse(text: str) => result.Result<List<Item>, ParseErr> { ... }
 ```
 
 And in a consumer:

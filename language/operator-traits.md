@@ -52,11 +52,11 @@ impl "std/fmt"
 datac Vec2(val x: i64, val y: i64)
 
 impl ops.Add for Vec2 {
-    fun Self.add(rhs: &Vec2) => Vec2 = Vec2(x = self.x + rhs.x, y = self.y + rhs.y)
+    fun Self.add(rhs: Vec2) => Vec2 = Vec2(x = self.x + rhs.x, y = self.y + rhs.y)
 }
 
 impl ops.Sub for Vec2 {
-    fun Self.sub(rhs: &Vec2) => Vec2 = Vec2(x = self.x - rhs.x, y = self.y - rhs.y)
+    fun Self.sub(rhs: Vec2) => Vec2 = Vec2(x = self.x - rhs.x, y = self.y - rhs.y)
 }
 
 impl ops.Neg for Vec2 {
@@ -80,7 +80,7 @@ impl fmt.Display for Vec2 {
 datac Version(val major: i32, val minor: i32)
 
 impl ops.Ord for Version {
-    fun Self.cmp(other: &Version) => i32 {
+    fun Self.cmp(other: Version) => i32 {
         if self.major != other.major {
             return self.major - other.major
         }

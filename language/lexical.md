@@ -41,7 +41,7 @@ does:
 datac Buffer(val bytes: Bytes)
 
 /// How many characters a `&str` has, continuation bytes counted once.
-fun char_count(s: &str) => int
+fun char_count(s: str) => int
 ```
 
 `//!` is read as the header of a block, so it has to start a line: consecutive

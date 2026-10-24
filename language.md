@@ -77,7 +77,7 @@ impl "std/str"
 
 datac Point(var x: i32, var y: i32)
 
-fun area(p: &Point) => i32 = p.x * p.y
+fun area(p: Point) => i32 = p.x * p.y
 
 enum Shape {
     Circle(val r: f64)

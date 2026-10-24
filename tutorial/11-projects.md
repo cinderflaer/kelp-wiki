@@ -16,7 +16,7 @@ is the module:
 ```kelp
 pub datac Rect(val w: i32, val h: i32)
 
-pub fun area(r: &Rect) => i32 = r.w * r.h
+pub fun area(r: Rect) => i32 = r.w * r.h
 
 fun secret() => i32 = 42
 ```
@@ -71,7 +71,7 @@ file:
 ```kelp
 impl "std/fs"
 
-pub fun count_lines(path: &str) => i64 {
+pub fun count_lines(path: str) => i64 {
     val lines = fs.read_lines(path)
     return lines.len().to_i64()
 }

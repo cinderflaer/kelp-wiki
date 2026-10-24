@@ -25,7 +25,7 @@ impl "std/process"
 
 fun is_space(c: u8) => bool = c == ' ' || c == '\t' || c == '\n' || c == '\r'
 
-fun report(label: &str, n: i64) {
+fun report(label: str, n: i64) {
     val padded = fmt.pad_right(label, 8, ' ')
     val count = fmt.int(n)
     print(str.concat(padded.as_str(), count.as_str()))

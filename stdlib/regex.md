@@ -185,7 +185,7 @@ impl "std/option"
 impl "std/result"
 impl "std/str"
 
-fun compile_or_die(pat: &str) => regex.Regex {
+fun compile_or_die(pat: str) => regex.Regex {
     val r = regex.compile(pat)
     if let Ok(re) = r {
         return re
@@ -193,7 +193,7 @@ fun compile_or_die(pat: &str) => regex.Regex {
     panic("bad pattern in the example")
 }
 
-fun repeated(unit: &str, times: int, tail: &str) => String {
+fun repeated(unit: str, times: int, tail: str) => String {
     var s = String.with_capacity(str.len(unit) * times + str.len(tail))
     var i: int = 0
     while i < times {

@@ -22,7 +22,7 @@ kelpc 26.10.6
 Create a file called `hello.kp`:
 
 ```kelp
-fun greet(name: &str) {
+fun greet(name: str) {
     print("hello, ${name}")
 }
 

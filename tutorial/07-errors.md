@@ -17,7 +17,7 @@ impl "std/option"
 impl "std/result"
 impl "std/str"
 
-fun find(xs: &List<i32>, want: i32) => option.Option<int> {
+fun find(xs: List<i32>, want: i32) => option.Option<int> {
     var i: int = 0
     while i < xs.len() {
         if xs.get(i) == want {
@@ -40,7 +40,7 @@ fun quarter(n: i64) => result.Result<i64, String> {
     return half(n = h)
 }
 
-fun parse_half(text: &str) => result.Result<i64, String> {
+fun parse_half(text: str) => result.Result<i64, String> {
     val n = str.parse_i64(s = text)
     if let Ok(v) = n {
         return half(n = v)
@@ -48,7 +48,7 @@ fun parse_half(text: &str) => result.Result<i64, String> {
     return result.Result.Err(error = String.from_str(s = "not a number"))
 }
 
-fun show(text: &str) {
+fun show(text: str) {
     when parse_half(text) {
         Ok(v) -> print("half of ${text} is ${v}")
         Err(e) -> print("${text}: ${e}")

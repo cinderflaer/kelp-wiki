@@ -182,7 +182,7 @@ exit of the block. The value of `EXPR` is discarded. `defer` is a keyword.
   that reached it ([Iterators, `for` and `break`](/language/iterators)).
 
 ```kelp
-fun note(tag: &str) {
+fun note(tag: str) {
     defer print(tag)
     print("body")
     return

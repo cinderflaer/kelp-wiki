@@ -388,7 +388,7 @@ below still works and is the simpler option for a quick test:
 impl "std/fs" caps(fs = ["/srv/data/**"])
 impl "std/str"
 
-fun read(name: &str) => String = fs.read_text(str.concat("/srv/data/", name))
+fun read(name: str) => String = fs.read_text(str.concat("/srv/data/", name))
 ```
 
 Anything outside `/srv/data/**` is refused at the call, and the caller sees the

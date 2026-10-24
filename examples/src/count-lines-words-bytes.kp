@@ -23,7 +23,7 @@ fun is_space(c: u8) => bool = c == ' ' || c == '\t' || c == '\n' || c == '\r'
 // cannot be turned into an absolute one by the program. `fs.read_text("in.txt")`
 // therefore panics ("is outside the fs capability granted to module ..."), even
 // with a `/**` grant. Refusing it here gives the caller a sentence instead.
-fun require_absolute(tool: &str, file: &str) {
+fun require_absolute(tool: str, file: str) {
     if !path.is_absolute(file) {
         val message = str.concat("error: ", tool)
         val rest = String.from_str(" takes an absolute path (this language has no cwd accessor)")
@@ -32,7 +32,7 @@ fun require_absolute(tool: &str, file: &str) {
     }
 }
 
-fun report(label: &str, n: i64) {
+fun report(label: str, n: i64) {
     val padded = fmt.pad_right(label, 8, ' ')
     val count = fmt.int(n)
     print(str.concat(padded.as_str(), count.as_str()))

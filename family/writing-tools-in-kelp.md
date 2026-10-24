@@ -99,7 +99,7 @@ fresh `val` for the result rather than reassigning the `var`.
 ### Methods that mutate
 
 ```kelp
-fun Attrs.add_class(name: &str) { classes.push_str(name) }
+fun Attrs.add_class(name: str) { classes.push_str(name) }
 // error: cannot write to 'self': it is a shared borrow, not 'mut'
 ```
 

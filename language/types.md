@@ -49,7 +49,7 @@ A tuple is two or more values held in **position order**, and it is a type:
 `(i32, i32)` is a pair of `i32`s, written wherever a type is written.
 
 ```kelp
-fun min_max(xs: &List<i32>) => (i32, i32) {
+fun min_max(xs: List<i32>) => (i32, i32) {
     // ...
     return (lo, hi)
 }

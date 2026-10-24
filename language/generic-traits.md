@@ -183,11 +183,11 @@ impl convert.From<i64> for AppErr {
     fun from(value: i64) => AppErr = AppErr.Range(value = value)
 }
 
-fun parse(s: &str) => result.Result<i64, str.ParseErr> {
+fun parse(s: str) => result.Result<i64, str.ParseErr> {
     return str.parse_i64(s = s)
 }
 
-fun small(s: &str) => result.Result<i64, AppErr> {
+fun small(s: str) => result.Result<i64, AppErr> {
     val n = parse(s = s)?
     if n > 100 {
         return result.Result.Err(error = AppErr.from(value = n))

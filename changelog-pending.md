@@ -31,6 +31,8 @@ empty on release.
 
 - The Coral, Polyp, fpl and Lighthouse pages match their `main` branches: Coral has no version pins and records `coral.lock`, Polyp exports no `QUIT_ID` and its API lists the v4 and v5 nodes, fpl has 32 libraries, and Lighthouse has a Kelp port of the server in progress.
 
+- A `&` in front of a parameter of an owned type is redundant (issue #283): `s: &String`, `p: &Point` (a `datac`), `xs: &List<T>`, `m: &Map<K, V>`, `b: &Bytes`, `b: &Box<T>` and `s: &str` take the same arguments as the bare type. `kelpc lint` warns on it, and the examples and language pages write the bare type. `&dyn`, a scalar or another `Copy` type, a fixed-size array, a generic `T` and `fun X.eq(other: &X)` keep their `&`.
+
 ## Added
 
 - A multi-line string literal: `"""` opens a block, a line holding only `"""` closes it, and the closing line's indentation is removed from the lines between. The value always ends with a newline and uses the string escapes, so a block equals the same text written with `\n` (issue 260). An unterminated block is refused at its opening.

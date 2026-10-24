@@ -62,7 +62,7 @@ pub enum Sign {
 }
 
 /// Adds up the `cents` of every `Entry` in `entries`.
-pub fun total(entries: &List<Entry>) => i64 {
+pub fun total(entries: List<Entry>) => i64 {
     var sum: i64 = 0
     for e in entries {
         sum = sum + e.cents
@@ -163,7 +163,7 @@ How a ledger reads an amount.
 ### `total`
 
 ```kelp
-pub fun total(entries: &List<Entry>) => i64
+pub fun total(entries: List<Entry>) => i64
 ```
 
 Adds up the `cents` of every [`Entry`](#entry) in `entries`.
@@ -292,7 +292,7 @@ Those last two, from the compiler's own test module `kelpc/tests/docs/shapes.kp`
 ### `load`
 
 ```kelp
-pub fun load(path: &str) => String
+pub fun load(path: str) => String
 ```
 
 *requires capability `fs`*

@@ -391,7 +391,8 @@ recursing `.kp` files, with a link inside a directory skipped and reported), so 
 tree is named once.
 
 The rules are the ones a formatter cannot enforce: the comment run, the `else if`
-link, and the naming case, all three from [Style](/language/style).
+link, the naming case and the redundant borrow on a parameter, all from
+[Style](/language/style).
 
 ### The comment run
 

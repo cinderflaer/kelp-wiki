@@ -387,7 +387,7 @@ fun say(e: move tls.TlsError) {
     print(text.as_str())
 }
 
-fun try_pair(cert_file: &str, key_file: &str) {
+fun try_pair(cert_file: str, key_file: str) {
     val cert = tlsfile.read_pem(cert_file, "certificate chain")
     val key = tlsfile.read_pem(key_file, "private key")
     when cert {

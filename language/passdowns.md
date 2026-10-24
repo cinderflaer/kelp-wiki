@@ -108,7 +108,7 @@ write checked rather than free.
 ```kelp
 pd var config: String = String.from_str(s = "api")
 
-fun describe(name: &String) {
+fun describe(name: String) {
     print(name.as_str())
     print(config.as_str())   // shared: the argument and this read coexist
 }

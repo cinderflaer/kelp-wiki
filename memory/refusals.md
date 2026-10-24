@@ -133,7 +133,7 @@ datac Name(val text: String)
 
 fun mk() => Name = Name(text = String.from_str("kelp"))
 
-fun show(n: &Name) {
+fun show(n: Name) {
     print(n.text.len())
 }
 
@@ -154,7 +154,7 @@ datac Name(val text: String)
 
 fun mk() => Name = Name(text = String.from_str("kelp"))
 
-fun show(n: &Name) {
+fun show(n: Name) {
     print(n.text.len())
 }
 

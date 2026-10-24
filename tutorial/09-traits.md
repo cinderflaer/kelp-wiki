@@ -34,7 +34,7 @@ impl Shape for Circle {
     fun Self.describe() => String = "a circle"
 }
 
-fun total_area<T: Shape>(items: &List<T>) => f64 {
+fun total_area<T: Shape>(items: List<T>) => f64 {
     var sum = 0.0
     var i: int = 0
     while i < items.len() {

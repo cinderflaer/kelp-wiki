@@ -143,6 +143,30 @@ warning: function 'read_text' is snake_case, and this project asks for camelCase
 - The suggestion is a starting point, not a rename: `lint` writes nothing, and
   `read_HTTP` is suggested as `readHttp` rather than guessed at.
 
+## The redundant borrow
+
+A parameter of an owned type already borrows its argument, so a `&` in front of
+its type adds nothing. `kelpc lint` warns on it, and the fix is to delete the `&`:
+
+```kelp
+datac Point(var x: i32, var y: i32)
+
+fun area(p: &Point) => i32 = p.x * p.y      // warning: write 'p: Point'
+```
+
+The rule covers `String`, `Bytes`, `List<...>`, `Map<...>`, `Box<...>`, a `datac`
+declared in the same file, and `str` (so `s: &str` is written `s: str`). A
+`datac` from another file is not reported, because the lint reads one file.
+
+The `&` stays where it changes what the parameter takes:
+
+- `&dyn Trait`, which has no other spelling.
+- A scalar or another `Copy` type (`&i32`, an enum, a `View`): a plain parameter
+  of a `Copy` type is passed by value.
+- A fixed-size array (`&[i32; 3]`): a plain array is passed by value.
+- A generic `T` (`x: &T`): a plain `T` depends on whether it is `Copy`.
+- `fun X.eq(other: &X)`: the compiler requires the borrow there.
+
 ## See also
 
 - [`kelpc` CLI](/tooling/kelpc-cli)

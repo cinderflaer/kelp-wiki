@@ -34,7 +34,7 @@ mentions `option.Option` without importing `std/option`:
 ```kelp
 impl "std/str"
 
-fun count_from(text: &str) => option.Option<i64> {
+fun count_from(text: str) => option.Option<i64> {
     return option.Option.None
 }
 ```
@@ -103,7 +103,7 @@ files, one grant, one call outside it:
 impl "std/fs" caps(fs = ["/tmp/kelp-sandbox/vault/**"])
 impl "std/str"
 
-fun read(name: &str) => String {
+fun read(name: str) => String {
     val path = str.concat("/tmp/kelp-sandbox/vault/", name)
     return fs.read_text(path.as_str())
 }

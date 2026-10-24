@@ -79,7 +79,7 @@ interface itself:
 
 ```kelp
 pub trait Backend {
-    fun mut Self.apply(patches: &List<Patch>)          // one line: core.apply_patches
+    fun mut Self.apply(patches: List<Patch>)          // one line: core.apply_patches
     fun mut Self.make(path: &Path, at: i32, kind: i32, props: &Props)
     fun mut Self.patch_widget(path: &Path, props: &Props)
     fun mut Self.drop_widget(path: &Path)
@@ -89,7 +89,7 @@ pub trait Backend {
     fun Self.path_of(id: i32) => option.Option<Path>
     fun Self.focus() => option.Option<i32>
     fun mut Self.set_focus(id: i32)
-    fun mut Self.set_entry_text(id: i32, text: &str)
+    fun mut Self.set_entry_text(id: i32, text: str)
     fun Self.entry_text(id: i32) => String
     fun Self.entry_ids() => List<i32>
     fun Self.entries_built() => i32

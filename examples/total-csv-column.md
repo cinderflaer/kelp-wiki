@@ -41,7 +41,7 @@ impl "std/str"
 impl "std/fmt"
 
 // Totals the `units` column per region, in a function of its own.
-fun totals_by_region(rows: &List<csv.Row>) => Map<String, i64> {
+fun totals_by_region(rows: List<csv.Row>) => Map<String, i64> {
     var totals: Map<String, i64> = Map.new()
     var i: int = 1          // row 0 is the header
     while i < rows.len() {
@@ -60,7 +60,7 @@ fun totals_by_region(rows: &List<csv.Row>) => Map<String, i64> {
     return totals
 }
 
-fun render(totals: &Map<String, i64>) {
+fun render(totals: Map<String, i64>) {
     var headers: List<String> = List.empty()
     headers.push("region")
     headers.push("units")

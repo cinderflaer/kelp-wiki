@@ -186,7 +186,7 @@ tables, and it costs nothing to read:
 ```kelp
 pd var config: String = String.from_str(s = "api")
 
-fun describe(name: &String) {
+fun describe(name: String) {
     print(name.as_str())
     print(config.as_str())   // shared borrow: the argument and this read coexist
 }
