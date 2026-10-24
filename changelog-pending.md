@@ -33,6 +33,7 @@ empty on release.
 - The `val` on a `datac` or enum-payload field is optional: `datac Point(x: i32, y: i32)` is the same as `datac Point(val x: i32, val y: i32)`. A bare field is immutable, and `var` is still written, so a misused `var` keeps its message (issue #284).
 
 - A method may be written inside the braces of its `datac`, with no `fun` and no type name: `mut bump() { count += 1 }` in `datac Counter(val id: int, var count: int) { ... }` means the same as `fun mut Counter.bump()` written after the type. The two forms mix, and `fun` and `pub` are refused inside the block (issue #285).
+- `derive(text)` writes the `Display` form of a `datac` or `enum` above it (issue #292): `impl fmt.Display` with `to_text`, so `"${x}"` and `print(x)` work with no hand-written impl. A `datac` reads `Point(3, ab)`, a `datac` with no fields `Blank()`, and an enum reads `Circle(2)` or its unit variant name `Empty`. Fields are written in declaration order and a `String` is written without quotes. The file must import `std/fmt`, and a field with no text form (a `List`, `Map`, `Box`, tuple or array, or a local type with no `to_text`) is refused by name. `derive(eq, hash, text)` may combine the three.
 
 ## Documentation
 

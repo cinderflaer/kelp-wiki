@@ -1119,14 +1119,18 @@ temporary handling frees the text after it is printed.
   keep theirs.
 - `x.to_text()` may be called explicitly wherever the method is declared, like any other trait
   method; the interpolation and `print` desugars are the convenience, not a new method surface.
+- **`derive(text)`** (issue #292) writes this impl for a `datac` or `enum`: `to_text` is the
+  constructor shape, `Point(3, ab, true)`, `Empty()` for a `datac` with no fields, and `Circle(2)` or
+  `Empty` for an enum variant. Fields are in declaration order, and a `String` is written without
+  quotes. A field with no text form is refused by name, and the file must import `std/fmt`.
 
 ### 13.5 What is deliberately not in this slice
 
 Each refused where it is written, with the message naming the follow-up:
 
-- **Derive-like helpers.** There is no macro and no `derive`; a type writes its `impl` by hand, and
-  no impl is generated for it. A `datac`/`enum` still has no `==`, `<` or `Display` unless it
-  declares one.
+- **Derive-like helpers beyond `derive(text)`.** There is no macro. `derive(text)` (syntax 12.2)
+  writes the `impl fmt.Display` of a `datac` or `enum` above it, and nothing else is derived: a type
+  writes its other `impl`s by hand, and a `datac`/`enum` still has no `<` unless it declares one.
 - **Bitwise operators, `&&`/`||`, `!`, `~`, shifts and `?` through a trait.** Only the arithmetic
   operators, the order operators and the unary minus are overloaded. `&&`/`||` stay `bool`, and the
   bitwise set stays integral.

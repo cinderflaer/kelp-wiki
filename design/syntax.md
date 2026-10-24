@@ -2104,7 +2104,7 @@ print(m.get(key = Tag(name = String.from_str(s = "a"), on = true, n = 1)))   // 
 
 - **`eq` is field by field in declaration order.** Two values are equal when every field is equal. For an `enum`, two values are equal when they are the same variant and every payload field of that variant is equal. Each variant's `hash` starts from its position in the declaration, so two variants never share a starting value.
 - **`hash` folds the same fields in the same order**, so equal values hash equally. A `String` or `Bytes` field is folded byte by byte and then by its length, a `bool` as one of two values, and an integer through `to_u64`. A `char` adds a fixed step, because the language has no `char` to integer conversion, so keys that differ only in a `char` share a hash and `eq` tells them apart.
-- **Only `eq` and `hash` are names.** `derive(show)`, or any other name, is refused by name. `derive(eq)` alone gives `==` and `!=` and no key, and `derive(hash)` alone is a lone `hash`, which is refused as in 12.2.
+- **Only `eq`, `hash` and `text` are names.** `derive(show)`, or any other name, is refused by name. `derive(eq)` alone gives `==` and `!=` and no key, and `derive(hash)` alone is a lone `hash`, which is refused as in 12.2. `derive(text)` is the `Display` form, below.
 - **A field or payload type must have the method being derived.** An integer, `bool`, `char`, `String` or `Bytes` has both. A `f32` or `f64` has `eq` (its `==`) but no hash, so `derive(hash)` refuses it. A `datac` or `enum` of this file has the method when it derives it or declares it by hand. A `List`, `Box`, `Map`, tuple or array field has neither, and a type of another module is checked where its module declares it.
 - **Refusals.** Each one names the field and its type and gives the fix:
   - a field whose type has no `eq` or `hash` of its own, for example a `datac` `Inner` without a derive, which is refused as `derive(hash) on 'Outer' cannot hash field 'inner' of type 'Inner'` with the fix "add derive(eq, hash) above 'Inner', or declare 'fun Inner.hash' by hand";
@@ -2113,6 +2113,36 @@ print(m.get(key = Tag(name = String.from_str(s = "a"), on = true, n = 1)))   // 
   - a generic type (`datac Wrap<T>`) with a field whose type mentions a type parameter, which is refused by name, because derive cannot tell what a `T` is compared as. A type with a const parameter is refused too.
 
 The methods are written by hand when the type needs a different comparison: a float field, or a field whose equality is not the one a derive gives.
+
+#### Derived `text`
+
+A `datac` or `enum` that prints by its fields can ask for its `Display` form. A `derive(text)` line on its own, directly above the type, writes `impl fmt.Display for T` with `fun Self.to_text() => String`, so `"${x}"` and `print(x)` lower through it (13.4) exactly as through a hand-written impl. The file must import `std/fmt` first (`impl "std/fmt"`).
+
+```kelp
+impl "std/fmt"
+
+derive(text)
+datac Point(val x: i32, val name: String, val on: bool)
+
+derive(text)
+enum Shape {
+    Circle(val r: i32)
+    Empty
+}
+
+print(Point(x = 3, name = String.from_str(s = "ab"), on = true))   // Point(3, ab, true)
+print(Shape.Circle(r = 2))                                          // Circle(2)
+print(Shape.Empty)                                                  // Empty
+```
+
+- **The text is the constructor shape.** A `datac` reads its name and then its fields in declaration order, separated by `, ` and in parentheses: `Point(3, ab, true)`. A `datac` with no fields reads `Name()`. An enum payload variant reads `Variant(a, b)`, and a unit variant reads its name only. Field names are not written.
+- **A `String` or `Bytes` field is written as its bytes, with no quotes.** This is the `Display` form, not a debug form, so `Point(3, ab, true)` and not `Point(3, "ab", true)`.
+- **Nested values use their own text form.** A field whose type is a number, `bool`, `char`, a float, `String`, `Bytes`, or a type of this file with a `to_text` (a hand-written or derived `Display`) is written in place. A type of another module is checked where its module declares it.
+- **Refusals.** Each one names the field and its type and gives the fix:
+  - a field with no text form, for example `List<i32>`, a `Map`, a `Box`, a tuple or an array, or a `datac` of this file with no `to_text`, which is refused as `derive(text) on 'Bag' cannot write field 'items' of type 'List<i32>'`;
+  - a file without `impl "std/fmt"`, which is refused with the import to add, because derive writes `impl fmt.Display`;
+  - a generic `datac` or `enum`, because a type parameter has no known text form, and a type that already declares `to_text` by hand, refused as for `eq` and `hash`.
+
 
 ### 12.3 `Box<T>`
 
