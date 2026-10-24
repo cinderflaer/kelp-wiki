@@ -24,6 +24,15 @@ fun abs_diff(a: i32, b: i32) => i32 {         // block body
 }
 ```
 
+- At the top level the keyword may be left out of a function with no modifier:
+  `main() { ... }`, `half(n: i32) => i32 = n / 2`, `Counter.bump() { ... }` and
+  `mut Counter.bump() { ... }` are the same as their `fun` forms, and one file may
+  mix the two. The name must be followed by its parameter list (`(` or `<`), so a
+  top-level line that is not a declaration is still refused. A function with a
+  modifier keeps `fun`: `pub fun half(...)`, `extern fun`, `unsafe fun`, and the
+  functions marked `naked`, `must_use`, `interrupt`, `section(...)` or `align(N)`.
+  Closures and function types keep `fun`, and so do methods in an `impl` or
+  `trait` block. The examples on this site write `fun`.
 - The keyword is `fun`; the return type is written `=> T` **after** the
   parameter list. `->` is accepted as an alias of `=>`. There is no trailing type,
   and no inferred return type for a block body. No return type means `unit`.

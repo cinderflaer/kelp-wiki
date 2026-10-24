@@ -47,6 +47,9 @@ bound        := traitname [ typeargs ]                // `Shape`, `From<i32>`
 typeargs     := "<" type ("," type)* ">"   // in an expression: adjacent to the name and to "("
 fun          := [ "pub" ] [ "extern" ] "fun" [ "mut" ] ( ident [ typeparams ] "." )? ident [ typeparams ]
                 "(" [ param ("," param)* ] ")" [ "=>" type ] body
+                // at the top level, "fun" may be left out when no "pub", "extern" or other modifier
+                // is written, and the line is a name, or "mut" and a type name, then "Name" or
+                // "Type.name", then "(" or "<" (issue #287). "pub" keeps "fun".
                 // `[typeparams]` after the function's own name bounds its type
                 // parameters (9.5); on a receiver it names the receiver's type
                 // arguments and takes no bounds.
