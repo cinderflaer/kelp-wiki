@@ -71,6 +71,11 @@ false
 `unsafe fun name(...)` declares a function that only unsafe context may call.
 Its body is itself an unsafe context, so it needs no block of its own.
 
+A function whose whole body is one `unsafe { ... }` block is written this way,
+with the block left out. Make the change only when every caller is already in
+unsafe context: a call from safe code would then be an error, and a block at
+each such call puts back the lines the form removes.
+
 ```kelp project
 unsafe fun store(p: Ptr<i32>, v: i32) {
     p.write(v)

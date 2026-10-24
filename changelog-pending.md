@@ -40,6 +40,8 @@ empty on release.
 
 - A `&` in front of a parameter of an owned type is redundant (issue #283): `s: &String`, `p: &Point` (a `datac`), `xs: &List<T>`, `m: &Map<K, V>`, `b: &Bytes`, `b: &Box<T>` and `s: &str` take the same arguments as the bare type. `kelpc lint` warns on it, and the examples and language pages write the bare type. `&dyn`, a scalar or another `Copy` type, a fixed-size array, a generic `T` and `fun X.eq(other: &X)` keep their `&`.
 
+- A function whose whole body is one `unsafe { ... }` block may be written `unsafe fun`, with the block left out (issue #289). The language chapter states the rule: every caller must already be in unsafe context. The compiler is unchanged, and three example functions in the kernel tests are written this way.
+
 ## Added
 
 - A multi-line string literal: `"""` opens a block, a line holding only `"""` closes it, and the closing line's indentation is removed from the lines between. The value always ends with a newline and uses the string escapes, so a block equals the same text written with `\n` (issue 260). An unterminated block is refused at its opening.
