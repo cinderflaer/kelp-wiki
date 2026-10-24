@@ -124,14 +124,25 @@ val n: i64 = 7
 val x: f64 = n.to_f64()        // 7.0, exact for every i64
 val b: u8 = 200
 val idx: int = b.to_int()    // a byte used as an index
-val back: u8 = idx.to_u8()     // panics if it does not fit
-val small = idx.try_to_u8()    // Option<u8>: None where to_u8 would panic
+val back: u8 = idx.to_byte()   // panics if it does not fit
+val small = idx.try_to_byte()  // Option<u8>: None where to_byte would panic
+```
+
+The conversion to `u8` is spelled `to_byte()`, and its fallible twin is
+`try_to_byte()`. `to_u8()` and `try_to_u8()` still compile and print an `outdated:`
+finding that names the fix; they are removed in the next development cycle.
+`to_int()` and `to_float()` convert to the native-width types, and the fixed widths
+keep their names (`to_i64()`, `to_f64()`, `to_usize()`, and the rest).
+
+```kelp
+val byte: u8 = idx.to_byte()          // panics if idx is past 255
+val small = idx.try_to_byte()         // Option<u8>
 ```
 
 `try_to_<T>` exists only where the plain conversion can fail. A widening is already
 exact, so `b.try_to_int()` is not a method. Write `b.to_int()` instead, and the
 diagnostic says so. The `Option` it hands back is
-[`std/option`](/stdlib/option)'s, so `if let Some(v) = idx.try_to_u8()` needs no
+[`std/option`](/stdlib/option)'s, so `if let Some(v) = idx.try_to_byte()` needs no
 type written anywhere. That module has to be somewhere in the program's import
 graph; a program that imports `std/str` has it already, since `std/str` imports
 it, and one that imports nothing at all is told to add the `impl` line.

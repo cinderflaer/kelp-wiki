@@ -36,7 +36,7 @@ fun main() {
     val ratio: f64 = n.to_f64() / 2.0
     print("ratio = ${ratio}")
     val wide: i32 = 300
-    if let Some(v) = wide.try_to_u8() {
+    if let Some(v) = wide.try_to_byte() {
         print("fits ${v}")
     } else {
         print("300 does not fit in a u8")
@@ -88,7 +88,7 @@ error: operator requires matching numeric operands, found 'int' and 'f64'
 
 You convert on purpose with a method. `n.to_f64()` turns an integer into a float,
 and `n.to_i64()` turns it into an `i64`. A conversion that might not fit, such as
-`300` into a `u8`, has a second form, `try_to_u8()`, that returns an `Option`.
+`300` into a `u8`, has a second form, `try_to_byte()`, that returns an `Option`.
 This is why the program above printed the `else` branch. A conversion that does
 not fit and is not written with `try_` panics, which ends the program.
 

@@ -154,7 +154,7 @@ panic: List.get: index out of bounds
 ```
 
 When the caller can recover, return a value instead. The conversion functions show
-the pattern: `n.to_u8()` panics when `n` does not fit, and `n.try_to_u8()` returns
+the pattern: `n.to_byte()` panics when `n` does not fit, and `n.try_to_byte()` returns
 an `Option` for the caller to test.
 
 ## Which to use

@@ -121,8 +121,8 @@ panic inside the handler goes to a double-panic path instead of recursing. See
 [Freestanding mode](/language/freestanding#panic-semantics) for both shapes, the
 double-panic rule and the table of checks.
 
-One conversion fails in both ways. A narrowing number conversion such as `n.to_u8()`
-panics when the value does not fit. `n.try_to_u8()` returns an
+One conversion fails in both ways. A narrowing number conversion such as `n.to_byte()`
+panics when the value does not fit. `n.try_to_byte()` returns an
 [`Option`](/stdlib/option) instead, so the caller decides what to do.
 
 **The divergence rule.** A block whose last statement is `panic(...)` never
