@@ -85,6 +85,15 @@ enum Shape {
 - Construction names the variant, qualified by the enum:
   `Shape.Circle(r = 1.0)`, `Shape.Empty`. Arguments may be named or positional, and a
   bare name is shorthand for `name = name` (`Shape.Circle(r)` when a local `r` exists).
+- The enum may be left out when the variant name is unique. `Circle(r = 1.0)` and
+  `Empty` build the variant of an `enum` declared in the same module when exactly
+  one such enum declares a variant of that name. A local, a passdown, a `datac`, a
+  function or a builtin of that name wins, and the bare form is not used. When two
+  or more of the module's enums declare the name, the bare form is refused and the
+  message names the qualifier to write, such as `Drawing.Circle` or `Shape.Circle`.
+  An enum from another module keeps its qualifier. `None`, `Some`, `Ok` and `Err`
+  are never read as a variant by this rule. A `when` pattern always takes the bare
+  name, because the scrutinee's type names the enum.
 - An `enum` may declare receiver methods, and a call on a value of the type
   resolves one. A receiver that builds a variant names a type rather than a value,
   so it is refused: bind the variant first.
