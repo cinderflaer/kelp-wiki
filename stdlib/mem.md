@@ -12,7 +12,7 @@ impl "std/mem"
 
 | Function | Returns | Notes |
 | --- | --- | --- |
-| `mem.alloc(n: usize)` | `Bytes` | a zero-filled buffer of `n` bytes |
+| `mem.alloc(n: int)` | `Bytes` | a zero-filled buffer of `n` bytes |
 
 That is the whole module. `Bytes` is the owned buffer type, so an allocation is
 used like any other `Bytes`: `get`/`set`, `len`, `append`, `clone`, `as_str`,

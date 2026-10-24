@@ -58,7 +58,7 @@ fun main() {
     }
 
     var count: i64 = 10
-    var at: usize = 1
+    var at: int = 1
 
     if str.eq(argv.get(1).as_str(), "--lines") {
         if argv.len() < 4 {
@@ -76,7 +76,7 @@ fun main() {
     val resolved = absolute_or_here(target.as_str(), here.as_str())
 
     val lines = fs.read_lines(resolved.as_str())
-    var i: usize = 0
+    var i: int = 0
     while i < lines.len() && i.to_i64() < count {
         print(lines.get(i).as_str())
         i += 1

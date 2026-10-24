@@ -15,7 +15,7 @@ impl "std/list"
 | `map<T, U>(xs, f: closure(&T) => U)` | `List<U>` | one new element per element |
 | `filter<T>(xs, f: closure(&T) => bool)` | `List<T>` | **`T` must be `Copy`** |
 | `each<T>(xs, f: closure(&T))` | `Unit` | for the side effect |
-| `find_index<T>(xs, f: closure(&T) => bool)` | `option.Option<usize>` | the first match |
+| `find_index<T>(xs, f: closure(&T) => bool)` | `option.Option<int>` | the first match |
 | `any<T>(xs, f: closure(&T) => bool)` | `bool` | |
 | `all<T>(xs, f: closure(&T) => bool)` | `bool` | |
 

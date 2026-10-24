@@ -43,7 +43,7 @@ datac Child(
 | Function | Returns | Notes |
 | --- | --- | --- |
 | `args()` | `List<String>` | this process's argv, **including `argv[0]`** |
-| `arg_count()` | `usize` | |
+| `arg_count()` | `int` | |
 | `spawn(program, args)` | `Child` | pipes for all three streams |
 | `spawn_in(dir, program, args)` | `Child` | with a working directory; `""` keeps the parent's |
 | `run(program, args)` | `RunResult` | runs to completion, collects both streams; panics if it cannot start |
@@ -74,7 +74,7 @@ fun main() {
     print(argv.len())            // at least 1: argv[0] is the program path
 
     var argv_tail: List<String> = List.empty()
-    var i: usize = 1
+    var i: int = 1
     while i < argv.len() {
         argv_tail.push(argv.get(i).clone())
         i += 1

@@ -36,7 +36,7 @@ impl Shape for Circle {
 
 fun total_area<T: Shape>(items: &List<T>) => f64 {
     var sum = 0.0
-    var i: usize = 0
+    var i: int = 0
     while i < items.len() {
         sum += items.get(i).area()
         i += 1

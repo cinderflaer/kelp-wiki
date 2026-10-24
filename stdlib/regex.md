@@ -95,8 +95,8 @@ where the parser noticed. Nothing panics and nothing matches.
 ## API
 
 ```kelp
-datac RegexErr(val message: String, val offset: usize)
-datac Match(val start: usize, val end: usize, val text: String)
+datac RegexErr(val message: String, val offset: int)
+datac Match(val start: int, val end: int, val text: String)
 datac Captures(val text: String, val slots: List<i32>)
 ```
 
@@ -105,7 +105,7 @@ regex.compile(pattern: &str) => result.Result<Regex, RegexErr>
 regex.is_match(pattern: &str, text: &str) => bool          // panics on a bad pattern
 Regex.is_match(&str) => bool
 Regex.find(&str) => option.Option<Match>
-Regex.find_at(&str, start: usize) => option.Option<Match>
+Regex.find_at(&str, start: int) => option.Option<Match>
 Regex.captures(&str) => option.Option<Captures>
 Regex.find_all(&str) => List<Match>
 Regex.replace(&str, replacement: &str) => String
@@ -113,10 +113,10 @@ Regex.replace_all(&str, replacement: &str) => String
 Regex.split(&str) => List<String>
 Regex.steps() => i64
 Regex.reset_steps()
-Regex.group_count() => usize
-Captures.get(i: usize) => option.Option<String>
-Captures.span(i: usize) => option.Option<Match>
-Captures.len() => usize                                    // groups including group 0
+Regex.group_count() => int
+Captures.get(i: int) => option.Option<String>
+Captures.span(i: int) => option.Option<Match>
+Captures.len() => int                                    // groups including group 0
 ```
 
 The matching methods take the `Regex` **exclusively** (`fun mut`): the scratch
@@ -193,9 +193,9 @@ fun compile_or_die(pat: &str) => regex.Regex {
     panic("bad pattern in the example")
 }
 
-fun repeated(unit: &str, times: usize, tail: &str) => String {
+fun repeated(unit: &str, times: int, tail: &str) => String {
     var s = String.with_capacity(str.len(unit) * times + str.len(tail))
-    var i: usize = 0
+    var i: int = 0
     while i < times {
         s.push_str(unit)
         i += 1

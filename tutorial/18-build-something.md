@@ -28,10 +28,10 @@ impl "std/str"
 
 fun count_words(path: &str, counts: mut Map<String, i64>) {
     val lines = fs.read_lines(path)
-    var i: usize = 0
+    var i: int = 0
     while i < lines.len() {
         val words = str.split(lines.get(i).as_str(), " ")
-        var j: usize = 0
+        var j: int = 0
         while j < words.len() {
             val word = str.to_lower(words.get(j).as_str())
             if !word.is_empty() {
@@ -60,7 +60,7 @@ fun main() {
 
     var words = counts.keys()
     words.sort()
-    var k: usize = 0
+    var k: int = 0
     while k < words.len() {
         val w = words.get(k)
         print("${w} ${counts.get(key = w.as_str())}")

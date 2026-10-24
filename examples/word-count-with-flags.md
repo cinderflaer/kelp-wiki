@@ -47,7 +47,7 @@ fun is_space(c: u8) => bool = c == ' ' || c == '\t' || c == '\n' || c == '\r'
 fun count_lines(s: &str) => i64 {
     val bytes = str.len(s)
     var lines: i64 = 0
-    var i: usize = 0
+    var i: int = 0
     while i < bytes {
         if str.byte(s, i) == '\n' {
             lines += 1
@@ -64,7 +64,7 @@ fun count_words(s: &str) => i64 {
     val bytes = str.len(s)
     var words: i64 = 0
     var in_word = false
-    var i: usize = 0
+    var i: int = 0
     while i < bytes {
         if is_space(str.byte(s, i)) {
             in_word = false
@@ -129,7 +129,7 @@ fun run(parser: &argparse.Parser, pa: &argparse.ParsedArgs) {
 
     val label = argparse.get_option(parser, pa, "label")
     val here = fs.cwd()
-    var i: usize = 0
+    var i: int = 0
     while i < names.len() {
         val name = names.get(i)
         val resolved = absolute_or_here(name.as_str(), here.as_str())
@@ -153,7 +153,7 @@ fun absolute_or_here(name: &str, here: &str) => String {
 // Without this, `./word-count-with-flags file.txt` would treat `./word-count-with-flags` as a file to read.
 fun without_program_name(argv: &List<String>) => List<String> {
     var out: List<String> = List.empty()
-    var i: usize = 1
+    var i: int = 1
     while i < argv.len() {
         out.push(argv.get(i).clone())
         i += 1

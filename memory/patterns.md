@@ -118,7 +118,7 @@ parameter, which is allowed because the return is derived from that parameter.
 ```kelp
 fun first_word(line: &str) => View {
     val v = line.view()
-    var end: usize = 0
+    var end: int = 0
     while end < v.len() && v.get(end) != 32 {
         end += 1
     }

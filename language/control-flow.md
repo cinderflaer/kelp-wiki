@@ -99,7 +99,7 @@ if let Rect(w, h) = shape {
 ## `while`
 
 ```kelp
-var i: usize = 0
+var i: int = 0
 while i < xs.len() {
     print(xs.get(i))
     i += 1

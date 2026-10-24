@@ -3601,7 +3601,7 @@ impl "std/str"
 impl "std/fmt"
 impl "std/result"
 
-datac ScanError(val message: String, val at: usize)
+datac ScanError(val message: String, val at: int)
 
 fun is_blank(c: u8) => bool = c == ' ' || c == '\t' || c == '\n' || c == '\r'
 
@@ -3611,13 +3611,13 @@ fun is_alpha(c: u8) => bool {
     return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_'
 }
 
-fun skip_blanks(text: View, pos: mut usize) {
+fun skip_blanks(text: View, pos: mut int) {
     while *pos < text.len() && is_blank(text.get(*pos)) {
         *pos += 1
     }
 }
 
-fun scan_word(text: View, pos: mut usize) => result.Result<String, ScanError> {
+fun scan_word(text: View, pos: mut int) => result.Result<String, ScanError> {
     skip_blanks(text, pos)
     val start = *pos
     while *pos < text.len() && is_alpha(text.get(*pos)) {
@@ -3629,7 +3629,7 @@ fun scan_word(text: View, pos: mut usize) => result.Result<String, ScanError> {
     return result.Result.Ok(value = text.slice(start, *pos))
 }
 
-fun scan_number(text: View, pos: mut usize) => result.Result<i64, ScanError> {
+fun scan_number(text: View, pos: mut int) => result.Result<i64, ScanError> {
     skip_blanks(text, pos)
     val start = *pos
     var n: i64 = 0
@@ -3645,7 +3645,7 @@ fun scan_number(text: View, pos: mut usize) => result.Result<i64, ScanError> {
 
 fun tokenize(text: View) => result.Result<List<String>, ScanError> {
     var out: List<String> = List.empty()
-    var pos: usize = 0
+    var pos: int = 0
     while pos < text.len() {
         skip_blanks(text, pos)
         if pos < text.len() {

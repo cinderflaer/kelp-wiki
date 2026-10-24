@@ -26,12 +26,12 @@ datac File(val fd: i32)
 | Method | Returns | Notes |
 | --- | --- | --- |
 | `is_open()` | `bool` | |
-| `read(max: usize)` | `Bytes` | up to `max` bytes; empty at end of file |
-| `read_into(buf: mut Bytes, at: usize)` | `usize` | reads into an existing buffer |
+| `read(max: int)` | `Bytes` | up to `max` bytes; empty at end of file |
+| `read_into(buf: mut Bytes, at: int)` | `int` | reads into an existing buffer |
 | `read_all()` | `Bytes` | to end of file |
-| `write(data: Bytes)` | `usize` | |
-| `write_text(text: String)` | `usize` | takes ownership of the text |
-| `write_str(text: &str)` | `usize` | |
+| `write(data: Bytes)` | `int` | |
+| `write_text(text: String)` | `int` | takes ownership of the text |
+| `write_str(text: &str)` | `int` | |
 | `flush()` | `Unit` | |
 | `close()` | `Unit` | |
 | `set_nonblocking(on: bool)` | `Unit` | `mut` receiver |

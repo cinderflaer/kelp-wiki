@@ -38,7 +38,7 @@ datac Client(val timeout_ms: u64, val max_redirects: i32, val follow_redirects: 
 datac Pool(
     val host: String,
     val port: u16,
-    val size: usize,
+    val size: int,
     val timeout_ms: u64,
     var idle: List<Conn>,
     var idle_since: List<i64>,
@@ -193,9 +193,9 @@ its pool was small.
 | `Pool.warm(use_tls: bool)` | `Unit` (`mut`) |
 | `Pool.checkout(use_tls: bool)` | `Lease` (`mut`) |
 | `Pool.release(lease, reusable: bool)` | `Unit` (`mut`) |
-| `Pool.size()` / `Pool.len()` | `usize`: the keep count, and how many are idle |
+| `Pool.size()` / `Pool.len()` | `int`: the keep count, and how many are idle |
 | `Pool.set_idle_timeout(ms)` | `Unit` (`mut`): `checkout` closes a connection idle for `ms` or longer instead of reusing it; 0 is off (the default) |
-| `Pool.close_idle(after_ms)` | `usize` (`mut`): closes every connection idle for `after_ms` or longer, returns how many; `close_idle(0)` closes them all |
+| `Pool.close_idle(after_ms)` | `int` (`mut`): closes every connection idle for `after_ms` or longer, returns how many; `close_idle(0)` closes them all |
 | `Pool.close_all()` | `Unit` (`mut`) |
 | `Lease.conn()` | `Conn` |
 
@@ -374,7 +374,7 @@ token of any `Connection` header) closes.
 | `Server.close()` | `Unit` | |
 | `ServerConn.read_request(&Limits)` | `Result<ServerRequest, HttpErr>` | |
 | `ServerConn.write_response(&ServerResponse)` | `Result<usize, HttpErr>` | a gone peer is `Err`, never a panic |
-| `ServerConn.write_error(&HttpErr)` | `Result<usize, HttpErr>` | answers a failed read |
+| `ServerConn.write_error(&HttpErr)` | `Result<int, HttpErr>` | answers a failed read |
 | `ServerConn.mark_close()` / `wants_close()` | `Unit` / `bool` | |
 | `ServerConn.close()` | `Unit` | half-close, drain briefly, then close |
 | `http_error_status(&HttpErr)` | `i32` | the status of a failed read, or `0` |
@@ -433,7 +433,7 @@ fun client(port: u16) => String {
     // A request line over the 8 KiB limit is answered 414 and closed.
     var over = String.with_capacity(8300)
     over.push_str("GET /")
-    var i: usize = 0
+    var i: int = 0
     while i < 8200 {
         over.push('x')
         i += 1

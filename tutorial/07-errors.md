@@ -17,8 +17,8 @@ impl "std/option"
 impl "std/result"
 impl "std/str"
 
-fun find(xs: &List<i32>, want: i32) => option.Option<usize> {
-    var i: usize = 0
+fun find(xs: &List<i32>, want: i32) => option.Option<int> {
+    var i: int = 0
     while i < xs.len() {
         if xs.get(i) == want {
             return option.Option.Some(value = i)

@@ -17,17 +17,17 @@ impl "std/str"
 
 | Function | Returns | Notes |
 | --- | --- | --- |
-| `len(s: &str)` | `usize` | bytes, not characters (a `strlen`, so it costs the length of the string) |
+| `len(s: &str)` | `int` | bytes, not characters (a `strlen`, so it costs the length of the string) |
 | `is_empty(s: &str)` | `bool` | |
-| `byte(s: &str, i: usize)` | `u8` | byte at `i`; out of range panics. The bounds check reads `i + 1` bytes, not the whole string |
+| `byte(s: &str, i: int)` | `u8` | byte at `i`; out of range panics. The bounds check reads `i + 1` bytes, not the whole string |
 | `ptr(s: &str)` | `Ptr<u8>` | the address of the first byte, which is the NUL-terminated text itself; reading through it needs `unsafe` |
 | `byte_index(s: &str, i: usize)` | `usize` | the byte offset of character `i` |
-| `char_count(s: &str)` | `usize` | codepoints |
-| `char_at(s: &str, i: usize)` | `u32` | the codepoint at character index `i` |
+| `char_count(s: &str)` | `int` | codepoints |
+| `char_at(s: &str, i: int)` | `u32` | the codepoint at character index `i` |
 | `decode_at(s: &str, at: usize)` | `u32` | the codepoint starting at byte offset `at` |
 | `substring(s: &str, from: usize)` | `&str` | from a byte offset to the end: a borrow, no copy |
-| `copy_range(s: &str, from: usize, to: usize)` | `String` | copies the byte range |
-| `prefix(s: &str, n: usize)` | `String` | the first `n` bytes, copied |
+| `copy_range(s: &str, from: int, to: int)` | `String` | copies the byte range |
+| `prefix(s: &str, n: int)` | `String` | the first `n` bytes, copied |
 | `index_of(s: &str, needle: &str)` | `option.Option<usize>` | byte offset, `None` when absent |
 | `starts_with(s, prefix)` / `starts_with_at(s, needle, at)` | `bool` | |
 | `ends_with(s, suffix)` | `bool` | |
@@ -38,13 +38,13 @@ impl "std/str"
 | `is_space(c: u8)` | `bool` | space, tab, LF, CR |
 | `is_digit(c: u8)` | `bool` | ASCII `0`-`9` |
 | `to_upper(s)` / `to_lower(s)` | `String` | every letter with a simple Unicode case mapping; the full mappings are not applied, so `ß` stays as it is |
-| `slice(s: &str, from: usize, to: usize)` | `String` | the bytes `[from, to)`, copied. Panics when `to` is past the end, when `from` is past `to`, or when either end lies inside a codepoint |
-| `repeat(s: &str, n: usize)` | `String` | |
+| `slice(s: &str, from: int, to: int)` | `String` | the bytes `[from, to)`, copied. Panics when `to` is past the end, when `from` is past `to`, or when either end lies inside a codepoint |
+| `repeat(s: &str, n: int)` | `String` | |
 | `replace(s: &str, from: &str, to: &str)` | `String` | every occurrence |
 | `split(s: &str, sep: &str)` | `List<String>` | keeps empty pieces: `"a,"` splits to 2 |
 | `join(parts: List<String>, sep: &str)` | `String` | takes the list by value |
 | `concat(a: &str, b: &str)` | `String` | allocates |
-| `copy_into(dst: mut Bytes, at: usize, src: &str)` | `usize` | raw copy into a buffer |
+| `copy_into(dst: mut Bytes, at: int, src: &str)` | `int` | raw copy into a buffer |
 | `from_i64(n)` / `from_u64(n)` / `from_f64(x, decimals)` | `String` | |
 | `parse_i64(s)` / `parse_u64(s)` / `parse_f64(s)` | `result.Result<T, ParseErr>` | |
 | `parse_err(s: &str)` | `ParseErr` | the error a failed parse would carry |

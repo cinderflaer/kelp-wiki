@@ -14,7 +14,7 @@ impl "std/rand" caps(rand = [])
 | --- | --- | --- |
 | `rand.u64()` | `u64` | a full-width random value |
 | `rand.below(n: u64)` | `u64` | in `[0, n)` |
-| `rand.bytes(n: usize)` | `Bytes` | `n` random bytes, for a token or a salt |
+| `rand.bytes(n: int)` | `Bytes` | `n` random bytes, for a token or a salt |
 
 ```kelp
 impl "std/rand"

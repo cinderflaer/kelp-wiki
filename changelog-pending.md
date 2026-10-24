@@ -37,6 +37,7 @@ empty on release.
 
 ## Changed
 
+- Index and length functions take `int`, not `usize` (issue #278): `len`, `get`, `set`, `insert`, `remove`, `slice`, `str.byte`, `str.substring`, the `Bytes` read and write offsets, the byte counts of `mem.alloc`, `rand.bytes` and the `io` and `net` reads and writes, and the counts of `with_capacity` and `reserve`. Breaking: a `usize` passed to one of them is refused, and the message names both types, so convert with `to_int()`. A negative index panics with the same bounds message as today; a negative count to `with_capacity` or `reserve` panics with `negative count`. Addresses and arena or frame sizes (`Ptr.addr`, `Ptr.offset`, `Frame`, `Arena`, the allocator hooks) stay `usize`.
 - Field shorthand: in a `datac` or enum variant construction, a bare name `host` means `host = host` when a local has that name, and it mixes with named arguments (`Job(host, port, paths = paths)`). A bare name with no matching local or field is refused with the name in the message. Calls to functions are unchanged.
 
 - The example pages match their programs: `count-lines-words-bytes` passes an absolute path, the `sandbox-directory-grant` panic line is current, and the `count-lines-in-kelp-tree` listing is the current `examples/src`.

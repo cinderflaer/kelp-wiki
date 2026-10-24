@@ -33,7 +33,7 @@ so it has no section here.
 
 Functions:
 
-- `fun alloc(n: usize) => Bytes`
+- `fun alloc(n: int) => Bytes`
 
 ## `std/str`
 
@@ -43,14 +43,14 @@ Types:
 
 Functions:
 
-- `fun len(s: &str) => usize`
-- `fun byte(s: &str, i: usize) => u8`
+- `fun len(s: &str) => int`
+- `fun byte(s: &str, i: int) => u8`
 - `fun ptr(s: &str) => Ptr<u8>`
 - `fun is_empty(s: &str) => bool`
-- `fun substring(s: &str, from: usize) => &str`
-- `fun char_count(s: &str) => usize`
-- `fun index_of(s: &str, needle: &str) => option.Option<usize>`
-- `fun starts_with_at(s: &str, needle: &str, at: usize) => bool`
+- `fun substring(s: &str, from: int) => &str`
+- `fun char_count(s: &str) => int`
+- `fun index_of(s: &str, needle: &str) => option.Option<int>`
+- `fun starts_with_at(s: &str, needle: &str, at: int) => bool`
 - `fun starts_with(s: &str, prefix: &str) => bool`
 - `fun ends_with(s: &str, suffix: &str) => bool`
 - `fun contains(s: &str, needle: &str) => bool`
@@ -60,14 +60,14 @@ Functions:
 - `fun is_digit(c: u8) => bool`
 - `fun trim_start(s: &str) => &str`
 - `fun trim_end(s: &str) => String`
-- `fun prefix(s: &str, n: usize) => String`
+- `fun prefix(s: &str, n: int) => String`
 - `fun trim(s: &str) => String`
 - `fun to_upper(s: &str) => String`
 - `fun to_lower(s: &str) => String`
-- `fun repeat(s: &str, n: usize) => String`
-- `fun copy_range(s: &str, from: usize, to: usize) => String`
+- `fun repeat(s: &str, n: int) => String`
+- `fun copy_range(s: &str, from: int, to: int) => String`
 - `fun split(s: &str, sep: &str) => List<String>`
-- `fun copy_into(dst: mut Bytes, at: usize, src: &str) => usize`
+- `fun copy_into(dst: mut Bytes, at: int, src: &str) => int`
 - `fun join(parts: List<String>, sep: &str) => String`
 - `fun concat(a: &str, b: &str) => String`
 - `fun from_u64(n: u64) => String`
@@ -78,9 +78,9 @@ Functions:
 - `fun parse_f64(s: &str) => result.Result<f64, ParseErr>`
 - `fun parse_err(s: &str) => ParseErr`
 - `fun replace(s: &str, from: &str, to: &str) => String`
-- `fun byte_index(s: &str, i: usize) => usize`
-- `fun decode_at(s: &str, at: usize) => u32`
-- `fun char_at(s: &str, i: usize) => u32`
+- `fun byte_index(s: &str, i: int) => int`
+- `fun decode_at(s: &str, at: int) => u32`
+- `fun char_at(s: &str, i: int) => u32`
 
 ## `std/path`
 
@@ -89,7 +89,7 @@ Functions:
 - `fun is_absolute(s: &str) => bool`
 - `fun normalize(s: &str) => String`
 - `fun absolute(base: &str, p: &str) => String`
-- `fun last_sep(s: &str) => usize`
+- `fun last_sep(s: &str) => int`
 - `fun file_name(s: &str) => &str`
 - `fun extension(s: &str) => &str`
 - `fun stem(s: &str) => String`
@@ -203,8 +203,8 @@ Functions:
 - `fun float(x: f64, decimals: i32) => String`
 - `fun hex(n: u64) => String`
 - `fun bytes(b: Bytes) => String`
-- `fun pad_left(s: &str, width: usize, fill: u8) => String`
-- `fun pad_right(s: &str, width: usize, fill: u8) => String`
+- `fun pad_left(s: &str, width: int, fill: u8) => String`
+- `fun pad_right(s: &str, width: int, fill: u8) => String`
 - `fun commas_u64(n: u64) => String`
 - `fun commas_i64(n: i64) => String`
 - `fun group_digits(text: &str) => String`
@@ -242,7 +242,7 @@ Functions:
 Types:
 
 - `datac RegexErr(val message: String, val offset: usize)`
-- `datac Match(val start: usize, val end: usize, val text: String)`
+- `datac Match(val start: int, val end: int, val text: String)`
 - `datac Captures(val text: String, val slots: List<i32>)`
 - `datac Regex(`
 
@@ -268,7 +268,7 @@ Types:
 
 - `datac IoErr(val errno: i32, val message: String)`
 - `datac File(val fd: i32)`
-- `datac BufReader(val file: File, var buf: Bytes, var start: usize, var end: usize)`
+- `datac BufReader(val file: File, var buf: Bytes, var start: int, var end: int)`
 
 Functions:
 
@@ -360,7 +360,7 @@ Types:
 Functions:
 
 - `fun args() => List<String>`
-- `fun arg_count() => usize`
+- `fun arg_count() => int`
 - `fun spawn_in(dir: &str, program: &str, args: List<String>) => Child`
 - `fun spawn(program: &str, args: List<String>) => Child`
 - `fun run_in(dir: &str, program: &str, args: List<String>) => RunResult`
@@ -389,9 +389,9 @@ Functions:
 
 - `fun connect(host: &str, port: u16) => Socket`
 - `fun try_connect(host: &str, port: u16) => result.Result<Socket, ConnectErr>`
-- `fun try_send_all(s: Socket, data: Bytes) => result.Result<usize, NetErr>`
-- `fun try_recv(s: Socket, max: usize) => result.Result<Bytes, NetErr>`
-- `fun try_recv_into(s: Socket, buf: mut Bytes, at: usize) => result.Result<usize, NetErr>`
+- `fun try_send_all(s: Socket, data: Bytes) => result.Result<int, NetErr>`
+- `fun try_recv(s: Socket, max: int) => result.Result<Bytes, NetErr>`
+- `fun try_recv_into(s: Socket, buf: mut Bytes, at: int) => result.Result<int, NetErr>`
 - `fun listen(port: u16) => Listener`
 - `fun listen_on(host: &str, port: u16) => Listener`
 - `fun accept(l: Listener) => Socket`
@@ -401,11 +401,11 @@ Functions:
 - `fun Listener.close()`
 - `fun shutdown_write(s: Socket)`
 - `fun try_shutdown_write(s: Socket) => bool`
-- `fun send(s: Socket, data: Bytes) => usize`
-- `fun send_all(s: Socket, data: Bytes) => usize`
+- `fun send(s: Socket, data: Bytes) => int`
+- `fun send_all(s: Socket, data: Bytes) => int`
 - `fun send_text(s: Socket, text: &str)`
-- `fun recv(s: Socket, max: usize) => Bytes`
-- `fun recv_into(s: Socket, buf: mut Bytes, at: usize) => usize`
+- `fun recv(s: Socket, max: int) => Bytes`
+- `fun recv_into(s: Socket, buf: mut Bytes, at: int) => int`
 - `fun Socket.wait_readable(timeout_ms: u64) => bool`
 - `fun Socket.wait_writable(timeout_ms: u64) => bool`
 - `fun mut Socket.set_timeout(ms: u64)`
@@ -530,15 +530,15 @@ Functions:
 - `fun handshake_with(s: net.Socket, host: &str, opts: TlsOptions) => TlsStream`
 - `fun handshake_timeout(s: net.Socket, host: &str, ms: u64) => TlsStream`
 - `fun set_timeout(t: TlsStream, ms: u64)`
-- `fun try_write(t: TlsStream, data: Bytes) => result.Result<usize, TlsError>`
-- `fun try_write_all(t: TlsStream, data: Bytes) => result.Result<usize, TlsError>`
-- `fun try_read(t: TlsStream, max: usize) => result.Result<Bytes, TlsError>`
-- `fun try_read_into(t: TlsStream, buf: mut Bytes, at: usize) => result.Result<usize, TlsError>`
+- `fun try_write(t: TlsStream, data: Bytes) => result.Result<int, TlsError>`
+- `fun try_write_all(t: TlsStream, data: Bytes) => result.Result<int, TlsError>`
+- `fun try_read(t: TlsStream, max: int) => result.Result<Bytes, TlsError>`
+- `fun try_read_into(t: TlsStream, buf: mut Bytes, at: int) => result.Result<int, TlsError>`
 - `fun try_shutdown(t: TlsStream) => result.Result<bool, TlsError>`
-- `fun write(t: TlsStream, data: Bytes) => usize`
-- `fun write_all(t: TlsStream, data: Bytes) => usize`
-- `fun read(t: TlsStream, max: usize) => Bytes`
-- `fun read_into(t: TlsStream, buf: mut Bytes, at: usize) => usize`
+- `fun write(t: TlsStream, data: Bytes) => int`
+- `fun write_all(t: TlsStream, data: Bytes) => int`
+- `fun read(t: TlsStream, max: int) => Bytes`
+- `fun read_into(t: TlsStream, buf: mut Bytes, at: int) => int`
 - `fun shutdown(t: TlsStream)`
 - `fun server_options() => ServerOptions`
 - `fun ServerOptions.min_version(v: TlsVersion) => ServerOptions`
@@ -615,7 +615,7 @@ Functions:
 Functions:
 
 - `fun file() => str`
-- `fun line() => usize`
+- `fun line() => int`
 
 ## `std/trace`
 
@@ -625,10 +625,10 @@ Types:
 
 Functions:
 
-- `fun event(file: &str, line: usize, name: &str)`
-- `fun begin(file: &str, line: usize, name: &str) => Span`
-- `fun end(file: &str, line: usize, span: Span)`
-- `fun emit(kind: &str, file: &str, line: usize, name: &str, elapsed_ns: i64)`
+- `fun event(file: &str, line: int, name: &str)`
+- `fun begin(file: &str, line: int, name: &str) => Span`
+- `fun end(file: &str, line: int, span: Span)`
+- `fun emit(kind: &str, file: &str, line: int, name: &str, elapsed_ns: i64)`
 - `fun escape(text: &str) => String`
 
 ## `std/tz`
@@ -657,7 +657,7 @@ Functions:
 
 - `fun u64() => u64`
 - `fun below(n: u64) => u64`
-- `fun bytes(n: usize) => Bytes`
+- `fun bytes(n: int) => Bytes`
 
 ## `std/env`
 
@@ -675,7 +675,7 @@ Functions:
 - `fun map<T, U>(xs: &List<T>, f: closure(&T) => U) => List<U>`
 - `fun filter<T>(xs: &List<T>, f: closure(&T) => bool) => List<T>`
 - `fun each<T>(xs: &List<T>, f: closure(&T))`
-- `fun find_index<T>(xs: &List<T>, f: closure(&T) => bool) => option.Option<usize>`
+- `fun find_index<T>(xs: &List<T>, f: closure(&T) => bool) => option.Option<int>`
 - `fun any<T>(xs: &List<T>, f: closure(&T) => bool) => bool`
 - `fun all<T>(xs: &List<T>, f: closure(&T) => bool) => bool`
 
@@ -843,7 +843,7 @@ Functions:
 
 - `fun range(a: i64, b: i64) => Range`
 - `fun range_step(a: i64, b: i64, step: i64) => Range`
-- `fun count<I: Iterator>(it: move I) => usize`
+- `fun count<I: Iterator>(it: move I) => int`
 - `fun sum_i64<I: Iterator>(it: move I) => i64`
 - `fun collect_list<I: Iterator>(it: move I) => List<I::Item>`
 - `fun mut ListIter<T>.next() => option.Option<T>`
@@ -854,10 +854,10 @@ Functions:
 - `fun mut FilterIter<I, T>.next() => option.Option<T>`
 - `fun filter<I: Iterator>(it: move I, pred: move closure(&I::Item) => bool) => FilterIter<I, I::Item>`
 - `fun mut TakeIter<I, T>.next() => option.Option<T>`
-- `fun take<I: Iterator>(it: move I, n: usize) => TakeIter<I, I::Item>`
+- `fun take<I: Iterator>(it: move I, n: int) => TakeIter<I, I::Item>`
 - `fun mut SkipIter<I, T>.next() => option.Option<T>`
-- `fun skip<I: Iterator>(it: move I, n: usize) => SkipIter<I, I::Item>`
-- `fun mut EnumerateIter<I, T>.next() => option.Option<(usize, T)>`
+- `fun skip<I: Iterator>(it: move I, n: int) => SkipIter<I, I::Item>`
+- `fun mut EnumerateIter<I, T>.next() => option.Option<(int, T)>`
 - `fun enumerate<I: Iterator>(it: move I) => EnumerateIter<I, I::Item>`
 - `fun mut ZipIter<A, B, T, U>.next() => option.Option<(T, U)>`
 - `fun zip<A: Iterator, B: Iterator>(a: move A, b: move B) => ZipIter<A, B, A::Item, B::Item>`

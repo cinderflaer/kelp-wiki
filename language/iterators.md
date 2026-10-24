@@ -302,7 +302,7 @@ pub datac Range(var lo: i64, val hi: i64, val step: i64)
 pub fun range(a: i64, b: i64) => Range
 pub fun range_step(a: i64, b: i64, step: i64) => Range
 
-pub fun count<I: Iterator>(it: move I) => usize
+pub fun count<I: Iterator>(it: move I) => int
 pub fun sum_i64<I: Iterator>(it: move I) => i64
 pub fun collect_list<I: Iterator>(it: move I) => List<I::Item>
 ```
@@ -359,7 +359,7 @@ iter.map(it, f)        -> MapIter<..>     // f: closure(&Item) -> U
 iter.filter(it, pred)  -> FilterIter<..>  // pred: closure(&Item) -> bool
 iter.take(it, n)       -> TakeIter<..>    // at most the first n
 iter.skip(it, n)       -> SkipIter<..>    // the items after the first n
-iter.enumerate(it)     -> EnumerateIter<..>   // (usize, Item), from 0
+iter.enumerate(it)     -> EnumerateIter<..>   // (int, Item), from 0
 iter.zip(a, b)         -> ZipIter<..>     // (A::Item, B::Item), stops at the shorter
 iter.chain(a, b)       -> ChainIter<..>   // all of a, then all of b (same item type)
 ```

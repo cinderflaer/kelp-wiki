@@ -17,7 +17,7 @@ change, so neither backend learned a new case.
 A parameter of a `datac`, an `enum` or a `fun` may be a value instead of a type:
 
 ```kelp
-datac Ring<const N: usize>(var items: [i32; N], var len: usize)
+datac Ring<const N: usize>(var items: [i32; N], var len: int)
 fun sum<const N: usize>(a: &[i32; N]) => i32
 fun mut Ring<const N: usize>.push(v: i32) => bool
 ```
@@ -29,10 +29,10 @@ The declared type is one of `usize`, `u8`, `u16`, `u32`, `u64`, `i32`, `i64` or
 ```kelp
 const CAP: usize = 4
 
-datac Ring<const N: usize>(var items: [i32; N], var len: usize)
+datac Ring<const N: usize>(var items: [i32; N], var len: int)
 
 fun mut Ring<const N: usize>.push(v: i32) => bool {
-    if self.len >= N {
+    if self.len >= N.to_int() {
         return false
     }
     self.items.set(i = self.len, v = v)
@@ -44,8 +44,8 @@ fun Ring<const N: usize>.capacity() => usize = N
 
 fun sum<const N: usize>(a: &[i32; N]) => i32 {
     var total: i32 = 0
-    var i: usize = 0
-    while i < N {
+    var i: int = 0
+    while i < N.to_int() {
         total += a.get(i = i)
         i += 1
     }

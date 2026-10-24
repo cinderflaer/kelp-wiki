@@ -16,7 +16,7 @@ valid inside the scope that lent it.
 | --- | --- | --- |
 | `int` | Copy | the default integer type, the type an unannotated integer literal takes. The native signed width of the target (`i64` on a 64-bit target). A distinct type: it does not mix with `i64` or `i32` without a conversion |
 | `uint` `float` | Copy | the native unsigned integer and the native float (`u64` and `f64` on a 64-bit target). Distinct types, with the same rule as `int` |
-| `i32` `i64` `u8` `u16` `u32` `u64` `usize` `isize` | Copy | integers; all widths are distinct, and each is distinct from `int` |
+| `i32` `i64` `u8` `u16` `u32` `u64` `usize` `isize` | Copy | integers; all widths are distinct, and each is distinct from `int`. `usize` is the address-sized type: addresses, allocation sizes and `Ptr` counts. Indices and lengths of collections, text and buffers are `int` |
 | `f32` `f64` | Copy | IEEE floats |
 | `bool` | Copy | `true` / `false` |
 | `char` | Copy | one Unicode scalar value, written `'x'`. A code point, **not** an integer |
@@ -123,13 +123,13 @@ panicking:
 val n: i64 = 7
 val x: f64 = n.to_f64()        // 7.0, exact for every i64
 val b: u8 = 200
-val idx: usize = b.to_usize()  // a byte used as an index
+val idx: int = b.to_int()    // a byte used as an index
 val back: u8 = idx.to_u8()     // panics if it does not fit
 val small = idx.try_to_u8()    // Option<u8>: None where to_u8 would panic
 ```
 
 `try_to_<T>` exists only where the plain conversion can fail. A widening is already
-exact, so `b.try_to_usize()` is not a method. Write `b.to_usize()` instead, and the
+exact, so `b.try_to_int()` is not a method. Write `b.to_int()` instead, and the
 diagnostic says so. The `Option` it hands back is
 [`std/option`](/stdlib/option)'s, so `if let Some(v) = idx.try_to_u8()` needs no
 type written anywhere. That module has to be somewhere in the program's import

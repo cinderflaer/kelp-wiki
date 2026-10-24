@@ -93,8 +93,8 @@ wrapper that panics with the error's own text.
 | `try_handshake(s, host)` | `handshake(s, host)` | `Result<TlsStream, TlsError>` / `TlsStream` | the TLS handshake over an already-connected socket |
 | `try_handshake_with(s, host, opts)` | `handshake_with(s, host, opts)` | as above, with `TlsOptions` | private CA bytes, timeout |
 | `try_handshake_timeout(s, host, ms)` | `handshake_timeout(s, host, ms)` | as above, with a deadline | shorthand for `TlsOptions` with only `timeout_ms` |
-| `try_write(t, data)` | `write(t, data)` | `Result<usize, TlsError>` / `usize` | one write, may be partial |
-| `try_write_all(t, data)` | `write_all(t, data)` | `Result<usize, TlsError>` / `usize` | loops until everything is written |
+| `try_write(t, data)` | `write(t, data)` | `Result<int, TlsError>` / `int` | one write, may be partial |
+| `try_write_all(t, data)` | `write_all(t, data)` | `Result<int, TlsError>` / `int` | loops until everything is written |
 | `try_read(t, max)` | `read(t, max)` | `Result<Bytes, TlsError>` / `Bytes` | up to `max` bytes |
 | `try_read_into(t, buf, at)` | `read_into(t, buf, at)` | `Result<usize, TlsError>` / `usize` | fills an existing buffer from offset `at` |
 | `try_shutdown(t)` | `shutdown(t)` | `Result<bool, TlsError>` | ends the TLS session and frees the handle |

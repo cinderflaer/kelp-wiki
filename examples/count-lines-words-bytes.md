@@ -46,7 +46,7 @@ fun main() {
     var lines: i64 = 0
     var words: i64 = 0
     var in_word = false
-    var i: usize = 0
+    var i: int = 0
     while i < bytes {
         val c = str.byte(s, i)
         if c == '\n' {

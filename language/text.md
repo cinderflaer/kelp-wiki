@@ -130,7 +130,7 @@ val owned: String = v.slice(4, 9)   // copies by length, not by strlen
 | Call | Returns |
 | --- | --- |
 | `s.view()` | `View` over a `str` (one `strlen`) |
-| `v.len()`, `v.is_empty()` | `usize`, `bool` |
+| `v.len()`, `v.is_empty()` | `int`, `bool` |
 | `v.get(i)` | `u8` |
 | `v.slice(from, to)` | `View` |
 | `v.eq(other: View)` | `bool`: compares bytes and lengths |

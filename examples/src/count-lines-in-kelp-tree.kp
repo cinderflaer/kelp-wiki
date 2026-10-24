@@ -57,7 +57,7 @@ fun main() {
 
     var total: i64 = 0
     var counted: i64 = 0
-    var i: usize = 0
+    var i: int = 0
     while i < candidates.len() {
         val entry = candidates.get(i)
         if fs.is_file(entry.as_str()) {

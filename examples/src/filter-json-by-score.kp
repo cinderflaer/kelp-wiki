@@ -20,7 +20,7 @@ impl "deps/json/lib"
 // A helper, so the walk owns the list it builds.
 fun keep_high_scores(doc: &json.Json) => String {
     var kept: List<json.Json> = List.empty()
-    var i: usize = 0
+    var i: int = 0
     while i < json.array_len(doc) {
         val item = json.array_get(doc, i)
         val score = json.as_i64(json.get(item, "score"))

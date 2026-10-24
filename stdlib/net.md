@@ -55,7 +55,7 @@ panicked with (the message line and the `errno` detail line, or
 | --- | --- | --- |
 | `connect(host, port)` | `Socket` | panics on failure (`net.connect: connection failed`) |
 | `try_connect(host, port)` | `Result<Socket, ConnectErr>` | the fallible `connect`: a refused dial is `Err`, and only a capability denial still panics |
-| `try_send_all(s, data)` / `try_recv(s, max)` / `try_recv_into(s, buf, at)` | `Result<usize, NetErr>` / `Result<Bytes, NetErr>` / `Result<usize, NetErr>` | `send_all`, `recv` and `recv_into` with a reset, a closed peer or a timeout as `Err` (`NetErr.reason` is the panic text) instead of a panic; an empty or zero `Ok` is still end of stream |
+| `try_send_all(s, data)` / `try_recv(s, max)` / `try_recv_into(s, buf, at)` | `Result<int, NetErr>` / `Result<Bytes, NetErr>` / `Result<int, NetErr>` | `send_all`, `recv` and `recv_into` with a reset, a closed peer or a timeout as `Err` (`NetErr.reason` is the panic text) instead of a panic; an empty or zero `Ok` is still end of stream |
 | `listen(port)` | `Listener` | port `0` asks the OS for a free one |
 | `accept(l)` | `Socket` | blocks until a peer connects |
 | `try_accept(l)` | `Result<Socket, NetErr>` | `accept` with a failed accept (including a timeout) as an `Err` instead of a panic |
@@ -65,14 +65,14 @@ panicked with (the message line and the `errno` detail line, or
 | `close(s)` | `Unit` | |
 | `shutdown_write(s)` | `Unit` | half-close, which is how a line protocol says "no more input" |
 | `try_shutdown_write(s)` | `bool` | `shutdown_write` that answers `false` when the peer has already reset the socket |
-| `send(s, data)` | `usize` | one `send`; may write less than asked |
-| `send_all(s, data)` | `usize` | loops until everything is written |
+| `send(s, data)` | `int` | one `send`; may write less than asked |
+| `send_all(s, data)` | `int` | loops until everything is written |
 | `send_text(s, text)` | `Unit` | |
 | `recv(s, max)` | `Bytes` | up to `max` bytes; **empty means the peer closed**, or that `max` was `0` |
-| `recv_into(s, buf, at)` | `usize` | |
-| `try_send_all(s, data)` | `Result<usize, NetErr>` | the fallible `send_all`; the `Ok` count is always the whole buffer |
+| `recv_into(s, buf, at)` | `int` | |
+| `try_send_all(s, data)` | `Result<int, NetErr>` | the fallible `send_all`; the `Ok` count is always the whole buffer |
 | `try_recv(s, max)` | `Result<Bytes, NetErr>` | the fallible `recv`; an empty `Ok` is still the peer's clean end of stream |
-| `try_recv_into(s, buf, at)` | `Result<usize, NetErr>` | the fallible `recv_into`; `Ok(0)` is end of stream |
+| `try_recv_into(s, buf, at)` | `Result<int, NetErr>` | the fallible `recv_into`; `Ok(0)` is end of stream |
 | `Socket.wait_readable(timeout_ms)` / `wait_writable(...)` | `bool` | |
 | `Socket.set_timeout(ms)` | `Unit` | `mut` receiver |
 | `mono_ms()` | `i64` | milliseconds on the monotonic clock, for deadlines: only the difference of two readings means anything |

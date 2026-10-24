@@ -41,10 +41,10 @@ while !xs.is_empty() {
 | Method | Takes | Returns |
 | --- | --- | --- |
 | `List.empty()` | nothing | empty list; element type from the context, or from the first `push`/`insert`/`set` |
-| `List.with_capacity(n)` | `usize` or `i64` | an empty list with room for at least `n` elements, so filling it with `push` allocates once; the element type comes from the binding, and the list still grows past `n` |
+| `List.with_capacity(n)` | `int` | an empty list with room for at least `n` elements, so filling it with `push` allocates once; the element type comes from the binding, and the list still grows past `n` |
 | `List.of(x)` | one value | a list holding it |
-| `len()` / `is_empty()` | shared | `usize` / `bool` |
-| `get(i)` | shared, `usize` | the element, or a borrow of it |
+| `len()` / `is_empty()` | shared | `int` / `bool` |
+| `get(i)` | shared, `int` | the element, or a borrow of it |
 | `set(i, v)` | exclusive | `unit` |
 | `push(v)` | exclusive | `unit`; moves the element in |
 | `pop()` | exclusive | the last element, moved out |
@@ -177,8 +177,8 @@ print(runs.get(key = 7))
 | Method | Returns |
 | --- | --- |
 | `Map.new()` / `Map.empty()` | an empty map; key and value types from the binding, or from the first `insert` |
-| `Map.with_capacity(n)` | the same empty map with room for `n` entries; `n` is a `usize` or an `i64` |
-| `len()` / `is_empty()` | `usize` / `bool` |
+| `Map.with_capacity(n)` | the same empty map with room for `n` entries; `n` is an `int` |
+| `len()` / `is_empty()` | `int` / `bool` |
 | `insert(key, v)` | `unit`; stores `true`-style upsert |
 | `get(key)` | the value, or a borrow of it; panics when absent |
 | `get_or(key, fallback)` | the value or the fallback |
@@ -242,10 +242,10 @@ print(grid.get(i = 2).get(i = 1))
 
 | Method | Takes | Returns |
 | --- | --- | --- |
-| `len()` | shared | `usize`, as a compile-time constant |
+| `len()` | shared | `int`, as a compile-time constant |
 | `is_empty()` | shared | `bool`, always `false` |
-| `get(i)` | shared, `usize` | the element, or a borrow of it |
-| `set(i, v)` | exclusive, `usize` | `unit` |
+| `get(i)` | shared, `int` | the element, or a borrow of it |
+| `set(i, v)` | exclusive, `int` | `unit` |
 
 - The length is a **compile-time constant**: a literal, another `const`, or an
   expression over them ([Constants](/language/passdowns) has the rules). A `val`
