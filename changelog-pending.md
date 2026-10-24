@@ -29,6 +29,8 @@ empty on release.
 
 - The `val` on a `datac` or enum-payload field is optional: `datac Point(x: i32, y: i32)` is the same as `datac Point(val x: i32, val y: i32)`. A bare field is immutable, and `var` is still written, so a misused `var` keeps its message (issue #284).
 
+- A method may be written inside the braces of its `datac`, with no `fun` and no type name: `mut bump() { count += 1 }` in `datac Counter(val id: int, var count: int) { ... }` means the same as `fun mut Counter.bump()` written after the type. The two forms mix, and `fun` and `pub` are refused inside the block (issue #285).
+
 ## Documentation
 
 - The Coral, Polyp, fpl and Lighthouse pages match their `main` branches: Coral has no version pins and records `coral.lock`, Polyp exports no `QUIT_ID` and its API lists the v4 and v5 nodes, fpl has 32 libraries, and Lighthouse has a Kelp port of the server in progress.

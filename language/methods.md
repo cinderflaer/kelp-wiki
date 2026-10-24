@@ -27,6 +27,34 @@ c.bump()
 print(c.total())
 ```
 
+## Methods inside the datac block
+
+A method may also be written inside the braces of the `datac` that declares its
+type. A line in the block has no `fun` and no type name, because the receiver is
+the datac the block belongs to:
+
+```kelp
+datac Counter(val id: i32, var count: i32) {
+    total() => i32 = id + count   // shared receiver
+    mut bump() {                  // exclusive receiver
+        count += 1
+    }
+}
+```
+
+- A line is `[mut] name[<T>](params) [=> T] { body }`, or the same with `= expression`
+  for the body. `mut` before the name makes the receiver exclusive, as `fun mut
+  Type.name()` does.
+- Each method is the one the `fun Type.name()` line after the type would be. The
+  two forms mix for one type, and a method name may be declared once for the type
+  in either form.
+- A generic datac's methods take its type parameters, as the datac declares them:
+  `datac Pair<A, B>(val first: A, val second: B) { first_of() => A = first }`.
+- `fun` and `pub` are refused inside the block. A method is exported by its type's
+  `pub`, as it is when it is written after the type.
+- A block line that is not a method, such as a field, is refused, and the message
+  says that the block declares methods.
+
 ## Rules
 
 - Inside the method, fields are read and written **by their bare names**. `self`

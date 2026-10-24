@@ -167,7 +167,7 @@ val n: Maybe<i32> = Maybe.Some(value = 7)
 
 ## Methods
 
-A `datac` can carry methods, and so can an `enum` ([Methods and receivers](/language/methods)).
+A `datac` can carry methods, written after the type or inside its braces, and so can an `enum` ([Methods and receivers](/language/methods)).
 A method on a concrete enum is called on a value of that type:
 
 ```kelp

@@ -1140,6 +1140,21 @@ c.bump()
 print(c.total())
 ```
 
+A method may instead be written inside the braces of its `datac`, with no `fun` and no
+type name. A method line is `[mut] name[<T>](params) [=> T] { body }`:
+
+```kelp
+datac Counter(val id: i32, var count: i32) {
+    total() => i32 = id + count
+    mut bump() {
+        count += 1
+    }
+}
+```
+
+It means the same as the `fun Counter.name()` line after the type, and the two forms mix.
+`fun` and `pub` are refused inside the block.
+
 - Inside the method, fields are read and written by their bare names. `self` also works as the whole receiver, for the rare method that needs to hand the value on.
 - `fun Type.name()` takes a shared borrow of the receiver, so it may be called on a `val` binding.
 - `fun mut Type.name()` takes an exclusive borrow, so the receiver must be reachable mutably: a `var` binding, a `mut` parameter, or a field of one. Calling it on a `val` binding fails with `cannot borrow 'c' as exclusive` (see 19).
