@@ -124,7 +124,7 @@ combinators.
   freestanding image too, the body hosted code gets from `kelp_map_key_eq`, so
   such a type compares and hashes with no libc behind it. `kelpc/tests/fixtures/examples/kernel0-eq`
   is the proof: it prints a `String`-field equality, a `Map` lookup through the
-  derived pair, a `Bytes`-field equality (a declared `eq` that walks the bytes),
+  `derive(eq, hash)` pair, a `Bytes`-field equality (a declared `eq` that walks the bytes),
   a `View` slice and a `std/regex` match over the UART on riscv64 and x86-64.
 - `Ptr<T>`, the compile-time `size_of`/`align_of`/`offset_of`, `unsafe`,
   `asm` and naked functions. `Ptr.alloc` and `Ptr.try_alloc` are allowed by the

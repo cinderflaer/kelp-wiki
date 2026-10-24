@@ -168,8 +168,8 @@ that shipped here.
   builder.
 
 The acceptance is `examples/kernel0-eq` (riscv64) and
-`examples/kernel0-eq-x86_64`: a `String`-field `datac` with a declared `eq` and
-a `Map<Pair, i32>` that resolves through the derived pair, a `Bytes`-field
+`examples/kernel0-eq-x86_64`: a `String`-field `datac` written `derive(eq, hash)` and
+a `Map<Pair, i32>` that uses that pair, a `Bytes`-field
 `datac` whose declared `eq` walks the bytes, a `View.slice` and
 `View.to_string`, and a `regex.compile("[a-z]+(\\d+)")` matched against
 `"xx hello42"`, with the match text and capture group printed over the UART

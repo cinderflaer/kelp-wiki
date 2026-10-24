@@ -146,6 +146,8 @@ print(runs.get(key = 7))
   ```
 
   The map then calls these two in place of a derived pair. Declare both or neither.
+  A `datac` whose fields compare and hash one by one can write the pair as `derive(eq, hash)`
+  on the line above it, and the compiler writes both methods field by field (issue #291).
   The key is still cloned into the entry, so the type must also be deep-copyable.
 - An enum can be a `Map` key: a `Map<Kind, i32>` with `Kind` an enum is checked by the compiler. An enum
   cannot be a `Map` value. The checker refuses an enum value: `'Status' cannot be a 'Map' value: a hosted build cannot describe an 'enum'
