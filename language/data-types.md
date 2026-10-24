@@ -19,7 +19,8 @@ datac Node(val value: i32, val next: Box<Node>)
 ```
 
 - Fields are declared `val` (immutable) or `var` (mutable), one per
-  comma-separated entry.
+  comma-separated entry. A field with no keyword is `val`, so `datac Point(x: i32)`
+  and `datac Point(val x: i32)` are the same declaration. `var` is always written.
 - **A `datac` holds owned data.** Store a `String`, not a `&str`. A `str` field is
   accepted only when the text cannot dangle. A string literal qualifies. A borrow
   of a local `String` qualifies only when that `String` is moved into an earlier

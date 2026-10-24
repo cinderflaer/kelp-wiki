@@ -88,7 +88,7 @@ fun main() {
 }
 ```
 
-- A `datac` field is `val` (immutable) or `var` (mutable).
+- A `datac` field is `val` (immutable) or `var` (mutable). A field with no keyword is `val`.
 - A parameter is a **borrow**, so `area(p)` does not move `p` and `p` is still
   usable afterwards.
 - The return type is written `=> T`; no return type means the function returns `Unit`.

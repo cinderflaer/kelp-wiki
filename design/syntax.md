@@ -265,7 +265,7 @@ place in the file:
 | a `fun` (or an `extern fun`) | `fun:name` |
 | a `datac` / an `enum` | `datac:name` / `enum:name` |
 | a `const` | `const:NAME` |
-| a field (`val` / `var`) | `field:name` |
+| a field (`val` / `var`, or bare for `val`) | `field:name` |
 | a variant | `variant:Name` |
 | the first declaration of a file, or its `impl` lines | `module:<file stem>` |
 
@@ -1171,7 +1171,7 @@ datac Counter(val id: i32, var count: i32)
 datac Node(val value: i32, val next: Box<Node>)
 ```
 
-- Fields are declared `val` (immutable) or `var` (mutable), one field per comma-separated entry.
+- Fields are declared `val` (immutable) or `var` (mutable), one field per comma-separated entry. The keyword may be left out: a field with no keyword is a `val` field, so `datac Point(x: i32, y: i32)` is the same as `datac Point(val x: i32, val y: i32)`. An enum payload takes the same form. `var` always has to be written.
 - A `datac` holds owned data only. A `str` field, a reference field, or a `Unit` field is illegal, because the `datac` owns its fields and must be able to free them.
 - A field of another `datac` type is stored inline, so that type must be declared earlier in the same file. A self-referencing or forward-referencing field must be behind a `Box` or a `List`:
 

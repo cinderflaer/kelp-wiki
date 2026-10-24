@@ -95,7 +95,7 @@ compile error.
 | a `fun`, or an `extern fun` | `fun:name` |
 | a `datac` or an `enum` | `datac:name`, `enum:name` |
 | a `const` | `const:NAME` |
-| a field, written `val` or `var` | `field:name` |
+| a field, written `val`, `var` or with no keyword (a bare field is `val`) | `field:name` |
 | a variant | `variant:Name` |
 | the first declaration of a file, or its `impl` lines | `module:<file stem>` |
 
