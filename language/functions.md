@@ -9,7 +9,8 @@ Source: [`syntax.md` §7](/design/syntax).
 ## Declaration
 
 ```kelp
-fun add(a: i32, b: i32) => i32 = a + b        // expression body, requires =>
+fun add(a: i32, b: i32) => i32 = a + b        // expression body, written type
+fun double(x: i32) = x * 2                    // expression body, type taken from the body
 
 fun greet(name: &str) {                       // no => returns unit
     print(str.concat("hello, ", name))
@@ -30,8 +31,9 @@ fun abs_diff(a: i32, b: i32) => i32 {         // block body
   `=>`, as in `fun f(a: i32) => i32`. The `.R:` spelling was removed before it.
   `=>` and `->` are both accepted on a declaration, a `fun` literal and a function
   type.
-- An expression body (`= expr`) requires `=> T`; a block body ends with
-  `return expr`.
+- An expression body (`= expr`) may leave out `=> T`, and then its type is the
+  return type; a recursive body, a `when` with several arms or an `asm` body
+  still needs the type written. A block body ends with `return expr`.
 - Parameters are `name: T`. A parameter is a **shared borrow** of its argument.
   `name: mut T` is an exclusive borrow: the only spelling for mutation in
   parameter position (`&mut T` there is a parse error). `name: move T` takes

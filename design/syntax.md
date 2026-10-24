@@ -969,7 +969,7 @@ fun abs_diff(a: i32, b: i32) => i32 {         // block body
 - The keyword is `fun`.
 - The return type is written `=> T` after the parameter list. `->` is accepted as an alias of `=>`; there is no trailing type, and no inferred return type for block bodies.
 - No return type means `Unit`.
-- An expression body (`= expr`) requires `=> T`; a block body may end with `return expr`.
+- An expression body (`= expr`) may leave out `=> T`, and then its type is the return type, except for a recursive body, a `when` with several arms, an `asm` body, a generic or trait method, and a body whose type is a borrow; a block body may end with `return expr`.
 - Parameters are `name: T`. A parameter is a shared borrow of its argument. `name: mut T` is an exclusive borrow, which is the only spelling for mutation in parameter position: `&mut T` there is a parse error. `name: move T` takes ownership: the call site moves the argument in, and the callee frees it when its scope ends (10.1). `mut` and `move` are mutually exclusive, `move` is refused on a `str` or a `&T`, and a receiver is always borrowed, there is no `fun move Type.name()`.
 - Named arguments are allowed at any call site when there is more than one parameter, and are matched by name first, then positionally:
 
@@ -3084,7 +3084,7 @@ Compiler diagnostics print as `file:line:col`, a message, and often a note with 
 | Message | Cause and fix |
 | --- | --- |
 | `expected 'fun', found 'fn'` | the keyword is `fun` |
-| `expression-bodied function requires a '=> T' return type` | add `=> T`, or use a block body with `return` |
+| `recursive expression-bodied function 'f' requires a '=> T' return type` | write `=> T` on each function in the cycle |
 | `if without an else branch must evaluate to 'unit'` | an `if`, `if let` or `when` used as a value needs an `else` arm |
 | `pattern 'Circle(a, b)' has 2 binding(s) but variant 'Circle' carries 1 payload field(s)` | `if let` and a `when` arm bind one name per payload field, in order |
 | `expected 'in' between the 'for' binding and what it iterates, found 'xs'` | a `for` is `for name in list { ... }`; the `in` is required (6.2) |

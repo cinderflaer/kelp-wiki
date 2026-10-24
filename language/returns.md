@@ -33,14 +33,23 @@ fun greet(name: &str) {                    // no => returns unit
 
 ## Bodies
 
-An **expression body** is `= expr`, and it requires `=> T`:
+An **expression body** is `= expr`. It may write `=> T`, or leave the return
+type out, and then the type of the expression is the return type:
 
 ```kelp
-fun double(x: i32) => i32 = x * 2
+fun double(x: i32) => i32 = x * 2      // written return type
+fun triple(x: i32) = x * 3             // return type taken from the body: i32
 ```
 
-Writing `= expr` with no return type is refused with
-`expression-bodied function requires a '=> T' return type`.
+A body with no `=> T` is refused in these cases, and the type has to be written:
+
+- the body calls itself, directly or through other bodies with no `=> T`; the
+  error is `recursive expression-bodied function 'f' requires a '=> T' return type`,
+  and the fix is to write the type on each function in the cycle;
+- the body is a `when` with more than one arm, or an `asm` body;
+- the function is generic, or is a method of a generic type, or is a trait method;
+- the body's type is a borrow, since a return type is always owned;
+- the function is `pub` and its type names a private type.
 
 A **block body** is `{ ... }`, and its value comes from one of two places:
 
