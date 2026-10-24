@@ -59,6 +59,32 @@ pub fun scale(v: f64, k: f64) => f64 = v * k
 pub extern fun clock_ticks() => u64
 ```
 
+A group of items may be written inside one `pub { ... }` block. Each item in the
+block is exported as if `pub` were written in front of it, so the block is a
+shorter spelling and changes no rule:
+
+```kelp
+pub {
+    const LIMIT: i32 = 10
+
+    /// A point with two coordinates.
+    datac Point(val x: i32, val y: i32)
+
+    /// Scales a value.
+    fun scale(v: f64, k: f64) => f64 = v * k
+
+    extern fun clock_ticks() => u64
+}
+```
+
+- Each item in the block keeps its own `///` doc comment, its own `repr`,
+  `section` or `align` clause, and its `fun`: a function in the block is written
+  `fun`, as it is after `pub`.
+- The block holds declarations only. An empty block, a block that is not closed
+  before the end of the file, a `pub` written on an item inside it, a block inside
+  a block, and a statement, a `pd`, a `tl` or a method inside it are each a parse
+  error that names the problem.
+
 - `pub` is accepted only on a top-level `fun`, `extern fun`, `extern type`,
   `datac`, `enum` or `const`. Written anywhere else it is a parse error that
   names those forms:

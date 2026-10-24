@@ -48,6 +48,7 @@ typeparam    := ident [ ":" bound ("+" bound)* ]
               | "const" ident ":" type                // a value parameter: `const N: usize`
 bound        := traitname [ typeargs ]                // `Shape`, `From<i32>`
 typeargs     := "<" type ("," type)* ">"   // in an expression: adjacent to the name and to "("
+group        := "pub" "{" { const | static | extern-type | datac | enum | trait | fun } "}"   // every item is pub; no nested group, no pub inside (issue #290)
 fun          := [ "pub" ] [ "extern" ] "fun" [ "mut" ] ( ident [ typeparams ] "." )? ident [ typeparams ]
                 "(" [ param ("," param)* ] ")" [ "=>" type ] body
                 // at the top level, "fun" may be left out when no "pub", "extern" or other modifier

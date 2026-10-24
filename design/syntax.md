@@ -2334,6 +2334,7 @@ pub fun scale(v: f64, k: f64) => f64 = v * k
 pub extern fun clock_ticks() => u64
 ```
 
+- A group of declarations may sit in one `pub { ... }` block at the top level (issue #290). Each declaration in the block is read as if `pub` were written in front of it, and the same item forms are accepted. The block holds declarations only: an empty block, a block that is not closed, a `pub` written again inside it, a block inside a block, and a statement, `pd`, `tl` or method inside it are parse errors.
 - `pub` is accepted only on a top-level `fun`, `extern fun`, `datac`, `enum` or `const`. Written anywhere else it is a parse error, and the message names the item forms it applies to.
 - A `pd` never takes `pub`. A passdown is module-scoped by design (§9, `meta/roadmap.md` (kelp wiki) item 10), so `pub pd` is refused where it is written; a `fun` that reads the passdown is what another module uses, and that function can be `pub`.
 - A method never takes `pub`. A method's reachability follows its declaring type, so `pub datac Circle` is what lets another module call `value.area()` on a `Circle` it holds, however that method was declared. `pub fun Circle.area()` is a parse error that says to mark the type instead.
