@@ -103,7 +103,7 @@ alpha goes, and that is the value the display comparison uses.
 
 Both projects and the equivalence test need `ld.lld` and an emulator on `PATH`,
 which is the repository's `shell.nix` shell, and a `kelpc` built there
-(`run.sh` looks for `target/debug/kelpc`; set `KELPC` to point at another binary).
+(`kelpc boot` builds with the `kelpc` that runs it).
 
 The test that compares the kernels with the hosted run:
 
@@ -114,15 +114,16 @@ nix-shell shell.nix --run 'cd kelpc && cargo test --test compile_and_run polyp_f
 The two manual boots:
 
 ```sh
-nix-shell shell.nix --run 'kelpc/tests/fixtures/examples/polyp-fb-riscv64/run.sh'
-nix-shell shell.nix --run 'kelpc/tests/fixtures/examples/polyp-fb-x86_64/run.sh'
+nix-shell shell.nix --run 'kelpc/tests/fixtures/examples/polyp-fb-riscv64'
+nix-shell shell.nix --run 'kelpc/tests/fixtures/examples/polyp-fb-x86_64'
 ```
 
-`run.sh` builds the project, boots it under `timeout 20 qemu-system-<arch>`,
-captures the serial bytes, waits for a whole-line marker (default `end` and
-`done`), and asserts each requested line is present. It prints what the UART
-actually said; nothing reads the kernel's intent. The scripts exit non-zero if the
-emulator is not on `PATH`.
+`kelpc boot` builds the project, boots it under `timeout 20` with the QEMU machine
+its `[run]` table names (`ramfb = true` for both framebuffer boots, which is what
+adds `-device ramfb`), captures the serial bytes, waits for a whole-line marker
+(the last `expect` line, `done` here), and asserts each expected line is present.
+It prints what the UART actually said; nothing reads the kernel's intent. It exits
+non-zero if the emulator is not on `PATH`.
 
 ### What the comparison proves
 

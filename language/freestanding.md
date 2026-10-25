@@ -511,16 +511,16 @@ manifest needs no `mmio` grant: `in`/`out` name a port number, not a
 `Ptr.from_addr`. `kmain` prints its greeting and halts:
 
 ```sh
-examples/kernel0-x86_64/run.sh
+kelpc boot kelpc/tests/fixtures/examples/kernel0-x86_64
 ```
 
 ```text
-run.sh: booted .../examples/kernel0-x86_64 and the UART printed:
+kelpc boot: booted .../examples/kernel0-x86_64 and the UART printed:
 hello from kelp (x86_64)
 ```
 
 SeaBIOS prints its own banner (and iPXE's prompt) on the same serial line before
-the greeting; `run.sh` asserts the greeting line whole, as it does for every
+the greeting; `kelpc boot` asserts the greeting line whole, as it does for every
 example, and the greeting's leading `\n` separates it from the banner's
 newline-less `Booting from ROM..` line.
 
@@ -531,11 +531,11 @@ With no IDT the `#UD` is a triple fault, so the machine resets; the boot test
 runs QEMU with `-no-reboot` and asserts the two lines came out first:
 
 ```sh
-examples/kernel0-x86_64-lmode/run.sh
+kelpc boot kelpc/tests/fixtures/examples/kernel0-x86_64-lmode
 ```
 
 ```text
-run.sh: booted .../examples/kernel0-x86_64-lmode and the UART printed:
+kelpc boot: booted .../examples/kernel0-x86_64-lmode and the UART printed:
 hello from kelp (x86_64)
 long mode on
 ```

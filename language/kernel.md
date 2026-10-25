@@ -17,23 +17,36 @@ The build side is [Freestanding mode](/language/freestanding).
 
 The examples need `qemu-system-riscv64`, `qemu-system-aarch64`,
 `qemu-system-x86_64` and `ld.lld`. The repository's `shell.nix` supplies `ld.lld`
-and LLVM 21, but not the QEMU binaries, so they must be on `PATH`. Each has a
-`run.sh` that builds the project, boots it under `timeout 20 qemu-system-riscv64
--machine virt -bios none -nographic -no-reboot -serial mon:stdio -kernel <elf>`,
-reads QEMU's own stdout until the last expected line appears, kills QEMU, and
-asserts every expected line appears whole. Nothing in the script reads the
-kernel's intent: the assertion is a comparison against the bytes that came out
-of the serial port.
-
-```sh
-examples/kernel0/run.sh
-```
-
-The script builds with `target/debug/kelpc` by default; `KELPC` points it at
-another binary. The real output, from a build of the current tree:
+and LLVM 21, but not the QEMU binaries, so they must be on `PATH`. Each example
+names its boot in a `[run]` table in its `coral.toml`: the QEMU machine (`qemu`),
+the serial lines it must print (`expect`), and, when needed, `ramfb = true` for the
+Polyp framebuffer and `smp = N` for more than one CPU. `kelpc boot <project dir>`
+builds the project, boots it under `timeout 20` with that machine's flags (on
+riscv64, `qemu-system-riscv64 -machine virt -bios none -nographic -no-reboot
+-serial mon:stdio -kernel <elf>`), reads QEMU's own stdout until the last expected
+line appears, kills QEMU, and asserts every expected line appears whole. Nothing in
+the boot reads the kernel's intent: the assertion is a comparison against the bytes
+that came out of the serial port. Only `kelpc boot` reads the `[run]` table; a
+normal build ignores it.
 
 ```text
-run.sh: booted kelpc/tests/fixtures/examples/kernel0 and the UART printed:
+[run]
+qemu = "riscv64"
+expect = ["hello from kelp"]
+```
+
+```sh
+kelpc boot kelpc/tests/fixtures/examples/kernel0
+```
+
+`kelpc boot` builds with the `kelpc` that runs it. Four examples keep a `run.sh`
+instead, because their checks are not a list of lines: `kernel0-panic`,
+`kernel0-panic2`, `kernel0-sched` and `kernel0-x86_64-idt`. Their scripts build with
+`target/debug/kelpc` by default, and `KELPC` points them at another binary. The
+real output of `kelpc boot`, from a build of the current tree:
+
+```text
+kelpc boot: booted kelpc/tests/fixtures/examples/kernel0 and the UART printed:
 hello from kelp
 ```
 
@@ -94,11 +107,11 @@ entry grants it line 10 and it reaches for 11, which the test suite copies into
 a scratch project and asserts is refused.
 
 ```sh
-examples/kernel0-caps/run.sh
+kelpc boot kelpc/tests/fixtures/examples/kernel0-caps
 ```
 
 ```text
-run.sh: booted .../examples/kernel0-caps and the UART printed:
+kelpc boot: booted .../examples/kernel0-caps and the UART printed:
 line 10
 frame 0x80100000
 offset 0x80100010
@@ -125,11 +138,11 @@ names. Port I/O is not memory-mapped, so the manifest carries no `mmio` grant:
 `in`/`out` name a port number, not a `Ptr.from_addr`.
 
 ```sh
-examples/kernel0-x86_64/run.sh
+kelpc boot kelpc/tests/fixtures/examples/kernel0-x86_64
 ```
 
 ```text
-run.sh: booted .../examples/kernel0-x86_64 and the UART printed:
+kelpc boot: booted .../examples/kernel0-x86_64 and the UART printed:
 hello from kelp (x86_64)
 ```
 
@@ -140,17 +153,17 @@ executes `ud2`. With no IDT that is a triple fault, so the machine resets and
 `-no-reboot` turns the reset into an exit the test can read.
 
 ```sh
-examples/kernel0-x86_64-lmode/run.sh
+kelpc boot kelpc/tests/fixtures/examples/kernel0-x86_64-lmode
 ```
 
 ```text
-run.sh: booted .../examples/kernel0-x86_64-lmode and the UART printed:
+kelpc boot: booted .../examples/kernel0-x86_64-lmode and the UART printed:
 hello from kelp (x86_64)
 long mode on
 ```
 
 SeaBIOS prints its own banner on the same serial line first (the greeting's
-leading `\n` separates it from `Booting from ROM..`), and `run.sh` asserts the
+leading `\n` separates it from `Booting from ROM..`), and `kelpc boot` asserts the
 greeting and `long mode on` whole.
 
 ## x86-64 interrupts: the IDT, the exceptions and the timer
@@ -502,11 +515,11 @@ a load from an address no leaf maps (`scause` 13, `stval` the address) and a
 store to the read-only leaf (15). One boot prints both.
 
 ```sh
-kelpc/tests/fixtures/examples/kernel0-vm/run.sh; kelpc/tests/fixtures/examples/kernel0-vm-fault/run.sh
+kelpc/tests/fixtures/examples/kernel0-vm; kelpc/tests/fixtures/examples/kernel0-vm-fault
 ```
 
 ```text
-run.sh: booted .../examples/kernel0-vm and the UART printed:
+kelpc boot: booted .../examples/kernel0-vm and the UART printed:
 vm: m-mode
 vm: root
 vm: identity
@@ -518,7 +531,7 @@ vm: alias ok
 vm: unmap ok
 vm: align refused
 vm: range refused
-run.sh: booted .../examples/kernel0-vm-fault and the UART printed:
+kelpc boot: booted .../examples/kernel0-vm-fault and the UART printed:
 fault: m-mode
 fault: paging on
 fault: scause 0xd stval 0x40000000
@@ -688,11 +701,11 @@ stack, replaces `X` with `55 + (-a0)` (the hex digit of the errno magnitude, so
 kernel prints `kernel survived`.
 
 ```sh
-examples/kernel0-user/run.sh
+kelpc boot kelpc/tests/fixtures/examples/kernel0-user
 ```
 
 ```text
-run.sh: booted .../examples/kernel0-user and the UART printed:
+kelpc boot: booted .../examples/kernel0-user and the UART printed:
 user: m-mode
 user: s-mode
 user: paging on
@@ -836,14 +849,14 @@ page-table frame, a trap-frame slot, a user page) hold the whole-address-space
 The four RISC-V boots, run one after another:
 
 ```text
-run.sh: booted .../examples/kernel0-trap and the UART printed:
+kelpc boot: booted .../examples/kernel0-trap and the UART printed:
 trap: ecall
 done
 run.sh: booted .../examples/kernel0-panic and the UART printed:
 panic: Array.get: index out of bounds
-run.sh: booted .../examples/kernel0-bss and the UART printed:
+kelpc boot: booted .../examples/kernel0-bss and the UART printed:
 bss clear
-run.sh: booted .../examples/kernel0-heap and the UART printed:
+kelpc boot: booted .../examples/kernel0-heap and the UART printed:
 heap sum 55
 balanced
 ```
@@ -851,11 +864,11 @@ balanced
 And the aarch64 boot, on QEMU's `virt` machine with `-cpu cortex-a57`:
 
 ```sh
-examples/kernel0-aarch64/run.sh
+kelpc boot kelpc/tests/fixtures/examples/kernel0-aarch64
 ```
 
 ```text
-run.sh: booted .../examples/kernel0-aarch64 and the UART printed:
+kelpc boot: booted .../examples/kernel0-aarch64 and the UART printed:
 hello from kelp (aarch64)
 ```
 
@@ -886,11 +899,11 @@ down page by page into the kernel guard, which is the case a `sub sp` alone woul
 miss.
 
 ```sh
-examples/kernel0-stack/run.sh
+kelpc boot kelpc/tests/fixtures/examples/kernel0-stack
 ```
 
 ```text
-run.sh: booted .../examples/kernel0-stack and the UART printed:
+kelpc boot: booted .../examples/kernel0-stack and the UART printed:
 stack: m-mode
 stack: paging on
 stack: guard 0x80009000 0x8000a000
@@ -912,7 +925,7 @@ stack, so a store into it faults (phase t) before the handler, which runs on the
 trap stack, has anything to say about the kernel stack. The kernel stack's guard
 is one page below the kernel stack and takes the two overflows (phases a and b).
 Every fault is `scause 0xf`, a store page fault, and each `stval` falls inside
-one of the two guards the kernel printed. `run.sh` asserts the `stack:` lines,
+one of the two guards the kernel printed. `kelpc boot` asserts the `stack:` lines,
 and the suite's boot test parses both bounds and all three fault addresses to
 check the same ranges independently.
 
@@ -1116,7 +1129,7 @@ freestanding riscv64 project whose `kmain` polls the NS16550 UART's LSR bit 5 an
 `kelpc/tests/fixtures/examples/kernel0-trap` installs `mtvec` at a naked handler, takes an `ecall`, prints
 `trap: ecall` from the handler and `done` after `mret`. Both are built with `kelpc` and booted
 under `timeout 20 qemu-system-riscv64 -machine virt -bios none -nographic -no-reboot
--serial mon:stdio -kernel <elf>`; `kelpc/tests/fixtures/examples/kernel0/run.sh` and `kelpc/tests/fixtures/examples/kernel0-trap/run.sh`
+-serial mon:stdio -kernel <elf>`; `kelpc/tests/fixtures/examples/kernel0` and `kelpc/tests/fixtures/examples/kernel0-trap`
 read QEMU's own stdout and assert the expected lines, and
 `cargo test --test compile_and_run kernel0` runs both where the tools are present. No
 compiler change was needed. What the examples could not do is in [`language/kernel.md`](/language/kernel), in
@@ -1223,7 +1236,7 @@ refused, and both the class and the intrinsics are freestanding-only, refused
 by `infer.rs` on both backends. The riscv64 `_start` stub now parks every hart
 whose `mhartid` is not zero before it loads `sp`, so a `-smp 2` image with no
 firmware does not have two harts racing through boot;
-`kelpc/tests/fixtures/examples/kernel0-percpu/run.sh` boots one, writes a per-CPU static on hart 0,
+`kelpc/tests/fixtures/examples/kernel0-percpu` boots one, writes a per-CPU static on hart 0,
 reads the other copy by setting `tp = 1` by hand, and asserts the four lines
 from QEMU's stdout. A per-CPU allocator or run queue is still a kernel design,
 not this stage.
@@ -1325,7 +1338,7 @@ the same word at a time and halts on `wfe`. Any other triple is refused by name 
 `kelpc/tests/fixtures/examples/kernel0-aarch64` is the PL011 driver (`DR` at `0x09000000`, `FR` bit 5 the FIFO-full
 flag) whose `kmain` prints `hello from kelp (aarch64)` and halts; it boots under
 `qemu-system-aarch64 -M virt -cpu cortex-a57 -nographic -serial mon:stdio -kernel <elf>` and
-`kelpc/tests/fixtures/examples/kernel0-aarch64/run.sh` and two tests in `kelpc/tests/compile_and_run.rs` (an
+`kelpc/tests/fixtures/examples/kernel0-aarch64` and two tests in `kelpc/tests/compile_and_run.rs` (an
 `llvm-readelf`/`llvm-nm`/`llvm-objdump` check of the ELF and the boot) cover it. The riscv64
 `examples/kernel0*` all still boot after the change.
 

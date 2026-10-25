@@ -53,6 +53,7 @@ the source of this list (`usage` in `kelpc/src/main.rs`).
 | `kelpc cache stats` | prints the per-unit object cache's entry count and total size | 0 |
 | `kelpc cache clear` | deletes every cached unit object | 0, or 1 when the directory cannot be removed |
 | `kelpc caps <file.kp\|project dir>` | prints what each project module holds, what it reaches and what it grants, from the capability gate ([Capabilities](/language/capabilities)) | see `kelpc/src/caps_report.rs` |
+| `kelpc boot <project dir>` | builds the project and boots it under the QEMU machine its `[run]` table names, then checks that each `expect` line appears whole in the serial output. It stops at the last expected line or after 20 seconds, and prints the serial output it captured. It replaces the per-example `run.sh` scripts (see [Projects](#projects)) | 0 when every expected line appears; 1 otherwise, or when the project has no `[run]` table, or when the QEMU program is not on `PATH` |
 | `kelpc repl [--script <file>]` | the read-eval-print loop, or a script run through it (`kelpc/src/repl.rs`) | not stated here |
 | `kelpc stdlib --json --dir <dir>` | writes every shipped std module's source under `<dir>` and prints a JSON listing with each module's SHA-256 (`kelpc/src/commands/cmd_stdlib.rs`). Refused without `--json` or `--dir` | 1 on a bad flag |
 | `kelpc version [--verbose]` | prints the release name the binary was built from, for example `kelpc 26.10.4`. With `--verbose` it also prints the commit, build date, rustc and LLVM versions ([Release tooling](/tooling/release-tooling)). The name is the same text as the release tag. For months before October the tag keeps a leading zero (`v26.09.5`) that `Cargo.toml` cannot carry, and this command adds it back | 0 |
@@ -565,8 +566,9 @@ file changes three things:
    file that must hold `main`, and it does not have to be called `main.kp`.
 3. **The compiler reads the flat keys and a few of its own sections.** It wants
    `name`, `version` and `entry` (plus `http_pool` and `naming_case`), and it
-   reads `[build]`, `[target]`, `[caps]`, `[unsafe]` and `[extern."..."]`
-   itself, because those change what it compiles. The keys it reads from
+   reads `[build]`, `[target]`, `[caps]`, `[unsafe]`, `[run]` and `[extern."..."]`
+   itself, because those change what it compiles. `[run]` changes nothing a normal
+   build produces; only `kelpc boot` reads it. The keys it reads from
    `[build]` are:
 
    | Key | Value | Effect |
@@ -577,6 +579,22 @@ file changes three things:
 
    Every other section (`[tasks]`, `[dependencies]`, `[toolchain]`) is Coral's
    manifest surface, and the compiler skips its lines rather than rejecting them.
+
+`[run]` is the table `kelpc boot` reads. It names the QEMU machine and the serial
+lines a freestanding example must print:
+
+```toml
+[run]
+qemu = "riscv64"             # "riscv64", "aarch64" or "x86_64"
+expect = ["bss clear"]       # one line, or a list; each must appear whole
+ramfb = true                 # optional: add a ramfb framebuffer device
+smp = 2                      # optional: CPU count, default 1
+```
+
+`qemu` and `expect` are required. `expect` is read in order, and its last line is
+where the boot stops early. A `#` ends a line's comment, so an expected line cannot
+contain one. An unknown key, or a repeated one, is an error in the manifest, and
+so is a malformed `[run]` table even in a normal build.
 
 `kelpc` is lenient about flat keys it does not use: a manifest carrying
 `http_pool = 8` compiles, because the compiler never looks at it. Coral validates

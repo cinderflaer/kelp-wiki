@@ -24,6 +24,8 @@ empty on release.
 
 ## added
 
+- `kelpc boot <project dir>` builds a freestanding example and boots it under QEMU, checking the serial lines named by the `[run]` table in its `coral.toml` (`qemu`, `expect`, and the optional `ramfb` and `smp`). It replaces the `run.sh` scripts that each repeated the same QEMU command: 21 of the 25 examples lost theirs (issue #303). Four keep a `run.sh` because their checks are ordered or generated.
+
 - Several plain module paths may share one `impl` line: `impl "std/str", "std/fmt", "std/option"` is the same as three lines, one module each, in the order written (issue #299). A `caps(...)` grant keeps its own line, and a grant written after a list is refused with that fix named. This is spelling only: the existing lines are unchanged.
 
 - The pure std modules need no `impl` line (issue #300). `str`, `fmt`, `math`, `option`, `result`, `convert` and `iter` are in scope in every project module by their own names, and a module joins the program only when the file names it. A bare `Option<T>` and `Result<T, E>` are the std types, in annotations, generic arguments and the paths `Option.Some(...)` and `Result.Err(...)`. The `impl` line still works and keeps its meaning: a file whose own `impl` names a module `str` has that module as `str`, and the std `str` is then reached from another file. `derive(text)` no longer needs `impl "std/fmt"`. Capability modules keep their `impl` line.

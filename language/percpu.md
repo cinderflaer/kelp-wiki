@@ -137,15 +137,16 @@ sets `tp = 0`, writes `4` into its copy and prints it; it then sets `tp = 1` by
 hand, so the same name reads the untouched second copy; `cpu_index()` and
 `cpu_count()` print `1` and `2`.
 
-Run the script from a shell where `kelpc`, `qemu-system-riscv64` and `ld.lld` are on
-`PATH`. A Nix shell for the repository provides all three:
+Run the boot from a shell where `kelpc`, `qemu-system-riscv64` and `ld.lld` are on
+`PATH`. A Nix shell for the repository provides `kelpc` and `ld.lld`; QEMU comes from
+`nix-shell -p qemu`:
 
 ```sh
-examples/kernel0-percpu/run.sh
+kelpc boot kelpc/tests/fixtures/examples/kernel0-percpu
 ```
 
 ```text
-run.sh: booted .../examples/kernel0-percpu and the UART printed:
+kelpc boot: booted kelpc/tests/fixtures/examples/kernel0-percpu and the UART printed:
 cpu0 4
 cpu1 7
 idx 1

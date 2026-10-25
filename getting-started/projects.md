@@ -40,7 +40,8 @@ local     = "file:///srv/git/fpl#other"  # a full URL, folder after '#'
 
 `kelpc` reads the flat keys (`name`, `version`, `entry`, `http_pool` and
 `naming_case`) and the sections that change what it compiles, such as `[alias]`,
-`[caps]` and `[target]`. It skips the sections that belong to Coral, such as
+`[caps]` and `[target]`. A `[run]` table, which names the QEMU machine and the lines
+`kelpc boot` checks, is read by that command only (see [`kelpc` CLI](/tooling/kelpc-cli)). It skips the sections that belong to Coral, such as
 `[tasks]` and `[dependencies]`.
 
 ## What a project buys you
