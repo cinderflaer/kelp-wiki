@@ -37,6 +37,8 @@ empty on release.
 
 - An `extern fun` may name the C symbol it forwards to: `extern fun read(path: &str) => Bytes = "read_raw"` declares `read` as a function whose body calls `read_raw` with its parameters in order. The C symbol is the name the module's `symbols` list allows, and the std forwarding wrappers use the form now (issue #294).
 
+- A parameter of a top-level `fun` may take a default value (issue #296): `fun scale(n: int, factor: int = 3)` makes `scale(2)` mean `scale(2, 3)`. The default is one literal, checked at each call, and a parameter with one comes after every parameter without one. An expression, another parameter, or a default on a method, generic function, `extern fun` or fun literal is refused.
+
 ## Documentation
 
 - The Coral, Polyp, fpl and Lighthouse pages match their `main` branches: Coral has no version pins and records `coral.lock`, Polyp exports no `QUIT_ID` and its API lists the v4 and v5 nodes, fpl has 32 libraries, and Lighthouse has a Kelp port of the server in progress.
@@ -68,3 +70,4 @@ empty on release.
 - An expression body with no `=> T` takes the type of its body as its return type (issue 280): `fun double(x: i32) = x * 2` builds. A recursive body, a `when` with several arms, an `asm` body, a generic or trait method, and a body whose type is a borrow still need the type written, and a public function's inferred type cannot name a private type.
 
 - The borrowing `Option` and `Result` helpers have one definition each, written as methods (issue #295). `map`, `and_then`, `or_else` and `each` are methods only: `o.map(f)`, `r.and_then(f)`. Breaking: the free spellings `option.map`, `option.and_then`, `option.or_else`, `option.each`, `result.and_then`, `result.or_else` and `result.each` are removed, and a call to one is refused; write the method. `option.is_some`, `option.is_none`, `result.is_ok` and `result.is_err` keep their free spelling. `result.map` and `result.map_err` are unchanged.
+- `spawn`, `run`, `run_inherit` and `try_run` take a trailing `dir: &str = ""` (issue #296), and `fmt.float`'s `decimals` defaults to 2. The `_in` forms (`spawn_in`, `run_in`, `run_inherit_in`, `try_run_in`) keep their signatures for one cycle and forward to the new functions; no program changes.

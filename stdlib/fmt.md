@@ -15,7 +15,7 @@ impl "std/fmt"
 | --- | --- | --- |
 | `fmt.int(n: i64)` | `String` | decimal, `-` for negatives |
 | `fmt.uint(n: u64)` | `String` | decimal |
-| `fmt.float(x: f64, decimals: i32)` | `String` | fixed point with exactly `decimals` digits |
+| `fmt.float(x: f64, decimals: i32 = 2)` | `String` | fixed point with exactly `decimals` digits; two when `decimals` is left out |
 | `fmt.hex(n: u64)` | `String` | lowercase hex |
 | `fmt.bytes(b: Bytes)` | `String` | a debugging dump: lowercase hex, one space between bytes, `1f 8b 08` |
 | `fmt.pad_left(s: &str, width: usize, fill: u8)` | `String` | pads on the left to `width`; a longer `s` is returned unchanged |

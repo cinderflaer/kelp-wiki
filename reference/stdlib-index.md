@@ -200,7 +200,7 @@ Functions:
 
 - `fun int(n: i64) => String`
 - `fun uint(n: u64) => String`
-- `fun float(x: f64, decimals: i32) => String`
+- `fun float(x: f64, decimals: i32 = 2) => String`
 - `fun hex(n: u64) => String`
 - `fun bytes(b: Bytes) => String`
 - `fun pad_left(s: &str, width: int, fill: u8) => String`
@@ -361,15 +361,15 @@ Functions:
 
 - `fun args() => List<String>`
 - `fun arg_count() => int`
+- `fun spawn(program: &str, args: List<String>, dir: &str = "") => Child`
 - `fun spawn_in(dir: &str, program: &str, args: List<String>) => Child`
-- `fun spawn(program: &str, args: List<String>) => Child`
+- `fun run(program: &str, args: List<String>, dir: &str = "") => RunResult`
 - `fun run_in(dir: &str, program: &str, args: List<String>) => RunResult`
-- `fun run(program: &str, args: List<String>) => RunResult`
+- `fun run_inherit(program: &str, args: List<String>, dir: &str = "") => RunResult`
 - `fun run_inherit_in(dir: &str, program: &str, args: List<String>) => RunResult`
-- `fun run_inherit(program: &str, args: List<String>) => RunResult`
 - `fun executable(program: &str) => bool`
+- `fun try_run(program: &str, args: List<String>, dir: &str = "") => result.Result<RunResult, ProcErr>`
 - `fun try_run_in(dir: &str, program: &str, args: List<String>) => result.Result<RunResult, ProcErr>`
-- `fun try_run(program: &str, args: List<String>) => result.Result<RunResult, ProcErr>`
 - `fun mut Child.wait() => i32`
 - `fun mut Child.is_running() => bool`
 - `fun Child.kill(signal: i32)`

@@ -105,6 +105,33 @@ The shorthand needs both a local called `host` in scope and a field called `host
 otherwise the call is refused with the name in the message. In a call to a
 function a bare name stays positional, so `f(host)` is not shorthand.
 
+## Default values
+
+A parameter of a top-level `fun` may name a default value with `= literal`. A
+call that leaves that argument out takes the default, and a call that passes it
+uses the written value instead:
+
+```kelp
+fun scale(n: int, factor: int = 3) => int = n * factor
+
+scale(2)                  // 6
+scale(2, 10)              // 20
+scale(2, factor = 5)      // 10
+```
+
+The rules:
+
+- The default is one literal: a number (with an optional leading `-`), a string,
+  a character, a byte or `true`/`false`. An expression, a call, or a name such as
+  another parameter is refused with "must be a literal".
+- The default is checked against the parameter's type at every call that uses
+  it, and a wrong type is reported at that call.
+- A parameter with a default comes after every parameter without one. A call
+  that leaves a middle argument out names the arguments after it.
+- A default is written on a plain top-level `fun` only. An `extern fun`, a
+  trait method, a receiver method, a generic function and a `fun` literal take
+  none, and the refusal names which one it is.
+
 ## Overloading and recursion
 
 - **A user program cannot overload a name.** `fun pick(a: i32)` and
