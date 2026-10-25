@@ -6,9 +6,7 @@ tags: "stdlib, text"
 ---
 Text: search, slice, split, join, case, format, parse. Ungated.
 
-```kelp
-impl "std/str"
-```
+Needs no `impl` line: the module is in scope by its own name.
 
 `str.len` and `str.byte` are byte-oriented; `str.char_count`, `str.char_at` and
 `str.decode_at` are the codepoint-oriented set.
@@ -59,9 +57,6 @@ enum ParseErr {
 ## Example
 
 ```kelp
-impl "std/str"
-impl "std/result"
-
 fun main() {
     val s = "  kelp, language  "
     val t = str.trim(s)

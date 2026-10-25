@@ -39,6 +39,12 @@ fun main() {
 - **Several plain paths may share one line.** `impl "std/str", "std/fmt"` is the same as two
   `impl` lines, in the order written, and each module is reached by its own name. A `caps(...)`
   grant takes its own line: a grant after a list is refused with that fix named.
+- **The pure standard modules need no line.** `str`, `fmt`, `math`, `option`, `result`,
+  `convert` and `iter` are in scope in every project module under their own names. A file
+  gets one when it writes its name (`str.parse_i64`, `derive(text)`), and the bare `Option`
+  and `Result` are the std types there. A file whose own `impl` line names a module with
+  one of those names keeps that module for the file, and the std module is then not in that
+  file: call it from another file. Capability modules (`fs`, `net`, ...) keep their line.
 - **`impl "path" as name` is removed.** A module has one name, its own. A program
   that still writes the `as` clause gets an error that names the module's name to
   use instead.

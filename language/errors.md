@@ -12,30 +12,28 @@ Source: [`syntax.md` §18](/design/syntax).
 
 ## `Option` and `Result`
 
-Both are ordinary enums from the standard library. Import them with `impl`, and
-write the types with the module name:
+Both are ordinary enums from the standard library. Neither needs an `impl` line:
+write `Option<T>` and `Result<T, E>`, or the prefixed `option.Option<T>` and
+`result.Result<T, E>` when the module name should show. A file that declares its
+own `Option` or `Result` keeps its own type.
 
 | Type | Import | Variants |
 | --- | --- | --- |
-| `option.Option<T>` | `impl "std/option"` | `Some(value)`, `None` |
-| `result.Result<T, E>` | `impl "std/result"` | `Ok(value)`, `Err(error)` |
+| `Option<T>` or `option.Option<T>` | none (`impl "std/option"` still works) | `Some(value)`, `None` |
+| `Result<T, E>` or `result.Result<T, E>` | none (`impl "std/result"` still works) | `Ok(value)`, `Err(error)` |
 
 Each module provides free functions such as `option.is_none(o = maybe)`, and most
 of them also exist as methods, such as `maybe.is_none()`. See
 [`std/option`](/stdlib/option) and [`std/result`](/stdlib/result).
 
 ```kelp
-impl "std/option"
-impl "std/result"
-impl "std/str"
-
 fun main() {
     val parsed = str.parse_i64(s = "41")
     if let Ok(n) = parsed {
         print(n + 1)
     }
 
-    val maybe: option.Option<i32> = option.Option.None
+    val maybe: Option<i32> = Option.None
     if option.is_none(o = maybe) {
         print("nothing")
     }

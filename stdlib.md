@@ -47,6 +47,11 @@ text functions are reviewable Kelp rather than a C blob. It is imported with
 `impl "std/<module>"`; a module that touches the outside world needs the domain
 **delegated on the `impl` line**.
 
+The pure modules `std/str`, `std/fmt`, `std/math`, `std/option`, `std/result`,
+`std/convert` and `std/iter` need no `impl` line at all: a project module that
+names one of them (`str.parse_i64`, a bare `Option<T>`) has it in scope under its
+own name. See [Modules and imports](/language/modules).
+
 `std/internal/...` is reserved for compiler implementation modules. It is not
 part of the public library: a project cannot import it or place its own source
 under that path.
@@ -54,7 +59,7 @@ under that path.
 ```kelp
 impl "std/fs"                                          // needs fs
 impl "std/net" caps(net = ["api.example.com:443"]) // names the host it may dial
-impl "std/str"                                          // needs nothing
+impl "std/mem"                                          // needs nothing
 ```
 
 The domain each module needs comes from the compiler's own table

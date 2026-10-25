@@ -7,9 +7,7 @@ tags: "stdlib, text"
 Formatting into `String`: numbers, bytes, padding, digit grouping and byte
 sizes. Ungated.
 
-```kelp
-impl "std/fmt"
-```
+Needs no `impl` line: the module is in scope by its own name.
 
 | Function | Returns | Notes |
 | --- | --- | --- |
@@ -31,8 +29,6 @@ with a name that reads well inside a call. `print` itself formats floats with si
 decimals; use `fmt.float` when you want another count.
 
 ```kelp
-impl "std/fmt"
-
 fun main() {
     print(fmt.int(-7))
     print(fmt.uint(1024))

@@ -6,9 +6,7 @@ tags: "stdlib, errors"
 ---
 `Result<T, E>` and its combinators. Ungated.
 
-```kelp
-impl "std/result"
-```
+Needs no `impl` line: the module is in scope by its own name.
 
 ```kelp
 enum Result<T, E> {
@@ -28,8 +26,6 @@ written `Result<(), E>`: `()` is the type of the absent value, the same type as
 constructs and matches like any other `Ok`:
 
 ```kelp
-impl "std/result"
-
 fun check_positive(x: i32) => result.Result<unit, String> {
     if x > 0 {
         return result.Result.Ok(value = ())
@@ -71,9 +67,6 @@ result with `move`, so they stay free functions.
 ## Example
 
 ```kelp
-impl "std/result"
-impl "std/str"
-
 fun main() {
     val ok = str.parse_i64("41")
     val bad = str.parse_i64("nope")

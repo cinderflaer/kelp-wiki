@@ -6,9 +6,7 @@ tags: "stdlib, errors"
 ---
 `Option<T>` and its combinators. Ungated.
 
-```kelp
-impl "std/option"
-```
+Needs no `impl` line: the module is in scope by its own name.
 
 ```kelp
 enum Option<T> {
@@ -68,8 +66,6 @@ is owned or `Copy`.
 ## Example
 
 ```kelp
-impl "std/option"
-
 fun main() {
     val some: option.Option<i64> = option.Option.Some(value = 7)
     val none: option.Option<i64> = option.Option.None

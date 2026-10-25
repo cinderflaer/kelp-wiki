@@ -7,9 +7,7 @@ tags: "stdlib, math"
 Floating-point math over `f64` and `f32`, plus `abs`/`min`/`max`/`clamp` over the
 integers: the only overloaded names in the language. Ungated.
 
-```kelp
-impl "std/math"
-```
+Needs no `impl` line: the module is in scope by its own name.
 
 ## Constants
 
@@ -44,8 +42,6 @@ library (syntax.md §7.2). A user module cannot repeat the trick; that is why
 [`mathx`](/libraries/mathx) spells checked arithmetic per width.
 
 ```kelp
-impl "std/math"
-
 fun main() {
     print(math.sqrt(2.0))
     print(math.pow(2.0, 10.0))
