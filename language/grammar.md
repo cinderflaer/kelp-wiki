@@ -58,7 +58,7 @@ fun          := [ "pub" ] [ "extern" ] "fun" [ "mut" ] ( ident [ typeparams ] ".
                 // parameters (9.5); on a receiver it names the receiver's type
                 // arguments and takes no bounds.
 param        := ident ":" [ "mut" | "move" ] ( type | "impl" traitname )   // `impl Trait`: a whole parameter type, bare or behind `&`
-body         := "=" expr | block | <nothing for extern>
+body         := "=" expr | block | <nothing for extern> | "=" string   // an extern with a string is a binding to that C symbol (issue #294)
 
 type         := [ "&" [ "mut" ] "dyn" ident ]  // a borrowed trait object: `&dyn T`, `&mut dyn T`
               | "Box" "<" "dyn" ident ">"       // an owned trait object

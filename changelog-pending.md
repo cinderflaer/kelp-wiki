@@ -35,6 +35,8 @@ empty on release.
 - A method may be written inside the braces of its `datac`, with no `fun` and no type name: `mut bump() { count += 1 }` in `datac Counter(val id: int, var count: int) { ... }` means the same as `fun mut Counter.bump()` written after the type. The two forms mix, and `fun` and `pub` are refused inside the block (issue #285).
 - `derive(text)` writes the `Display` form of a `datac` or `enum` above it (issue #292): `impl fmt.Display` with `to_text`, so `"${x}"` and `print(x)` work with no hand-written impl. A `datac` reads `Point(3, ab)`, a `datac` with no fields `Blank()`, and an enum reads `Circle(2)` or its unit variant name `Empty`. Fields are written in declaration order and a `String` is written without quotes. The file must import `std/fmt`, and a field with no text form (a `List`, `Map`, `Box`, tuple or array, or a local type with no `to_text`) is refused by name. `derive(eq, hash, text)` may combine the three.
 
+- An `extern fun` may name the C symbol it forwards to: `extern fun read(path: &str) => Bytes = "read_raw"` declares `read` as a function whose body calls `read_raw` with its parameters in order. The C symbol is the name the module's `symbols` list allows, and the std forwarding wrappers use the form now (issue #294).
+
 ## Documentation
 
 - The Coral, Polyp, fpl and Lighthouse pages match their `main` branches: Coral has no version pins and records `coral.lock`, Polyp exports no `QUIT_ID` and its API lists the v4 and v5 nodes, fpl has 32 libraries, and Lighthouse has a Kelp port of the server in progress.

@@ -69,6 +69,26 @@ library = "c"
 symbols = ["process_id=getpid"]
 ```
 
+## Binding a C symbol under another name
+
+An `extern fun` may name the C symbol it forwards to after `=`:
+
+```kelp
+extern fun read(path: &str) => Bytes = "read_raw"
+```
+
+`read` is an ordinary function with that signature. Its body calls `read_raw` with
+its parameters, in the order written, and returns the result unchanged. The
+binding needs a `=> T` return type, and it cannot be variadic, generic, or a
+method. The symbol must be a C identifier, and it cannot be the name of the
+binding itself. Write `pub` on the binding to export `read`; the symbol stays
+private.
+
+In a user module the symbol is an ordinary `extern`, so the name that
+`symbols` lists in `coral.toml` is the C symbol (`read_raw` here), not the Kelp
+name. The compiler's own std modules use the form for their one-line forwarding
+wrappers.
+
 ## `extern type`: opaque native handles
 
 A native pointer that Kelp never dereferences is declared `extern type`. It is an
