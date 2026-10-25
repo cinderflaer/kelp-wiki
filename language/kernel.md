@@ -29,6 +29,18 @@ the boot reads the kernel's intent: the assertion is a comparison against the by
 that came out of the serial port. Only `kelpc boot` reads the `[run]` table; a
 normal build ignores it.
 
+The examples share their source files. `kelpc/tests/fixtures/examples/shared/`
+holds one copy of each file that more than one example uses, such as the
+NS16550 driver (`uart-kernel0.kp`), the Sv39 walker (`vm-kernel0-stack.kp`) and
+the Polyp framebuffer platform (`fb_platform-polyp.kp`). An example's `src/`
+names that copy with a relative symbolic link: `src/uart.kp` is a link to
+`../../shared/uart-kernel0.kp`. The compiler reads the link as the file it
+names, so the module keeps its id and the diagnostics keep their path, and the
+manifest needs no change. To change a shared file, edit it under `shared/`:
+every example that links it builds the new text. A new example that needs one
+of these files links to it and does not copy it. `kelpc/tests/shared_examples.rs`
+checks both rules.
+
 ```text
 [run]
 qemu = "riscv64"

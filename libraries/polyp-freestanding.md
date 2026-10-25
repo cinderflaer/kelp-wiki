@@ -150,7 +150,7 @@ image.
 There is no libc and no runtime behind a bare-metal Polyp image, so a project
 writes a few more facts down in its `coral.toml`. `kelpc/tests/fixtures/examples/polyp-fb-riscv64/` is
 the worked example (about two hundred lines of project code;
-`kelpc/tests/fixtures/examples/polyp-fb-x86_64/src/fb_platform.kp` is literally the same file):
+`kelpc/tests/fixtures/examples/polyp-fb-x86_64/src/fb_platform.kp` is a link to the same file, which lives once in `kelpc/tests/fixtures/examples/shared/`):
 
 1. **A framebuffer.** The platform owns it. A `static mut [u32; W * H]` in `.bss`
    is enough, and `_start` zeroes `.bss`, so the surface starts black the way
