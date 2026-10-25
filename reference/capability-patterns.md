@@ -136,6 +136,7 @@ domain gate alone, and it is what a GTK binding asks for (see
   importing module holds. It stands alone (`caps(*, net = [...])` is a parse
   error in either order), it can never grant more than the delegator holds, and
   it is refused on an import that reaches no capability domain at all.
+- `coral.toml`'s `[caps."<module id>"]` section (#301) gives an imported module a grant once, whichever file imports it. It is a ceiling: a `caps(...)` clause on that module may grant only what the section covers (see [Coral: the manifest](/tooling/coral#caps-module-id-the-grant-for-one-imported-module)).
 - A non-entry module holds exactly what its importer granted, and **can delegate
   less than it holds, never more**: granting a pattern the importer does not hold
   is an error.

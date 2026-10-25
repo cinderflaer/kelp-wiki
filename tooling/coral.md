@@ -357,6 +357,38 @@ author: Ada Lovelace <ada@example.org>
 description: A demo project
 ```
 
+### `[caps."<module id>"]`: the grant for one imported module
+
+A grant that many `impl` lines would repeat can be written once, for the module
+it names. A `[caps."<module id>"]` section gives that module the listed patterns
+whichever file imports it:
+
+```toml
+[caps."std/http"]
+net = ["api.example.com:443"]
+
+[caps."deps/fsx/lib"]
+fs = ["/var/lib/myproject/**"]
+```
+
+```kelp
+impl "std/http"          // holds net = ["api.example.com:443"]
+impl "deps/fsx/lib"      // holds fs = ["/var/lib/myproject/**"]
+```
+
+- **One line per domain**, the same vocabulary and the same checks as the
+  `[caps]` section above and as a `caps(...)` clause.
+- **The section is a ceiling.** A `caps(...)` clause on the named module may
+  grant only what the section covers in that domain. A clause on a domain the
+  section does not list is an error, and so is a clause that asks for more.
+- **The section's patterns must be ones the entry module holds**: its `[caps]`
+  section, or the whole resource when there is none.
+- **It names a module the program imports**, one that reaches a capability domain,
+  and not the entry module (the entry module's grant is `[caps]`). Each module id
+  appears once.
+- **No section means no change.** A project that writes no `[caps."..."]`
+  section behaves exactly as before.
+
 Package archives made by `coral build --package` do not carry these keys yet.
 
 ### Sections
@@ -364,6 +396,7 @@ Package archives made by `coral build --package` do not carry these keys yet.
 | Section | Shape | Notes |
 | --- | --- | --- |
 | `[caps]` | `domain = ["pattern", ...]` | read by `kelpc`, not Coral: it restricts the entry module's own capability grant; see [below](#caps-the-entry-modules-own-grant) |
+| `[caps."<module id>"]` | `domain = ["pattern", ...]` | read by `kelpc`, not Coral: the grant an imported module holds whichever file imports it; see [below](#caps-module-id-the-grant-for-one-imported-module) |
 | `[extern."<module id>"]` | `domain`, `library`, `symbols`, `header`, `include_dirs`, `library_dirs`, `pkg_config` | read by `kelpc`, not Coral: it assigns a user module a capability domain and a native FFI surface; see [below](#user-modules-that-bind-a-native-symbol-extern) |
 | `[unsafe]` | `modules = ["<module id>", ...]` | read by `kelpc`, not Coral: the modules allowed to contain `unsafe`, an `unsafe fun`, a `static mut` access or an `asm`; see [below](#unsafe-modules-that-may-leave-the-checked-language) |
 | `[target]` | `mode`, `triple`, `entry`, `linker_script`, `panic`, `alloc`, `dealloc`, `realloc`, `cpus` | read by `kelpc`, not Coral: a bare-metal build; see [below](#target-a-freestanding-build) |

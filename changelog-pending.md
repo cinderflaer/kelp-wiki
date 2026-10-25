@@ -55,6 +55,7 @@ empty on release.
 
 ## Added
 
+- A `coral.toml` section `[caps."<module id>"]` grants an imported module its capabilities once, so the `impl` lines that import it need no `caps(...)` clause (issue #301). The section is a ceiling: a clause on that module may grant only what the section covers, and the entry module keeps its `[caps]` section. No existing grant changes meaning.
 - A multi-line string literal: `"""` opens a block, a line holding only `"""` closes it, and the closing line's indentation is removed from the lines between. The value always ends with a newline and uses the string escapes, so a block equals the same text written with `\n` (issue 260). An unterminated block is refused at its opening.
 
 ## Changed

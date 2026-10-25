@@ -125,6 +125,37 @@ A module that reaches a gated one counts even when it is ungated itself:
 `std/http` is ungated and holds `net`, so `impl "std/http" caps(*)` is a
 legitimate line, while the clause on `std/str` is the refusal above.
 
+### The manifest grant
+
+A module that many files import can be granted once, in `coral.toml`, instead
+of in every `impl` line that imports it:
+
+```toml
+# coral.toml
+[caps."std/http"]
+net = ["api.example.com:443"]
+```
+
+```kelp
+impl "std/http"
+```
+
+- The named module holds the section's patterns whichever file imports it, so a
+  bare `impl` line is enough. A module the manifest does not name holds nothing
+  from a bare `impl` line, as before.
+- The section is a **ceiling** for that module. A `caps(...)` clause on it may
+  grant only the patterns the section covers in that domain. A clause on a
+  domain the section does not list is refused, and so is a clause that asks for
+  more than the section gives. A clause inside the ceiling is accepted and adds
+  no authority the section does not already give.
+- The section's own patterns must be ones the entry module holds: its `[caps]`
+  section, or the whole resource when it has none.
+- The section must name a module the program imports, a module that reaches a
+  capability domain, and not the entry module (the entry module's grant is
+  `[caps]`). Each module id appears once.
+- The vocabulary and the checks are the ones `caps(...)` uses. See
+  [Coral: the manifest](/tooling/coral#caps-module-id-the-grant-for-one-imported-module).
+
 ### Patterns
 
 | Domain | Pattern forms | Matching |
