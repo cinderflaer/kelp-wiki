@@ -24,6 +24,8 @@ empty on release.
 
 ## added
 
+- Several plain module paths may share one `impl` line: `impl "std/str", "std/fmt", "std/option"` is the same as three lines, one module each, in the order written (issue #299). A `caps(...)` grant keeps its own line, and a grant written after a list is refused with that fix named. This is spelling only: the existing lines are unchanged.
+
 - A file of top-level statements with no `fun main` runs them as its `main`, in source order, and declarations may come before, between or after them. A file with statements cannot also declare `main`, the statements may only be in the entry file, and `?` is refused in one, as it is in `fun main()` (issue #288).
 - At the top level, `fun` may be left out of a function with no modifier: `main() { ... }`, `half(n: int) => int = n / 2`, `Counter.bump()` and `mut Counter.bump()` are the same as their `fun` forms, and one file may mix them. A `pub` function keeps `fun`, and a `pub` line without it is refused with `pub fun` named as the fix (issue #287).
 - A `fun Type.name()` whose body writes `self` is exclusive with no `mut` written: the receiver mode is inferred from the body, so `fun mut` is not needed. A shared borrow cannot call such a method, and the refusal names the rule. Inside a datac block the mode is still written (`mut name()`), and a block method that writes `self` without it is refused with that fix named (issue #286).

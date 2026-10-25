@@ -16,7 +16,9 @@ line         := impl | trait | traitimpl | const | pd | datac | enum | fun | sta
                 // `main` (issue #288). A file with statements cannot also declare `main`, and
                 // only the entry file may hold statements.
 
-impl         := "impl" string [ "caps" "(" ( grant ( "," grant )* | "*" ) ")" ]
+impl         := "impl" string ( "," string )* [ "caps" "(" ( grant ( "," grant )* | "*" ) ")" ]
+                // a list of plain paths on one line (issue #299) takes no `caps` clause: the
+                // parser refuses a grant after a comma by name, and each path is one module
                 // `caps(*)` (15.2) delegates the whole resource of every domain and
                 // stands alone: a named domain beside the `*` is refused by name.
                 // `as name` was removed (13.1) and `with caps(...)` with it (15.2):
