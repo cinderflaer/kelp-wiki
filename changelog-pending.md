@@ -39,6 +39,8 @@ empty on release.
 
 - A parameter of a top-level `fun` may take a default value (issue #296): `fun scale(n: int, factor: int = 3)` makes `scale(2)` mean `scale(2, 3)`. The default is one literal, checked at each call, and a parameter with one comes after every parameter without one. An expression, another parameter, or a default on a method, generic function, `extern fun` or fun literal is refused.
 
+- `main` may return `result.Result<unit, E>` (issue #298). On `Err(e)` the text of `e` goes to stderr with a newline and the program exits with status 1; on `Ok` it exits with status 0. `?` works in such a `main`. The success type must be `unit`, and `kelp_main_result` is reserved while `main` returns Result. A file needs no `std/io` or `std/process` import for this.
+
 ## Documentation
 
 - The Coral, Polyp, fpl and Lighthouse pages match their `main` branches: Coral has no version pins and records `coral.lock`, Polyp exports no `QUIT_ID` and its API lists the v4 and v5 nodes, fpl has 32 libraries, and Lighthouse has a Kelp port of the server in progress.

@@ -72,7 +72,9 @@ fun quarter(n: i64) => result.Result<i64, str.ParseErr> {
   payload, so it never converts. See
   [Generic traits, `From` and `?` conversion](/language/generic-traits).
   For a one-off conversion, `result.map_err` also works.
-- A function that returns `unit` (including `main`) has nowhere to propagate to.
+- A function that returns `unit` has nowhere to propagate to. `main` may return
+  `result.Result<unit, E>` instead, and then `?` works at the top level. See
+  [Returning Result from `main`](#returning-result-from-main).
 - The result composes inside an expression: `1 + half(n = n)?`.
 - A failure returns at once, and the frame's locals are dropped as they are for a
   `return`.
@@ -82,6 +84,43 @@ fun quarter(n: i64) => result.Result<i64, str.ParseErr> {
   `fun mk(n: i32) => result.Result<(i32, i32), String>`, the line
   `val (a, b) = mk(n)?` binds the tuple and takes it apart. Writing `?` on the tuple
   itself is an error, because a tuple is not an `enum` ([Types](/language/types)).
+
+## Returning `Result` from `main`
+
+`main` may return `result.Result<unit, E>` in place of `unit`. Then `?` works at the
+top level, and a failure ends the program with a message:
+
+```kelp
+impl "std/result"
+
+fun parse_step(n: i32) => result.Result<i32, String> {
+    if n > 2 {
+        return result.Result.Err(error = "step ${n} is too large")
+    }
+    return result.Result.Ok(value = n)
+}
+
+fun main() => result.Result<unit, String> {
+    val a = parse_step(1)?
+    print("a = ${a}")
+    val b = parse_step(5)?
+    print("b = ${b}")
+    return result.Result.Ok(value = ())
+}
+```
+
+The rules:
+
+- On `Ok`, the program ends with status 0.
+- On `Err(e)`, the text of `e` is written to stderr with a newline, and the program
+  ends with status 1. The text is what `"${e}"` gives: a `String`, an integer, or any
+  type with a `Display` form such as one from `derive(text)` ([`design/traits`](/design/traits)).
+  Anything `main` printed before the failure is still on stdout.
+- The success type must be `unit`. `main` returning `Result<i32, E>` is refused.
+- The name `kelp_main_result` is reserved while `main` returns a `Result`. The
+  compiler gives that name to the body, so a function of that name is refused.
+- A script (a file of top-level statements) still returns unit, so `?` is refused in
+  it.
 
 ## `panic` and `assert`
 
