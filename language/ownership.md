@@ -113,8 +113,6 @@ borrow is dead. `first` below is read once, and the `push` after that read no
 longer conflicts, even though `first` is still in scope:
 
 ```kelp
-impl "std/str"
-
 fun main() {
     var names: List<String> = List.empty()
     names.push(String.from_str("alpha"))
@@ -130,8 +128,6 @@ matters: move the `push` before the `print` and the borrow is still used after
 the mutation, so it is refused:
 
 ```kelp refused
-impl "std/str"
-
 fun main() {
     var names: List<String> = List.empty()
     names.push(String.from_str("alpha"))
@@ -145,7 +141,7 @@ fun main() {
 ```text
 $ kelpc check swap.kp
 error: cannot borrow 'names' as exclusive: already borrowed as shared
-  --> swap.kp:7:5
+  --> swap.kp:5:5
 ```
 
 Two structured cases follow from statement granularity. A use inside a loop body

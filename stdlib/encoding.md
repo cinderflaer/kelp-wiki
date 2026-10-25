@@ -40,7 +40,6 @@ error to say.
 
 ```kelp
 impl "std/encoding"
-impl "std/result"
 
 fun main() {
     val b = Bytes.from_str("hello")

@@ -13,7 +13,6 @@ target facts of [`std/os`](/stdlib/os), which is where new code should look.
 
 ```kelp
 impl "std/sys"
-impl "std/str"
 
 fun main() {
     if str.eq(sys.os(), "linux") {

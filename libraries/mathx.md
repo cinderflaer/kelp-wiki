@@ -53,7 +53,6 @@ dividing the product back out (mul).
 
 ```kelp project
 impl "deps/mathx/lib"
-impl "std/option"
 
 fun main() {
     print(mathx.gcd(12, 18))

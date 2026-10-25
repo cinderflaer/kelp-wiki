@@ -67,7 +67,6 @@ parses the rest.
 
 ```kelp
 impl "std/process"
-impl "std/result"
 
 fun main() {
     val argv = process.args()

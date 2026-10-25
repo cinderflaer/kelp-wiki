@@ -73,8 +73,6 @@ error, and so is a `const` or `pd` after a `datac`, `enum` or `fun`
 ## The 60-second version
 
 ```kelp
-impl "std/str"
-
 datac Point(var x: i32, var y: i32)
 
 fun area(p: Point) => i32 = p.x * p.y

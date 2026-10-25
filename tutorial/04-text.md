@@ -10,9 +10,6 @@ how to read a number out of text.
 ## The program
 
 ```kelp
-impl "std/fmt"
-impl "std/str"
-
 fun shout(s: str) => String {
     var out = String.empty()
     out.push_str(s)

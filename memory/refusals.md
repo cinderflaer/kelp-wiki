@@ -47,8 +47,6 @@ x
 on the next line, so the list cannot be changed.
 
 ```kelp
-impl "std/str"
-
 fun main() {
     var names: List<String> = List.empty()
     names.push(String.from_str("alpha"))
@@ -68,8 +66,6 @@ Move the mutation after the last read of the borrow. The borrow is dead once
 `first` is read for the last time, so the `push` is accepted there.
 
 ```kelp
-impl "std/str"
-
 fun main() {
     var names: List<String> = List.empty()
     names.push(String.from_str("alpha"))

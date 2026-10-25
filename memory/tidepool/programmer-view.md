@@ -18,8 +18,6 @@ A block is an expression. It names the block, gives the element type, and holds 
 statements that use it:
 
 ```kelp
-impl "std/result"
-
 datac Node(val value: i32)
 
 fun doubled(n: i32) => result.Result<i32, BlockError> {
@@ -109,8 +107,6 @@ Channel ends may cross to a worker as a thread argument or result (see
 the first case that is ready:
 
 ```kelp
-impl "std/option"
-impl "std/result"
 impl "std/sync"
 
 fun main() {

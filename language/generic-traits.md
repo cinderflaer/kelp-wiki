@@ -164,10 +164,6 @@ failure type. When the two differ, and an `impl From<E1> for E2` exists where
 and returns that:
 
 ```kelp
-impl "std/convert"
-impl "std/result"
-impl "std/str"
-
 enum AppErr {
     Parse(val text: String)
     Range(val value: i64)

@@ -212,8 +212,6 @@ Several values can be matched together by writing them as a tuple and each arm a
 a tuple pattern:
 
 ```kelp
-impl "std/option"
-
 fun combine(a: &option.Option<i32>, b: &option.Option<i32>) => i32 = when (a, b) {
     (Some(x), Some(y)) -> x + y
     (Some(x), None) -> x
@@ -271,8 +269,6 @@ declared return type, including a borrowed one. That rule is what makes a
 "this cannot happen" accessor expressible:
 
 ```kelp
-impl "std/option"
-
 fun unwrap<T>(o: &option.Option<T>) => T {
     if let Some(v) = o {
         return v

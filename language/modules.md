@@ -10,11 +10,11 @@ A module **is** a file. `impl` names it, and optionally grants it authority.
 
 ```kelp
 impl "std/fs"                                        // the standard library
+impl "std/fs", "std/env"                             // several plain paths, one line
 impl "std/net" caps(net = ["api.example.com:443"])
 impl "deps/discord/lib" caps(*)                      // the whole set, one clause
 impl "shapes/circle"                                 // a file in this project
 impl "deps/json/lib"                                 // a dependency
-impl "std/str", "std/fmt", "std/option"             // several plain paths, one line
 ```
 
 ```kelp project
@@ -36,7 +36,7 @@ fun main() {
   entry module**, a path ending in `/lib` under `deps/`, is named after the
   directory Coral fetched it into: `impl "deps/json/lib"` is `json`, whichever
   repository or folder it came from.
-- **Several plain paths may share one line.** `impl "std/str", "std/fmt"` is the same as two
+- **Several plain paths may share one line.** `impl "std/fs", "std/env"` is the same as two
   `impl` lines, in the order written, and each module is reached by its own name. A `caps(...)`
   grant takes its own line: a grant after a list is refused with that fix named.
 - **The pure standard modules need no line.** `str`, `fmt`, `math`, `option`, `result`,

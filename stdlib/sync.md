@@ -332,8 +332,6 @@ shape: `None` means the deadline passed with the predicate still true and the
 block did not run.
 
 ```kelp
-impl "std/option"
-
 fun not_ready(v: &i64) => bool = v == 0
 
 fun main() {
@@ -438,7 +436,6 @@ It has the same shape as `chan_string_producers.kp`, which the test suite runs:
 
 ```kelp
 impl "std/thread"
-impl "std/result"
 impl "std/sync"
 
 datac Job(val tx: sync.Sender<i64>, val base: i64)
@@ -481,8 +478,6 @@ The program prints `6`, the number of values received, and then `96`, their sum.
 ### `try_recv` and `recv_timeout`
 
 ```kelp
-impl "std/result"
-impl "std/option"
 impl "std/sync"
 
 fun show(o: move option.Option<i64>) => i64 = when o {
@@ -535,8 +530,6 @@ it needs no call.
   the sender instead of being lost.
 
 ```kelp
-impl "std/result"
-impl "std/option"
 impl "std/sync"
 
 fun fill(tx: move sync.Sender<i64>) {

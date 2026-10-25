@@ -37,8 +37,6 @@ and nothing about which repository it came from.
 ```kelp project
 impl "deps/csv/lib"
 impl "deps/table/lib"
-impl "std/str"
-impl "std/fmt"
 
 // Totals the `units` column per region, in a function of its own.
 fun totals_by_region(rows: List<csv.Row>) => Map<String, i64> {

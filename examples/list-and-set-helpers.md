@@ -31,7 +31,6 @@ Both exist because of one language rule: a user module cannot overload a name. S
 ```kelp project
 impl "deps/listx/lib"
 impl "deps/set/lib"
-impl "std/option"
 
 fun main() {
     var xs: List<i32> = List.empty()

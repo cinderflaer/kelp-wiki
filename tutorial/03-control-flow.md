@@ -10,8 +10,6 @@ tags: "tutorial, language"
 ## The program
 
 ```kelp
-impl "std/iter"
-
 fun sign(n: int) => &str {
     if n > 0 {
         return "positive"
@@ -92,8 +90,8 @@ branch, which is the usual style for a function with several exits.
 - `for x in xs` walks a list or an array one element at a time. `x` is a copy
   for a number, and a borrow of the element otherwise.
 - `iter.range(0, 10)` produces the numbers from 0 up to 10, but not including 10.
-  It needs `impl "std/iter"`. Ranges and other iterators are covered again in the
-  [closures and iterators](/tutorial/10-closures) chapter.
+  The `iter` module is in scope in every file, so no import line is needed. Ranges and
+  other iterators are covered again in the [closures and iterators](/tutorial/10-closures) chapter.
 - `break` leaves the loop. `continue` skips to the next pass.
 
 A `for` loop does not let its body change the list it is walking: a `push` or

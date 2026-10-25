@@ -142,7 +142,6 @@ library's `query_pairs` leaves `+` alone for the same reason.
 
 ```kelp project
 impl "deps/encoding/lib"
-impl "std/result"
 
 fun main() {
     val data = Bytes.from_str("foobar")

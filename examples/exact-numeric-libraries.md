@@ -37,8 +37,6 @@ impl "deps/complex/lib"
 impl "deps/mathx/lib"
 impl "deps/stats/lib"
 impl "deps/prng/lib"
-impl "std/option"
-impl "std/str"
 
 // A separate function, so the arithmetic stays out of `main`.
 fun power_of_two(exponent: u32) => bigint.BigInt {

@@ -16,9 +16,6 @@ mylib/
 ```
 
 ```kelp
-impl "std/str"
-impl "std/result"
-
 pub datac Item(val name: String, val count: i64)
 pub enum ParseErr { Empty Bad(val offset: usize) }
 

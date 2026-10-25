@@ -66,7 +66,6 @@ per numeric type, this library spells the type into the name:
 
 ```kelp project
 impl "deps/listx/lib"
-impl "std/option"
 
 fun main() {
     var xs: List<i32> = List.empty()

@@ -27,8 +27,6 @@ glob = "Lilly/fpl/glob"
 ```kelp project
 impl "deps/glob/lib"
 impl "std/fs"
-impl "std/str"
-impl "std/fmt"
 impl "std/process"
 impl "std/path"
 

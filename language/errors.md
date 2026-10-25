@@ -48,9 +48,6 @@ fun main() {
 enclosing function. Otherwise the expression's value is the success payload.
 
 ```kelp
-impl "std/result"
-impl "std/str"
-
 fun half(n: i64) => result.Result<i64, str.ParseErr> {
     return result.Result.Ok(value = n / 2)
 }
@@ -89,8 +86,6 @@ fun quarter(n: i64) => result.Result<i64, str.ParseErr> {
 top level, and a failure ends the program with a message:
 
 ```kelp
-impl "std/result"
-
 fun parse_step(n: i32) => result.Result<i32, String> {
     if n > 2 {
         return result.Result.Err(error = "step ${n} is too large")
@@ -129,8 +124,6 @@ owned `String`, so a message built in the failing branch needs no binding and no
 `.as_str()`:
 
 ```kelp
-impl "std/fmt"
-
 fun main() {
     val n: i64 = 3
     panic(fmt.int(n))          // fmt.int returns a String, which goes straight in
@@ -167,8 +160,6 @@ returns. So it satisfies any declared return type, including a borrowed one. Thi
 is how a "this cannot happen" accessor is written:
 
 ```kelp
-impl "std/option"
-
 fun unwrap<T>(o: &option.Option<T>) => T {
     if let Some(v) = o {
         return v

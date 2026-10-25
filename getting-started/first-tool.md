@@ -20,9 +20,7 @@ Every output below was produced by the program on this page, against `kelpc 26.0
 //   coral run -- --lines 3 /tmp/five.txt    # inside a Coral project
 
 impl "std/fs"
-impl "std/option"
 impl "std/process"
-impl "std/str"
 impl "std/path"
 
 fun usage() {

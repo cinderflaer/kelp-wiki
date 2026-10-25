@@ -340,9 +340,6 @@ The last piece: `List#sort`, `reverse`, `contains`, `slice`, `insert`, `remove`,
 *Deliverable*: `String`/`Bytes` grow in place, numbers convert both ways, formatted output exists, lists sort, and a program can fail deliberately. *Gate*: none (`str`, `fmt`, `mem` are ungated modules but note that "ungated" still means an explicit `impl`; there is no prelude, open item 35).
 
 ```kelp
-impl "std/str"
-impl "std/fmt"
-
 // --- growable buffers: *builtin* methods (compiler work; user code cannot
 // declare a method on a builtin type probed) ---
 // SHIPPED in MK5-S1-M1, except that `String.push` takes `u8`, not `char`:
@@ -410,7 +407,6 @@ fun assert(cond: bool)                               // panics with "assertion f
 ```kelp
 // ---- std/io.kp ungated --------------------------------------------------
 impl "std/mem"
-impl "std/str"
 
 // One concrete type over a file descriptor: the honest answer to "what does a
 // reader/writer abstraction cost without traits and generics". Files, pipes,
@@ -553,8 +549,6 @@ fun net.resolve(host: &str) => List<String>         // dotted-quad / v6 strings,
 // The importer delegates: impl "std/http" with caps(net = ["api.example.com:443"])
 impl "std/mem"
 impl "std/net"
-impl "std/str"
-impl "std/fmt"
 
 // The project's configured pool ceiling, spliced in by the compiler from
 // coral.toml's `http_pool` key before the plan is lexed. `0` means "no pooling".

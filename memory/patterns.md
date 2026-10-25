@@ -51,8 +51,6 @@ reads the list takes `&List<T>`. The list is `List<i64>` because `iter.range`
 yields `i64`.
 
 ```kelp
-impl "std/iter"
-
 fun total(xs: List<i64>) => i64 {
     var sum: i64 = 0
     for x in xs {
@@ -151,8 +149,6 @@ owns the result, and nothing is dropped inside the function. Build text in a loc
 `String` and return that local; do not return a borrow of it.
 
 ```kelp
-impl "std/str"
-
 fun make_name(id: i32) => String {
     var s = String.from_str("user-")
     val digits = str.from_i64(id.to_i64())

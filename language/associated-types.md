@@ -37,8 +37,6 @@ This program has two impls that bind `Item` to different types. One generic
 function returns whichever type the argument's impl chose.
 
 ```kelp
-impl "std/option"
-
 trait Source {
     type Item
     fun mut Self.next() => option.Option<Self::Item>

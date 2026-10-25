@@ -93,8 +93,6 @@ declared return type, including a borrowed one. That is what makes a "this canno
 happen" accessor expressible:
 
 ```kelp
-impl "std/option"
-
 fun unwrap<T>(o: &option.Option<T>) => T {
     if let Some(v) = o {
         return v
@@ -139,8 +137,6 @@ fun as_str(v: &Json) => &str {
   escape the function, because its promoted owner ends with the frame:
 
   ```kelp refused
-  impl "std/str"
-
   // error: a temporary would be dropped before the borrow is used
   fun bad() => str = String.from_str(s = "x").as_str()
 

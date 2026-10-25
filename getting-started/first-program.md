@@ -150,9 +150,6 @@ Fallible calls return `Result`, and `?` propagates a failure out of the enclosin
 function. `if let` handles one on the spot:
 
 ```kelp
-impl "std/str"
-impl "std/result"
-
 fun half(n: i64) => result.Result<i64, str.ParseErr> {
     if n < 0 {
         return result.Result.Err(error = str.ParseErr.Invalid)
@@ -188,7 +185,6 @@ granted:
 
 ```kelp
 impl "std/fs"
-impl "std/str"
 
 fun main() {
     val path = "/tmp/kelp-first.txt"

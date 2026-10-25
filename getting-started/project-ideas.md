@@ -76,9 +76,6 @@ grants, and you will have to decide whether the exit goes in the `while` conditi
 in two columns:
 
 ```kelp
-impl "std/fmt"
-impl "std/str"
-
 fun main() {
     var c: i64 = 0
     while c <= 100 {

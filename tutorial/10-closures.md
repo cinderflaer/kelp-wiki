@@ -10,9 +10,6 @@ a value it was made with, and how `for` walks anything that implements `Iterator
 ## The program
 
 ```kelp
-impl "std/iter"
-impl "std/option"
-
 datac Countdown(var n: i32)
 
 impl iter.Iterator for Countdown {

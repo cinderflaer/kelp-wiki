@@ -120,8 +120,6 @@ Serialization is the caller's: a `Snapshot` is a `root`, a timestamp and a
 
 ```kelp project
 impl "std/fs"
-impl "std/fmt"
-impl "std/str"
 impl "deps/dedup/lib"
 impl "deps/fsx/lib" caps(fs = ["/tmp/dedupdemo/**"])
 impl "deps/hash/lib"

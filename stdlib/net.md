@@ -173,7 +173,6 @@ every attempt dials something nothing owns:
 
 ```kelp
 impl "std/net"
-impl "std/result"
 
 fun dead_port() => u16 {
     val l = net.listen(0)

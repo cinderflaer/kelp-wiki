@@ -37,9 +37,6 @@ This program writes one iterator by hand, walks it with `break` and `continue`,
 and uses the three helpers `std/iter` ships:
 
 ```kelp
-impl "std/iter"
-impl "std/option"
-
 datac Fib(var a: i64, var b: i64)
 
 impl iter.Iterator for Fib {
@@ -283,7 +280,6 @@ The `Iterator` trait that `for x in it` walks, the half-open `Range`, and three
 helpers that drain an iterator. Ungated.
 
 ```kelp
-impl "std/iter"
 ```
 
 The module is pure Kelp, builds in a freestanding image where `std/option` does
@@ -322,8 +318,6 @@ Each helper takes the iterator by `move`.
 ### Example
 
 ```kelp
-impl "std/iter"
-
 fun main() {
     for i in iter.range(0, 5) {
         print!("$i ")

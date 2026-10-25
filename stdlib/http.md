@@ -246,7 +246,6 @@ browsers do, so a name cannot end its parameter or add a header line.
 
 ```kelp
 impl "std/http" caps(net = ["127.0.0.1:*", "api.example.com:443"])
-impl "std/str"
 
 fun main() {
     val client = http.default_client()
@@ -412,7 +411,6 @@ handler ends the process under `serve`/`serve_n` and one worker thread under
 impl "std/http" caps(net = ["127.0.0.1:*"])
 impl "std/net"
 impl "std/thread"
-impl "std/str"
 
 fun handle(req: &http.ServerRequest) => http.ServerResponse {
     if str.eq(req.path.as_str(), "/ping") {
@@ -520,8 +518,6 @@ impl "std/http" caps(net = ["*"])
 impl "std/tls"
 impl "std/tlsfile" caps(fs = ["/etc/myapp/certs/**"])
 impl "std/thread"
-impl "std/result"
-impl "std/fmt"
 
 fun hello(req: &http.ServerRequest) => http.ServerResponse {
     return http.ok_text("hello over tls")

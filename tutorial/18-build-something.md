@@ -21,7 +21,6 @@ Create `wordcount.kp`:
 ```kelp
 impl "std/fs"
 impl "std/process"
-impl "std/str"
 
 // Count the words in a text file and print each one with its count, sorted.
 // Words are separated by spaces, and case is ignored.

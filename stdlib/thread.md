@@ -191,7 +191,6 @@ died, and the compiler names `ThreadErr` through this module's key exactly as an
 
 ```kelp
 impl "std/thread"
-impl "std/result"
 
 when thread.join(h) {
     Ok(v) -> print(v)

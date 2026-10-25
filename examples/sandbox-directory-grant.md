@@ -22,7 +22,6 @@ own `impl` line is where the read's authority comes from.
 
 ```kelp
 impl "std/fs" caps(fs = ["/tmp/kelp-sandbox/vault/**"])
-impl "std/str"
 
 // Reads a file inside the granted directory. A path outside it is refused by the
 // capability check at the call, which panics with the call site, the attempted

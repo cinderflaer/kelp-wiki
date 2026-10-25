@@ -25,7 +25,6 @@ set carries.
 
 ```kelp
 impl "std/list"
-impl "std/str"
 
 fun main() {
     var xs: List<i64> = List.empty()

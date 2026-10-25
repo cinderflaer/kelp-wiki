@@ -24,7 +24,6 @@ fsx = "Lilly/fpl/fsx"
 
 ```kelp
 impl "std/http" caps(net = ["127.0.0.1:*"])
-impl "std/str"
 impl "deps/fsx/lib" caps(fs = ["/tmp/**"])
 ```
 
@@ -36,7 +35,6 @@ separate domain, and the pattern is the directory the write may land in.
 
 ```kelp project
 impl "std/http" caps(net = ["127.0.0.1:*"])
-impl "std/str"
 impl "deps/fsx/lib" caps(fs = ["/tmp/**"])
 
 fun main() {

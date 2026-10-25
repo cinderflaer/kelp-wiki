@@ -183,7 +183,6 @@ The sub-delimiters RFC 3986 §2.2 allows in a path include `!$&'()*+,;=`, so
 
 ```kelp project
 impl "deps/url/lib"
-impl "std/str"
 
 fun main() {
     val parsed = url.parse("https://user:pw@example.com:8443/a/b%20c?x=1&y=%2F#frag")

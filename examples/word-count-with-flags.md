@@ -37,8 +37,6 @@ argparse = "Lilly/fpl/argparse"
 ```kelp project
 impl "deps/argparse/lib"
 impl "std/fs"
-impl "std/str"
-impl "std/fmt"
 impl "std/process"
 impl "std/path"
 

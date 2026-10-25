@@ -31,7 +31,6 @@ folder you named is fetched.
 ```kelp project
 impl "std/http"
 impl "deps/httpx/lib"
-impl "std/str"
 
 fun main() {
     // httpx reuses http.Header as a name/value pair, which saves a second type.

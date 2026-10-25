@@ -10,9 +10,6 @@ a generic function accepts any type that implements a trait.
 ## The program
 
 ```kelp
-impl "std/fmt"
-impl "std/str"
-
 trait Shape {
     fun Self.area() => f64
     fun Self.describe() => String {

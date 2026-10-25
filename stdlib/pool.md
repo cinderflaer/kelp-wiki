@@ -134,7 +134,6 @@ atomic as above.
 ```kelp
 impl "std/pool"
 impl "std/sync"
-impl "std/result"
 
 fun main() {
     val (tx, rx) = sync.bounded<i64>(4)

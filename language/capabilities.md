@@ -386,7 +386,6 @@ below still works and is the simpler option for a quick test:
 ```kelp
 // sandbox.kp: a module with exactly one directory
 impl "std/fs" caps(fs = ["/srv/data/**"])
-impl "std/str"
 
 fun read(name: str) => String = fs.read_text(str.concat("/srv/data/", name))
 ```

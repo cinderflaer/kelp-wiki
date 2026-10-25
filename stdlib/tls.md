@@ -380,7 +380,6 @@ is not PEM as the certificate, and a path that does not exist:
 ```kelp norun
 impl "std/tls"
 impl "std/tlsfile" caps(fs = ["/etc/myapp/certs/**"])
-impl "std/result"
 
 fun say(e: move tls.TlsError) {
     val text = tls.error_text(e)
@@ -456,9 +455,6 @@ impl "std/tls"
 impl "std/tlsfile" caps(fs = ["/etc/myapp/certs/**"])
 impl "std/thread"
 impl "std/process"
-impl "std/result"
-impl "std/option"
-impl "std/str"
 
 fun show(o: move option.Option<String>) => String = when o {
     Some(v) -> v

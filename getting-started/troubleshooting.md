@@ -32,8 +32,6 @@ This one costs everyone a minute, so here it is in full. Writing a signature tha
 mentions `option.Option` without importing `std/option`:
 
 ```kelp
-impl "std/str"
-
 fun count_from(text: str) => option.Option<i64> {
     return option.Option.None
 }
@@ -50,7 +48,6 @@ standard-library type named by path needs its `impl` line, even when another
 module already returns it.
 
 ```kelp
-impl "std/option"
 ```
 
 ## The first week's failures
@@ -101,7 +98,6 @@ files, one grant, one call outside it:
 ```kelp
 // src/vault.kp
 impl "std/fs" caps(fs = ["/tmp/kelp-sandbox/vault/**"])
-impl "std/str"
 
 fun read(name: str) => String {
     val path = str.concat("/tmp/kelp-sandbox/vault/", name)

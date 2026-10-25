@@ -66,7 +66,6 @@ when a narrower scale is wanted.
 
 ```kelp project
 impl "deps/decimal/lib"
-impl "std/result"
 
 fun main() {
     val a = decimal.from_str("12.34", 2)

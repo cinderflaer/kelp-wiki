@@ -35,7 +35,6 @@ impl "deps/benchkit/lib" caps(time = [])
 ```kelp project
 impl "deps/testkit/lib"
 impl "deps/benchkit/lib" caps(time = [])
-impl "std/str"
 
 fun sum_to(n: i64) => i64 {
     var acc: i64 = 0

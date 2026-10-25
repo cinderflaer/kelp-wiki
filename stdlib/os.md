@@ -10,7 +10,6 @@ rest are gated per item: the table below says which.
 
 ```kelp
 impl "std/os" caps(env = ["APP_*"], machine = [], fs = ["/tmp/**"])
-impl "std/str"
 
 fun main() {
     print(os.hostname())
@@ -103,7 +102,6 @@ decision.
 ```kelp
 impl "std/os" caps(fs = ["/tmp/**"], machine = [])
 impl "std/fs" caps(fs = ["/tmp/**"])
-impl "std/str"
 
 fun main() {
     val td = os.temp_dir()

@@ -43,8 +43,6 @@ A freestanding build runs `freestanding::prune` and type checks the pruned progr
 This program uses a `datac`, a `List` and a `for` loop:
 
 ```kelp
-impl "std/str"
-
 datac Point(val x: i32, val y: i32)
 
 fun area(p: Point) => i32 = p.x * p.y

@@ -254,8 +254,6 @@ the compiler can neither merge, reorder nor elide it. The base, the offsets and
 the bit are the driver's own claim about the hardware.
 
 ```kelp
-impl "std/str"
-
 const UART_BASE: usize = 0x10000000
 const LSR_OFFSET: usize = 5
 

@@ -34,7 +34,6 @@ impl "deps/lineproto/lib" caps(net = ["127.0.0.1:*"])
 
 ```kelp project
 impl "std/net"
-impl "std/str"
 impl "std/process"
 impl "deps/lineproto/lib" caps(net = ["127.0.0.1:*"])
 
@@ -87,7 +86,6 @@ the only structural difference.
 
 ```kelp project
 impl "std/net"
-impl "std/str"
 impl "std/process"
 impl "deps/lineproto/lib" caps(net = ["127.0.0.1:*"])
 

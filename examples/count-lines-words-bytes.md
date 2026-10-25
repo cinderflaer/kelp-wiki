@@ -19,8 +19,6 @@ It is the closest of the examples to a shell one-liner, `wc`.
 
 ```kelp
 impl "std/fs"
-impl "std/str"
-impl "std/fmt"
 impl "std/process"
 
 fun is_space(c: u8) => bool = c == ' ' || c == '\t' || c == '\n' || c == '\r'

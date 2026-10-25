@@ -377,8 +377,6 @@ The direction is a property of the *target*, asked rather than assumed: the LLVM
 backend reads the target's byte order from its data layout. On a big-endian target `to_le` swaps and `to_be` does not, with no source change.
 
 ```kelp
-impl "std/fmt"
-
 fun main() {
     val w: u32 = 0x12345678
     print(fmt.hex(w.to_be().to_u64()))
@@ -411,8 +409,6 @@ every offset is a `usize`.
   because a wire format fixes its field widths, not the host's pointer width.
 
 ```kelp
-impl "std/fmt"
-
 fun main() {
     var h = Bytes.empty()
     h.push(0x50)

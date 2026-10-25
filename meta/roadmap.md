@@ -1068,8 +1068,6 @@ Why this exists, in this repository's own evidence: `kelpc build <path>` compile
 ```kelp
 // tasks/report.kp
 impl "std/fs" caps(fs = ["/project/out/**", "/project/data/**"])
-impl "std/str"
-impl "std/fmt"
 
 fun main() {
     val size = fmt.uint(fs.size("/project/data/input.csv"))

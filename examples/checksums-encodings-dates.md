@@ -33,8 +33,6 @@ prints a fixed date instead of today's.
 impl "deps/hash/lib"
 impl "deps/encoding/lib"
 impl "deps/datetime/lib"
-impl "std/result"
-impl "std/str"
 
 fun main() {
     val text = "kelp"

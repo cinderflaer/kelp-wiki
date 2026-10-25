@@ -47,7 +47,6 @@ nothing derived. The traits can be written as `ops.Add` after `impl "std/ops"`.
 
 ```kelp
 impl "std/ops"
-impl "std/fmt"
 
 datac Vec2(val x: i64, val y: i64)
 

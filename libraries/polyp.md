@@ -379,8 +379,6 @@ is kept for reference. Its `coral.toml` fetched Polyp with `polyp = "fpl/polyp"`
 impl "deps/polyp/core/core"
 impl "deps/polyp/backends/gtk/polyp/lib" caps(ui = ["*"])
 impl "std/env"
-impl "std/fmt"
-impl "std/str"
 
 datac Counter(var count: i32, var draft: String)
 

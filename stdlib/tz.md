@@ -136,9 +136,6 @@ neither offset reproduces itself, and across a fall-back both do.
 // The `std/tz` example: the offset in force at an instant, the wall clock an
 // instant names, the instant a wall clock names, and the formatter.
 impl "std/tz" caps(fs = ["/**"], env = ["TZDIR"])
-impl "std/str"
-impl "std/option"
-impl "std/result"
 
 fun digits(n: i64) => String = str.from_i64(n)
 

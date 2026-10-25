@@ -181,9 +181,6 @@ project that pins the undefined-symbol check.
 
 ```kelp
 impl "std/regex"
-impl "std/option"
-impl "std/result"
-impl "std/str"
 
 fun compile_or_die(pat: str) => regex.Regex {
     val r = regex.compile(pat)

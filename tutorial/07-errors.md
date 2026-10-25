@@ -13,10 +13,6 @@ return type, so the caller always sees the failure.
 ## The program
 
 ```kelp
-impl "std/option"
-impl "std/result"
-impl "std/str"
-
 fun find(xs: List<i32>, want: i32) => option.Option<int> {
     var i: int = 0
     while i < xs.len() {
@@ -100,8 +96,8 @@ for `Some`, and `i` is the number inside it.
 `option.is_none(o = ...)` is the same test as a function call. A few helpers in
 the `option` module are written this way.
 
-The `impl "std/option"` line at the top is what makes the type name available.
-Each standard module is imported this way.
+`Option` is a standard type, so the type name needs no import line at the top.
+Modules that need one, such as `std/fs`, are still imported with an `impl` line.
 
 ## Result: a value or a reason
 
