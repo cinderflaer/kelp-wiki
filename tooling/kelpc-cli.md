@@ -391,8 +391,8 @@ recursing `.kp` files, with a link inside a directory skipped and reported), so 
 tree is named once.
 
 The rules are the ones a formatter cannot enforce: the comment run, the `else if`
-link, the naming case and the redundant borrow on a parameter, all from
-[Style](/language/style).
+link, the naming case, the redundant borrow on a parameter and the unused pattern
+binding, all from [Style](/language/style).
 
 ### The comment run
 
@@ -451,6 +451,24 @@ a pattern binding), which is why a call into the standard library's locked
 `snake_case` is never reported under either setting: a call is a use. A file with
 no `coral.toml` to read gets the option's default, and a file under the
 project's `src/deps/` gets no case rule at all.
+
+### The unused pattern binding
+
+A name that a `when` arm or an `if let` binds, and that its arm or its block
+never reads, is reported with the fix. The fix is `_`:
+
+```text
+$ kelpc lint result.kp
+warning: unused binding 'e' in a pattern: write '_' to ignore the value
+  --> result.kp:4:13
+$ echo $?
+0
+```
+
+A name that starts with `_` is never reported, so `Err(_e)` keeps a name without
+a warning. Renaming an unused binding to `_` does not change the program. The
+rule does not check `val`, `var` and `for` bindings, a `let ... else`, or the
+positions of a tuple pattern.
 
 ## Outdated syntax
 

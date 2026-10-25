@@ -145,10 +145,10 @@ when base {
         val next = url.resolve(b, "../api/v2?x=1")
         when next {
             Ok(u) -> print(url.to_string(u))     // http://a.example.com/api/v2?x=1
-            Err(e) -> print("bad reference")
+            Err(_) -> print("bad reference")
         }
     }
-    Err(e) -> print("bad base")
+    Err(_) -> print("bad base")
 }
 ```
 

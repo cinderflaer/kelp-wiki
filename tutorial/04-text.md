@@ -43,7 +43,7 @@ fun main() {
         print(v + 1)
     }
     val bad = str.parse_i64(s = "x1")
-    if let Err(e) = bad {
+    if let Err(_) = bad {
         print("not a number")
     }
     print("tab\tand\nnewline")
@@ -107,8 +107,9 @@ dropped before the borrow is used.
 
 `str.parse_i64` reads an integer from text. It does not panic on bad input. It
 returns a `Result`, which [Errors](/tutorial/07-errors) covers in full. You can
-read the success case with `if let Ok(v) = n`, and the failure case with
-`if let Err(e) = bad`.
+read the success case with `if let Ok(v) = n`, and a failure with
+`if let Err(_) = bad`, which ignores the error. Write the name instead of `_`
+when the message is needed.
 
 ## Try it
 

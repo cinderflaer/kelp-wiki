@@ -3010,7 +3010,7 @@ fun main() {
     when c.recv() {
         Text(t) -> print(t)
         Ping(d) -> c.pong(d)
-        Close(code, reason) -> print("closed ${code}")
+        Close(code, _) -> print("closed ${code}")
         else -> print("other")
     }
     c.close(1000, "done")

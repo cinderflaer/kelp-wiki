@@ -84,9 +84,9 @@ fun main() {
 
 So the column limit, the order inside the last group and the naming rules need a
 review, not a formatter. `kelpc lint` is where those live: it is warning-only,
-so it never fails a build, and it reports four rules: the comment run, the naming
-case, a redundant borrow on a `List` or `str` parameter, and a redundant
-comparison such as `== true`.
+so it never fails a build, and it reports five rules: the comment run, the naming
+case, a redundant borrow on a `List` or `str` parameter, a redundant comparison
+such as `== true`, and an unused pattern binding.
 
 ## The comment run
 
@@ -166,6 +166,21 @@ The `&` stays where it changes what the parameter takes:
 - A fixed-size array (`&[i32; 3]`): a plain array is passed by value.
 - A generic `T` (`x: &T`): a plain `T` depends on whether it is `Copy`.
 - `fun X.eq(other: &X)`: the compiler requires the borrow there.
+
+## The unused binding
+
+A name that a `when` arm or an `if let` binds, and that its arm or block never
+reads, is reported, because the value is ignored. The fix is `_`:
+
+```kelp
+when r {
+    Ok(v) -> v
+    Err(_) -> 0                // was `Err(e) -> 0`, and `e` was never read
+}
+```
+
+A name that starts with `_` is never reported, so `Err(_e)` keeps a name for a
+reader. The rule does not check `val`, `var` and `for` bindings or a `let ... else`.
 
 ## See also
 
