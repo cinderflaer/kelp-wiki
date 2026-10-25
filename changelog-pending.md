@@ -60,6 +60,8 @@ empty on release.
 
 ## Changed
 
+- One name for an empty map (issue #302): `Map.empty()` is the constructor, as `List.empty()` and `String.empty()` already are. `Map.new()` still compiles and prints an `outdated:` finding that names `Map.empty()`; it is removed in the next development cycle. The examples, the wiki pages and the test fixtures are written with `Map.empty()`. No meaning changes.
+
 - One spelling of a function type (issue #293): `fun(T) => U` is the function pointer and `closure fun(T) => U` is the owned closure, with the `closure` marker in front of `fun`. The old `closure(T) => U` spelling is refused, and the message names the new one. Every example, library and page is written with the new spelling. Breaking: a `closure(...)` type in a program must become `closure fun(...)`. No meaning changes.
 
 - A name that a `when` arm or an `if let` binds and never reads is an unused binding: `kelpc lint` warns on it and names the fix, `_` (issue #297). `Err(e) -> 0` becomes `Err(_) -> 0`, and a name that starts with `_` is never reported. Renaming to `_` does not change any program. The examples, the wiki examples and the test fixtures that bound a value they never read are written with `_`.

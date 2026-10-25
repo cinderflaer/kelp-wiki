@@ -28,7 +28,7 @@ val d = Doc(title = "a title", body = "text")   // no String.from_str needed
 var xs: List<String> = List.empty()
 xs.push("pushed")                               // an element converts
 val s: String = "a literal"                     // an assignment converts
-var m: Map<String, String> = Map.new()
+var m: Map<String, String> = Map.empty()
 m.insert(key = "k", v = "v")                    // a key and a value convert
 ```
 

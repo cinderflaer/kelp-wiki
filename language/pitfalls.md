@@ -77,7 +77,7 @@ and [Cursors and provenance](/language/ownership#cursors-and-provenance).
 
 | Symptom | Fix |
 | --- | --- |
-| `List.empty()` / `Map.new()` has no element type | nothing said what is inside and nothing decided it: write it on the binding (`var xs: List<i32> = List.empty()`), or `push`/`insert`/`set` a value, which decides the element |
+| `List.empty()` / `Map.empty()` has no element type | nothing said what is inside and nothing decided it: write it on the binding (`var xs: List<i32> = List.empty()`), or `push`/`insert`/`set` a value, which decides the element |
 | a `Map` value or an array element is a container | a `List` element and a `Box` element may be a `List` or a `Box`, but a `Map` value and an array element may not be a container at all; wrap the inner one in a one-field `datac` |
 | `Map` key type refused | a key is keyable when the compiler can derive its hash and its equality: `String`, an integer, `bool`, `char`, or a `datac`/`enum`/tuple whose fields, variant payloads or positions are all keyable, and a `datac`/`enum` outside that set becomes a key by declaring `hash` and `eq`. The message names the field that is not, or the half of the pair that is missing |
 | `cannot mutate 'xs' while iterating over it` | the body may read the list it walks but not change it; walk a different list, or change the source by index in a `while` |

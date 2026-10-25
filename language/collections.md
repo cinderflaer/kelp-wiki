@@ -115,7 +115,7 @@ datac Node(val value: i32, val next: Box<Node>)
 ## `Map<K, V>`
 
 ```kelp
-var counts: Map<String, i64> = Map.new()
+var counts: Map<String, i64> = Map.empty()
 counts.insert(key = "one", v = 1)
 counts.insert(key = "two", v = 2)
 print(counts.has(key = "two"))
@@ -125,7 +125,7 @@ counts.insert(key = "two", v = 22)
 print(counts.remove(key = "one"))
 print(counts.keys().len())
 
-var runs: Map<i32, i64> = Map.new()        // a scalar key
+var runs: Map<i32, i64> = Map.empty()        // a scalar key
 runs.insert(key = 7, v = 3)
 print(runs.get(key = 7))
 ```
@@ -174,11 +174,11 @@ print(runs.get(key = 7))
   order, `keys()` order and tombstone reuse are unchanged. It is the constructor
   for a caller that knows how many entries it is about to insert, and the only
   way to pay the growth once rather than as a series of rebuilds. The argument
-  gets its key and value types from the binding, as `Map.new()` does.
+  gets its key and value types from the binding, as `Map.empty()` does.
 
 | Method | Returns |
 | --- | --- |
-| `Map.new()` / `Map.empty()` | an empty map; key and value types from the binding, or from the first `insert` |
+| `Map.empty()` | an empty map; key and value types from the binding, or from the first `insert` |
 | `Map.with_capacity(n)` | the same empty map with room for `n` entries; `n` is an `int` |
 | `len()` / `is_empty()` | `int` / `bool` |
 | `insert(key, v)` | `unit`; stores `true`-style upsert |
@@ -188,6 +188,8 @@ print(runs.get(key = 7))
 | `remove(key)` | the value, moved out; **panics** when the key is absent |
 | `keys()` / `values()` | `List<K>` / `List<V>`, insertion order |
 | `clear()` | `unit` |
+
+`Map.new()` is outdated. It still compiles this release and prints an `outdated:` finding for each call, which `--deny-outdated` turns into an error. It will be removed in the next development cycle, so write `Map.empty()`.
 
 ## `Box<T>`
 

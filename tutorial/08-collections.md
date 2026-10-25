@@ -23,7 +23,7 @@ fun main() {
         print("popped ${xs.pop()}")
     }
 
-    var ages: Map<String, i64> = Map.new()
+    var ages: Map<String, i64> = Map.empty()
     ages.insert(key = "ada", v = 36)
     ages.insert(key = "linus", v = 54)
     ages.insert(key = "ada", v = 37)

@@ -40,7 +40,7 @@ impl "deps/table/lib"
 
 // Totals the `units` column per region, in a function of its own.
 fun totals_by_region(rows: List<csv.Row>) => Map<String, i64> {
-    var totals: Map<String, i64> = Map.new()
+    var totals: Map<String, i64> = Map.empty()
     var i: int = 1          // row 0 is the header
     while i < rows.len() {
         val row = rows.get(i)

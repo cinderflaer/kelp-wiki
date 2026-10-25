@@ -133,7 +133,7 @@ fun main() {
     }
     print("")
 
-    var counts: Map<String, i64> = Map.new()
+    var counts: Map<String, i64> = Map.empty()
     counts.insert(key = "a", v = 1)
     if counts.has(key = "a") {
         print(counts.get(key = "a"))
@@ -141,7 +141,7 @@ fun main() {
 }
 ```
 
-`List.empty()` and `Map.new()` need the element type from somewhere: write it on
+`List.empty()` and `Map.empty()` need the element type from somewhere: write it on
 the binding, or let the first `push`/`insert`/`set` decide it.
 
 ## Errors without exceptions

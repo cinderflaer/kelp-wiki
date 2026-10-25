@@ -54,7 +54,7 @@ fun main() {
         process.exit(2)
     }
 
-    var counts: Map<String, i64> = Map.new()
+    var counts: Map<String, i64> = Map.empty()
     count_words(argv.get(1).as_str(), counts)
 
     var words = counts.keys()

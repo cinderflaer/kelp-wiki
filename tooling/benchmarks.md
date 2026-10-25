@@ -177,7 +177,7 @@ not change them:
 - **`str.byte(s, i)` costs O(i).** A `str` stores no length, so each bounds check
   scans up to `i`. A byte loop over a long `str` is quadratic. The fix for a user is
   to call `s.view()` once, outside the loop.
-- **`Map` growth.** `Map.new()` grows by rehashing. `Map.with_capacity` avoids that,
+- **`Map` growth.** `Map.empty()` grows by rehashing. `Map.with_capacity` avoids that,
   and the double indirection remains.
 - **No alias information for `List`.** LLVM receives no `noalias` or type-based
   alias information for `List` accesses. That is a likely reason for the 1.3 ratio

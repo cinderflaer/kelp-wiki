@@ -86,7 +86,7 @@ or a `datac`/`enum`, so a value that is a `List` goes in a one-field `datac`.
 
 ```kelp
 fun main() {
-    var names: Map<String, String> = Map.new()
+    var names: Map<String, String> = Map.empty()
     names.insert(key = "ada", v = String.from_str("Ada Lovelace"))
     names.insert(key = "linus", v = String.from_str("Linus Torvalds"))
     print(names.get(key = "ada"))
