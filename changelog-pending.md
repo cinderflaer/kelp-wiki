@@ -62,6 +62,8 @@ empty on release.
 
 ## Changed
 
+- A compiled-and-run test fixture keeps its expected stdout in a `// stdout-begin` trailer at the end of the file, not in the Rust test that runs it (issue #304). The test names and the number of passing tests do not change. The `impl` lines are not expanded yet (issue #357).
+
 - One name for an empty map (issue #302): `Map.empty()` is the constructor, as `List.empty()` and `String.empty()` already are. `Map.new()` still compiles and prints an `outdated:` finding that names `Map.empty()`; it is removed in the next development cycle. The examples, the wiki pages and the test fixtures are written with `Map.empty()`. No meaning changes.
 
 - One spelling of a function type (issue #293): `fun(T) => U` is the function pointer and `closure fun(T) => U` is the owned closure, with the `closure` marker in front of `fun`. The old `closure(T) => U` spelling is refused, and the message names the new one. Every example, library and page is written with the new spelling. Breaking: a `closure(...)` type in a program must become `closure fun(...)`. No meaning changes.

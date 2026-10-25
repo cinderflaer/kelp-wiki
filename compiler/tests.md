@@ -32,6 +32,17 @@ Each fixture falls into one of three groups.
 | Compiled and run, expected to fail | The program panics with a specific message. |
 | Rejected by the compiler | The compiler reports a specific diagnostic. |
 
+A compiled-and-run fixture keeps its expected stdout at the end of the file, in a trailer of comment lines:
+
+```
+// stdout-begin
+// stdout: hello, world
+// stdout:
+// stdout:  an indented line keeps its extra space
+```
+
+`// stdout-begin` starts the trailer. Each `// stdout:` line after it is one line of output: the text after the single space that follows the colon is printed as written, and a bare `// stdout:` is an empty line. A fixture with no output has `// stdout-begin` and nothing after it. The Rust test names the file only, with `assert_fixture_runs("tests/fixtures/name.kp")`, and the harness reads the trailer.
+
 The rejected group is what shows that the move and borrow checker works.
 The projects cover the capability cases: a granted path, a path outside the grant, a symlink that leads outside it, an over-delegation that must be refused, and a `..` pattern refused at the `impl` line.
 
