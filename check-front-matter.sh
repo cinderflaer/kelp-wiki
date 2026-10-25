@@ -10,7 +10,11 @@
 # `path: what is wrong`.
 cd "$(dirname "$0")" || exit 2
 status=0
-for page in $(git ls-files '*.md' | grep -v '^README\.md$'); do
+# README.md is the repository's own note, and SUMMARY.md is the mdBook table of
+# contents that scripts/wiki_book.py writes from the page folders. Neither is a
+# wiki page, and SUMMARY.md has no front matter to give (the script overwrites it),
+# so both are skipped here.
+for page in $(git ls-files '*.md' | grep -v -E '^(README|SUMMARY)\.md$'); do
     awk -v page="$page" '
         function bad(msg) { printf "%s: %s\n", page, msg; failed = 1 }
         NR == 1 { if ($0 != "---") { bad("no front matter"); exit } ; next }
