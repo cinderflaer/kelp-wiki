@@ -53,14 +53,20 @@ tuple element, a `datac` field or a container element ([Types](/language/types))
 | `expect_err<T, E>(r, message: &str)` | `E` | **`E` must be `Copy`**; panics with the message on `Ok` |
 | `map<T, U, E>(r: move Result<T, E>, f: closure fun(&T) => U)` | `Result<U, E>` | the result is consumed; the rebuilt side may be owned |
 | `map_err<T, E, F>(r: move Result<T, E>, f: closure fun(&E) => F)` | `Result<T, F>` | the result is consumed; the rebuilt side may be owned |
-| `and_then<T, U, E>(r, f: closure fun(&T) => Result<U, E>)` | `Result<U, E>` | **`E` must be `Copy`**: the receiver is a borrow |
-| `or_else<T, E, F>(r, f: closure fun(&E) => Result<T, F>)` | `Result<T, F>` | **`T` must be `Copy`**: the receiver is a borrow |
-| `each<T, E>(r, f: closure fun(&T))` | `Unit` | |
 
-These are free functions. Since 26.10.3 the ones that only borrow the result are
-also **methods**: `r.is_ok()`, `r.is_err()`, `r.and_then(f)`, `r.or_else(f)` and
-`r.each(f)`. `map` and `map_err` take the result with `move`, so they stay free
-functions.
+The borrowing helpers `and_then`, `or_else` and `each` are **methods** only. They
+are written once, on the result as its receiver, and have no free function of the
+same name:
+
+| Method | Returns | Notes |
+| --- | --- | --- |
+| `r.and_then<U>(f: closure fun(&T) => Result<U, E>)` | `Result<U, E>` | **`E` must be `Copy`**: the receiver is a borrow |
+| `r.or_else<F>(f: closure fun(&E) => Result<T, F>)` | `Result<T, F>` | **`T` must be `Copy`**: the receiver is a borrow |
+| `r.each(f: closure fun(&T))` | `Unit` | |
+
+`is_ok` and `is_err` keep their free spelling, `result.is_ok(r)`, and each one is
+the same as the method `r.is_ok()` or `r.is_err()`. `map` and `map_err` take the
+result with `move`, so they stay free functions.
 
 ## Example
 

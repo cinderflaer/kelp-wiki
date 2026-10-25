@@ -26,20 +26,26 @@ writes `val x = f(...)?`. Nothing in the compiler knows this module exists: the
 
 | Function | Returns | Notes |
 | --- | --- | --- |
-| `is_some<T>(o)` / `is_none<T>(o)` | `bool` | |
+| `is_some<T>(o)` / `is_none<T>(o)` | `bool` | the same as `o.is_some()` and `o.is_none()` |
 | `unwrap<T>(o: move Option<T>)` | `T` | the option is consumed; panics on `None` |
 | `unwrap_or<T>(o: move Option<T>, fallback: move T)` | `T` | the option and the fallback are consumed |
 | `expect<T>(o: move Option<T>, message: &str)` | `T` | the option is consumed; panics with the message |
-| `map<T, U>(o, f: closure fun(&T) => U)` | `Option<U>` | |
-| `and_then<T, U>(o, f: closure fun(&T) => Option<U>)` | `Option<U>` | |
-| `or_else<T>(o, f: fun() => Option<T>)` | `Option<T>` | **`T` must be `Copy`**: the receiver is a borrow |
-| `each<T>(o, f: closure fun(&T))` | `Unit` | |
 
-Every combinator is a free function that takes the option as its first argument.
-Since 26.10.3 the ones that only borrow it are also **methods**: `o.is_some()`,
-`o.is_none()`, `o.map(f)`, `o.and_then(f)`, `o.or_else(f)` and `o.each(f)` mean
-exactly `option.is_some(o)` and so on. `unwrap_or`, `unwrap` and `expect` take the
-option with `move`, and a method always borrows, so they stay free functions.
+The borrowing helpers are **methods**. Each one is written once, as a method on
+the option, and takes the option as its receiver:
+
+| Method | Returns | Notes |
+| --- | --- | --- |
+| `o.is_some()` / `o.is_none()` | `bool` | |
+| `o.map<U>(f: closure fun(&T) => U)` | `Option<U>` | |
+| `o.and_then<U>(f: closure fun(&T) => Option<U>)` | `Option<U>` | |
+| `o.or_else(f: closure fun() => Option<T>)` | `Option<T>` | **`T` must be `Copy`**: the receiver is a borrow |
+| `o.each(f: closure fun(&T))` | `Unit` | |
+
+`map`, `and_then`, `or_else` and `each` have no free function of the same name.
+`is_some` and `is_none` keep their free spelling, `option.is_none(o = x)`, which
+is what the rest of the library uses. A method always borrows its receiver, so
+`unwrap_or`, `unwrap` and `expect` stay free functions.
 
 ## Where the payload goes
 
@@ -71,14 +77,14 @@ fun main() {
     print(option.is_some(o = some))          // true
     print(option.is_none(o = none))          // true
 
-    val doubled = option.map(o = some, f = fun(x: &i64) => i64 = x * 2)
+    val doubled = some.map(fun(x: &i64) => i64 = x * 2)
     print(option.unwrap(o = doubled))        // 14
 
     if let Some(v) = some {
         print(v + 1)                         // 8
     }
 
-    option.each(o = some, f = fun(x: &i64) = print(x))
+    some.each(fun(x: &i64) = print(x))
 
     // `unwrap` and `unwrap_or` take the option with `move`, so each of them
     // consumes the option it is given: `some` is used last.

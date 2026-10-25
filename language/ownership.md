@@ -301,7 +301,7 @@ fun peek_word(h: &Held) => usize = when h {
 ```
 
 Some helpers take their receiver as a borrow, and they only work on `Copy`
-payloads. Examples are `option.or_else` and `result.and_then`. Others take the
+payloads. Examples are the methods `o.or_else(f)` and `r.and_then(f)`. Others take the
 receiver with `move`, so they also work on owned payloads. Examples are
 `option.unwrap` on an `Option<String>` and `result.map` on a `Result<T, MyErr>`.
 
