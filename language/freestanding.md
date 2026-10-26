@@ -161,7 +161,7 @@ fails the build rather than defaulting to allowed.
 | Module | Verdict | What is admitted |
 | --- | --- | --- |
 | `std/atomic` | Pure | every item; `Ordering` is a plain `enum` |
-| `std/option` | Subset | `is_some`, `is_none`, `unwrap_or`, `unwrap`, `expect`, and the methods `is_some`, `is_none`; with `[target] alloc`/`dealloc`, the methods `map`, `and_then`, `or_else`, `each` |
+| `std/option` | Subset | `is_some`, `is_none`, `unwrap_or`, `unwrap`, `expect`, and the methods `is_some`, `is_none`, `unwrap_or`; with `[target] alloc`/`dealloc`, the methods `map`, `and_then`, `or_else`, `each` |
 | `std/result` | Subset | the value helpers as-is; with the allocator pair, `map`, `map_err`, and the methods `and_then`, `or_else`, `each` |
 | `std/arena` | Pure | every item; the region is the caller's |
 | `std/convert`, `std/ops` | Pure | every item; they are trait declarations (`From`, `Into`, `Add`, `Sub`, `Mul`, `Div`, `Rem`, `Neg`, `Ord`), so the `?` conversion and an operator on a user type lower to ordinary calls |

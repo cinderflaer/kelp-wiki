@@ -2839,6 +2839,7 @@ fun map<T, U>(o: &Option<T>, f: closure fun(&T) => U) => Option<U>
 fun and_then<T, U>(o: &Option<T>, f: closure fun(&T) => Option<U>) => Option<U>
 fun or_else<T>(o: &Option<T>, f: fun() => Option<T>) => Option<T>   // `T` must be Copy
 fun each<T>(o: &Option<T>, f: closure fun(&T))
+fun Option<T>.unwrap_or(fallback: T) => T   // method form; `T` must be Copy
 ```
 
 The enum is the point: `Some`/`None` is one of the two shapes `?` (5) and `if let` (6.1) understand, so a function that can fail one way returns `Option<T>` and its caller writes `val x = f(...)?`. Nothing in the compiler knows this module exists, the *shape* is the contract, so a program's own `Option` works identically.
@@ -2863,7 +2864,7 @@ enum Result<T, E> {
 
 fun is_ok<T, E>(r: &Result<T, E>) => bool
 fun is_err<T, E>(r: &Result<T, E>) => bool
-fun unwrap_or<T, E>(r: &Result<T, E>, fallback: T) => T   // `T` must be Copy
+fun unwrap_or<T, E>(r: &Result<T, E>, fallback: T) => T   // `T` must be Copy; the same as `r.unwrap_or(fallback)`
 fun unwrap<T, E>(r: &Result<T, E>) => T                   // `T` must be Copy; panics on Err
 fun unwrap_err<T, E>(r: &Result<T, E>) => E               // `E` must be Copy; panics on Ok
 
@@ -2872,11 +2873,14 @@ fun map_err<T, E, F>(r: move Result<T, E>, f: closure fun(&E) => F) => Result<T,
 fun and_then<T, U, E>(r: &Result<T, E>, f: closure fun(&T) => Result<U, E>) => Result<U, E>
 fun or_else<T, E, F>(r: &Result<T, E>, f: closure fun(&E) => Result<T, F>) => Result<T, F>
 fun each<T, E>(r: &Result<T, E>, f: closure fun(&T))
+fun Result<T, E>.unwrap_or(fallback: T) => T   // method form; `T` must be Copy; the `Err` payload is dropped
 ```
 
 `Ok`/`Err` is the shape that carries a reason. The operand's failure payload type and the enclosing function's may differ when an `impl From<Source> for Target` exists, which `?` calls; when they are the same no call is emitted. `std/convert` ships the `From` and `Into` traits (9.5).
 
 The `Copy` requirements left here are on the side a helper has to **rebuild** through a borrow: `unwrap_or`/`unwrap`/`unwrap_err` hand a payload out of a borrowed result, and `and_then`/`or_else` rebuild the other variant out of one. `map` and `map_err` take the result with **`move`** instead, so the side they rebuild may be owned: `result.map` over a `Result<T, MyErr>` moves the error payload into the fresh `Err` (17's partial moves).
+
+`unwrap_or` drops the `Err` payload without reading it, so its error type needs no `Copy`. It is meant for an error that carries nothing the caller needs; where the error matters, use `when`, `?` or `map_err`.
 
 ### 16.16 `std/list`
 

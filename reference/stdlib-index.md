@@ -702,6 +702,7 @@ Functions:
 - `fun Option<T>.and_then<U>(f: closure fun(&T) => Option<U>) => Option<U>`
 - `fun Option<T>.or_else(f: closure fun() => Option<T>) => Option<T>`
 - `fun Option<T>.each(f: closure fun(&T))`
+- `fun Option<T>.unwrap_or(fallback: T) => T`
 
 ## `std/result`
 
@@ -728,6 +729,7 @@ Functions:
 - `fun Result<T, E>.and_then<U>(f: closure fun(&T) => Result<U, E>) => Result<U, E>`
 - `fun Result<T, E>.or_else<F>(f: closure fun(&E) => Result<T, F>) => Result<T, F>`
 - `fun Result<T, E>.each(f: closure fun(&T))`
+- `fun Result<T, E>.unwrap_or(fallback: T) => T`
 
 ## `std/arena`
 

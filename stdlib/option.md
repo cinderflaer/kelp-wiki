@@ -26,7 +26,7 @@ writes `val x = f(...)?`. Nothing in the compiler knows this module exists: the
 | --- | --- | --- |
 | `is_some<T>(o)` / `is_none<T>(o)` | `bool` | the same as `o.is_some()` and `o.is_none()` |
 | `unwrap<T>(o: move Option<T>)` | `T` | the option is consumed; panics on `None` |
-| `unwrap_or<T>(o: move Option<T>, fallback: move T)` | `T` | the option and the fallback are consumed |
+| `unwrap_or<T>(o: move Option<T>, fallback: move T)` | `T` | the option and the fallback are consumed; for an owned payload. A `Copy` payload also has the method form `o.unwrap_or(fallback)` |
 | `expect<T>(o: move Option<T>, message: &str)` | `T` | the option is consumed; panics with the message |
 
 The borrowing helpers are **methods**. Each one is written once, as a method on
@@ -39,11 +39,13 @@ the option, and takes the option as its receiver:
 | `o.and_then<U>(f: closure fun(&T) => Option<U>)` | `Option<U>` | |
 | `o.or_else(f: closure fun() => Option<T>)` | `Option<T>` | **`T` must be `Copy`**: the receiver is a borrow |
 | `o.each(f: closure fun(&T))` | `Unit` | |
+| `o.unwrap_or(fallback: T)` | `T` | **`T` must be `Copy`**: the receiver is a borrow. An owned payload uses the free `option.unwrap_or(o = ..., fallback = ...)` |
 
 `map`, `and_then`, `or_else` and `each` have no free function of the same name.
 `is_some` and `is_none` keep their free spelling, `option.is_none(o = x)`, which
 is what the rest of the library uses. A method always borrows its receiver, so
-`unwrap_or`, `unwrap` and `expect` stay free functions.
+`unwrap` and `expect` stay free functions, and the owned form of `unwrap_or` does
+too. `unwrap_or` has a method form for a `Copy` payload: `o.unwrap_or(0)`.
 
 ## Where the payload goes
 
@@ -81,6 +83,7 @@ fun main() {
     }
 
     some.each(fun(x: &i64) = print(x))
+    print(some.unwrap_or(0))                 // 7, the method form: `some` is borrowed
 
     // `unwrap` and `unwrap_or` take the option with `move`, so each of them
     // consumes the option it is given: `some` is used last.
