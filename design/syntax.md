@@ -562,7 +562,7 @@ The refusals name the rule and the fix:
 
 ## 5. Operators and expressions
 
-**Evaluation order.** Kelp evaluates strictly left to right: the arguments of a call (after its receiver), the interpolations of a string template, the two operands of a binary operator (`&&` and `||` short-circuit as usual), the fields of a `datac`/`enum` constructor and the elements of an array literal. This holds on both backends; the C backend binds order-dependent operands to temporaries because C itself leaves the order of call arguments and operands unspecified. `tests/fixtures/eval_order_*.kp` pin it.
+**Evaluation order.** Kelp evaluates strictly left to right: the arguments of a call (after its receiver), the interpolations of a string template, the two operands of a binary operator (`&&` and `||` short-circuit as usual), the fields of a `datac`/`enum` constructor and the elements of an array literal. The LLVM lowering keeps that order. `tests/fixtures/eval_order_*.kp` pin it.
 
 Precedence, loosest first:
 
@@ -1114,8 +1114,8 @@ Rules and limits of this phase:
 - **A call through a function value is positional.** A function *type* has no parameter names, so `f(x = 1)` is refused and the argument count is checked against the callee's own list.
 - **A call's result cannot be called directly.** `pick(true)(4)` is not the grammar; bind it (`val p = pick(true)`) and call `p(4)`.
 - **A module's item is named with its qualified spelling**, `val f = math.sqrt`, and a bare name means a function of the current module. An *overloaded* item (`math.abs`, which is `i32`/`i64`/`f64`) is refused: its parameter types are part of its name, so it is several functions, not one.
-- **A declared `fun` is always a plain function value.** A generic function (no single signature), a function that reads a passdown (its C signature has a hidden argument), and `main` are each refused with a message that says which. A receiver method is not reachable as a value at all, and an overloaded standard-library name (`math.abs`) is refused because its parameter types are part of its name.
-- **Placements with no C spelling are refused**: a function type may not return a function type and may not be borrowed. A function type *is* fine as a parameter, a `val`/`var`, a `datac`/`enum` field, a passdown, a function's return type, and a type argument. A closure type is fine in all of those as well, plus `Box<closure fun(...)>`.
+- **A declared `fun` is always a plain function value.** A generic function (no single signature), a function that reads a passdown (its signature has a hidden argument), and `main` are each refused with a message that says which. A receiver method is not reachable as a value at all, and an overloaded standard-library name (`math.abs`) is refused because its parameter types are part of its name.
+- **Some placements are refused**: a function type may not return a function type and may not be borrowed. A function type *is* fine as a parameter, a `val`/`var`, a `datac`/`enum` field, a passdown, a function's return type, and a type argument. A closure type is fine in all of those as well, plus `Box<closure fun(...)>`.
 - There is no `print` for a function value or a closure.
 
 ## 8. Methods and receivers
@@ -2267,7 +2267,7 @@ thread.fence(order = atomic.Ordering.SeqCst)
 
 Until MK9-S3-M2 states it as the language's own, the definition of the model this section states is the one `plan/mk9-memory-model.md` section 3 records; MK9-S3-M2 is the stage that publishes it rather than borrowing it by reference.
 
-A fence changes nothing a single-threaded program can observe, and it is one instruction: `__atomic_thread_fence(__ATOMIC_SEQ_CST)` on the C side and `fence seq_cst` on the LLVM side.
+A fence changes nothing a single-threaded program can observe, and it is one instruction: `fence seq_cst` in the LLVM IR.
 
 ### 12.7 Threads
 
@@ -2880,7 +2880,7 @@ The `Copy` requirements left here are on the side a helper has to **rebuild** th
 
 ### 16.16 `std/list`
 
-The element-wise API of `List<T>` (`len`, `get`, `push`, `sort`, …) is builtin, because a list is monomorphized and its methods are generated C per element type (12.1). The operations that need a **callback** cannot be generated without knowing what the callback returns, so they are free functions in a module, `list.map(xs, f)`, the same shape `str.*` and `math.*` have.
+The element-wise API of `List<T>` (`len`, `get`, `push`, `sort`, …) is builtin, because a list is monomorphized and its methods are generated per element type (12.1). The operations that need a **callback** cannot be generated without knowing what the callback returns, so they are free functions in a module, `list.map(xs, f)`, the same shape `str.*` and `math.*` have.
 
 ```kelp
 fun map<T, U>(xs: &List<T>, f: closure fun(&T) => U) => List<U>
@@ -3170,14 +3170,14 @@ Compiler diagnostics print as `file:line:col`, a message, and often a note with 
 | `'mut' and 'move' cannot be combined on one parameter` | `mut T` is an exclusive borrow, `move T` takes ownership, pick the one the callee needs |
 | `'move' cannot be written on a receiver` | a receiver is always borrowed; a move-taking parameter is `name: move T` |
 | `'first' is a generic function` (as a value) | a function value needs one concrete signature; wrap the call in a small non-generic function |
-| `'f' reads a passdown, so it cannot be a function value` | a passdown is a hidden argument, so its C signature is not a plain function pointer; call it directly |
+| `'f' reads a passdown, so it cannot be a function value` | a passdown is a hidden argument, so the function is not a plain function value; call it directly |
 | `a call through 'f' cannot use named arguments` | a function type has no parameter names; pass the arguments positionally |
 | `'host' is shorthand for 'host = host', but no local named 'host' is in scope` | a bare name in a construction is a field and a local of the same name; declare the local, or write `field = value` |
 | `'host' is shorthand for 'host = host', but datac 'Job' has no field named 'host'` | a bare name must be a field of the constructor; write the field's own name |
 | `a call through 'f' takes 1 argument(s), found 2` | an indirect call is counted against the callee's own parameter list |
 | `'mut'/'&' cannot be written on the function type` | a function value is Copy, so a borrow of one is a pointer to a pointer |
-| `a function type cannot return another function type` | C cannot write that declarator; return a `datac` holding the function value |
-| `'fun(i32) => i32' cannot be a 'List' element yet` | a container's generated C type names its element type as a prefix; hold it in a one-field `datac` |
+| `a function type cannot return another function type` | a function type that returns a function type is not supported; return a `datac` holding the function value |
+| `'fun(i32) => i32' cannot be a 'List' element yet` | a function value cannot be a container element yet; hold it in a one-field `datac` |
 | `a 'fun' literal cannot capture 's': it is a borrow ('str')` | the environment outlives the frame the borrow points into; capture an owned value, or pass the borrow as a parameter of the literal |
 | `a 'fun' literal cannot capture 'n': it is a field of 'Counter'` | a receiver is a borrow, and a field cannot be moved out of a borrow; bind a `Copy` field to a local first, or take the receiver as a `move` parameter |
 | `cannot capture 'text' into this literal: it belongs to the enclosing closure's environment` | an environment is read through a borrow, so an owned capture cannot be moved out of it; capture it from the frame that owns it, or copy a `Copy` one |
