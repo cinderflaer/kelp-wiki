@@ -151,7 +151,9 @@ checker applies to a `spawn` call:
 `thread.join` consumes the handle and hands back `Ok` with the value the worker
 returned or `Err` with a [`ThreadErr`](/stdlib/thread) carrying the panic text.
 A join is a barrier, so a worker's writes are visible to its joiner once its own
-join has returned.
+join has returned. `pool.join_or_report(handle)` is the short form for a program
+that only wants the value: it returns `Some(value)`, or prints the panic text and
+returns `None` ([`std/pool`](/stdlib/pool#joining-one-handle-and-reporting-its-error)).
 
 `thread.sleep_ms(ms)` and `thread.current_id()` sit beside `spawn`/`join` for a
 worker pool to use: sleeping backs off between empty pulls, and the id names

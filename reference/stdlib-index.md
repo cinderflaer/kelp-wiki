@@ -823,6 +823,7 @@ Functions:
 - `fun Pool.spawn(job: move closure fun())`
 - `fun Pool.join()`
 - `fun Pool.panicked() => i32`
+- `fun join_or_report<t>(handle: move Thread<t>) => option.Option<t>`
 
 ## `std/iter`
 

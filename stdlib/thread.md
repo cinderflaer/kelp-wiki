@@ -115,6 +115,9 @@ A join hands back `Result<T, ThreadErr>`, so a program that writes one also
 needs `impl "std/result"`, exactly as `Atomic.compare_exchange`'s `Result<T, T>`
 does ([`std/result`](/stdlib/result)).
 
+To join one handle and print its error in one call, use
+[`pool.join_or_report`](/stdlib/pool#joining-one-handle-and-reporting-its-error).
+
 ## The one borrow that may cross
 
 **A shared borrow crosses only from a `pd` whose pointee has no reachable `var`
