@@ -24,6 +24,8 @@ empty on release.
 
 ## added
 
+- `str.bytes(s)` returns an iterator over the bytes of a `str`, so `for b in str.bytes(s) { ... }` walks every byte in order as a `u8`, with no index or bounds check. The empty string yields nothing and a multi-byte character yields its UTF-8 bytes (issue #261). The iterator copies the text once when the walk starts.
+
 - `kelpc boot <project dir>` builds a freestanding example and boots it under QEMU, checking the serial lines named by the `[run]` table in its `coral.toml` (`qemu`, `expect`, and the optional `ramfb` and `smp`). It replaces the `run.sh` scripts that each repeated the same QEMU command: 21 of the 25 examples lost theirs (issue #303). Four keep a `run.sh` because their checks are ordered or generated.
 
 - Several plain module paths may share one `impl` line: `impl "std/str", "std/fmt", "std/option"` is the same as three lines, one module each, in the order written (issue #299). A `caps(...)` grant keeps its own line, and a grant written after a list is refused with that fix named. This is spelling only: the existing lines are unchanged.

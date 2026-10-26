@@ -111,6 +111,7 @@ Reading it line by line:
 - The `List` walk (`for x in xs` over `[1, 2, 3, 4, 5, 6]`) skips 2 with
   `continue` and stops at 5, so the total is `1 + 3 + 4`.
 - `count`, `sum_i64` and `collect_list` drain an iterator.
+- `str.bytes(s)` from [`std/str`](/stdlib/str) is an `Iterator` over the bytes of a `str`, one `u8` per pass. The loop `for b in str.bytes(s) { ... }` needs no index.
 
 ## What `for` does with each type
 

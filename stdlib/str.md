@@ -18,6 +18,7 @@ Needs no `impl` line: the module is in scope by its own name.
 | `len(s: &str)` | `int` | bytes, not characters (a `strlen`, so it costs the length of the string) |
 | `is_empty(s: &str)` | `bool` | |
 | `byte(s: &str, i: int)` | `u8` | byte at `i`; out of range panics. The bounds check reads `i + 1` bytes, not the whole string |
+| `bytes(s: &str)` | `ByteIter<String>` | an `Iterator` over the bytes, one `u8` per pass: `for b in str.bytes(s) { ... }`. It copies `s` once when the walk starts; the empty string yields nothing and a multi-byte character yields its UTF-8 bytes |
 | `ptr(s: &str)` | `Ptr<u8>` | the address of the first byte, which is the NUL-terminated text itself; reading through it needs `unsafe` |
 | `byte_index(s: &str, i: usize)` | `usize` | the byte offset of character `i` |
 | `char_count(s: &str)` | `int` | codepoints |
@@ -94,6 +95,7 @@ fun main() {
   quadratic and does not finish. `val v = s.view()` pays one `strlen` (none from
   an owned `String`), and `v.len()` and `v.get(i)` are then constant time: the
   same 13 MB scan takes about 15 ms. See [Text](/language/text#view-borrowed-text-with-a-length).
+- **A walk over every byte: `for b in str.bytes(s)`.** It needs no index, bounds check or `str.byte` call, and it yields a `u8` per pass. The iterator owns a copy of the text, so the walk costs one copy of `s`; use `view()` and an index when a copy is not wanted.
 - Everything byte-oriented counts bytes: `str.len("é")` is 2. Use `char_count`
   when the answer must be characters.
 - `to_upper`/`to_lower` apply the simple Unicode case mappings (`kelpc/std/str.kp`, the generated table). U+00DF (sharp s) stays as it is, and U+0130 lowercases to U+0069.
