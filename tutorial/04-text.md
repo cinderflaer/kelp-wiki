@@ -28,7 +28,7 @@ fun main() {
     val loud = shout("hey")
     print(loud)
 
-    val digits = fmt.int(42)
+    val digits = (42).toText()
     print(str.concat("total: ", digits.as_str()))
 
     val parts = str.split("a,b,c", ",")
@@ -96,7 +96,7 @@ fun label(n: i32) => String {
 
 `label(7)` returns the `String` `n is 7`. To build text a piece at a time, use
 `str.concat`, the `fmt` functions, or a `String`.
-`fmt.int(42)` turns a number into a `String`. Pass a borrow of it on with
+`(42).toText()` turns a number into a `String`. Pass a borrow of it on with
 `.as_str()`, and bind it to a variable first, as the program does. A call that
 returns a borrow of a temporary value is refused, because the temporary would be
 dropped before the borrow is used.

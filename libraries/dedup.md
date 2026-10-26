@@ -149,10 +149,10 @@ fun main() {
 
     val o = dedup.default_options()
     val report = dedup.duplicates(entries = &entries, o = &o, hash = file_hash, equal = file_equal)
-    print(fmt.uint(n = report.files.to_u64()))
-    print(fmt.uint(n = report.unique.to_u64()))
-    print(fmt.uint(n = report.groups.len().to_u64()))
-    print(fmt.uint(n = dedup.total_wasted(groups = &report.groups)))
+    print(report.files.toText())
+    print(report.unique.toText())
+    print(report.groups.len().toText())
+    print(dedup.total_wasted(groups = &report.groups).toText())
 
     val snap = dedup.snapshot(root = "/tmp/dedupdemo", generated = 1700000000, entries = &entries, hash = file_hash)
     val moved = dedup.drift(s = &snap, entries = &entries, hash = file_hash)

@@ -66,17 +66,17 @@ fun measure(file: str, label: str, want_lines: bool, want_words: bool, want_byte
     out.push_str(line.as_str())
     if want_lines {
         out.push_str(" lines=")
-        val n = fmt.int(count_lines(s))
+        val n = count_lines(s).toText()
         out.push_str(n.as_str())
     }
     if want_words {
         out.push_str(" words=")
-        val n = fmt.int(count_words(s))
+        val n = count_words(s).toText()
         out.push_str(n.as_str())
     }
     if want_bytes {
         out.push_str(" bytes=")
-        val n = fmt.int(str.len(s).to_i64())
+        val n = str.len(s).toText()
         out.push_str(n.as_str())
     }
     print(out)

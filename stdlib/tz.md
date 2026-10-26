@@ -137,7 +137,7 @@ neither offset reproduces itself, and across a fall-back both do.
 // instant names, the instant a wall clock names, and the formatter.
 impl "std/tz" caps(fs = ["/**"], env = ["TZDIR"])
 
-fun digits(n: i64) => String = str.from_i64(n)
+fun digits(n: i64) => String = n.toText()
 
 fun label(r: &tz.Resolved) => String {
     var out = String.empty()

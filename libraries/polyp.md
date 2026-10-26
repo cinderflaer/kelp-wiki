@@ -394,7 +394,7 @@ fun changed(text: String) => Msg = Msg.Changed(text = String.from_str(text.as_st
 fun view(s: Counter) => core.Node<Msg> {
     return polyp.column { k ->
         k.text_styled("a counter", 0, true)
-        val shown_count = fmt.int(s.count.to_i64())
+        val shown_count = s.count.toText()
         val shown = str.concat("count: ", shown_count.as_str())
         k.text(shown.as_str())
         k.spacer(6)
@@ -489,7 +489,7 @@ fun view(s: Model) => core.Node<Msg> {
             var i: usize = 0
             while i < s.items.len() {
                 val item = s.items.get(i)
-                val key = fmt.int(item.id.to_i64())
+                val key = item.id.toText()
                 if item.done {
                     sc.class("todo-done")
                 } else {

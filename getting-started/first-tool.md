@@ -188,7 +188,7 @@ Each of these is one function and no new imports beyond the one named:
 | A `--chars N` flag, so a file of accented text is cut at N characters and not N bytes | `str.char_count`, `str.byte_index`, `str.copy_range` | the byte and codepoint index sets, and why they differ |
 | A `tail` that counts back from the end | `lines.len()`, a descending `while` | indexing from the end, and a loop whose exit is in its condition |
 | Several paths, with a header per file | a second loop over the arguments | `argv` as a list rather than positional slots |
-| A `total` line at the end, like `wc` | `fmt.int`, a counter | building output when `print` takes one argument |
+| A `total` line at the end, like `wc` | `n.toText()`, a counter | building output when `print` takes one argument |
 
 The `tail` version is the one worth doing: counting down means the loop condition
 carries the exit, and `break` and `continue` ([Iterators, `for` and

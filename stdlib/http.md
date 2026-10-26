@@ -555,7 +555,7 @@ fun main() {
     val h = thread.spawn(serve, server.fd)
 
     var url = String.from_str("https://localhost:")
-    val digits = fmt.uint(port.to_u64())
+    val digits = port.toText()
     url.push_str(digits.as_str())
     url.push_str("/")
     when tlsfile.ca_pem("/etc/myapp/certs/ca.pem") {

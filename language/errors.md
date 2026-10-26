@@ -126,7 +126,7 @@ owned `String`, so a message built in the failing branch needs no binding and no
 ```kelp
 fun main() {
     val n: i64 = 3
-    panic(fmt.int(n))          // fmt.int returns a String, which goes straight in
+    panic(n.toText())          // toText returns a String, which goes straight in
 }
 ```
 

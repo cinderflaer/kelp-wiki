@@ -34,7 +34,7 @@ fun require_absolute(tool: str, file: str) {
 
 fun report(label: str, n: i64) {
     val padded = fmt.pad_right(label, 8, ' ')
-    val count = fmt.int(n)
+    val count = n.toText()
     print(str.concat(padded.as_str(), count.as_str()))
 }
 

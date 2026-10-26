@@ -4,16 +4,29 @@ description: "Formatting into String: numbers, bytes, padding, digit grouping an
 isPublished: true
 tags: "stdlib, text"
 ---
-Formatting into `String`: numbers, bytes, padding, digit grouping and byte
-sizes. Ungated.
+Formatting into `String`: bytes, padding, digit grouping and byte sizes. Ungated.
 
 Needs no `impl` line: the module is in scope by its own name.
 
+## Numbers as text
+
+A number's text is a method on the number, so no `fmt` call is needed first:
+
+| Call | Returns | Notes |
+| --- | --- | --- |
+| `n.toText()` | `String` | an integer's decimal digits, `-` for a negative; the same text as `"${n}"` |
+| `x.toText()` | `String` | a float's print form, the same text as `"${x}"` |
+| `x.toText(decimals)` | `String` | a float with exactly `decimals` digits after the point; `x.toText(2)` is the usual call. The file needs `impl "std/str"` |
+
+`fmt.int`, `fmt.uint` and `fmt.float` are retired. They still compile for one
+release cycle, and each call prints an `outdated:` finding that names its
+replacement. `--deny-outdated` makes the finding an error. The same goes for
+`str.from_i64`, `str.from_u64` and `str.from_f64`.
+
+## Other functions
+
 | Function | Returns | Notes |
 | --- | --- | --- |
-| `fmt.int(n: i64)` | `String` | decimal, `-` for negatives |
-| `fmt.uint(n: u64)` | `String` | decimal |
-| `fmt.float(x: f64, decimals: i32 = 2)` | `String` | fixed point with exactly `decimals` digits; two when `decimals` is left out |
 | `fmt.hex(n: u64)` | `String` | lowercase hex |
 | `fmt.bytes(b: Bytes)` | `String` | a debugging dump: lowercase hex, one space between bytes, `1f 8b 08` |
 | `fmt.pad_left(s: &str, width: usize, fill: u8)` | `String` | pads on the left to `width`; a longer `s` is returned unchanged |
@@ -24,16 +37,20 @@ Needs no `impl` line: the module is in scope by its own name.
 | `fmt.group_digits(text: &str)` | `String` | the digit run of `text` with a comma every three digits; a leading `-` is kept and not counted |
 | `fmt.human_scale(bytes: u64, div: u64, unit: &str)` | `String` | `bytes / div` with two decimals, then `unit` appended; the helper `human_size` is built on |
 
-All the number functions wrap `str.from_*`, so `fmt.int(n)` is `str.from_i64(n)`
-with a name that reads well inside a call. `print` itself formats floats with six
-decimals; use `fmt.float` when you want another count.
+`print` itself formats floats with six decimals. For another count, use
+`x.toText(decimals)`.
 
 ```kelp
+impl "std/str"
+
 fun main() {
-    print(fmt.int(-7))
-    print(fmt.uint(1024))
-    print(fmt.float(1.5, 2))
-    print(fmt.float(1.0 / 3.0, 4))
+    val n: i64 = -7
+    print(n.toText())
+    val u: u64 = 1024
+    print(u.toText())
+    val x: f64 = 1.5
+    print(x.toText(2))
+    print((1.0 / 3.0).toText(4))
     print(fmt.hex(255))
     print(fmt.pad_left("7", 3, '0'))
     print(fmt.pad_right("ab", 5, '.'))
@@ -65,13 +82,13 @@ ab...
   that position) rather than a string.
 - Padding counts bytes, so a multi-byte character pads short.
 - `commas_u64` and `commas_i64` exist as two names because a user module cannot
-  overload a name, which is why `fmt` already spells `int` and `uint` apart.
+  overload a name.
 - `human_size` is **binary** (1024) and not decimal, two decimals, one space
   before the unit: `"585.94 KiB"`. Binary is what a byte-count command-line
   option like `4k` means, so a tool that prints a size and takes one agrees with
   itself.
 - There is no sign control, no scientific notation, and no width/precision
-  mini-language: `fmt.float(x, d)` is the whole float API.
+  mini-language: `x.toText(d)` is the whole float API.
 
 ## `Display`
 
@@ -88,11 +105,11 @@ of `print`/`print!`; the front end lowers both to `x.to_text()`, so the value is
 only borrowed and stays owned. A type without it is refused with a message that
 names `Display`. Builtin types keep the formatting they always had. `to_text`
 has to build its `String` without a template (a template is not a value), for
-example with `String.empty()`, `push_str` and `fmt.int`. A worked example is
-[Operator traits and `Display`](/language/operator-traits).
+example with `String.empty()`, `push_str` and `n.toText()` for a number. A worked
+example is [Operator traits and `Display`](/language/operator-traits).
 
 ## See also
 
-- [`std/str`](/stdlib/str) for `from_i64`/`from_f64` and parsing
+- [`std/str`](/stdlib/str) for parsing and the other text functions
 - [Operator traits and `Display`](/language/operator-traits)
 - [`table`](/libraries/table), which is `fmt.pad_right` over columns

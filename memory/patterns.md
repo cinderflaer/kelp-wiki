@@ -151,7 +151,7 @@ owns the result, and nothing is dropped inside the function. Build text in a loc
 ```kelp
 fun make_name(id: i32) => String {
     var s = String.from_str("user-")
-    val digits = str.from_i64(id.to_i64())
+    val digits = id.toText()
     s.push_str(digits.as_str())
     return s
 }

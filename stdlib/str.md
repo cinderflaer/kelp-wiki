@@ -44,7 +44,7 @@ Needs no `impl` line: the module is in scope by its own name.
 | `join(parts: List<String>, sep: &str)` | `String` | takes the list by value |
 | `concat(a: &str, b: &str)` | `String` | allocates |
 | `copy_into(dst: mut Bytes, at: int, src: &str)` | `int` | raw copy into a buffer |
-| `from_i64(n)` / `from_u64(n)` / `from_f64(x, decimals)` | `String` | |
+| `from_i64(n)` / `from_u64(n)` / `from_f64(x, decimals)` | `String` | retired spellings, still compiling for one cycle: write `n.toText()` or `x.toText(decimals)` ([`std/fmt`](/stdlib/fmt)) |
 | `parse_i64(s)` / `parse_u64(s)` / `parse_f64(s)` | `result.Result<T, ParseErr>` | |
 | `parse_err(s: &str)` | `ParseErr` | the error a failed parse would carry |
 
@@ -82,8 +82,8 @@ fun main() {
     val bad = str.parse_i64("4x")
     print(result.is_err(bad))         // true
 
-    print(str.from_i64(-7))           // -7
-    print(str.from_f64(1.5, 2))       // 1.50
+    print((-7).toText())           // -7
+    print((1.5).toText(2))       // 1.50
 }
 ```
 

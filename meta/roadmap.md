@@ -1070,7 +1070,7 @@ Why this exists, in this repository's own evidence: `kelpc build <path>` compile
 impl "std/fs" caps(fs = ["/project/out/**", "/project/data/**"])
 
 fun main() {
-    val size = fmt.uint(fs.size("/project/data/input.csv"))
+    val size = fs.size("/project/data/input.csv").toText()
     fs.write_text("/project/out/report.txt", str.concat("input bytes: ", size.as_str()))
 }
 ```

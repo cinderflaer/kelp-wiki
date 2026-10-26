@@ -50,7 +50,7 @@ fun render(totals: Map<String, i64>) {
         val name = names.get(i)
         var cells: List<String> = List.empty()
         cells.push(name.clone())
-        cells.push(fmt.int(totals.get(name.as_str())))
+        cells.push(totals.get(name.as_str()).toText())
         table.add_row(t, cells)
         i += 1
     }

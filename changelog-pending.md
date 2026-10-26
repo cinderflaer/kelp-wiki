@@ -64,7 +64,11 @@ empty on release.
 - A `coral.toml` section `[caps."<module id>"]` grants an imported module its capabilities once, so the `impl` lines that import it need no `caps(...)` clause (issue #301). The section is a ceiling: a clause on that module may grant only what the section covers, and the entry module keeps its `[caps]` section. No existing grant changes meaning.
 - A multi-line string literal: `"""` opens a block, a line holding only `"""` closes it, and the closing line's indentation is removed from the lines between. The value always ends with a newline and uses the string escapes, so a block equals the same text written with `\n` (issue 260). An unterminated block is refused at its opening.
 
+- `n.toText()` gives the text of a number with no conversion first (issue #262): an integer's decimal digits, the same text as `"${n}"`, and a float's `x.toText()` (its print form) or `x.toText(decimals)`, with exactly `decimals` digits after the point. `x.toText(2)` is the text `fmt.float(x)` gave. The float form needs `impl "std/str"`.
+
 ## Changed
+
+- `fmt.int`, `fmt.uint`, `fmt.float`, `str.from_u64`, `str.from_i64` and `str.from_f64` are outdated (issue #262). Each still compiles for one release cycle and prints an `outdated:` finding that names its replacement: `n.toText()` for an integer, `x.toText(decimals)` for a float.
 
 - A freestanding build no longer refuses a `String` or `Bytes` field in a `std` struct that the program never reaches. A project that loads `std/str` without calling `str.bytes` builds again, and a struct the program constructs with such a field is still refused by name (issue #367).
 

@@ -25,7 +25,7 @@ fun is_space(c: u8) => bool = c == ' ' || c == '\t' || c == '\n' || c == '\r'
 
 fun report(label: str, n: i64) {
     val padded = fmt.pad_right(label, 8, ' ')
-    val count = fmt.int(n)
+    val count = n.toText()
     print(str.concat(padded.as_str(), count.as_str()))
 }
 
@@ -96,7 +96,7 @@ bytes   54
   `if c == '\n'` needs no cast: `c` is a `u8`, so the literal is one.
 - **Output is built, not concatenated with `+`.** There is no `+` on strings:
   `str.concat(a, b)` allocates, `fmt.*` formats, and `String.push_str` appends in
-  place. Note that `fmt.pad_right(...)` and `fmt.int(...)` are bound to `val`s
+  place. Note that `fmt.pad_right(...)` and `(...).toText()` are bound to `val`s
   before `.as_str()` is taken: `.as_str()` on a temporary is refused.
 - **`process.exit(2)` is the only way to fail a program by exit code**
   ([`panic`](/language/errors) also exits non-zero, with a message).

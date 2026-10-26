@@ -10,10 +10,12 @@ a generic function accepts any type that implements a trait.
 ## The program
 
 ```kelp
+impl "std/str"
+
 trait Shape {
     fun Self.area() => f64
     fun Self.describe() => String {
-        val text = fmt.float(self.area(), 1)
+        val text = self.area().toText(1)
         return str.concat("a shape with area ", text.as_str())
     }
 }

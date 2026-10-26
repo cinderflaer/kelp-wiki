@@ -31,7 +31,7 @@ small program looks like in Kelp:
 | A palindrome and anagram checker | `str.char_at`, `List<i32>.sort` | byte against character indices, sorting in place |
 | Collatz lengths for 1 to 100 | `while`, `i64` | integer division and modulo, and finding the longest by hand |
 | Roman numerals, both directions | `String.push_str`, `str.parse_i64` | building text a piece at a time |
-| A right-aligned multiplication table | `fmt.pad_left`, `fmt.int` | formatting into a `String` rather than printing pieces |
+| A right-aligned multiplication table | `fmt.pad_left`, `n.toText()` | formatting into a `String` rather than printing pieces |
 | A dice roller with a histogram | `rand.below`, `str.repeat` | a capability grant, and a `Map` as a counter |
 | A passphrase from a word list on disk | `fs.read_lines`, `rand.below` | two grants in one program, and resolving a relative path with `fs.cwd` |
 | Countdown to a date | `time.now_unix` | the `time` grant, and integer date arithmetic |
@@ -76,12 +76,15 @@ grants, and you will have to decide whether the exit goes in the `while` conditi
 in two columns:
 
 ```kelp
+impl "std/fmt"
+impl "std/str"
+
 fun main() {
     var c: i64 = 0
     while c <= 100 {
         val f = c.to_f64() * 9.0 / 5.0 + 32.0
-        val c_text = fmt.int(c)
-        val f_text = fmt.float(f, 1)
+        val c_text = c.toText()
+        val f_text = f.toText(1)
         val left = fmt.pad_left(c_text.as_str(), 4, ' ')
         val right = fmt.pad_left(f_text.as_str(), 6, ' ')
         print(str.concat(left.as_str(), right.as_str()))
@@ -104,7 +107,7 @@ fun main() {
  100 212.0
 ```
 
-Why the two `val`s in the middle instead of `fmt.int(c).as_str()`: `.as_str()` on a
+Why the two `val`s in the middle instead of `c.toText().as_str()`: `.as_str()` on a
 temporary is refused, because the temporary would be dropped before the view could
 be used. Bind it to a local first. That one rule explains a large share of the
 text errors you will meet, and [Pitfalls](/language/pitfalls) lists the rest.

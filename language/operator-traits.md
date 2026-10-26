@@ -65,8 +65,8 @@ impl ops.Neg for Vec2 {
 impl fmt.Display for Vec2 {
     fun Self.to_text() => String {
         var out = String.empty()
-        val xs = fmt.int(self.x)
-        val ys = fmt.int(self.y)
+        val xs = self.x.toText()
+        val ys = self.y.toText()
         out.push_str("(")
         out.push_str(xs.as_str())
         out.push_str(", ")

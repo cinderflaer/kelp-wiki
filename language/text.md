@@ -109,9 +109,10 @@ the lexer refuses a raw NUL or `\x00` in the literal first. Binary data is
 Growing a buffer takes an exclusive borrow, so a live `str` view of it blocks the
 growth. That rule is what makes reallocation safe without lifetime syntax.
 
-Formatting a number: `fmt.int(n)`, `fmt.uint(n)`, `fmt.float(x, decimals)`,
-`fmt.hex(n)`, `fmt.pad_left(s, width, fill)`, `fmt.pad_right(...)`. All return
-`String`. See [`std/fmt`](/stdlib/fmt).
+Formatting a number: `n.toText()` gives an integer's decimal text, and
+`x.toText()` and `x.toText(decimals)` give a float's text. `fmt.hex(n)`,
+`fmt.pad_left(s, width, fill)` and `fmt.pad_right(...)` format the rest. All
+return `String`. See [`std/fmt`](/stdlib/fmt).
 
 ## `View`: borrowed text with a length
 
@@ -150,7 +151,7 @@ earlier field of the same value. Text you must keep independently is a `String`.
 ```kelp
 val n: i32 = -7
 print(n.to_i64())            // widening, exact
-print(fmt.int(n.to_i64()))   // "-7" as a String
+print(n.toText())   // "-7" as a String
 
 val parsed = str.parse_i64(s = "41")   // Result<i64, str.ParseErr>
 if let Ok(v) = parsed {
@@ -167,7 +168,10 @@ val x: f64 = big.to_f64()            // 3.0, the only integer-to-float widening
 - `try_to_<T>()` is the fallible twin, for the pairs whose plain conversion can
   lose a value: it hands back `Option<T>`, so a caller tests rather than
   panicking. A widening has no `try_to_<T>` (see [Types](/language/types)).
-- `str.from_i64`, `str.from_u64` and `str.from_f64(x, decimals)` return `String`.
+- `n.toText()` on an integer and `x.toText(decimals)` on a float return a
+  `String` with the text of the number. The float form needs `impl "std/str"`.
+  The old `str.from_i64`, `str.from_u64` and `str.from_f64` spellings are retired
+  (see [`std/fmt`](/stdlib/fmt)).
 - `str.parse_i64`, `str.parse_u64`, `str.parse_f64` return
   `Result<T, str.ParseErr>`. `ParseErr` has two variants, `Empty` (the text was
   empty) and `Invalid` (the text is not a number).

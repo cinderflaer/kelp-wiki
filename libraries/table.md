@@ -98,5 +98,5 @@ b     | 2005
   header separator, no colour.
 - Widths are recomputed on every `render` call; `Table.rows` is a `var` field, so
   rows can be added after the first render.
-- A cell is only ever a `String`; format numbers with `fmt.int`/`fmt.float`
+- A cell is only ever a `String`; format numbers with `n.toText()` and `x.toText(decimals)`
   before pushing them.
