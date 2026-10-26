@@ -49,6 +49,8 @@ empty on release.
 
 ## Documentation
 
+- The example modules open with a `//!` module header instead of a `//` comment block (issue #306). `kelpc doc` renders the header as the opening of each module's page, and `kelpc lint` no longer counts it as a comment run. Each header keeps its first paragraph and any paragraph that names a design path; the rest of the old block was repeated detail. The style page states the form in its new module header section.
+
 - The Coral, Polyp, fpl and Lighthouse pages match their `main` branches: Coral has no version pins and records `coral.lock`, Polyp exports no `QUIT_ID` and its API lists the v4 and v5 nodes, fpl has 32 libraries, and Lighthouse has a Kelp port of the server in progress.
 
 - A `&` in front of a parameter of an owned type is redundant (issue #283): `s: &String`, `p: &Point` (a `datac`), `xs: &List<T>`, `m: &Map<K, V>`, `b: &Bytes`, `b: &Box<T>` and `s: &str` take the same arguments as the bare type. `kelpc lint` warns on it, and the examples and language pages write the bare type. `&dyn`, a scalar or another `Copy` type, a fixed-size array, a generic `T` and `fun X.eq(other: &X)` keep their `&`.

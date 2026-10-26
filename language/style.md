@@ -58,6 +58,25 @@ fun main() {
 }
 ```
 
+## The module header
+
+A file that needs a description opens with a `//!` block on the first lines,
+before anything else, `impl` lines included. The block says what the module is
+and, if the design is written down, the path to it. `kelpc doc` renders it as the
+opening of the module's page, and `kelpc lint` does not count it as a run of `//`
+comments.
+
+```kelp
+//! Integer animation values (Polyp v4 stage 1).
+//!
+//! The easing curves and the clock. Design: plan/polyp-v3.md.
+
+impl "std/option"
+```
+
+Keep the header to what a reader cannot see from the code: the purpose, and the
+path to the design. Do not restate the rules or the layout the code already shows.
+
 ## Naming
 
 - Standard-library modules, functions and `datac` fields are `snake_case`
