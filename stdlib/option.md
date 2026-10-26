@@ -92,7 +92,7 @@ fun main() {
 
     // An owned payload comes out of an owned option: `unwrap` takes the option
     // with `move`, so `text` is consumed by the call.
-    val text: option.Option<String> = option.Option.Some(value = String.from_str(s = "owned"))
+    val text: option.Option<String> = option.Option.Some(value = "owned")
     print(option.unwrap(o = text))           // owned
 }
 ```

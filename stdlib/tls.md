@@ -458,7 +458,7 @@ impl "std/process"
 
 fun show(o: move option.Option<String>) => String = when o {
     Some(v) -> v
-    None -> String.from_str("-")
+    None -> "-"
 }
 
 fun make_config() => result.Result<tls.ServerConfig, tls.TlsError> {
@@ -466,8 +466,8 @@ fun make_config() => result.Result<tls.ServerConfig, tls.TlsError> {
     val key = tlsfile.read_pem("/etc/myapp/certs/server.key", "private key")?
     val ca = tlsfile.read_pem("/etc/myapp/certs/ca.pem", "client CA")?
     var protos: List<String> = List.empty()
-    protos.push(String.from_str("h2"))
-    protos.push(String.from_str("http/1.1"))
+    protos.push("h2")
+    protos.push("http/1.1")
     val opts = tls.server_options().alpn(&protos).require_client_cert_pem(ca)
     return tls.server_config_pem_with(cert, key, &opts)
 }
@@ -475,7 +475,7 @@ fun make_config() => result.Result<tls.ServerConfig, tls.TlsError> {
 fun serve_one(fd: i32) => String {
     val l = net.Listener(fd = fd)
     return when make_config() {
-        Err(_) -> String.from_str("server: config failed")
+        Err(_) -> "server: config failed"
         Ok(cfg) -> {
             var line = String.from_str("server: no client")
             when net.try_accept(l) {
@@ -484,7 +484,7 @@ fun serve_one(fd: i32) => String {
                         Ok(t) -> {
                             val proto = show(t.alpn())
                             val who = show(t.peer_cert_subject())
-                            line = String.from_str("server: alpn=")
+                            line = "server: alpn="
                             line.push_str(proto.as_str())
                             line.push_str(" peer=")
                             line.push_str(who.as_str())
@@ -493,7 +493,7 @@ fun serve_one(fd: i32) => String {
                             val w = tls.try_write_all(t, Bytes.from_str("ok"))
                             val sd = tls.try_shutdown(t)
                         }
-                        Err(_) -> line = String.from_str("server: handshake refused")
+                        Err(_) -> line = "server: handshake refused"
                     }
                     net.close(sock)
                 }
@@ -512,8 +512,8 @@ fun client(port: u16, with_cert: bool) => String {
         Err(_) -> {}
     }
     var protos: List<String> = List.empty()
-    protos.push(String.from_str("http/1.1"))
-    protos.push(String.from_str("h2"))
+    protos.push("http/1.1")
+    protos.push("h2")
     opts = opts.alpn(&protos)
     if with_cert {
         val c = tlsfile.read_pem("/etc/myapp/certs/client.pem", "client certificate")
@@ -535,15 +535,15 @@ fun client(port: u16, with_cert: bool) => String {
             val w = tls.try_write_all(t, Bytes.from_str("hi"))
             when tls.try_read(t, 16) {
                 Ok(b) -> {
-                    line = String.from_str("client: got ")
+                    line = "client: got "
                     val text = String.from_bytes(b)
                     line.push_str(text.as_str())
                 }
-                Err(_) -> line = String.from_str("client: refused after handshake")
+                Err(_) -> line = "client: refused after handshake"
             }
             val sd = tls.try_shutdown(t)
         }
-        Err(_) -> line = String.from_str("client: handshake refused")
+        Err(_) -> line = "client: handshake refused"
     }
     net.close(s)
     return line

@@ -69,17 +69,18 @@ Kelp has two text types you will use every day:
   a `str`, and so is a parameter declared `&str`. You can read it, but it must be
   built somewhere else.
 - **`String`** is text that your variable owns. It is dropped when the variable
-  goes out of scope. `String.from_str(s = "...")` makes one from a literal.
+  goes out of scope. A string literal such as `"..."` becomes one where a
+  `String` is expected, so `val s: String = "..."` needs no conversion call.
 
 A `String` becomes a `str` with `.as_str()`, a borrow, so the `String` keeps
 ownership. The `shout` function builds a `String` with `String.empty()` and
 `push_str`, then returns it. The function's return type is `String`, so the
 caller owns the result.
 
-A string literal is assigned to a `String` without `from_str` in some places,
-such as a struct field or a list element. The [text reference](/language/text)
-lists those cases. This chapter uses the explicit forms so that you can see which
-type you have.
+A string literal is assigned to a `String` without `from_str` wherever the
+target type is a `String`, such as a struct field, a list element or a `val`
+with a written type. The [text reference](/language/text) lists those cases.
+This chapter uses the explicit forms so that you can see which type you have.
 
 ## Templates
 

@@ -26,7 +26,7 @@ fun find(xs: List<i32>, want: i32) => option.Option<int> {
 
 fun half(n: i64) => result.Result<i64, String> {
     if n % 2 == 1 {
-        return result.Result.Err(error = String.from_str(s = "odd number"))
+        return result.Result.Err(error = "odd number")
     }
     return result.Result.Ok(value = n / 2)
 }
@@ -41,7 +41,7 @@ fun parse_half(text: str) => result.Result<i64, String> {
     if let Ok(v) = n {
         return half(n = v)
     }
-    return result.Result.Err(error = String.from_str(s = "not a number"))
+    return result.Result.Err(error = "not a number")
 }
 
 fun show(text: str) {

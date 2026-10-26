@@ -557,7 +557,7 @@ fun main() {
     // receiver gone: send hands the value back
     val (tx3, rx3) = sync.bounded<String>(1)
     hang_up(rx3)
-    when tx3.send(String.from_str("back")) {
+    when tx3.send("back") {
         Some(s) -> print(s)
         None -> print("lost")
     }

@@ -106,7 +106,7 @@ reference in the chain becomes an exclusive borrow instead. That is what makes t
 write checked rather than free.
 
 ```kelp
-pd var config: String = String.from_str(s = "api")
+pd var config: String = "api"
 
 fun describe(name: String) {
     print(name.as_str())

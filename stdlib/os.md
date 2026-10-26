@@ -108,7 +108,7 @@ fun main() {
     val template = str.concat(td, "/build-XXXXXX")
     val made = os.make_temp_dir(template)
     let Ok(dir) = &made else { panic("no directory") }
-    fs.write_text(str.concat(dir.path(), "/log.txt"), String.from_str("ok"))
+    fs.write_text(str.concat(dir.path(), "/log.txt"), "ok")
     print(fs.is_dir(dir.path()))
 }   // dir is dropped here, and the directory and its contents are removed
 ```

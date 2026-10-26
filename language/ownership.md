@@ -115,10 +115,10 @@ longer conflicts, even though `first` is still in scope:
 ```kelp
 fun main() {
     var names: List<String> = List.empty()
-    names.push(String.from_str("alpha"))
+    names.push("alpha")
     val first = names.get(0)
     print(first.as_str())
-    names.push(String.from_str("beta"))   // accepted: `first` is dead here
+    names.push("beta")   // accepted: `first` is dead here
     print(names.len())
 }
 ```
@@ -130,9 +130,9 @@ the mutation, so it is refused:
 ```kelp refused
 fun main() {
     var names: List<String> = List.empty()
-    names.push(String.from_str("alpha"))
+    names.push("alpha")
     val first = names.get(0)
-    names.push(String.from_str("beta"))
+    names.push("beta")
     print(first.as_str())
     print(names.len())
 }
@@ -287,7 +287,7 @@ enum Held {
 
 fun take_word(h: move Held) => String = when h {
     Word(text) -> text        // the payload moves out of the owned `h`
-    Blank -> String.from_str(s = "")
+    Blank -> ""
 }
 
 fun peek_word(h: &Held) => usize = when h {

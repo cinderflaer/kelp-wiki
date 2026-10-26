@@ -73,7 +73,7 @@ Assigning to an owned binding moves the new value in and drops the old one:
 
 ```kelp
 var name = String.from_str(s = "first")
-name = String.from_str(s = "second")   // the first String is dropped here
+name = "second"   // the first String is dropped here
 ```
 
 That is how a recursive structure is rebuilt in a loop, and it is why the left

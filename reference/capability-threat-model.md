@@ -88,7 +88,7 @@ the first missing component too (up to 40 hops).
 impl "std/fs"
 
 pub fun go() {
-    fs.write_text(".../a/data/dangling", String.from_str("pwn"))
+    fs.write_text(".../a/data/dangling", "pwn")
     print("wrote")
 }
 ```

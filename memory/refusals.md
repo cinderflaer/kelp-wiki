@@ -49,9 +49,9 @@ on the next line, so the list cannot be changed.
 ```kelp
 fun main() {
     var names: List<String> = List.empty()
-    names.push(String.from_str("alpha"))
+    names.push("alpha")
     val first = names.get(0)
-    names.push(String.from_str("beta"))
+    names.push("beta")
     print(first.as_str())
     print(names.len())
 }
@@ -68,10 +68,10 @@ Move the mutation after the last read of the borrow. The borrow is dead once
 ```kelp
 fun main() {
     var names: List<String> = List.empty()
-    names.push(String.from_str("alpha"))
+    names.push("alpha")
     val first = names.get(0)
     print(first.as_str())
-    names.push(String.from_str("beta"))
+    names.push("beta")
     print(names.len())
 }
 ```
@@ -127,7 +127,7 @@ be borrowed: it has no name for the borrow to point at.
 ```kelp
 datac Name(val text: String)
 
-fun mk() => Name = Name(text = String.from_str("kelp"))
+fun mk() => Name = Name(text = "kelp")
 
 fun show(n: Name) {
     print(n.text.len())
@@ -148,7 +148,7 @@ Bind the value to a name first, then borrow the name.
 ```kelp
 datac Name(val text: String)
 
-fun mk() => Name = Name(text = String.from_str("kelp"))
+fun mk() => Name = Name(text = "kelp")
 
 fun show(n: Name) {
     print(n.text.len())

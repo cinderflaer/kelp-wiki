@@ -220,7 +220,7 @@ A `pd var` that nothing writes is the common case for configuration and lookup
 tables, and it costs nothing to read:
 
 ```kelp
-pd var config: String = String.from_str(s = "api")
+pd var config: String = "api"
 
 fun describe(name: String) {
     print(name.as_str())

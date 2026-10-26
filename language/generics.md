@@ -35,7 +35,7 @@ fun identity<T>(x: T) => T = x
 The arguments are written wherever a type is written:
 
 ```kelp
-val p: Pair<i32, String> = Pair(first = 1, second = String.from_str(s = "one"))
+val p: Pair<i32, String> = Pair(first = 1, second = "one")
 val n: Maybe<i32> = Maybe.Some(value = 7)
 val xs: List<Maybe<i32>> = List.empty()
 ```

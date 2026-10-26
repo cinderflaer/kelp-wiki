@@ -64,6 +64,8 @@ empty on release.
 
 ## Changed
 
+- A string literal is written bare where a `String` is expected: `String.from_str("x")` in a `String` slot (a `val` or `var` with a written type, a `datac` field, an argument, a `List` element, a `Map` key or value, a `return`) becomes `"x"`. The conversion was already there (`str` to `String` where a `String` is expected); the wrapper was boilerplate. `String.from_str` stays for a non-literal argument, for a method call on its result (`String.from_str("x").as_str()`), and for an untyped `val` or `var` (issue #312).
+
 - The example folders share one copy of each file they use (issue #305). `kelpc/tests/fixtures/examples/shared/` holds the NS16550 driver, the Sv39 walker and the Polyp framebuffer platform, and each example's `src/` links to its copy instead of carrying its own. The compiler reads a link as the file it names, so no module id, diagnostic or output changes, and the manifests are unchanged.
 
 - A compiled-and-run test fixture keeps its expected stdout in a `// stdout-begin` trailer at the end of the file, not in the Rust test that runs it (issue #304). The test names and the number of passing tests do not change. The `impl` lines are not expanded yet (issue #357).

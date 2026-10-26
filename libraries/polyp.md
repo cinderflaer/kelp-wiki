@@ -443,7 +443,7 @@ fun main() {
         title = "polyp counter",
         width = 320,
         height = 200,
-        init = Counter(count = 0, draft = String.from_str("")),
+        init = Counter(count = 0, draft = ""),
         view = view,
         update = update,
     )
@@ -457,8 +457,8 @@ The plain-constructor style of the same view still compiles:
 
 ```kelp
 var kids: List<core.Node<Msg>> = List.empty()
-kids.push(polyp.text(String.from_str("hi")))
-kids.push(polyp.button(String.from_str("+1"), Msg.Inc))
+kids.push(polyp.text("hi"))
+kids.push(polyp.button("+1", Msg.Inc))
 return polyp.plain_column(kids)
 ```
 
