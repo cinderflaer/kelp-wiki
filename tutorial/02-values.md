@@ -9,9 +9,62 @@ and how to write functions.
 
 ## A first program
 
+The opening program is split into four small programs. Each one is complete,
+runs on its own, and adds one idea to the ones before it. Save each one in a
+file and run it with `kelpc run`.
+
+### Step 1: values and conversions
+
+Start with a `var` that changes, a `val` that does not, and two conversions.
+
+```kelp
+fun main() {
+    val n = 7
+    var total: i64 = 0
+    total += n.to_i64()
+    total *= 3
+    print("total = ${total}")
+    val ratio: f64 = n.to_f64() / 2.0
+    print("ratio = ${ratio}")
+}
+```
+
+```text
+total = 21
+ratio = 3.500000
+```
+
+### Step 2: a conversion that may not fit
+
+`try_to_byte()` returns an `Option`, so the program matches it with `if let`.
+The `impl "std/option"` line brings in the `Option` type that the `if let`
+uses. Only this step needs it.
+
 ```kelp
 impl "std/option"
 
+fun main() {
+    val wide: i32 = 300
+    if let Some(v) = wide.try_to_byte() {
+        print("fits ${v}")
+    } else {
+        print("300 does not fit in a u8")
+    }
+}
+```
+
+```text
+300 does not fit in a u8
+```
+
+[Errors](/tutorial/07-errors) explains `Option` fully.
+
+### Step 3: constants and functions
+
+This step adds a `const`, two functions (one with a `=` body, one with a block
+body), named arguments, and a function value passed to another function.
+
+```kelp
 const LIMIT: i32 = 10
 
 fun add(a: i32, b: i32) => i32 = a + b
@@ -28,40 +81,32 @@ fun double(x: i32) => i32 = x * 2
 fun apply(f: fun(i32) => i32, x: i32) => i32 = f(x)
 
 fun main() {
-    val n = 7
-    var total: i64 = 0
-    total += n.to_i64()
-    total *= 3
-    print("total = ${total}")
-    val ratio: f64 = n.to_f64() / 2.0
-    print("ratio = ${ratio}")
-    val wide: i32 = 300
-    if let Some(v) = wide.try_to_byte() {
-        print("fits ${v}")
-    } else {
-        print("300 does not fit in a u8")
-    }
     print("limit ${LIMIT}, add ${add(a = 2, b = 3)}, diff ${abs_diff(3, 10)}")
     print("apply ${apply(double, 21)}")
+}
+```
+
+```text
+limit 10, add 5, diff 7
+apply 42
+```
+
+### Step 4: a tuple, a comparison and a char
+
+```kelp
+fun main() {
     val (lo, hi) = (1, 9)
     print("pair ${lo} ${hi}")
+    val n = 7
     val c = 'k'
     print("big ${n > 3} char ${c}")
 }
 ```
 
 ```text
-total = 21
-ratio = 3.500000
-300 does not fit in a u8
-limit 10, add 5, diff 7
-apply 42
 pair 1 9
 big true char k
 ```
-
-Some of this is new. `impl "std/option"` brings in the `Option` type that the
-`if let` uses; [Errors](/tutorial/07-errors) explains it fully.
 
 ## Types
 
@@ -89,7 +134,7 @@ error: operator requires matching numeric operands, found 'int' and 'f64'
 You convert on purpose with a method. `n.to_f64()` turns an integer into a float,
 and `n.to_i64()` turns it into an `i64`. A conversion that might not fit, such as
 `300` into a `u8`, has a second form, `try_to_byte()`, that returns an `Option`.
-This is why the program above printed the `else` branch. A conversion that does
+This is why step 2 printed the `else` branch. A conversion that does
 not fit and is not written with `try_` panics, which ends the program.
 
 A `char` is a Unicode character, not a number. It is not an integer, and a
