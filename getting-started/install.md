@@ -4,6 +4,34 @@ description: "Building `kelpc` from source and the requirements it has of the ma
 isPublished: true
 tags: "getting-started"
 ---
+## Run a file
+
+Both commands need a `kelpc` that is already built or installed. [Requirements](#requirements) lists what the machine needs for that, and [Build the compiler](#build-the-compiler) and [Install Coral](#install-coral) show how to get one.
+
+```sh
+./target/release/kelpc run kelpc/tests/fixtures/examples/hello.kp
+```
+
+`run` compiles and executes in one step. To keep the artifact:
+
+```sh
+./target/release/kelpc build kelpc/tests/fixtures/examples/download.kp      # artifact in build/download
+```
+
+Through Coral the same two commands are `coral run` and `coral build`, run inside
+a project directory. Worth starting there at the first program rather than the
+first dependency, so the manifest is familiar before it has to be: `coral init`
+scaffolds one, and [Projects and coral.toml](/getting-started/projects) explains
+what lands in it.
+
+With no `-o`, the binary and its generated files land in `build/` in the
+**current working directory**, named after the last path segment compiled. The
+backend leaves `<name>.ll` (textual IR) and `<name>.o` (the object) beside it.
+So `kelpc build myproject/` writes `build/myproject`,
+`build/myproject.ll` and `build/myproject.o`, and `kelpc build src/main.kp`
+writes `build/main`. Pass `-o` when that is not where you want it, and pass
+`-O0` for a cheap dev build (`-O2` is the default).
+
 ## Requirements
 
 | Component | Needed for |
@@ -36,32 +64,6 @@ The binary lands at `target/release/kelpc`.
 
 A prebuilt release binary installs with the verifying `build/install.sh` instead
 (see [Release tooling](/tooling/release-tooling)).
-
-## Run a file
-
-```sh
-./target/release/kelpc run kelpc/tests/fixtures/examples/hello.kp
-```
-
-`run` compiles and executes in one step. To keep the artifact:
-
-```sh
-./target/release/kelpc build kelpc/tests/fixtures/examples/download.kp      # artifact in build/download
-```
-
-Through Coral the same two commands are `coral run` and `coral build`, run inside
-a project directory. Worth starting there at the first program rather than the
-first dependency, so the manifest is familiar before it has to be: `coral init`
-scaffolds one, and [Projects and coral.toml](/getting-started/projects) explains
-what lands in it.
-
-With no `-o`, the binary and its generated files land in `build/` in the
-**current working directory**, named after the last path segment compiled. The
-backend leaves `<name>.ll` (textual IR) and `<name>.o` (the object) beside it.
-So `kelpc build myproject/` writes `build/myproject`,
-`build/myproject.ll` and `build/myproject.o`, and `kelpc build src/main.kp`
-writes `build/main`. Pass `-o` when that is not where you want it, and pass
-`-O0` for a cheap dev build (`-O2` is the default).
 
 ## Install Coral
 
