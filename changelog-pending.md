@@ -65,6 +65,7 @@ empty on release.
 - A multi-line string literal: `"""` opens a block, a line holding only `"""` closes it, and the closing line's indentation is removed from the lines between. The value always ends with a newline and uses the string escapes, so a block equals the same text written with `\n` (issue 260). An unterminated block is refused at its opening.
 
 - `n.toText()` gives the text of a number with no conversion first (issue #262): an integer's decimal digits, the same text as `"${n}"`, and a float's `x.toText()` (its print form) or `x.toText(decimals)`, with exactly `decimals` digits after the point. `x.toText(2)` is the text `fmt.float(x)` gave. The float form needs `impl "std/str"`.
+- `r.orExit(message)` gives the `Ok` value of a `Result` whose payload is `Copy` (issue #263). On `Err` it writes the message and a newline to standard error and exits with status 2. `str.parse_u64(args.get(2).as_str()).orExit("bad port")` replaces the six-line `when` that printed and exited. `examples/download_pool.kp` uses it; its usage output does not change, and a bad port now prints its message on standard error, not standard output.
 
 ## Changed
 

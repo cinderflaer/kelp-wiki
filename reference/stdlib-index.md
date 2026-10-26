@@ -730,6 +730,7 @@ Functions:
 - `fun Result<T, E>.or_else<F>(f: closure fun(&E) => Result<T, F>) => Result<T, F>`
 - `fun Result<T, E>.each(f: closure fun(&T))`
 - `fun Result<T, E>.unwrap_or(fallback: T) => T`
+- `fun Result<T, E>.orExit(message: &str) => T`
 
 ## `std/arena`
 

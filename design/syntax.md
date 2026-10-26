@@ -2874,6 +2874,7 @@ fun and_then<T, U, E>(r: &Result<T, E>, f: closure fun(&T) => Result<U, E>) => R
 fun or_else<T, E, F>(r: &Result<T, E>, f: closure fun(&E) => Result<T, F>) => Result<T, F>
 fun each<T, E>(r: &Result<T, E>, f: closure fun(&T))
 fun Result<T, E>.unwrap_or(fallback: T) => T   // method form; `T` must be Copy; the `Err` payload is dropped
+fun Result<T, E>.orExit(message: &str) => T   // method form; `T` must be Copy; on Err, the message to stderr and exit 2
 ```
 
 `Ok`/`Err` is the shape that carries a reason. The operand's failure payload type and the enclosing function's may differ when an `impl From<Source> for Target` exists, which `?` calls; when they are the same no call is emitted. `std/convert` ships the `From` and `Into` traits (9.5).
@@ -2881,6 +2882,8 @@ fun Result<T, E>.unwrap_or(fallback: T) => T   // method form; `T` must be Copy;
 The `Copy` requirements left here are on the side a helper has to **rebuild** through a borrow: `unwrap_or`/`unwrap`/`unwrap_err` hand a payload out of a borrowed result, and `and_then`/`or_else` rebuild the other variant out of one. `map` and `map_err` take the result with **`move`** instead, so the side they rebuild may be owned: `result.map` over a `Result<T, MyErr>` moves the error payload into the fresh `Err` (17's partial moves).
 
 `unwrap_or` drops the `Err` payload without reading it, so its error type needs no `Copy`. It is meant for an error that carries nothing the caller needs; where the error matters, use `when`, `?` or `map_err`.
+
+`orExit` is the one method that ends the program. On `Err` it writes its message and a newline to standard error and exits with status 2, so a usage error needs no six-line `when`. The exit is not a panic: no unwinding and no destructors run.
 
 ### 16.16 `std/list`
 

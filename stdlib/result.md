@@ -60,6 +60,7 @@ same name:
 | `r.or_else<F>(f: closure fun(&E) => Result<T, F>)` | `Result<T, F>` | **`T` must be `Copy`**: the receiver is a borrow |
 | `r.each(f: closure fun(&T))` | `Unit` | |
 | `r.unwrap_or(fallback: T)` | `T` | **`T` must be `Copy`**: the receiver is a borrow. The `Err` payload is dropped, not read; see the rule below |
+| `r.orExit(message: &str)` | `T` | **`T` must be `Copy`**: the receiver is a borrow. On `Err` the message goes to standard error as one line and the program exits with status 2 (issue #263); see the note below |
 
 `is_ok` and `is_err` keep their free spelling, `result.is_ok(r)`, and each one is
 the same as the method `r.is_ok()` or `r.is_err()`. `map` and `map_err` take the
@@ -115,6 +116,19 @@ fun describe(e: &str.ParseErr) => String = when e {
   optional setting, or a parse with a plain default. Where the error matters, use
   `when`, `?` or `map_err`, so the caller can see why the step failed. An owned payload read out of an owned
   result comes out with `if let`/`when`, which binds it by value.
+- **`orExit` ends the program.** `r.orExit(message)` gives the `Ok` value. On `Err` it writes `message` and a newline to standard error and exits with status 2, with no unwinding and no destructors, the way `process.exit` does. It is for a usage error, such as an argument that does not parse, where the person at the terminal is the one who must act. For a failure the program can handle, use `when`, `?` or `map_err`. The `Err` payload is not read, so its type needs no `Copy`.
+
+  ```kelp
+  impl "std/str"
+  impl "std/result"
+
+  fun main() {
+      val port = str.parse_u64("8080").orExit("bad port")   // 8080
+      print(port.toText())
+      val bad = str.parse_u64("80x80").orExit("bad port")   // stderr: bad port, exit 2
+      print(bad.toText())
+  }
+  ```
 - `?` propagates only between *identical* failure payload types. v1 has no error
   conversion, so `Result<i64, String>` cannot be propagated out of a function
   returning `Result<i64, IoErr>`; `map_err` is the bridge.
