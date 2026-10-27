@@ -67,11 +67,10 @@ spliced in by the compiler from the project's `http_pool` setting in
 | --- | --- | --- |
 | `parse_url(s)` | `Url` | accepts both `http://` and `https://`; the latter defaults to port 443 |
 | `default_client()` | `Client` | 30 s timeout, 5 redirects, following them |
-| `Client.send(req)` | `Response` | the whole exchange, scheme decides plain or TLS; panics on any failure |
-| `Client.try_send(req)` | `Result<Response, HttpErr>` | `send` with the failures as a value (see below) |
-| `try_get(url)` | `Result<Response, HttpErr>` | `get` with the failures as a value |
+| `Client.send(req)` | `Result<Response, HttpErr>` | the whole exchange, scheme decides plain or TLS (see below) |
+| `get(url)` | `Result<Response, HttpErr>` | a `GET` on a fresh connection |
 | `post_text(url, body, content_type)` | `Response` | a `POST` of `body` with that `Content-Type`, sent through `default_client()`; panics on failure |
-| `Pool.try_send(req)` / `Pool.try_checkout(use_tls)` | `Result<Response, HttpErr>` / `Result<Lease, HttpErr>` | the pooled forms of the same |
+| `Pool.send(req)` / `Pool.checkout(use_tls)` | `Result<Response, HttpErr>` / `Result<Lease, HttpErr>` | the pooled forms of the same |
 | `empty_headers()` | `List<Header>` | |
 | `Response.is_ok()` | `bool` | status in `200..299` |
 | `Response.text()` | `String` | the body as text |
@@ -108,17 +107,10 @@ enum HttpErr {
 }
 ```
 
-| Fallible | Panicking | Returns |
-| --- | --- | --- |
-| `try_get(url)` | `get(url)` | `Result<Response, HttpErr>` / `Response` |
-| `Client.try_send(req)` | `Client.send(req)` | as above |
-| `Pool.try_send(req)` | `Pool.send(req)` | as above, over a pooled connection |
-| `Pool.try_checkout(use_tls)` | `Pool.checkout(use_tls)` | `Result<Lease, HttpErr>` / `Lease` |
-
-Every `reason` is the text the panicking form panics with, so a caller that
-logs it prints what `send` would have printed on stderr. The panicking wrappers
-are thin: `get` is `default_client().send(make_get(url))`, and `send` is
-`when self.try_send(req) { Ok(r) -> r, Err(e) -> fail_http(e) }`.
+Every fallible call returns `Result<_, HttpErr>`. A program that wants a panic
+on failure writes `result.expect(call, "message")`, with `std/result` imported.
+Every `reason` is the text of the failure, so a caller that logs it prints the
+same words a panic would have written.
 
 A refused dial is a `Dial` error, not the end of the process:
 
@@ -126,7 +118,7 @@ A refused dial is a `Dial` error, not the end of the process:
 impl "std/http" caps(net = ["127.0.0.1:1"])
 
 fun main() {
-    when http.try_get("http://127.0.0.1:1/") {
+    when http.get("http://127.0.0.1:1/") {
         Ok(r) -> print(r.status)
         Err(e) -> when e {
             Dial(reason) -> {
@@ -166,7 +158,8 @@ or retries: the client hands the caller the parsed values and leaves the
 policy (back off, queue, fail) to them.
 
 ```kelp
-val resp = client.send(req)
+impl "std/result"
+val resp = result.expect(client.send(req), "send")
 if resp.status == 429 {
     when resp.retry_after() {
         is Some(secs) -> print("retry after " + secs.to_str() + "s")
@@ -246,6 +239,7 @@ browsers do, so a name cannot end its parameter or add a header line.
 
 ```kelp
 impl "std/http" caps(net = ["127.0.0.1:*", "api.example.com:443"])
+impl "std/result"
 
 fun main() {
     val client = http.default_client()
@@ -255,7 +249,7 @@ fun main() {
         headers = http.empty_headers(),
         body = Bytes.empty(),
     )
-    val resp = client.send(req)
+    val resp = result.expect(client.send(req), "send")
     print(resp.status)
     print(resp.is_ok())
     print(resp.text())
@@ -369,7 +363,7 @@ token of any `Connection` header) closes.
 | `listen(port)` | `Server` | port `0` asks the kernel for a free one |
 | `Server.port()` | `u16` | the bound port |
 | `Server.set_accept_timeout(ms)` | `Unit` | `0` waits forever |
-| `Server.accept()` / `Server.try_accept()` | `ServerConn` / `Result<ServerConn, HttpErr>` | |
+| `Server.accept()` | `Result<ServerConn, HttpErr>` | |
 | `Server.close()` | `Unit` | |
 | `ServerConn.read_request(&Limits)` | `Result<ServerRequest, HttpErr>` | |
 | `ServerConn.write_response(&ServerResponse)` | `Result<usize, HttpErr>` | a gone peer is `Err`, never a panic |
@@ -410,6 +404,7 @@ handler ends the process under `serve`/`serve_n` and one worker thread under
 ```kelp
 impl "std/http" caps(net = ["127.0.0.1:*"])
 impl "std/net"
+impl "std/result"
 impl "std/thread"
 
 fun handle(req: &http.ServerRequest) => http.ServerResponse {
@@ -422,9 +417,9 @@ fun handle(req: &http.ServerRequest) => http.ServerResponse {
 fun client(port: u16) => String {
     var out = String.empty()
 
-    val a = net.connect("127.0.0.1", port)
+    val a = result.expect(net.connect("127.0.0.1", port), "connect")
     net.send_text(a, "GET /ping HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n")
-    val ok = net.recv(a, 4096)
+    val ok = result.expect(net.recv(a, 4096), "recv")
     out.push_str(ok.as_str())
     net.close(a)
 
@@ -437,9 +432,9 @@ fun client(port: u16) => String {
         i += 1
     }
     over.push_str(" HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n")
-    val b = net.connect("127.0.0.1", port)
+    val b = result.expect(net.connect("127.0.0.1", port), "connect")
     net.send_text(b, over.as_str())
-    val bad = net.recv(b, 4096)
+    val bad = result.expect(net.recv(b, 4096), "recv")
     out.push_str(bad.as_str())
     net.close(b)
 
@@ -503,8 +498,8 @@ answered. Like `net.listen`, `serve_tls` binds every interface only when the
 by name, listen with `http.listen_on("127.0.0.1", port)` and serve with
 `serve_tls_on`.
 
-On the client side, `http.try_get_tls(url, &opts)`, `http.get_tls` and
-`Client.try_send_tls(req, &opts)` take a `tls.TlsClientOptions` (private CA as
+On the client side, `http.get_tls(url, &opts)` and
+`Client.send_tls(req, &opts)` take a `tls.TlsClientOptions` (private CA as
 PEM bytes, client certificate, ALPN). The CA bytes come from
 `tlsfile.ca_pem(path)`, which needs an `fs` grant; there is no `ca_file` option.
 
@@ -561,7 +556,7 @@ fun main() {
     when tlsfile.ca_pem("/etc/myapp/certs/ca.pem") {
         Ok(ca) -> {
             val opts = tls.client_options().with_ca_pem(ca).with_timeout_ms(10000)
-            when http.try_get_tls(url.as_str(), &opts) {
+            when http.get_tls(url.as_str(), &opts) {
                 Ok(resp) -> {
                     print(resp.status)
                     print(String.from_bytes(resp.body.clone()))

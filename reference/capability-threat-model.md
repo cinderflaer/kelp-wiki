@@ -278,7 +278,7 @@ has no bytes form and is gone.
 
 ```text
 error: datac 'std.tls.TlsClientOptions' has no method 'with_ca_file'
-error: 'std.fs.try_read' needs the 'fs' capability, which module 'std/tlsfile' was not granted; the module that imports this one must delegate it (`impl "<this module>" caps(fs = ["<pattern>"])`)
+error: 'std.fs.read' needs the 'fs' capability, which module 'std/tlsfile' was not granted; the module that imports this one must delegate it (`impl "<this module>" caps(fs = ["<pattern>"])`)
 ```
 
 The first is the old spelling, the second a module that imports `std/tlsfile`

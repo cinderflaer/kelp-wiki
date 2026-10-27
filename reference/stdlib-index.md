@@ -308,13 +308,13 @@ Types:
 
 Functions:
 
-- `fun read(path: &str) => Bytes`
+- `fun read(path: &str) => result.Result<Bytes, io.IoErr>`
 - `fun try_read(path: &str) => result.Result<Bytes, io.IoErr>`
-- `fun read_text(path: &str) => String`
+- `fun read_text(path: &str) => result.Result<String, io.IoErr>`
 - `fun try_read_text(path: &str) => result.Result<String, io.IoErr>`
-- `fun write(path: &str, data: Bytes)`
+- `fun write(path: &str, data: Bytes) => result.Result<unit, io.IoErr>`
 - `fun try_write(path: &str, data: Bytes) => option.Option<io.IoErr>`
-- `fun write_text(path: &str, text: String)`
+- `fun write_text(path: &str, text: String) => result.Result<unit, io.IoErr>`
 - `fun try_write_text(path: &str, text: String) => option.Option<io.IoErr>`
 - `fun cwd() => String`
 - `fun exists(path: &str) => bool`
@@ -323,27 +323,27 @@ Functions:
 - `fun is_symlink(path: &str) => bool`
 - `fun read_link(path: &str) => String`
 - `fun size(path: &str) => u64`
-- `fun remove(path: &str)`
+- `fun remove(path: &str) => result.Result<unit, io.IoErr>`
 - `fun try_remove(path: &str) => option.Option<io.IoErr>`
-- `fun rename(from: &str, to: &str)`
+- `fun rename(from: &str, to: &str) => result.Result<unit, io.IoErr>`
 - `fun try_rename(from: &str, to: &str) => option.Option<io.IoErr>`
 - `fun mkdir(path: &str)`
-- `fun append(path: &str, data: Bytes)`
+- `fun append(path: &str, data: Bytes) => result.Result<unit, io.IoErr>`
 - `fun try_append(path: &str, data: Bytes) => option.Option<io.IoErr>`
 - `fun sync(path: &str)`
-- `fun list(path: &str) => List<String>`
+- `fun list(path: &str) => result.Result<List<String>, io.IoErr>`
 - `fun try_list(path: &str) => result.Result<List<String>, io.IoErr>`
-- `fun mkdir_all(path: &str)`
+- `fun mkdir_all(path: &str) => result.Result<unit, io.IoErr>`
 - `fun try_mkdir_all(path: &str) => option.Option<io.IoErr>`
-- `fun remove_all(target: &str)`
+- `fun remove_all(target: &str) => result.Result<unit, io.IoErr>`
 - `fun try_remove_all(target: &str) => option.Option<io.IoErr>`
 - `fun walk(dir: &str) => List<String>`
 - `fun copy(from: &str, to: &str)`
-- `fun symlink(target: &str, link: &str)`
+- `fun symlink(target: &str, link: &str) => result.Result<unit, io.IoErr>`
 - `fun try_symlink(target: &str, link: &str) => option.Option<io.IoErr>`
 - `fun touch(path: &str)`
 - `fun set_mode(path: &str, mode: u32)`
-- `fun open(path: &str, mode: &str) => io.File`
+- `fun open(path: &str, mode: &str) => result.Result<io.File, io.IoErr>`
 - `fun try_open(path: &str, mode: &str) => result.Result<io.File, io.IoErr>`
 - `fun read_lines(path: &str) => List<String>`
 - `fun temp_path(prefix: &str) => String`
@@ -363,8 +363,8 @@ Functions:
 - `fun arg_count() => int`
 - `fun spawn(program: &str, args: List<String>, dir: &str = "") => Child`
 - `fun spawn_in(dir: &str, program: &str, args: List<String>) => Child`
-- `fun run(program: &str, args: List<String>, dir: &str = "") => RunResult`
-- `fun run_in(dir: &str, program: &str, args: List<String>) => RunResult`
+- `fun run(program: &str, args: List<String>, dir: &str = "") => result.Result<RunResult, ProcErr>`
+- `fun run_in(dir: &str, program: &str, args: List<String>) => result.Result<RunResult, ProcErr>`
 - `fun run_inherit(program: &str, args: List<String>, dir: &str = "") => RunResult`
 - `fun run_inherit_in(dir: &str, program: &str, args: List<String>) => RunResult`
 - `fun executable(program: &str) => bool`
@@ -387,25 +387,25 @@ Types:
 
 Functions:
 
-- `fun connect(host: &str, port: u16) => Socket`
+- `fun connect(host: &str, port: u16) => result.Result<Socket, ConnectErr>`
 - `fun try_connect(host: &str, port: u16) => result.Result<Socket, ConnectErr>`
 - `fun try_send_all(s: Socket, data: Bytes) => result.Result<int, NetErr>`
 - `fun try_recv(s: Socket, max: int) => result.Result<Bytes, NetErr>`
 - `fun try_recv_into(s: Socket, buf: mut Bytes, at: int) => result.Result<int, NetErr>`
 - `fun listen(port: u16) => Listener`
 - `fun listen_on(host: &str, port: u16) => Listener`
-- `fun accept(l: Listener) => Socket`
+- `fun accept(l: Listener) => result.Result<Socket, NetErr>`
 - `fun try_accept(l: Listener) => result.Result<Socket, NetErr>`
 - `fun mono_ms() => i64`
 - `fun close(s: Socket)`
 - `fun Listener.close()`
-- `fun shutdown_write(s: Socket)`
+- `fun shutdown_write(s: Socket) => result.Result<unit, NetErr>`
 - `fun try_shutdown_write(s: Socket) => bool`
 - `fun send(s: Socket, data: Bytes) => int`
-- `fun send_all(s: Socket, data: Bytes) => int`
+- `fun send_all(s: Socket, data: Bytes) => result.Result<int, NetErr>`
 - `fun send_text(s: Socket, text: &str)`
-- `fun recv(s: Socket, max: int) => Bytes`
-- `fun recv_into(s: Socket, buf: mut Bytes, at: int) => int`
+- `fun recv(s: Socket, max: int) => result.Result<Bytes, NetErr>`
+- `fun recv_into(s: Socket, buf: mut Bytes, at: int) => result.Result<int, NetErr>`
 - `fun Socket.wait_readable(timeout_ms: u64) => bool`
 - `fun Socket.wait_writable(timeout_ms: u64) => bool`
 - `fun mut Socket.set_timeout(ms: u64)`
@@ -452,24 +452,24 @@ Functions:
 - `fun Response.text() => String`
 - `fun Response.retry_after() => option.Option<u64>`
 - `fun Response.rate_limit() => RateLimit`
-- `fun Client.send(req: Request) => Response`
+- `fun Client.send(req: Request) => result.Result<Response, HttpErr>`
 - `fun Client.try_send(req: Request) => result.Result<Response, HttpErr>`
 - `fun pool(host: &str, port: u16) => Pool`
 - `fun Pool.size() => usize`
 - `fun Pool.len() => usize`
 - `fun mut Pool.warm(use_tls: bool)`
-- `fun mut Pool.checkout(use_tls: bool) => Lease`
+- `fun mut Pool.checkout(use_tls: bool) => result.Result<Lease, HttpErr>`
 - `fun mut Pool.try_checkout(use_tls: bool) => result.Result<Lease, HttpErr>`
 - `fun mut Pool.release(lease: Lease, reusable: bool)`
 - `fun mut Pool.close_all()`
 - `fun mut Pool.set_idle_timeout(ms: u64)`
 - `fun mut Pool.close_idle(after_ms: u64) => usize`
-- `fun mut Pool.send(req: Request) => Response`
+- `fun mut Pool.send(req: Request) => result.Result<Response, HttpErr>`
 - `fun mut Pool.try_send(req: Request) => result.Result<Response, HttpErr>`
 - `fun Client.try_send_tls(req: Request, opts: &tls.TlsClientOptions) => result.Result<Response, HttpErr>`
 - `fun try_get_tls(url: &str, opts: &tls.TlsClientOptions) => result.Result<Response, HttpErr>`
-- `fun get_tls(url: &str, opts: &tls.TlsClientOptions) => Response`
-- `fun get(url: &str) => Response`
+- `fun get_tls(url: &str, opts: &tls.TlsClientOptions) => result.Result<Response, HttpErr>`
+- `fun get(url: &str) => result.Result<Response, HttpErr>`
 - `fun try_get(url: &str) => result.Result<Response, HttpErr>`
 - `fun make_get(url: &str) => Request`
 - `fun post_text(url: &str, body: &str, content_type: &str) => Response`
@@ -499,7 +499,7 @@ Functions:
 - `fun Server.port() => u16`
 - `fun Server.set_accept_timeout(ms: u64)`
 - `fun Server.close()`
-- `fun Server.accept() => ServerConn`
+- `fun Server.accept() => result.Result<ServerConn, HttpErr>`
 - `fun Server.try_accept() => result.Result<ServerConn, HttpErr>`
 - `fun http_error_status(e: &HttpErr) => i32`
 - `fun http_error_text(e: &HttpErr) => String`
@@ -526,20 +526,20 @@ Functions:
 - `fun try_handshake_with(s: net.Socket, host: &str, opts: TlsOptions) => result.Result<TlsStream, TlsError>`
 - `fun try_handshake(s: net.Socket, host: &str) => result.Result<TlsStream, TlsError>`
 - `fun try_handshake_timeout(s: net.Socket, host: &str, ms: u64) => result.Result<TlsStream, TlsError>`
-- `fun handshake(s: net.Socket, host: &str) => TlsStream`
-- `fun handshake_with(s: net.Socket, host: &str, opts: TlsOptions) => TlsStream`
-- `fun handshake_timeout(s: net.Socket, host: &str, ms: u64) => TlsStream`
+- `fun handshake(s: net.Socket, host: &str) => result.Result<TlsStream, TlsError>`
+- `fun handshake_with(s: net.Socket, host: &str, opts: TlsOptions) => result.Result<TlsStream, TlsError>`
+- `fun handshake_timeout(s: net.Socket, host: &str, ms: u64) => result.Result<TlsStream, TlsError>`
 - `fun set_timeout(t: TlsStream, ms: u64)`
 - `fun try_write(t: TlsStream, data: Bytes) => result.Result<int, TlsError>`
 - `fun try_write_all(t: TlsStream, data: Bytes) => result.Result<int, TlsError>`
 - `fun try_read(t: TlsStream, max: int) => result.Result<Bytes, TlsError>`
 - `fun try_read_into(t: TlsStream, buf: mut Bytes, at: int) => result.Result<int, TlsError>`
 - `fun try_shutdown(t: TlsStream) => result.Result<bool, TlsError>`
-- `fun write(t: TlsStream, data: Bytes) => int`
-- `fun write_all(t: TlsStream, data: Bytes) => int`
-- `fun read(t: TlsStream, max: int) => Bytes`
-- `fun read_into(t: TlsStream, buf: mut Bytes, at: int) => int`
-- `fun shutdown(t: TlsStream)`
+- `fun write(t: TlsStream, data: Bytes) => result.Result<int, TlsError>`
+- `fun write_all(t: TlsStream, data: Bytes) => result.Result<int, TlsError>`
+- `fun read(t: TlsStream, max: int) => result.Result<Bytes, TlsError>`
+- `fun read_into(t: TlsStream, buf: mut Bytes, at: int) => result.Result<int, TlsError>`
+- `fun shutdown(t: TlsStream) => result.Result<bool, TlsError>`
 - `fun server_options() => ServerOptions`
 - `fun ServerOptions.min_version(v: TlsVersion) => ServerOptions`
 - `fun ServerOptions.alpn(protocols: &List<String>) => ServerOptions`
@@ -561,6 +561,7 @@ Functions:
 - `fun TlsClientOptions.client_cert_pem(cert_pem: Bytes, key_pem: Bytes) => TlsClientOptions`
 - `fun TlsClientOptions.with_ca_pem(pem: Bytes) => TlsClientOptions`
 - `fun TlsClientOptions.with_timeout_ms(ms: u64) => TlsClientOptions`
+- `fun handshake_opts(s: net.Socket, host: &str, opts: &TlsClientOptions) => result.Result<TlsStream, TlsError>`
 - `fun try_handshake_opts(s: net.Socket, host: &str, opts: &TlsClientOptions) => result.Result<TlsStream, TlsError>`
 
 ## `std/tlsfile`
@@ -591,9 +592,9 @@ Functions:
 - `fun try_connect_url(u: Url) => result.Result<Conn, WsErr>`
 - `fun try_connect_scheme(scheme: &str, host: &str, port: u16, path: &str) => result.Result<Conn, WsErr>`
 - `fun handshake( scheme: &str, fd: i32, tls_handle: move option.Option<tls.TlsHandle>, host: &str, port: u16, path: &str, key_text: &str, expected: &str, ) => result.Result<Conn, WsErr>`
-- `fun connect(host: &str, port: u16, path: &str) => Conn`
-- `fun connect_url(u: Url) => Conn`
-- `fun connect_scheme(scheme: &str, host: &str, port: u16, path: &str) => Conn`
+- `fun connect(host: &str, port: u16, path: &str) => result.Result<Conn, WsErr>`
+- `fun connect_url(u: Url) => result.Result<Conn, WsErr>`
+- `fun connect_scheme(scheme: &str, host: &str, port: u16, path: &str) => result.Result<Conn, WsErr>`
 - `fun Conn.send_text(text: &str)`
 - `fun Conn.send_binary(data: &Bytes)`
 - `fun Conn.ping(data: &Bytes)`
@@ -717,7 +718,7 @@ Functions:
 - `fun unwrap_or<T, E>(r: &Result<T, E>, fallback: T) => T`
 - `fun unwrap<T, E>(r: &Result<T, E>) => T`
 - `fun unwrap_err<T, E>(r: &Result<T, E>) => E`
-- `fun expect<T, E>(r: &Result<T, E>, message: &str) => T`
+- `fun expect<T, E>(r: move Result<T, E>, message: &str) => T`
 - `fun expect_err<T, E>(r: &Result<T, E>, message: &str) => E`
 - `fun map<T, U, E>(r: move Result<T, E>, f: closure fun(&T) => U) => Result<U, E>`
 - `fun map_err<T, E, F>(r: move Result<T, E>, f: closure fun(&E) => F) => Result<T, F>`

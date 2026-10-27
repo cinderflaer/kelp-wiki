@@ -126,7 +126,7 @@ panic: fs.read: cannot open file
 ```
 
 A tool that should report a missing file politely would use the fallible
-`fs.try_read_text`, which returns a `Result`. The
+`fs.read_text`, which returns a `Result`. The
 [first real tool](/getting-started/first-tool) page writes that version step by
 step.
 

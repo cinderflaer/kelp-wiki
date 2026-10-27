@@ -46,12 +46,10 @@ datac Child(
 | `arg_count()` | `int` | |
 | `spawn(program, args, dir = "")` | `Child` | pipes for all three streams; `dir` is the working directory, `""` (the default) keeps the parent's |
 | `spawn_in(dir, program, args)` | `Child` | the same with `dir` first; kept for one cycle |
-| `run(program, args, dir = "")` | `RunResult` | runs to completion, collects both streams; panics if it cannot start |
-| `run_in(dir, program, args)` | `RunResult` | the same with `dir` first; kept for one cycle |
+| `run(program, args, dir = "")` | `result.Result<RunResult, ProcErr>` | runs to completion, collects both streams; an `Err` when a program given as a path is missing or not executable, or the directory is not one, decided before the fork; a bare name is looked up on `PATH` by the child |
+| `run_in(dir, program, args)` | `result.Result<RunResult, ProcErr>` | the same with `dir` first; kept for one cycle |
 | `run_inherit(program, args, dir = "")` | `RunResult` | the child keeps this process's stdin, stdout and stderr: output is live, the two streams interleave as written, `isatty` sees the parent's terminal. `out` and `err` are empty; `code` and `signal` are the child's |
 | `run_inherit_in(dir, program, args)` | `RunResult` | the same with `dir` first; kept for one cycle |
-| `try_run(program, args, dir = "")` | `result.Result<RunResult, ProcErr>` | the fallible form |
-| `try_run_in(dir, program, args)` | `result.Result<RunResult, ProcErr>` | the same with `dir` first; kept for one cycle |
 | `executable(program)` | `bool` | |
 | `Child.wait()` | `i32` | exit code; `mut` receiver |
 | `Child.is_running()` | `bool` | `mut` receiver |
@@ -67,6 +65,7 @@ parses the rest.
 
 ```kelp
 impl "std/process"
+impl "std/result"
 
 fun main() {
     val argv = process.args()
@@ -80,13 +79,13 @@ fun main() {
     }
     print(argv_tail.len())
 
-    val res = process.run("/bin/echo", argv_tail)
+    val res = result.expect(process.run("/bin/echo", argv_tail), "run")
     print(res.code)
     print(res.out.as_str())
     print(process.executable("/bin/echo"))
     print(process.executable("/nope/nope"))
 
-    val bad = process.try_run("/nope/nope", argv_tail)
+    val bad = process.run("/nope/nope", argv_tail)
     print(result.is_err(bad))
 }
 ```
@@ -100,9 +99,10 @@ fun main() {
   program started with `spawn`**; any other pid, including one in a hand-built
   `Child`, panics with `process.kill: not a child this program started`. A
   reaped child leaves the table.
-- `try_run` decides everything it can (missing program, not executable, missing
+- `run` decides everything it can (a path that names no executable, a missing
   working directory) **before** the fork, which is why `ProcErr` has that
-  particular shape.
+  particular shape, and why a program that did not start is an `Err` while one
+  that exited nonzero is an `Ok` with its code.
 - A killed child's `code` is `128 + signal`, and `signal` holds the signal
   number (0 for a child that exited by itself). A child's own `exit 143` has the
   same `code` as one killed by SIGTERM; `signal` is what tells them apart.

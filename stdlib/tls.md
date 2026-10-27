@@ -1,6 +1,6 @@
 ---
 title: "`std/tls`"
-description: "Client and server TLS: typed `TlsError`, `try_` family, private CAs, `ServerOptions`, `tls.accept`, ALPN, mutual TLS with client certificates, `std/tlsfile` for PEM files, truncation detection and `wss`. Gated on net."
+description: "Client and server TLS: typed `TlsError`, the `Result` form, private CAs, `ServerOptions`, `tls.accept`, ALPN, mutual TLS with client certificates, `std/tlsfile` for PEM files, truncation detection and `wss`. Gated on net."
 isPublished: true
 tags: "stdlib, networking, tls"
 ---
@@ -77,27 +77,28 @@ integer-to-pointer path is gone. A std module the compiler ships may declare one
 (`stdlib.rs`'s source table is what admits it, since its extern bodies come from
 `externs.rs` rather than a manifest); a project module still needs its own
 `coral.toml` `[extern."<module id>"]` section. `TlsHandle` is `Copy`, owns
-nothing and has no drop, so a handle can still outlive the `try_shutdown` that
-freed its `SSL`; the type buys spelling, not liveness. `try_shutdown` remains
+nothing and has no drop, so a handle can still outlive the `shutdown` that
+freed its `SSL`; the type buys spelling, not liveness. `shutdown` remains
 the call that frees the `SSL*`, and `std/http`/`std/ws` carry the plain-or-TLS
 choice as an `Option<TlsHandle>`, so `None` is the "no handle" value and no
 integer sentinel has to stand in for one.
 
 ## Functions
 
-Every call has a fallible form returning `Result<_, TlsError>` and a panicking
-wrapper that panics with the error's own text.
+Every call that can fail returns `Result<_, TlsError>`. A program that wants a
+panic writes `result.expect(call, "message")`, with `std/result` imported.
 
-| Fallible | Panicking | Returns | Notes |
-| --- | --- | --- | --- |
-| `try_handshake(s, host)` | `handshake(s, host)` | `Result<TlsStream, TlsError>` / `TlsStream` | the TLS handshake over an already-connected socket |
-| `try_handshake_with(s, host, opts)` | `handshake_with(s, host, opts)` | as above, with `TlsOptions` | private CA bytes, timeout |
-| `try_handshake_timeout(s, host, ms)` | `handshake_timeout(s, host, ms)` | as above, with a deadline | shorthand for `TlsOptions` with only `timeout_ms` |
-| `try_write(t, data)` | `write(t, data)` | `Result<int, TlsError>` / `int` | one write, may be partial |
-| `try_write_all(t, data)` | `write_all(t, data)` | `Result<int, TlsError>` / `int` | loops until everything is written |
-| `try_read(t, max)` | `read(t, max)` | `Result<Bytes, TlsError>` / `Bytes` | up to `max` bytes |
-| `try_read_into(t, buf, at)` | `read_into(t, buf, at)` | `Result<usize, TlsError>` / `usize` | fills an existing buffer from offset `at` |
-| `try_shutdown(t)` | `shutdown(t)` | `Result<bool, TlsError>` | ends the TLS session and frees the handle |
+| Function | Returns | Notes |
+| --- | --- | --- |
+| `handshake(s, host)` | `Result<TlsStream, TlsError>` | the TLS handshake over an already-connected socket |
+| `handshake_with(s, host, opts)` | `Result<TlsStream, TlsError>` | with `TlsOptions`: private CA bytes, timeout |
+| `handshake_timeout(s, host, ms)` | `Result<TlsStream, TlsError>` | shorthand for `TlsOptions` with only `timeout_ms` |
+| `handshake_opts(s, host, &opts)` | `Result<TlsStream, TlsError>` | with `TlsClientOptions`: ALPN, a client certificate, a private CA file |
+| `write(t, data)` | `Result<int, TlsError>` | one write, may be partial |
+| `write_all(t, data)` | `Result<int, TlsError>` | loops until everything is written |
+| `read(t, max)` | `Result<Bytes, TlsError>` | up to `max` bytes |
+| `read_into(t, buf, at)` | `Result<int, TlsError>` | fills an existing buffer from offset `at` |
+| `shutdown(t)` | `Result<bool, TlsError>` | ends the TLS session and frees the handle |
 
 `set_timeout(t, ms)` sets the receive and send timeouts on the stream's socket,
 so a blocking read on a silent peer gives up instead of hanging forever; `ms`
@@ -108,18 +109,19 @@ says install the CA, and so on. `HandshakeFailed` and `Io` carry OpenSSL's or
 the socket's own sentence, so the detail is not thrown away. The panicking
 wrappers panic with the text those variants carry.
 
-The program below points `try_handshake` at a local plain-TCP peer that answers
+The program below points `handshake` at a local plain-TCP peer that answers
 with something that is not a TLS record, so the handshake fails and the typed
 error is reported. `report` matches every variant; a real caller usually has
 somewhere to go for only a few of them.
 
 ```kelp
 impl "std/net" caps(net = ["127.0.0.1:*"])
+impl "std/result"
 impl "std/tls"
 impl "std/thread"
 
 fun serve(l: move net.Listener) {
-    val peer = net.accept(l)
+    val peer = result.expect(net.accept(l), "accept")
     net.send_text(peer, "this is not a TLS record\n")
     thread.sleep_ms(200)
     net.close(peer)
@@ -150,12 +152,12 @@ fun main() {
     val port = l.port()
     val h = thread.spawn(serve, l)
 
-    when net.try_connect("127.0.0.1", port) {
+    when net.connect("127.0.0.1", port) {
         Ok(sock) -> {
-            when tls.try_handshake(sock, "127.0.0.1") {
+            when tls.handshake(sock, "127.0.0.1") {
                 Ok(t) -> {
                     print("handshake ok")
-                    tls.shutdown(t)
+                    val _ended = tls.shutdown(t)
                 }
                 Err(e) -> report(e)
             }
@@ -213,7 +215,7 @@ tlsfile.ca_pem(path: &str) => Result<Bytes, TlsError>   // read_pem with the rol
 - **`TlsOptions` stays two fields.** ALPN and a client certificate live in
   `TlsClientOptions` (`tls.client_options()`, then `.alpn(...)`,
   `.client_cert_pem(cert, key)`, `.with_ca_pem(bytes)`, `.with_timeout_ms(...)`),
-  used with `tls.try_handshake_opts(s, host, &opts)`.
+  used with `tls.handshake_opts(s, host, &opts)`.
 - **`TlsError` has no new variant.** A file that cannot be read is `Io`; a
   malformed PEM, a key that does not match the certificate, a CA file with no
   certificate in it, an ALPN mismatch and a handshake an mTLS server refuses are
@@ -224,7 +226,7 @@ tlsfile.ca_pem(path: &str) => Result<Bytes, TlsError>   // read_pem with the rol
 
 ### Reading the files: `std/tlsfile`
 
-Reading a file is the `fs` capability, and a module that names `fs.try_read`
+Reading a file is the `fs` capability, and a module that names `fs.read`
 needs the `fs` grant from every program that imports it. Every `https` client
 imports `std/tls`, so `std/tls` cannot hold `std/fs`. It takes PEM *bytes*, and
 `std/tlsfile` holds the one gated read, which a program grants on its own line:
@@ -283,7 +285,7 @@ error: datac 'std.tls.TlsClientOptions' has no method 'with_ca_file'
 ```
 
 and importing `std/tlsfile` without delegating `fs` is refused with
-`'std.fs.try_read' needs the 'fs' capability, which module 'std/tlsfile' was not
+`'std.fs.read' needs the 'fs' capability, which module 'std/tlsfile' was not
 granted; the module that imports this one must delegate it (`impl "<this module>"
 caps(fs = ["<pattern>"])`)`. To migrate, replace
 `.with_ca_file(path)` with `.with_ca_pem(tlsfile.ca_pem(path)?)` and
@@ -451,6 +453,7 @@ would reset the connection):
 
 ```kelp norun
 impl "std/net" caps(net = ["127.0.0.1:*"])
+impl "std/result"
 impl "std/tls"
 impl "std/tlsfile" caps(fs = ["/etc/myapp/certs/**"])
 impl "std/thread"
@@ -478,7 +481,7 @@ fun serve_one(fd: i32) => String {
         Err(_) -> "server: config failed"
         Ok(cfg) -> {
             var line = String.from_str("server: no client")
-            when net.try_accept(l) {
+            when net.accept(l) {
                 Ok(sock) -> {
                     when tls.accept(&cfg, sock) {
                         Ok(t) -> {
@@ -489,9 +492,9 @@ fun serve_one(fd: i32) => String {
                             line.push_str(" peer=")
                             line.push_str(who.as_str())
                             // read the request before closing, or the close resets the connection
-                            val req = tls.try_read(t, 16)
-                            val w = tls.try_write_all(t, Bytes.from_str("ok"))
-                            val sd = tls.try_shutdown(t)
+                            val req = tls.read(t, 16)
+                            val w = tls.write_all(t, Bytes.from_str("ok"))
+                            val sd = tls.shutdown(t)
                         }
                         Err(_) -> line = "server: handshake refused"
                     }
@@ -526,14 +529,14 @@ fun client(port: u16, with_cert: bool) => String {
             Err(_) -> {}
         }
     }
-    val s = net.connect("127.0.0.1", port)
+    val s = result.expect(net.connect("127.0.0.1", port), "connect")
     var line = String.empty()
-    when tls.try_handshake_opts(s, "localhost", &opts) {
+    when tls.handshake_opts(s, "localhost", &opts) {
         Ok(t) -> {
             // TLS 1.3 lets the client finish first, so a refused client
             // certificate shows on its first read.
-            val w = tls.try_write_all(t, Bytes.from_str("hi"))
-            when tls.try_read(t, 16) {
+            val w = tls.write_all(t, Bytes.from_str("hi"))
+            when tls.read(t, 16) {
                 Ok(b) -> {
                     line = "client: got "
                     val text = String.from_bytes(b)
@@ -541,7 +544,7 @@ fun client(port: u16, with_cert: bool) => String {
                 }
                 Err(_) -> line = "client: refused after handshake"
             }
-            val sd = tls.try_shutdown(t)
+            val sd = tls.shutdown(t)
         }
         Err(_) -> line = "client: handshake refused"
     }
@@ -614,7 +617,7 @@ default, and there is no way to go lower.
 ## Truncation is detected
 
 A connection that ends without a `close_notify` is an error, never a clean EOF.
-`try_read` is `Ok` with an empty `Bytes` on a clean `close_notify`, and
+`read` is `Ok` with an empty `Bytes` on a clean `close_notify`, and
 `Err(TlsError.PeerClosedUncleanly)` when the stream ended without one. This is
 by design: a peer that stops mid-body is never a clean end of stream. It is what
 makes `std/http`'s framing refuse a short body rather than accepting it as
@@ -627,8 +630,8 @@ handshake starts, so a silent peer is `Err(Timeout)` instead of a hang. The
 settings stay on the socket for the reads and writes that follow, and
 `set_timeout` changes them later. `0` is "no timeout", which is `SO_RCVTIMEO`'s
 own meaning; there is no silent default deadline. A write that stalls past the
-deadline, because the peer stopped reading, is `Err(Timeout)` from `try_write` and
-`try_write_all`; the same deadline covers the reads.
+deadline, because the peer stopped reading, is `Err(Timeout)` from `write` and
+`write_all`; the same deadline covers the reads.
 
 ## Certificate verification is not optional
 
@@ -689,7 +692,7 @@ every other setup.
 
 ## See also
 
-- [`std/http`](/stdlib/http) for `http.serve_tls` and `http.try_get_tls`
+- [`std/http`](/stdlib/http) for `http.serve_tls` and `http.get_tls`
 - [`std/ws`](/stdlib/ws)
 - [`std/net`](/stdlib/net)
 - [Capability patterns](/reference/capability-patterns)
@@ -719,7 +722,7 @@ fix (or why it was left).
 | (a) 10 MiB body, small and large reads | `tls_big_body.kp` | `CannedTlsServer`, 10 MiB body, then clean `close_notify` | length and SHA-1 match the bytes the server sent, both chunk sizes |
 | (b) partial reads and writes | `tls_partial.kp` | server reads 1 MiB one byte at a time, writes its own body one byte at a time | client's `write_all` sent 1 MiB; both SHA-1s match |
 | (c) alert mid-stream | `tls_bad_record.kp`, `https_get` project | partial body then a `close_notify`, and (separately) a record that fails authentication | the short body is refused by `std/http`; the bad record is an error, never a clean EOF |
-| (d) TCP reset during the handshake | `tls_reset_handshake.kp` | accept, no read, close with the ClientHello unread | `try_handshake` is an error, not a hang |
+| (d) TCP reset during the handshake | `tls_reset_handshake.kp` | accept, no read, close with the ClientHello unread | `handshake` is an error, not a hang |
 | (d) TCP reset during a read | `tls_reset_read.kp` | handshake, no read of the request, close | the read is an error |
 | (e) 64 concurrent clients | `tls_concurrent.kp` | one TLS echo connection per client, a thread each | every echo is its own request, no fd delta |
 | (f) silent peer, with `set_timeout` | `tls_handshake_socket_timeout.kp` | never answers the ClientHello | `Timeout` |
@@ -769,18 +772,18 @@ the `SSL*` a successful handshake had allocated; the "indirect" leaks included t
 `SSL_CTX`, so losing the `SSL*` loses the context too.
 
 **Cause.** After a failed read those fixtures closed the socket without ending the session. `std/tls`
-documents that nothing is freed on drop and that `try_shutdown` is the only call that frees the
+documents that nothing is freed on drop and that `shutdown` is the only call that frees the
 handle, so this was the fixture's omission, not a leak inside the module: the handshake's own error
 paths free the `SSL_CTX` and the `SSL*` on every branch, which the ASan gate now exercises for the
 untrusted, timeout, reset and bad-record handshakes, and which the 64-thread fixture exercises for
 success.
 
-**Fix.** `tls_truncated.kp`, `tls_timeout_read.kp` and every new fixture call `try_shutdown` on every
+**Fix.** `tls_truncated.kp`, `tls_timeout_read.kp` and every new fixture call `shutdown` on every
 path where a `TlsStream` exists, including after a read error. The typed-handle follow-up in
 `kelp issue #246` landed ([`stdlib/tls.md`](/stdlib/tls)): `TlsStream.handle` is the opaque `tls.TlsHandle`
 rather than a `usize`, so the handle can no longer be confused with an address or a length. It is a `Copy`
 handle that owns nothing, though, so the contract stands unchanged: nothing frees the `SSL*` on a `TlsStream`'s
-drop, `try_shutdown` is still the call that does, and that is what the leak gate checks.
+drop, `shutdown` is still the call that does, and that is what the leak gate checks.
 
 #### F3. The helper cannot send a fatal alert, so case (c) is split in two
 
@@ -797,7 +800,7 @@ Both assert the same observable rule: a peer that stops mid-body is never a clea
 No bug in `std/http` or `std/ws`: the `https` redirect to a second local port, `Connection: close`
 against keep-alive, and the 100 KiB header block all behave as documented, and the 10 MiB body, the
 1 MiB `write_all` against a dribbling peer and the 64 concurrent clients all preserve every byte with
-no descriptor delta. `try_handshake` failing halfway (untrusted, timeout, reset, bad record) frees the
+no descriptor delta. `handshake` failing halfway (untrusted, timeout, reset, bad record) frees the
 `SSL_CTX` and the `SSL*` on every branch, which is what the AddressSanitizer gate now pins.
 
 #### Left as a documented contract, not fixed

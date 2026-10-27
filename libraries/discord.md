@@ -70,7 +70,7 @@ with **no configuration at all**: [`std/http`](/stdlib/http) has TLS
 (`MISSING-XkcSp`, resolved), so `DEFAULT_API_BASE` and every
 webhook/interaction call reach the real `discord.com`, and
 [`std/ws`](/stdlib/ws) has TLS (`MISSING-wV4tg`, resolved), so the gateway loop
-is meant to dial `DEFAULT_GATEWAY_URL` (`wss://`) with the URL-aware `ws.try_connect_url`,
+is meant to dial `DEFAULT_GATEWAY_URL` (`wss://`) with the URL-aware `ws.connect_url`,
 following the URL's scheme. The `fpl` source does not do that yet (see the status note above). Point the gateway URL at a plain `ws://` endpoint (a
 local mock) and nothing else changes:
 
@@ -89,7 +89,7 @@ trust store does not vouch for panics inside `std/tls`.
 > `one_connection` calls `ws.try_connect_secure`, which `std/ws` on `main` does not export.
 > `dial_outcome` matches `Dial` and `Handshake` but not `WsErr.Tls`, so its `match` is not exhaustive.
 > The gateway path therefore does not work against current `main` until both points are fixed.
-> The fix is to call `ws.try_connect_url` and to add the `WsErr.Tls` arm. Neither change is in the `fpl` source yet.
+> The fix is to call `ws.connect_url` and to add the `WsErr.Tls` arm. Neither change is in the `fpl` source yet.
 
 ## The constants
 
@@ -623,7 +623,7 @@ Content-Type
   honest deployment until `std/crypto` exists.
 - **No retries and no rate-limit waiting.** `rate_limit(resp)` is a value; the
   decision and the sleep are the caller's.
-- **The URL-aware dial is `ws.try_connect_url`.** Where `ws.connect` panics when the dial fails, it returns `WsErr.Dial`
+- **The URL-aware dial is `ws.connect_url`.** It returns `Err(WsErr.Dial)` when the dial fails,
   with the refused connection's reason (or `WsErr.Tls` when the `wss` handshake
   or certificate check is what failed), so a redial after a dial that fails
   (a wrong host, a refused connection) can survive instead of ending the process.

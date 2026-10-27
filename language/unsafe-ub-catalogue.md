@@ -1005,7 +1005,7 @@ Not a kernel stage, recorded here because it changes what an opaque handle can h
 
 **New way to reach undefined behaviour.** `TlsHandle` is an `extern type`: C lowers it to `void*` behind
 `kelp_tls_TlsHandle` and LLVM to `ptr`, and every OpenSSL body trusts it (`(SSL*)kelp_handle`). A handle
-that is null, already freed by a `try_shutdown` that ran twice, or produced by a different library is
+that is null, already freed by a `tls.shutdown` that ran twice, or produced by a different library is
 undefined behaviour inside OpenSSL, exactly as the old `usize` `0` or a stale integer was. What the type
 buys is that a handle cannot be manufactured from an integer, compared with one, or confused with a
 different handle type, so the *accidental* integer-to-pointer path is gone. It does not track liveness:

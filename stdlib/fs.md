@@ -29,16 +29,11 @@ datac Metadata(val size: u64, val mtime: i64, val mode: u32, val is_dir: bool, v
 
 | Function | Returns | Notes |
 | --- | --- | --- |
-| `read(path)` | `Bytes` | whole file; panics on failure |
-| `read_text(path)` | `String` | whole file as text; panics on failure |
-| `try_read(path)` | `Result<Bytes, io.IoErr>` | the fallible `read` |
-| `try_read_text(path)` | `Result<String, io.IoErr>` | the fallible `read_text` |
-| `write(path, data)` | `Unit` | truncates and writes |
-| `try_write(path, data)` | `Option<io.IoErr>` | the fallible `write`; `None` is success |
-| `write_text(path, text)` | `Unit` | takes the `String` by value |
-| `try_write_text(path, text)` | `Option<io.IoErr>` | the fallible `write_text`; `None` is success |
-| `append(path, data)` | `Unit` | |
-| `try_append(path, data)` | `Option<io.IoErr>` | the fallible `append`; `None` is success |
+| `read(path)` | `Result<Bytes, io.IoErr>` | whole file, as owned bytes |
+| `read_text(path)` | `Result<String, io.IoErr>` | whole file as text; a file that is not UTF-8 is an `Err` |
+| `write(path, data)` | `Result<unit, io.IoErr>` | truncates and writes |
+| `write_text(path, text)` | `Result<unit, io.IoErr>` | takes the `String` by value |
+| `append(path, data)` | `Result<unit, io.IoErr>` | |
 | `exists(path)` | `bool` | |
 | `is_file(path)` / `is_dir(path)` | `bool` | follows a symlink |
 | `is_symlink(path)` | `bool` | `lstat`: true for the link itself, broken ones included |
@@ -46,26 +41,19 @@ datac Metadata(val size: u64, val mtime: i64, val mode: u32, val is_dir: bool, v
 | `cwd()` | `String` | the process's working directory, absolute |
 | `size(path)` | `u64` | |
 | `metadata(path)` | `Metadata` | size, mtime, mode, kind |
-| `remove(path)` | `Unit` | |
-| `try_remove(path)` | `Option<io.IoErr>` | the fallible `remove`; `None` is success |
-| `remove_all(path)` | `Unit` | recursive; unlinks a symlink rather than descending it |
-| `try_remove_all(path)` | `Option<io.IoErr>` | the fallible `remove_all`; stops at the first failure |
-| `rename(from, to)` | `Unit` | atomic within one filesystem |
-| `try_rename(from, to)` | `Option<io.IoErr>` | the fallible `rename`; `None` is success |
+| `remove(path)` | `Result<unit, io.IoErr>` | a file or an empty directory |
+| `remove_all(path)` | `Result<unit, io.IoErr>` | recursive; unlinks a symlink rather than descending it; stops at the first failure |
+| `rename(from, to)` | `Result<unit, io.IoErr>` | atomic within one filesystem |
 | `mkdir(path)` | `Unit` | |
-| `mkdir_all(path)` | `Unit` | creates parents |
-| `try_mkdir_all(path)` | `Option<io.IoErr>` | the fallible `mkdir_all`; `None` is success |
-| `list(path)` | `List<String>` | entry names in one directory |
-| `try_list(path)` | `Result<List<String>, io.IoErr>` | the fallible `list` |
+| `mkdir_all(path)` | `Result<unit, io.IoErr>` | creates parents |
+| `list(path)` | `Result<List<String>, io.IoErr>` | entry names in one directory |
 | `walk(dir)` | `List<String>` | every path below, recursively; reports a symlink but does not descend it |
 | `copy(from, to)` | `Unit` | one file |
-| `symlink(target, link)` | `Unit` | |
-| `try_symlink(target, link)` | `Option<io.IoErr>` | the fallible `symlink`; `None` is success |
+| `symlink(target, link)` | `Result<unit, io.IoErr>` | |
 | `touch(path)` | `Unit` | |
 | `set_mode(path, mode)` | `Unit` | sets the low 12 permission bits, the ones `Metadata.mode` reads; `493` is octal 755 |
 | `sync(path)` | `Unit` | flush to disk |
-| `open(path, mode)` | `io.File` | panics on failure |
-| `try_open(path, mode)` | `Result<io.File, io.IoErr>` | the fallible `open` |
+| `open(path, mode)` | `Result<io.File, io.IoErr>` | see [open modes](#open-modes) |
 | `read_lines(path)` | `List<String>` | the file, split on newlines |
 | `temp_path(prefix)` | `String` | a fresh, empty file in the temp directory |
 
@@ -73,59 +61,68 @@ datac Metadata(val size: u64, val mtime: i64, val mode: u32, val is_dir: bool, v
 
 `fs.open(path, mode)` takes one of four mode strings: `"r"`, `"w"` (create and
 truncate), `"a"` (create and append) and `"rw"` (create, no truncate). Anything
-else is a panic for `open` and `errno` `EINVAL` (22) for `try_open`. There are no
-`+`/`b` spellings: a `"b"` is a no-op on POSIX and `"rw"` is what `+` would mean.
+else is an `Err` with `errno` `EINVAL` (22). There are no `+`/`b` spellings: a
+`"b"` is a no-op on POSIX and `"rw"` is what `+` would mean.
 
-`try_read_text` fails on a file that is not valid UTF-8 as well, with `errno` 0
+`read_text` fails on a file that is not valid UTF-8 as well, with `errno` 0
 (no syscall failed) and a message that says so.
 
-## Errors are panics
+## Errors are values
 
-A failing syscall in the panicking functions **panics** with the errno, and a path
-outside the grant is refused by the capability check. Code that must survive a
-missing file checks `exists`/`is_file` first, and code that must survive an
-unreadable one uses a fallible form:
+A fallible function returns `Result`. Its `Err` is an `io.IoErr`, which carries
+the POSIX `errno` (for a branch on the cause) and its text (for a message). A
+unit operation returns `Result<unit, io.IoErr>`, so `Ok(())` is the success
+value. Code that must survive a missing file checks `exists` or `is_file` first,
+or matches the result:
 
 ```kelp
-val text = fs.try_read_text(path)
-if let Err(e) = text {
-    print(e.message)
+when fs.read_text(path) {
+    Ok(text) -> print(text)
+    Err(e) -> print(e.message)
 }
 ```
 
-The `try_` readers (`try_read`, `try_read_text`, `try_open`, `try_list`) return `Result<_, io.IoErr>`, where `io.IoErr`
-carries the POSIX `errno` (for a branch on the cause) and its text (for a
-message). The `try_` mutators (`try_write`, `try_write_text`,
-`try_append`, `try_remove`, `try_remove_all`, `try_rename`, `try_mkdir_all`, `try_symlink`)
-return `Option<io.IoErr>` instead: `None` is success, because `Result<unit, E>`
-has no success value to write. Everything else here still panics; the fallible twins are the ones a tool needs when it is walking a tree
-the author did not write.
+A program that wants a panic on failure wraps the call in `result.expect`, with
+the message it should print. A path outside the grant is still refused by the
+capability check, and that refusal is not a value:
 
 ```kelp
-if let Some(e) = fs.try_mkdir_all(dir) {
-    print(e.message)
+impl "std/fs"
+impl "std/result"
+
+val text = result.expect(fs.read_text(path), "cannot read the config")
+```
+
+The fallible forms are the ones a tool needs when it is walking a tree the
+author did not write.
+
+```kelp
+when fs.mkdir_all(dir) {
+    Ok(_) -> print("ready")
+    Err(e) -> print(e.message)
 }
 ```
 
 ```kelp
 impl "std/fs"
+impl "std/result"
 
 fun main() {
     val path = "/tmp/kelp-example.txt"
-    fs.write_text(path, "line one\nline two\n")
+    result.expect(fs.write_text(path, "line one\nline two\n"), "write")
     print(fs.exists(path))
     print(fs.size(path))
 
-    val text = fs.read_text(path)
+    val text = result.expect(fs.read_text(path), "read")
     print(text)
 
-    val entries = fs.list("/tmp")
+    val entries = result.expect(fs.list("/tmp"), "list")
     print(entries.len() >= 0)
 
-    fs.append(path, Bytes.from_str("line three\n"))
+    result.expect(fs.append(path, Bytes.from_str("line three\n")), "append")
     print(fs.read_lines(path).len())
 
-    fs.remove(path)
+    result.expect(fs.remove(path), "remove")
     print(fs.exists(path))
 }
 ```

@@ -53,12 +53,12 @@ datac Survey(val dirs: usize, val files: List<PathInfo>, val unreadable: usize, 
 - `dirs` counts the directories it descended into, `files` is what `keep`
   accepted.
 - `unreadable` counts the paths it skipped because no read bit was set on a file,
-  or no read and search bit was set on a directory. `std/fs.list` **panics** on a
+  or no read and search bit was set on a directory. `std/fs.list` returns an `Err` for a
 directory it may not read, so this is the difference between surveying a tree and
 dying on it. The test is the mode bits only, so a file that is mode-readable but
   unreadable in practice (owned by someone else, mode `0400`) passes the filter;
-  the caller who then reads it should use `fs.try_read`/`fs.try_read_text`, which
-  report the failure instead of panicking on it.
+  the caller who then reads it should use `fs.read`/`fs.read_text`, which
+  report the failure as an `Err` instead of panicking on it.
 - `too_deep` counts the directories at the ceiling that were not descended into.
 
 That ceiling is a safety valve for huge trees, and it is also still what bounds

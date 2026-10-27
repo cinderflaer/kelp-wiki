@@ -60,12 +60,10 @@ opcodes, `MAX_FRAME` (1048576), `MAX_HEAD` (8192) and `CLOSE_NO_STATUS` (1005).
 
 ## A refused dial or handshake is a value
 
-`ws.connect` panics on every refusal below; `ws.try_connect` is the same call with
-three of them as values, so a caller can tell a network failure from a peer that
-answered something other than `101` from a `wss` peer that would not do TLS.
-`WsErr.Dial(reason)` is the network half and
-carries what `net.try_connect` gave back, which is the text `net.connect` panics
-with. `WsErr.Handshake(status, reason)` is a peer that answered: `status` is what
+`ws.connect` returns `Err(WsErr)` for three of the refusals below, so a caller can
+tell a network failure from a peer that answered something other than `101` from
+a `wss` peer that would not do TLS. `WsErr.Dial(reason)` is the network half and
+carries what `net.connect` gave back, the text of the dial failure. `WsErr.Handshake(status, reason)` is a peer that answered: `status` is what
 it answered with and `reason` is the message `ws.connect` panics with for it. A
 `101` whose `Sec-WebSocket-Accept` does not match the key this connection sent is
 `Handshake` too, with `status` of `101`, because it is a handshake failure rather
@@ -76,7 +74,7 @@ listening is worth another attempt, a peer answering `403` usually is not, and a
 peer that is not speaking TLS is not a WebSocket server at all.
 
 ```kelp
-val refused = ws.try_connect("127.0.0.1", port, "/gateway")
+val refused = ws.connect("127.0.0.1", port, "/gateway")
 when refused {
     Err(e) -> {
         when e {
@@ -89,19 +87,16 @@ when refused {
 }
 ```
 
-`connect` stays as the convenience wrapper over the same code, for a caller for
-whom the refusal really is fatal: it calls `try_connect` and panics with the
-`reason` of whichever variant came back, so the two forms cannot report a
-different cause. Each `reason` is byte for byte the text that panic prints. The
-shape is `std/process`'s: `run` beside [`try_run`](/stdlib/process) with the error
-as a named type (`ProcErr`).
+A caller for whom the refusal is fatal writes `result.expect(ws.connect(...), "...")`,
+which panics with the message the program gives. The shape is `std/process`'s
+`run`, with the error as a named type (`ProcErr`).
 
 **The gap, stated rather than hidden.** `Dial`, `Handshake` and `Tls` are the
 only value cases, because each carries a network reason, a status or the TLS
 half's own sentence. A response whose
 head is not HTTP at all, a status code that does not convert, a head that overruns
 `MAX_HEAD` and a peer that closes mid-handshake have no status to report and
-`WsErr` has no arm to hold them, so they **still panic inside `ws.try_connect`**,
+`WsErr` has no arm to hold them, so they **still panic inside `ws.connect`**,
 with the same messages `connect` uses. A caller cannot branch on them.
 
 ## Functions
@@ -110,12 +105,9 @@ with the same messages `connect` uses. A caller cannot branch on them.
 | --- | --- | --- |
 | `ws.parse_url(s)` | `Url` | splits `ws://` or `wss://` `host[:port][/path]`; the port defaults to 80 for `ws` and 443 for `wss` |
 | `ws.default_port_for(scheme)` | `u16` | the scheme's default port, `80` for `ws` and `443` for `wss` |
-| `ws.connect(host, port, path)` | `Conn` | the plain-`ws` HTTP/1.1 upgrade; panics on every refusal below |
-| `ws.try_connect(host, port, path)` | `Result<Conn, WsErr>` | the fallible `connect` (plain `ws`): a refused dial, a refused `wss` handshake and a non-`101` answer are values, the errors with no status still panic |
-| `ws.connect_url(u)` | `Conn` | `connect` for a parsed URL, so the scheme (`wss`) comes off `u` |
-| `ws.try_connect_url(u)` | `Result<Conn, WsErr>` | `try_connect` for a parsed URL, the `wss`-capable spelling |
-| `ws.connect_scheme(scheme, host, port, path)` | `Conn` | `connect` with the scheme spelled out |
-| `ws.try_connect_scheme(scheme, host, port, path)` | `Result<Conn, WsErr>` | `try_connect` with the scheme spelled out |
+| `ws.connect(host, port, path)` | `Result<Conn, WsErr>` | the plain-`ws` HTTP/1.1 upgrade: a refused dial, a refused `wss` handshake and a non-`101` answer are values, the errors with no status still panic |
+| `ws.connect_url(u)` | `Result<Conn, WsErr>` | `connect` for a parsed URL, so the scheme (`wss`) comes off `u` |
+| `ws.connect_scheme(scheme, host, port, path)` | `Result<Conn, WsErr>` | `connect` with the scheme spelled out |
 | `Conn.send_text(text)` | `Unit` | one masked text frame |
 | `Conn.send_binary(data)` | `Unit` | one masked binary frame |
 | `Conn.ping(data)` / `Conn.pong(data)` | `Unit` | a control frame; the payload may not exceed 125 bytes |
@@ -158,10 +150,9 @@ send, so `close` refuses it: a caller that received one must not send it back.
 
 ## Refusals
 
-Each case has its own message. Through `connect` every one is a panic; through
-`try_connect` the dial failures, the `wss` handshake failures and the answers
-with a status are values (`WsErr.Dial`, `WsErr.Tls`, `WsErr.Handshake`), and the
-rest still panic. A `...` stands for
+Each case has its own message. The dial failures, the `wss` handshake failures
+and the answers with a status are values (`WsErr.Dial`, `WsErr.Tls`,
+`WsErr.Handshake`), and the rest still panic. A `...` stands for
 the number or code the module put there.
 
 | Message | When |
@@ -207,10 +198,11 @@ The two capability refusals are the compiler's, not the module's:
 
 ```kelp
 impl "std/ws" caps(net = ["gateway.example.com:80"], rand = [])
+impl "std/result"
 
 fun main() {
     val u = ws.parse_url("ws://gateway.example.com/socket")
-    var c = ws.connect(u.host.as_str(), u.port, u.path.as_str())
+    var c = result.expect(ws.connect(u.host.as_str(), u.port, u.path.as_str()), "connect")
     c.send_text("hello")
     when c.recv() {
         Text(t) -> print(t)
@@ -224,23 +216,21 @@ fun main() {
 
 ## Notes
 
-- **`wss://` is the same client over TLS.** `connect_url` and `try_connect_url`
-  (and `connect_scheme`/`try_connect_scheme`) take the scheme off the URL and
+- **`wss://` is the same client over TLS.** `connect_url` (and `connect_scheme`)
+  takes the scheme off the URL and
   wrap the dialed socket in a [`std/tls`](/stdlib/tls)
   session before the WebSocket handshake, checking the certificate against the
   host as written, exactly as `https` does. The `net` grant is the same
   host-and-port check (`caps(net = ["gateway.example.com:443"], rand = [])`);
   TLS needs nothing beyond it. A failed TLS handshake or certificate check is
-  `WsErr.Tls` in the fallible form, carrying `tls.error_text`'s sentence, and
-  panics with that sentence through `connect`. `connect` and
-  `try_connect` stay plain-`ws`.
+  `WsErr.Tls`, carrying `tls.error_text`'s sentence. `connect` stays plain-`ws`.
 - **A refused dial is a value, a head that is not HTTP is not.**
-  `ws.try_connect` returns `WsErr.Dial` for a dial that failed, `WsErr.Tls` for a
+  `ws.connect` returns `WsErr.Dial` for a dial that failed, `WsErr.Tls` for a
   `wss` handshake or certificate refusal and
   `WsErr.Handshake` for a peer that answered something other than `101`, so a
   reconnect loop can tell them apart. The errors that carry no status (a head that
   is not HTTP, a status code that does not convert, a head over `MAX_HEAD`, a peer
-  that closes mid-handshake) still panic inside `try_connect`, because `WsErr` has
+  that closes mid-handshake) still panic inside `connect`, because `WsErr` has
   no arm for them.
 - **Not here, deliberately:** a server, extensions
   (`Sec-WebSocket-Extensions`, so `permessage-deflate` and the `zlib-stream`

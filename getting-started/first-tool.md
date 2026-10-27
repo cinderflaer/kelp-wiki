@@ -156,11 +156,11 @@ panic: fs.read: cannot open file
   errno 2: No such file or directory
 ```
 
-The exit code is 1. To print a sentence and exit 2 instead, swap `fs.read_lines`
-for its fallible twin `fs.try_read_text`, which hands back a `Result`:
+The exit code is 1. To print a sentence and exit 2 instead, match the `Result`
+that `fs.read_text` returns:
 
 ```kelp
-val text = fs.try_read_text(resolved.as_str())
+val text = fs.read_text(resolved.as_str())
 if let Err(e) = text {
     print(str.concat("error: ", e.message.as_str()))
     process.exit(2)
@@ -171,9 +171,8 @@ if let Ok(body) = text {
 }
 ```
 
-`try_read`, `try_read_text` and `try_open` fail by value with a `Result`, and the
-mutators (`try_write`, `try_mkdir_all`, `try_remove` and five more) fail by value
-with an `Option<io.IoErr>`; everything else in [`std/fs`](/stdlib/fs) still panics.
+Every fallible call in [`std/fs`](/stdlib/fs) returns a `Result`, and a program
+that wants the panic writes `result.expect(call, "message")`.
 
 **Exit codes are the interface.** 0 is success, 2 is a usage error, 1 is a
 failure. `kelpc run` forwards the program's status, so a shell script can act on

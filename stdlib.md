@@ -15,7 +15,7 @@ One page per `std/*` module, the capability domain each one needs, and the compi
 - [`std/fmt`](/stdlib/fmt): number, grouping, byte-size and padding formatting, and the `Display` trait.
 - [`std/frame`](/stdlib/frame): a physical frame as a capability, `frame.claim(addr)` (gated on `frames`).
 - [`std/fs`](/stdlib/fs): read, write, walk and metadata (gated on `fs`).
-- [`std/http`](/stdlib/http): an HTTP/1.1 client and server, with the `try_` variants (needs `net` delegated).
+- [`std/http`](/stdlib/http): an HTTP/1.1 client and server, with a `Result` from every fallible call (needs `net` delegated).
 - [`std/io`](/stdlib/io): `File`, `BufReader`, `print` and `eprint`.
 - [`std/irq`](/stdlib/irq): an interrupt line as a capability, `irq.claim(n)` (gated on `irq`).
 - [`std/list`](/stdlib/list): closure-shaped helpers over `List<T>`: `map`, `filter`, `each`, `find_index`, `any`, `all`.
@@ -79,9 +79,9 @@ The domain each module needs comes from the compiler's own table
 | `std/io` | - | `File`, `BufReader`, `print`/`eprint` |
 | `std/fs` | `fs` | read, write, walk, metadata |
 | `std/process` | `process` | `args`, `spawn`, `run`, `exit` |
-| `std/net` | `net` | TCP connect/listen/accept, `send`/`recv`, and the `try_connect`/`try_send_all`/`try_recv`/`try_recv_into` value returns |
-| `std/http` | `net` (held) | an HTTP/1.1 client and server; the client speaks `http` and `https`, the server is HTTP/1.1 (plain, or HTTPS through `serve_tls`) with request limits and worker threads. Ungated itself, but importing it needs `net` delegated. The `try_get`/`try_send` family returns `HttpErr` |
-| `std/tls` | `net` (held) | client and server TLS: a typed `TlsError`, a private CA, a `try_` family, truncation detection, `ServerOptions`/`tls.accept`, ALPN and client certificates. Wraps a socket, never dials its own |
+| `std/net` | `net` | TCP connect/listen/accept and `send_all`/`recv`/`recv_into`, each returning a `Result` |
+| `std/http` | `net` (held) | an HTTP/1.1 client and server; the client speaks `http` and `https`, the server is HTTP/1.1 (plain, or HTTPS through `serve_tls`) with request limits and worker threads. Ungated itself, but importing it needs `net` delegated. The `get`, `send` and `accept` calls return `HttpErr` |
+| `std/tls` | `net` (held) | client and server TLS: a typed `TlsError`, a private CA, a `Result` from every fallible call, truncation detection, `ServerOptions`/`tls.accept`, ALPN and client certificates. Wraps a socket, never dials its own |
 | `std/tlsfile` | `fs` | `read_pem(path, what)`: the one gated file read behind `std/tls`'s PEM-bytes functions |
 | `std/ws` | `net`, `rand` (both held) | a WebSocket client (RFC 6455) over `ws://` and `wss://`; importing it needs both delegated |
 | `std/time` | `time` | `now_unix`, `now_mono_ns`, `sleep_ms` |
