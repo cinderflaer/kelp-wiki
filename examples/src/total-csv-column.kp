@@ -45,14 +45,11 @@ fun render(totals: Map<String, i64>) {
     var t = table.new_table(headers)
 
     val names = totals.keys()
-    var i: int = 0
-    while i < names.len() {
-        val name = names.get(i)
+    for name in names {
         var cells: List<String> = List.empty()
         cells.push(name.clone())
         cells.push(totals.get(name.as_str()).toText())
         table.add_row(t, cells)
-        i += 1
     }
     print!(table.render(&t))
     print("")

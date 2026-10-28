@@ -99,15 +99,17 @@ if let Rect(w, h) = shape {
 ## `while`
 
 ```kelp
-var i: int = 0
-while i < xs.len() {
-    print(xs.get(i))
-    i += 1
+var n: int = 3
+while n > 0 {
+    print!(n)
+    n = n - 1
 }
 ```
 
 `while` is the general loop: a condition, re-evaluated before each pass. The body
 may be empty (`while !file.isOpen() { }`), which is how a spin-wait is written.
+A loop that only counts over a list or a range is a `for`, not a `while` with an
+index: see [Walking a list or a range](#walking-a-list-or-a-range) below.
 
 ## `for`
 
@@ -162,6 +164,37 @@ for x in xs {
   its `items`, so the call does not run again for the condition and for every
   element.
 - The loop variable is a `val`; copy it into a `var` to mutate it.
+
+## Walking a list or a range
+
+A loop that reads every element of a list is a `for` over the list. It needs no
+index and no step:
+
+```kelp
+for path in paths {
+    print(path.as_str())
+}
+```
+
+A counter over a range is `for` over `iter.range(start, end)`. The range is
+half-open, so `end` is not yielded, and the loop variable is an `i64` with no
+`var` and no step to write. Both bounds are `i64`, so a bound that is an `int`,
+such as `args.len()`, does not fit yet and that loop stays a `while`. The file
+imports `std/iter` for it:
+
+```kelp
+impl "std/iter"
+
+fun main() {
+    for i in iter.range(0, 3) {
+        print!(i)
+    }
+    print("")
+}
+```
+
+This prints `012`. A loop whose index is changed in the body, or that needs an
+extra condition, stays a `while`.
 
 ## `when`
 

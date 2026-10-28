@@ -13,11 +13,13 @@ It is the smallest example with a function, a loop and two kinds of output.
 | --- | --- |
 | Source | [`src/recursive-fibonacci.kp`](https://homelabone.xenoo.dev/gittea/Lilly/kelp-wiki-wikijs/raw/branch/main/examples/src/recursive-fibonacci.kp) |
 | Needs | nothing, not even the standard library |
-| Shows | recursion, `while`, `=> i64`, `print` versus `print!` |
+| Shows | recursion, `for` over `iter.range`, `=> i64`, `print` versus `print!` |
 
 ## The program
 
 ```kelp
+impl "std/iter"
+
 fun fib(n: i64) => i64 {
     if n < 2 {
         return n
@@ -26,13 +28,11 @@ fun fib(n: i64) => i64 {
 }
 
 fun main() {
-    var i: i64 = 0
-    while i < 20 {
+    for i in iter.range(0, 20) {
         print!(fib(i))
         if i < 19 {
             print!(" ")
         }
-        i += 1
     }
     print("")
 }

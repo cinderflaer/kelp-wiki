@@ -2,8 +2,10 @@
 //
 //   kelpc run recursive-fibonacci.kp
 //
-// Demonstrates: recursion, a `while` loop, `print!` against `print`, and integer
+// Demonstrates: recursion, a `for` loop over `iter.range`, `print!` against `print`, and integer
 // width conversion (the loop counter is an `i64` because `recursive-fibonacci` takes one).
+
+impl "std/iter"
 
 fun fib(n: i64) => i64 {
     if n < 2 {
@@ -13,13 +15,11 @@ fun fib(n: i64) => i64 {
 }
 
 fun main() {
-    var i: i64 = 0
-    while i < 20 {
+    for i in iter.range(0, 20) {
         print!(fib(i))
         if i < 19 {
             print!(" ")
         }
-        i += 1
     }
     print("")
 }

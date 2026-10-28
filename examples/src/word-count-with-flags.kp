@@ -106,12 +106,9 @@ fun run(parser: &argparse.Parser, pa: &argparse.ParsedArgs) {
 
     val label = argparse.get_option(parser, pa, "label")
     val here = fs.cwd()
-    var i: int = 0
-    while i < names.len() {
-        val name = names.get(i)
+    for name in names {
         val resolved = absolute_or_here(name.as_str(), here.as_str())
         measure(resolved.as_str(), label.as_str(), want_lines, want_words, want_bytes)
-        i += 1
     }
 }
 

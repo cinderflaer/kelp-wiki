@@ -57,10 +57,8 @@ fun main() {
     shapes.push(make(square = true))
     shapes.push(make(square = false))
     var total: i64 = 0
-    var i: int = 0
-    while i < shapes.len() {
-        total += shapes.get(i).area()
-        i += 1
+    for shape in shapes {
+        total += shape.area()
     }
     print(total)
     describe(shapes.get(1).get())

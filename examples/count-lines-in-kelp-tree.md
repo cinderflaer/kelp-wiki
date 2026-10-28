@@ -69,16 +69,13 @@ fun main() {
 
     var total: i64 = 0
     var counted: i64 = 0
-    var i: int = 0
-    while i < candidates.len() {
-        val entry = candidates.get(i)
+    for entry in candidates {
         if fs.isFile(entry.as_str()) {
             val lines = fs.readLines(entry.as_str())
             report(entry.as_str(), lines.len())
             total += lines.len().to_i64()
             counted += 1
         }
-        i += 1
     }
 
     val files = counted.toText()
