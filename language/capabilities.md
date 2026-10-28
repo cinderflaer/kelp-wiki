@@ -64,7 +64,7 @@ instead of by auditing it.
 - Referencing a gated item without holding the domain is a **compile error
   naming the missing domain and the grant to write**: not a runtime refusal.
   Holding the domain is the whole check for an item that names no resource
-  (`fs.cwd`, `time.now_mono_ns`, a receiver method); an item that does name one
+  (`fs.cwd`, `time.nowMonoNs`, a receiver method); an item that does name one
   is additionally checked against the patterns at the call.
 
 ## Grants
@@ -418,7 +418,7 @@ below still works and is the simpler option for a quick test:
 // sandbox.kp: a module with exactly one directory
 impl "std/fs" caps(fs = ["/srv/data/**"])
 
-fun read(name: str) => String = fs.read_text(str.concat("/srv/data/", name))
+fun read(name: str) => String = fs.readText(str.concat("/srv/data/", name))
 ```
 
 Anything outside `/srv/data/**` is refused at the call, and the caller sees the

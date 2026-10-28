@@ -186,7 +186,7 @@ works on one file that is not part of a project yet:
 $ coral docs get std/str.kp
 /// How many characters a `&str` has: bytes that do not continue a UTF-8
 /// sequence.
-fun char_count(s: &str) => usize
+fun charCount(s: &str) => usize
 ```
 
 The point is shape rather than content: a reader (or an agent) facing a

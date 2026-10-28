@@ -123,7 +123,7 @@ fun main() {
     prng.shuffle_i32(rng, deck)
     print("prng      shuffled 1..8 = ${deck.get(0)} ${deck.get(1)} ${deck.get(2)} ${deck.get(3)} ${deck.get(4)} ${deck.get(5)} ${deck.get(6)} ${deck.get(7)}")
 
-    if option.is_none(o = overflowed) {
+    if option.isNone(o = overflowed) {
         print("mathx     max + 1 was caught, not wrapped")
     }
 }
@@ -174,7 +174,7 @@ every run, which is the property `std/rand` deliberately does not have.
 - **`Decimal` carries its scale, and mixing scales panics.** `add` and `sub`
   require equal scales, `mul` adds them, and `rescale` rounds half away from zero.
   That is why `0.10 * 0.20` prints four decimals: the result's scale is the sum.
-- **Checked arithmetic is an `Option`,** so `is_none` is `option.is_none`, not a
+- **Checked arithmetic is an `Option`,** so `is_none` is `option.isNone`, not a
   method on the value. `result` has `is_ok`/`is_err`; `option` has
   `is_some`/`is_none`, and the two are different modules.
 - **`stats` uses the population form** (divide by `n`), so a sample standard

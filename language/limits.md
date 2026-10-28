@@ -95,11 +95,11 @@ See [Concurrency](/language/concurrency).
 
 ### Libraries and text
 
-- A borrowing `List.iter()` that yields `&T`. Use `iter.into_iter` or `iter.cloned`
+- A borrowing `List.iter()` that yields `&T`. Use `iter.intoIter` or `iter.cloned`
   ([Iterators](/language/iterators)).
 - Regular-expression literals. Use [`std/regex`](/stdlib/regex) with a pattern
   string.
-- `str.to_upper` and `str.to_lower` change ASCII letters only.
+- `str.toUpper` and `str.toLower` change ASCII letters only.
 
 ### Networking
 

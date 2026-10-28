@@ -32,7 +32,7 @@ impl "std/fs" caps(fs = ["/tmp/kelp-sandbox/vault/**"])
 // one only through the qualifier, and a private `read` would be refused there.
 pub fun read(name: str) => String {
     val path = str.concat("/tmp/kelp-sandbox/vault/", name)
-    return fs.read_text(path.as_str())
+    return fs.readText(path.as_str())
 }
 ```
 
@@ -49,7 +49,7 @@ fun main() {
 
     // Inside the grant, straight from the entry module: fine, because the entry
     // module holds everything.
-    print(fs.read_text("/tmp/kelp-sandbox/vault/ok.txt"))
+    print(fs.readText("/tmp/kelp-sandbox/vault/ok.txt"))
 
     // Outside the grant, through the gated module: refused.
     print(vault.read("../secret.txt"))
@@ -122,7 +122,7 @@ and the empty line each `print` of a trailing newline leaves.
   program's own module holds everything. Authority matters at module boundaries,
   which is where a library lives.
 - **The `.as_str()` bind in `vault.read` is not decoration.** Writing
-  `fs.read_text(str.concat(...).as_str())` does not build: `.as_str()` on a
+  `fs.readText(str.concat(...).as_str())` does not build: `.as_str()` on a
   temporary is refused.
 
 ## See also

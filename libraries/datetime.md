@@ -9,7 +9,7 @@ value and back, plus leap years, day of week, and ISO-8601 parse/format.
 
 **No capability.** This library never reads the clock: it is pure integer
 arithmetic from a seconds count the caller supplies. For the current time use
-`std/time.now_unix()` (gated on `time`) and pass the result in.
+`std/time.nowUnix()` (gated on `time`) and pass the result in.
 
 ```toml
 [dependencies]
@@ -60,7 +60,7 @@ C's truncating integer division, which Kelp's `/` matches.
 | `format_iso8601(c: &Civil)` | `String`: `YYYY-MM-DDTHH:MM:SSZ` |
 | `parse_iso8601(s: &str)` | `result.Result<Civil, ParseErr>` |
 | `parse_stamp(s: &str)` | `result.Result<Civil, ParseErr>`: a bare `YYYY-MM-DD` is read as midnight UTC of that day |
-| `parse_stamp_unix(s: &str)` | `result.Result<i64, ParseErr>`: the same input as a seconds count, ready to compare against `std/time.now_unix()` |
+| `parse_stamp_unix(s: &str)` | `result.Result<i64, ParseErr>`: the same input as a seconds count, ready to compare against `std/time.nowUnix()` |
 
 `parse_iso8601` is strict: exactly `YYYY-MM-DDTHH:MM:SS` (or the same with a
 space instead of `T`), and an optional trailing `Z`. No fractional seconds, no
@@ -94,7 +94,7 @@ fun main() {
     print(datetime.is_leap_year(2024))
     val p = datetime.parse_iso8601("2024-02-29T12:34:56Z")
     if let Ok(x) = p {
-        print(datetime.to_unix(x))
+        print(datetime.toUnix(x))
         print(datetime.format_iso8601(x))
     }
     val c2 = datetime.add_seconds(&c, 3600)

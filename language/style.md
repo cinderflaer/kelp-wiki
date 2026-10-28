@@ -80,7 +80,7 @@ path to the design. Do not restate the rules or the layout the code already show
 ## Naming
 
 - Standard-library modules, functions and `datac` fields are `snake_case`
-  (`fs.read_text`, `str.is_empty`, `Line.text`); types are `PascalCase`
+  (`fs.readText`, `str.is_empty`, `Line.text`); types are `PascalCase`
   (`String`, `Bytes`, `Box`, `Metadata`, `Url`).
 - The case of **your own** names is configurable, and it is the one style rule
   with a setting: `coral.toml`'s `naming_case`, `0` for `camelCase` (the

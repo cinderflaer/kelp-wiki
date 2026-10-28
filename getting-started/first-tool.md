@@ -31,7 +31,7 @@ fun usage() {
 // call still receives an absolute path: `fs` patterns are absolute, and the
 // capability check normalizes before it matches.
 fun absolute_or_here(name: str, here: str) => String {
-    if path.is_absolute(name) {
+    if path.isAbsolute(name) {
         return String.from_str(name)
     }
     return path.absolute(here, name)
@@ -39,7 +39,7 @@ fun absolute_or_here(name: str, here: str) => String {
 
 // `None` means "not a usable count", and the caller keeps the default.
 fun count_from(text: str) => option.Option<i64> {
-    val parsed = str.parse_i64(text)
+    val parsed = str.parseI64(text)
     if let Ok(n) = parsed {
         if n > 0 {
             return option.Option.Some(value = n)
@@ -73,7 +73,7 @@ fun main() {
     val here = fs.cwd()
     val resolved = absolute_or_here(target.as_str(), here.as_str())
 
-    val lines = fs.read_lines(resolved.as_str())
+    val lines = fs.readLines(resolved.as_str())
     var i: int = 0
     while i < lines.len() && i.to_i64() < count {
         print(lines.get(i).as_str())
@@ -143,7 +143,7 @@ spellings name the same file:
 The second command in the section above passes an absolute path, which
 `absolute_or_here` returns unchanged.
 
-**Files fail by panicking, unless you ask for the value.** `fs.read_lines` and
+**Files fail by panicking, unless you ask for the value.** `fs.readLines` and
 its kin abort the process with the errno. That is a real, uncaught failure and it
 looks like this:
 
@@ -157,10 +157,10 @@ panic: fs.read: cannot open file
 ```
 
 The exit code is 1. To print a sentence and exit 2 instead, match the `Result`
-that `fs.read_text` returns:
+that `fs.readText` returns:
 
 ```kelp
-val text = fs.read_text(resolved.as_str())
+val text = fs.readText(resolved.as_str())
 if let Err(e) = text {
     print(str.concat("error: ", e.message.as_str()))
     process.exit(2)
@@ -184,7 +184,7 @@ Each of these is one function and no new imports beyond the one named:
 
 | Idea | What to use | What it teaches |
 | --- | --- | --- |
-| A `--chars N` flag, so a file of accented text is cut at N characters and not N bytes | `str.char_count`, `str.byte_index`, `str.copy_range` | the byte and codepoint index sets, and why they differ |
+| A `--chars N` flag, so a file of accented text is cut at N characters and not N bytes | `str.charCount`, `str.byteIndex`, `str.copyRange` | the byte and codepoint index sets, and why they differ |
 | A `tail` that counts back from the end | `lines.len()`, a descending `while` | indexing from the end, and a loop whose exit is in its condition |
 | Several paths, with a header per file | a second loop over the arguments | `argv` as a list rather than positional slots |
 | A `total` line at the end, like `wc` | `n.toText()`, a counter | building output when `print` takes one argument |

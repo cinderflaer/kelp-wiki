@@ -60,7 +60,7 @@ fun main() {
     })
     print("seen ${seen}")
 
-    print(iter.sum_i64(iter.range(1, 5)))
+    print(iter.sumI64(iter.range(1, 5)))
 }
 ```
 
@@ -102,7 +102,7 @@ when it has finished. `for` calls `next()` until it gets `None`, so the loop
 stops on its own.
 
 `iter.range(1, 5)` is a built-in iterator from `std/iter` that produces 1, 2, 3
-and 4, and stops before 5. `iter.sum_i64` adds up an iterator's values.
+and 4, and stops before 5. `iter.sumI64` adds up an iterator's values.
 
 ## Try it
 

@@ -15,21 +15,21 @@ any function in the module is the authority.
 
 | Function | Returns | Notes |
 | --- | --- | --- |
-| `time.now_unix()` | `i64` | seconds since the epoch (UTC) |
-| `time.now_mono_ns()` | `i64` | nanoseconds on the **monotonic** clock: for durations, never for dates |
-| `time.sleep_ms(ms: u64)` | `Unit` | |
+| `time.nowUnix()` | `i64` | seconds since the epoch (UTC) |
+| `time.nowMonoNs()` | `i64` | nanoseconds on the **monotonic** clock: for durations, never for dates |
+| `time.sleepMs(ms: u64)` | `Unit` | |
 
 ```kelp project
 impl "deps/datetime/lib"
 impl "std/time"
 
 fun main() {
-    val start = time.now_mono_ns()
-    time.sleep_ms(2)
-    val elapsed = time.now_mono_ns() - start
+    val start = time.nowMonoNs()
+    time.sleepMs(2)
+    val elapsed = time.nowMonoNs() - start
     print(elapsed >= 0)
 
-    val now = time.now_unix()
+    val now = time.nowUnix()
     print(now > 0)
 
     val civil = datetime.from_unix(now)

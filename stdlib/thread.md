@@ -31,8 +31,8 @@ functions, and one `datac`.
 fun spawn(entry: <a declared `fun`, a `fun` literal, or a capturing closure, taking one parameter>, arg: move A) => Thread<T>
 fun join(handle: move Thread<T>) => Result<T, ThreadErr>
 fun fence(order: Ordering)
-fun sleep_ms(ms: u64)
-fun current_id() => u64
+fun sleepMs(ms: u64)
+fun currentId() => u64
 
 datac ThreadErr(val message: String)
 ```
@@ -61,8 +61,8 @@ body, the way [`std/time`](/stdlib/time) and [`std/rand`](/stdlib/rand) work.
 | `thread.spawn(entry, arg)` | `Thread<T>` | starts a worker; `entry` takes exactly one parameter, `arg` is moved into it, and `T` is `entry`'s **return** type |
 | `thread.join(handle: move Thread<T>)` | `Result<T, ThreadErr>` | waits for the worker and consumes the handle |
 | `thread.fence(order: Ordering)` | `Unit` | one instruction; no cell, no receiver |
-| `thread.sleep_ms(ms: u64)` | `Unit` | sleeps the calling thread; takes no capability |
-| `thread.current_id()` | `u64` | a stable id for the calling thread, main or worker |
+| `thread.sleepMs(ms: u64)` | `Unit` | sleeps the calling thread; takes no capability |
+| `thread.currentId()` | `u64` | a stable id for the calling thread, main or worker |
 
 ## Starting a worker
 
@@ -116,7 +116,7 @@ needs `impl "std/result"`, exactly as `Atomic.compare_exchange`'s `Result<T, T>`
 does ([`std/result`](/stdlib/result)).
 
 To join one handle and print its error in one call, use
-[`pool.join_or_report`](/stdlib/pool#joining-one-handle-and-reporting-its-error).
+[`pool.joinOrReport`](/stdlib/pool#joining-one-handle-and-reporting-its-error).
 
 ## The one borrow that may cross
 
@@ -246,10 +246,10 @@ ordering means is [Concurrency in v1](/language/concurrency).
 
 ## Sleeping and naming a thread
 
-`thread.sleep_ms(ms)` sleeps the calling thread, main or a worker, for at least
+`thread.sleepMs(ms)` sleeps the calling thread, main or a worker, for at least
 `ms` milliseconds. Sleeping takes no capability here for the same reason it
 takes none in [`std/time`](/stdlib/time): it is authority over nothing shared.
-`std/thread` carries its own copy rather than re-exporting `time.sleep_ms`, so a
+`std/thread` carries its own copy rather than re-exporting `time.sleepMs`, so a
 worker pool's backoff between empty pulls from a queue does not need
 `impl "std/time"`, a namespace named for a wall clock the pool never reads.
 
@@ -258,11 +258,11 @@ impl "std/thread"
 
 fun poll_worker(queue_id: move i64) {
     // ... try to pull work, then, if there was none:
-    thread.sleep_ms(10)
+    thread.sleepMs(10)
 }
 ```
 
-`thread.current_id()` returns a `u64` that identifies the calling thread: stable
+`thread.currentId()` returns a `u64` that identifies the calling thread: stable
 across every call made from inside one thread, for that thread's whole
 lifetime, and distinct between the main thread and any worker `thread.spawn`
 starts. It names *which thread this is*, not *which Nth worker was spawned*
@@ -304,8 +304,8 @@ fun main() {
 
     // Sleeping and naming a thread work from either side of the join: the
     // main thread's id here differs from `work`'s if it printed its own.
-    thread.sleep_ms(1)
-    print(thread.current_id() == thread.current_id())   // true
+    thread.sleepMs(1)
+    print(thread.currentId() == thread.currentId())   // true
 
     when thread.join(h) {
         Ok(v) -> print(v)                              // 42

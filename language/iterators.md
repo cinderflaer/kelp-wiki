@@ -54,7 +54,7 @@ fun main() {
         print!("$i ")
     }
     print("")
-    for i in iter.range_step(10, 0, -3) {
+    for i in iter.rangeStep(10, 0, -3) {
         print!("$i ")
     }
     print("")
@@ -82,8 +82,8 @@ fun main() {
     }
     print(total)
     print(iter.count(iter.range(0, 10)))
-    print(iter.sum_i64(iter.range(1, 5)))
-    val l = iter.collect_list(iter.range(3, 6))
+    print(iter.sumI64(iter.range(1, 5)))
+    val l = iter.collectList(iter.range(3, 6))
     print(l.len())
     print(l.get(2))
 }
@@ -104,7 +104,7 @@ It prints:
 
 Reading it line by line:
 
-- `iter.range(0, 5)` and `iter.range_step(10, 0, -3)` are `std/iter`'s own
+- `iter.range(0, 5)` and `iter.rangeStep(10, 0, -3)` are `std/iter`'s own
   iterators. A range is half-open, and a negative step walks down.
 - `Fib` never returns `None`, so the loop needs `break`. `continue` skips the
   odd values, which is why only `0 2 8 34` print.
@@ -297,11 +297,11 @@ pub trait Iterator {
 
 pub datac Range(var lo: i64, val hi: i64, val step: i64)
 pub fun range(a: i64, b: i64) => Range
-pub fun range_step(a: i64, b: i64, step: i64) => Range
+pub fun rangeStep(a: i64, b: i64, step: i64) => Range
 
 pub fun count<I: Iterator>(it: move I) => int
-pub fun sum_i64<I: Iterator>(it: move I) => i64
-pub fun collect_list<I: Iterator>(it: move I) => List<I::Item>
+pub fun sumI64<I: Iterator>(it: move I) => i64
+pub fun collectList<I: Iterator>(it: move I) => List<I::Item>
 ```
 
 | Item | Notes |
@@ -324,13 +324,13 @@ fun main() {
         print!("$i ")
     }
     print("")
-    for i in iter.range_step(10, 0, -3) {
+    for i in iter.rangeStep(10, 0, -3) {
         print!("$i ")
     }
     print("")
     print(iter.count(iter.range(0, 10)))
-    print(iter.sum_i64(iter.range(1, 5)))
-    val l = iter.collect_list(iter.range(3, 6))
+    print(iter.sumI64(iter.range(1, 5)))
+    val l = iter.collectList(iter.range(3, 6))
     print(l.get(2))
 }
 ```
@@ -348,7 +348,7 @@ Output:
 ### The list iterator and the adapters
 
 ```kelp
-iter.into_iter(xs: move List<T>) -> ListIter<T>      // owned items, front to back
+iter.intoIter(xs: move List<T>) -> ListIter<T>      // owned items, front to back
 iter.cloned(xs: &List<T>) -> ListIter<T>             // a copy of a borrowed list
 iter.map(it, f)        -> MapIter<..>     // f: closure fun(&Item) -> U
 iter.filter(it, pred)  -> FilterIter<..>  // pred: closure fun(&Item) -> bool
@@ -360,7 +360,7 @@ iter.chain(a, b)       -> ChainIter<..>   // all of a, then all of b (same item 
 ```
 
 Each takes its iterator by `move` and is itself an `Iterator`, so they nest
-(`iter.take(iter.filter(iter.into_iter(xs), keep), 3)`). A `for` over an adapter
+(`iter.take(iter.filter(iter.intoIter(xs), keep), 3)`). A `for` over an adapter
 needs it in a `var` (or a temporary), as for any iterator that advances. The
 adapters are generic `datac`s with a `next` method; a generic type with such a
 `next` is an iterator by shape, which is why none of them needs a generic trait
@@ -387,7 +387,7 @@ whole set of consumers.
   other adapters would have to keep the list's borrow with the iterator, and a
   `datac` holds owned data only: a field cannot be a reference, and a constructor
   refuses a borrow. The language has no way yet to tie a borrow to an iterator
-  value. Until it does, `iter.into_iter(move xs)` walks the owned items and
+  value. Until it does, `iter.intoIter(move xs)` walks the owned items and
   `iter.cloned(&xs)` walks a copy.
 
 ## See also
@@ -418,7 +418,7 @@ The shipped half is the protocol itself, and every fixture and test named in
 ### What is missing, and exactly why
 
 The generic adapters the task asks for, `take`, `skip`, `enumerate`, `zip`,
-`chain`, and the association `List.into_iter()` that `enumerate` is tested
+`chain`, and the association `List.intoIter()` that `enumerate` is tested
 over, are **not** delivered. They are blocked on one language feature:
 
 **Generic trait impls.** Each adapter is a generic `datac` implementing
@@ -446,7 +446,7 @@ Without the impl, a composed adapter cannot even be built: `take(skip(range(0,
 (`I: Iterator`) then fails because `Skip<Range>` implements nothing. The item
 projection `Skip<Range>::Item` also has no impl binding to resolve, so the
 adapter's own `next` return type cannot be written. The same missing feature
-blocks a `ListIter<T>` for `List.into_iter()` and the closure adapters'
+blocks a `ListIter<T>` for `List.intoIter()` and the closure adapters'
 `I::Item` field.
 
 A second, smaller gap is visible in the same place: `datac Take<I: Iterator>`
@@ -479,5 +479,5 @@ Generic trait impls, in the shape `design/traits` 10 already sketches:
 3. `infer.rs`: `implements_trait` for an instance (base name plus a bound check
    on the arguments), the assoc bindings as templates instantiated per use, and
    the impl-signature check against the trait with a generic `Self`.
-4. Then the adapters, `List.into_iter()`, and `map`/`filter` are ordinary
+4. Then the adapters, `List.intoIter()`, and `map`/`filter` are ordinary
    `std/iter` code with no further compiler work.

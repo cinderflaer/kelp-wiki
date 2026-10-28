@@ -30,7 +30,7 @@ fun pool.new(workers: i32) => Pool
 fun Pool.spawn(job: move closure fun())
 fun Pool.join()
 fun Pool.panicked() => i32
-fun join_or_report<t>(handle: move Thread<t>) => option.Option<t>
+fun joinOrReport<t>(handle: move Thread<t>) => option.Option<t>
 ```
 
 | Call | Returns | Notes |
@@ -39,14 +39,14 @@ fun join_or_report<t>(handle: move Thread<t>) => option.Option<t>
 | `p.spawn(job)` | - | queues a `move closure fun()`; it runs on some worker, in queue order. A job owns what it captured |
 | `p.join()` | - | stops accepting work, runs everything still queued, and waits until every worker has exited. Safe to call twice |
 | `p.panicked()` | `i32` | how many jobs have panicked so far |
-| `pool.join_or_report(handle)` | `Option<T>` | joins one thread handle; an `Err` prints the panic text and gives `None`. See below |
+| `pool.joinOrReport(handle)` | `Option<T>` | joins one thread handle; an `Err` prints the panic text and gives `None`. See below |
 
 `Drop` on a `Pool` calls `join`, so a pool that goes out of scope shuts down
 cleanly: every queued job has finished when the scope ends.
 
 ## Joining one handle and reporting its error
 
-`pool.join_or_report(handle)` joins one thread handle, the way a job's worker
+`pool.joinOrReport(handle)` joins one thread handle, the way a job's worker
 joins its job thread above. It returns the worker's value as `Some`. An `Err`
 prints the panic text on stdout and returns `None`. The handle is consumed, so
 it joins once.
@@ -66,7 +66,7 @@ fun doubled(x: move i64) => i64 = x * 2
 
 fun main() {
     val h: Thread<i64> = thread.spawn(doubled, 21)
-    if let Some(v) = pool.join_or_report<i64>(h) {
+    if let Some(v) = pool.joinOrReport<i64>(h) {
         print(v)                              // 42
     }
 }
@@ -210,7 +210,7 @@ job. The honest consequences:
 
 - **One thread is created per job.** A pool does not save thread creation; it
   limits how many run at once and gives them a queue.
-- `thread.current_id()` differs between two jobs run by the same worker.
+- `thread.currentId()` differs between two jobs run by the same worker.
 - A panicking job's owned locals are dropped on the way out, as in a plain
   `thread.spawn` worker (see [Concurrency in v1](/language/concurrency)). A `Mutex` it
   held inside `lock` is released and poisoned, so a later `lock` on it panics.

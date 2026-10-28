@@ -57,7 +57,7 @@ pub datac TlsOptions(val ca_pem: Bytes, val timeout_ms: u64)
 `TlsOptions.ca_pem` is the PEM text of extra trusted CA certificates (empty means
 the system store only). It is bytes, never a path: the TLS runtime does not open
 files, so a module that holds only `net` cannot make the handshake read one. To
-read a CA file, use `tlsfile.ca_pem(path)` ([below](#reading-the-files-stdtlsfile)),
+read a CA file, use `tlsfile.caPem(path)` ([below](#reading-the-files-stdtlsfile)),
 which goes through the `fs` capability.
 
 `TlsStream` pairs a plain `fd` with the OpenSSL handle bound to it, not a
@@ -122,8 +122,8 @@ impl "std/thread"
 
 fun serve(l: move net.Listener) {
     val peer = result.expect(net.accept(l), "accept")
-    net.send_text(peer, "this is not a TLS record\n")
-    thread.sleep_ms(200)
+    net.sendText(peer, "this is not a TLS record\n")
+    thread.sleepMs(200)
     net.close(peer)
     l.close()
 }
@@ -183,23 +183,23 @@ reaches `std/tls`, and hosted only. Verification stays on in both directions (se
 [below](#certificate-verification-is-not-optional)).
 
 ```
-tls.server_config_pem(cert_chain_pem: Bytes, key_pem: Bytes) => Result<ServerConfig, TlsError>
-tls.server_config_pem_with(cert, key, opts: &ServerOptions) => Result<ServerConfig, TlsError>
+tls.serverConfigPem(cert_chain_pem: Bytes, key_pem: Bytes) => Result<ServerConfig, TlsError>
+tls.serverConfigPemWith(cert, key, opts: &ServerOptions) => Result<ServerConfig, TlsError>
 
-tls.server_options() => ServerOptions
-ServerOptions.min_version(v: TlsVersion) -> ServerOptions       // Tls12 (default) | Tls13
+tls.serverOptions() => ServerOptions
+ServerOptions.minVersion(v: TlsVersion) -> ServerOptions       // Tls12 (default) | Tls13
 ServerOptions.alpn(protocols: &List<String>) -> ServerOptions   // the server's preference order
-ServerOptions.require_client_cert_pem(ca_pem: Bytes) -> ServerOptions
-ServerOptions.handshake_timeout_ms(ms: u64) -> ServerOptions    // default 10000, 0 waits forever
+ServerOptions.requireClientCertPem(ca_pem: Bytes) -> ServerOptions
+ServerOptions.handshakeTimeoutMs(ms: u64) -> ServerOptions    // default 10000, 0 waits forever
 ServerConfig.free()
 
 tls.accept(config: &ServerConfig, s: net.Socket) => Result<TlsStream, TlsError>
 TlsStream.alpn() => Option<String>                // negotiated protocol, server and client streams
-TlsStream.peer_cert_subject() => Option<String>   // RFC 2253 subject of the peer's certificate
+TlsStream.peerCertSubject() => Option<String>   // RFC 2253 subject of the peer's certificate
 
 // std/tlsfile
-tlsfile.read_pem(path: &str, what: &str) => Result<Bytes, TlsError>
-tlsfile.ca_pem(path: &str) => Result<Bytes, TlsError>   // read_pem with the role "CA certificate"
+tlsfile.readPem(path: &str, what: &str) => Result<Bytes, TlsError>
+tlsfile.caPem(path: &str) => Result<Bytes, TlsError>   // read_pem with the role "CA certificate"
 ```
 
 - **A configuration is built once from PEM bytes and never changes.** The
@@ -213,9 +213,9 @@ tlsfile.ca_pem(path: &str) => Result<Bytes, TlsError>   // read_pem with the rol
 - **The certificate chain goes leaf first**, as PEM text. The key is a PEM
   private key, plain or encrypted (see [Encrypted keys](#encrypted-keys)).
 - **`TlsOptions` stays two fields.** ALPN and a client certificate live in
-  `TlsClientOptions` (`tls.client_options()`, then `.alpn(...)`,
-  `.client_cert_pem(cert, key)`, `.with_ca_pem(bytes)`, `.with_timeout_ms(...)`),
-  used with `tls.handshake_opts(s, host, &opts)`.
+  `TlsClientOptions` (`tls.clientOptions()`, then `.alpn(...)`,
+  `.clientCertPem(cert, key)`, `.withCaPem(bytes)`, `.withTimeoutMs(...)`),
+  used with `tls.handshakeOpts(s, host, &opts)`.
 - **`TlsError` has no new variant.** A file that cannot be read is `Io`; a
   malformed PEM, a key that does not match the certificate, a CA file with no
   certificate in it, an ALPN mismatch and a handshake an mTLS server refuses are
@@ -235,23 +235,23 @@ imports `std/tls`, so `std/tls` cannot hold `std/fs`. It takes PEM *bytes*, and
 impl "std/tlsfile" caps(fs = ["/etc/myapp/certs/**"])
 ```
 
-`tlsfile.read_pem(path, what)` returns the bytes or `TlsError.Io` whose text names
+`tlsfile.readPem(path, what)` returns the bytes or `TlsError.Io` whose text names
 the role (`what`) and path: `tls: cannot read the private key file <path>: No
 such file or directory`. `std/tlsfile` cannot call `std/tls` (those functions are
 `net`-gated and would need that grant too), so the program composes the two:
 
 ```kelp
-val cert = tlsfile.read_pem(cert_path, "certificate chain")?
-val key = tlsfile.read_pem(key_path, "private key")?
-val cfg = tls.server_config_pem(cert, key)?
+val cert = tlsfile.readPem(cert_path, "certificate chain")?
+val key = tlsfile.readPem(key_path, "private key")?
+val cfg = tls.serverConfigPem(cert, key)?
 ```
 
 The same module reads a private CA for a client, which is how a client trusts a
 server whose certificate was not issued by a public CA:
 
 ```kelp
-val ca = tlsfile.ca_pem("/etc/myapp/certs/ca.pem")?
-val opts = tls.client_options().with_ca_pem(ca).with_timeout_ms(10000)
+val ca = tlsfile.caPem("/etc/myapp/certs/ca.pem")?
+val opts = tls.clientOptions().withCaPem(ca).withTimeoutMs(10000)
 ```
 
 **`ca_file` and `ca_dir` are gone.** Earlier releases took a CA *path* in
@@ -275,7 +275,7 @@ store silently:
 impl "std/tlsfile" caps(fs = ["/etc/myapp/ca.d/**"])
 
 val ca = tlsfile.ca_dir_pem("/etc/myapp/ca.d")?
-val opts = tls.client_options().with_ca_pem(ca)
+val opts = tls.clientOptions().withCaPem(ca)
 ```
 
 The old spellings are compile errors (checked on 2026-10-04):
@@ -288,11 +288,11 @@ and importing `std/tlsfile` without delegating `fs` is refused with
 `'std.fs.read' needs the 'fs' capability, which module 'std/tlsfile' was not
 granted; the module that imports this one must delegate it (`impl "<this module>"
 caps(fs = ["<pattern>"])`)`. To migrate, replace
-`.with_ca_file(path)` with `.with_ca_pem(tlsfile.ca_pem(path)?)` and
+`.with_ca_file(path)` with `.withCaPem(tlsfile.caPem(path)?)` and
 `TlsOptions(ca_file = ..., ca_dir = ..., timeout_ms = ...)` with
 `TlsOptions(ca_pem = ..., timeout_ms = ...)`.
 
-`tlsfile.read_key(path)` is `read_pem` for a private key with a permission check
+`tlsfile.readKey(path)` is `read_pem` for a private key with a permission check
 in front: a file that group or others can read or write (any `mode & 0077` bit)
 is a `TlsError.Io` naming the file and its mode (`... has mode 0644: group and
 others must have no access (chmod 600)`), and the file is not read. A missing
@@ -300,17 +300,17 @@ file is the same `Io` as `read_pem`'s. Use `read_pem` when the key legitimately
 lives in a shared location.
 
 ```kelp
-val key = tlsfile.read_key(key_path)?
+val key = tlsfile.readKey(key_path)?
 ```
 
 ### Encrypted keys
 
-`ServerOptions.key_password(phrase)` gives the pass phrase of an encrypted PEM
-private key, so `tls.server_config_pem_with(cert, key, &opts)` can load it:
+`ServerOptions.keyPassword(phrase)` gives the pass phrase of an encrypted PEM
+private key, so `tls.serverConfigPemWith(cert, key, &opts)` can load it:
 
 ```kelp
-val opts = tls.server_options().key_password("correct horse")
-val cfg = tls.server_config_pem_with(cert, key, &opts)?
+val opts = tls.serverOptions().keyPassword("correct horse")
+val cfg = tls.serverConfigPemWith(cert, key, &opts)?
 ```
 
 Without a phrase an encrypted key is `HandshakeFailed("the private key is
@@ -326,9 +326,9 @@ A certificate renewal does not need a new `ServerConfig`, a stopped accept loop
 or a restart:
 
 ```kelp
-val fresh_cert = tlsfile.read_pem(cert_path, "certificate chain")?
-val fresh_key = tlsfile.read_key(key_path)?
-val failed = cfg.reload_pem(fresh_cert, fresh_key, &opts)
+val fresh_cert = tlsfile.readPem(cert_path, "certificate chain")?
+val fresh_key = tlsfile.readKey(key_path)?
+val failed = cfg.reloadPem(fresh_cert, fresh_key, &opts)
 ```
 
 `reload_pem(cert, key, &opts)` builds the new context first and swaps it in for
@@ -384,18 +384,18 @@ impl "std/tls"
 impl "std/tlsfile" caps(fs = ["/etc/myapp/certs/**"])
 
 fun say(e: move tls.TlsError) {
-    val text = tls.error_text(e)
+    val text = tls.errorText(e)
     print(text.as_str())
 }
 
 fun try_pair(cert_file: str, key_file: str) {
-    val cert = tlsfile.read_pem(cert_file, "certificate chain")
-    val key = tlsfile.read_pem(key_file, "private key")
+    val cert = tlsfile.readPem(cert_file, "certificate chain")
+    val key = tlsfile.readPem(key_file, "private key")
     when cert {
         Err(e) -> say(e)
         Ok(c) -> when key {
             Err(e) -> say(e)
-            Ok(k) -> when tls.server_config_pem(c, k) {
+            Ok(k) -> when tls.serverConfigPem(c, k) {
                 Ok(cfg) -> {
                     print("config ok")
                     cfg.free()
@@ -465,14 +465,14 @@ fun show(o: move option.Option<String>) => String = when o {
 }
 
 fun make_config() => result.Result<tls.ServerConfig, tls.TlsError> {
-    val cert = tlsfile.read_pem("/etc/myapp/certs/server.pem", "certificate chain")?
-    val key = tlsfile.read_pem("/etc/myapp/certs/server.key", "private key")?
-    val ca = tlsfile.read_pem("/etc/myapp/certs/ca.pem", "client CA")?
+    val cert = tlsfile.readPem("/etc/myapp/certs/server.pem", "certificate chain")?
+    val key = tlsfile.readPem("/etc/myapp/certs/server.key", "private key")?
+    val ca = tlsfile.readPem("/etc/myapp/certs/ca.pem", "client CA")?
     var protos: List<String> = List.empty()
     protos.push("h2")
     protos.push("http/1.1")
-    val opts = tls.server_options().alpn(&protos).require_client_cert_pem(ca)
-    return tls.server_config_pem_with(cert, key, &opts)
+    val opts = tls.serverOptions().alpn(&protos).requireClientCertPem(ca)
+    return tls.serverConfigPemWith(cert, key, &opts)
 }
 
 fun serve_one(fd: i32) => String {
@@ -486,14 +486,14 @@ fun serve_one(fd: i32) => String {
                     when tls.accept(&cfg, sock) {
                         Ok(t) -> {
                             val proto = show(t.alpn())
-                            val who = show(t.peer_cert_subject())
+                            val who = show(t.peerCertSubject())
                             line = "server: alpn="
                             line.push_str(proto.as_str())
                             line.push_str(" peer=")
                             line.push_str(who.as_str())
                             // read the request before closing, or the close resets the connection
                             val req = tls.read(t, 16)
-                            val w = tls.write_all(t, Bytes.from_str("ok"))
+                            val w = tls.writeAll(t, Bytes.from_str("ok"))
                             val sd = tls.shutdown(t)
                         }
                         Err(_) -> line = "server: handshake refused"
@@ -509,9 +509,9 @@ fun serve_one(fd: i32) => String {
 }
 
 fun client(port: u16, with_cert: bool) => String {
-    var opts = tls.client_options().with_timeout_ms(10000)
-    when tlsfile.ca_pem("/etc/myapp/certs/ca.pem") {
-        Ok(pem) -> opts = opts.with_ca_pem(pem)
+    var opts = tls.clientOptions().withTimeoutMs(10000)
+    when tlsfile.caPem("/etc/myapp/certs/ca.pem") {
+        Ok(pem) -> opts = opts.withCaPem(pem)
         Err(_) -> {}
     }
     var protos: List<String> = List.empty()
@@ -519,11 +519,11 @@ fun client(port: u16, with_cert: bool) => String {
     protos.push("h2")
     opts = opts.alpn(&protos)
     if with_cert {
-        val c = tlsfile.read_pem("/etc/myapp/certs/client.pem", "client certificate")
-        val k = tlsfile.read_pem("/etc/myapp/certs/client.key", "client private key")
+        val c = tlsfile.readPem("/etc/myapp/certs/client.pem", "client certificate")
+        val k = tlsfile.readPem("/etc/myapp/certs/client.key", "client private key")
         when c {
             Ok(cp) -> when k {
-                Ok(kp) -> opts = opts.client_cert_pem(cp, kp)
+                Ok(kp) -> opts = opts.clientCertPem(cp, kp)
                 Err(_) -> {}
             }
             Err(_) -> {}
@@ -531,11 +531,11 @@ fun client(port: u16, with_cert: bool) => String {
     }
     val s = result.expect(net.connect("127.0.0.1", port), "connect")
     var line = String.empty()
-    when tls.handshake_opts(s, "localhost", &opts) {
+    when tls.handshakeOpts(s, "localhost", &opts) {
         Ok(t) -> {
             // TLS 1.3 lets the client finish first, so a refused client
             // certificate shows on its first read.
-            val w = tls.write_all(t, Bytes.from_str("hi"))
+            val w = tls.writeAll(t, Bytes.from_str("hi"))
             when tls.read(t, 16) {
                 Ok(b) -> {
                     line = "client: got "
@@ -558,7 +558,7 @@ fun main() {
     val with_cert = str.eq(mode.as_str(), "cert")
     val l = net.listen(0)
     var lm = net.Listener(fd = l.fd)
-    lm.set_timeout(10000)
+    lm.setTimeout(10000)
     val port = l.port()
     val h = thread.spawn(serve_one, l.fd)
     val seen = client(port, with_cert)
@@ -611,7 +611,7 @@ line, then server line):
 | expired server certificate | `Expired` | `HandshakeFailed` |
 | peer sends data, then ends without `close_notify` | second read is `PeerClosedUncleanly` | - |
 
-`ServerOptions.min_version(Tls13)` raises the floor for a server; TLS 1.2 is the
+`ServerOptions.minVersion(Tls13)` raises the floor for a server; TLS 1.2 is the
 default, and there is no way to go lower.
 
 ## Truncation is detected
@@ -662,7 +662,7 @@ apply unchanged.
 impl "std/ws" caps(net = ["*"], rand = [])
 
 fun main() {
-    val u = ws.parse_url("wss://example.com/socket")
+    val u = ws.parseUrl("wss://example.com/socket")
     print(u.scheme)
     print(u.port)
 }
@@ -692,7 +692,7 @@ every other setup.
 
 ## See also
 
-- [`std/http`](/stdlib/http) for `http.serve_tls` and `http.get_tls`
+- [`std/http`](/stdlib/http) for `http.serveTls` and `http.getTls`
 - [`std/ws`](/stdlib/ws)
 - [`std/net`](/stdlib/net)
 - [Capability patterns](/reference/capability-patterns)

@@ -31,10 +31,10 @@ See [Testing what you write](/getting-started/testing) for Coral's own fixture r
 
 [`std/http`](/stdlib/http#the-server) now has a server, with `Limits`, keep-alive and worker threads. A server
 can also be written directly on `std/net`: `net.listen(port)`, `net.accept`, then `net.recv`,
-`net.send_all` and `net.close` on each socket, which is what the
+`net.sendAll` and `net.close` on each socket, which is what the
 [playground backend](/family/webkelp#playground) does. Points that mattered:
 
-- **Bound everything the client controls.** Cap the header and body size, and use `sock.wait_readable(ms)`
+- **Bound everything the client controls.** Cap the header and body size, and use `sock.waitReadable(ms)`
   before each `recv` so a client that stops sending cannot hold the loop.
 - **Validate before you construct.** `String.from_bytes` wants valid UTF-8, so an untrusted body is checked
   first and rejected with a `400` rather than risking a panic. A panic ends the process.
@@ -115,7 +115,7 @@ for a `val items`.
 
 ### `trim_start` is not like `trim`
 
-`str.trim` and `str.trim_end` return a `String`. `str.trim_start` returns a **`&str`**, so it
+`str.trim` and `str.trimEnd` return a `String`. `str.trimStart` returns a **`&str`**, so it
 has no `.len()` or `.as_str()`: use `str.len(t)` on it, or copy it with `String.from_str`.
 Check the return type in [`std/str`](/stdlib/str) before chaining.
 

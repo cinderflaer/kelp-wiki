@@ -16,7 +16,7 @@ impl "std/mem"
 
 That is the whole module. `Bytes` is the owned buffer type, so an allocation is
 used like any other `Bytes`: `get`/`set`, `len`, `append`, `clone`, `as_str`,
-and the ability to be handed to `fs.write`, `net.send_all` or a hash function.
+and the ability to be handed to `fs.write`, `net.sendAll` or a hash function.
 
 ```kelp
 impl "std/mem"

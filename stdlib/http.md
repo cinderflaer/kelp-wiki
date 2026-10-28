@@ -52,7 +52,7 @@ datac Conn(val fd: i32, val tls_handle: option.Option<tls.TlsHandle>)
 everywhere in this module: the dial, the pool, redirect-following and the
 framing reader dispatch on it without needing to know which kind they were
 handed. `tls_handle` is `None` for a plain connection and `Some(handle)` for a
-TLS one. `Conn.is_tls()` answers which kind it is, and `Conn.tls()` returns the
+TLS one. `Conn.isTls()` answers which kind it is, and `Conn.tls()` returns the
 `tls.TlsStream` view of a TLS connection; it panics on a plain one, so check
 `is_tls()` first.
 
@@ -72,11 +72,11 @@ spliced in by the compiler from the project's `http_pool` setting in
 | `post_text(url, body, content_type)` | `Response` | a `POST` of `body` with that `Content-Type`, sent through `default_client()`; panics on failure |
 | `Pool.send(req)` / `Pool.checkout(use_tls)` | `Result<Response, HttpErr>` / `Result<Lease, HttpErr>` | the pooled forms of the same |
 | `empty_headers()` | `List<Header>` | |
-| `Response.is_ok()` | `bool` | status in `200..299` |
+| `Response.isOk()` | `bool` | status in `200..299` |
 | `Response.text()` | `String` | the body as text |
-| `Response.has_header(name)` / `Response.header(name)` | `bool` / `String` | |
-| `Response.retry_after()` | `Option<u64>` | the `Retry-After` header, seconds form only (see below) |
-| `Response.rate_limit()` | `RateLimit` | the `X-RateLimit-*` bucket headers, each field `Option` |
+| `Response.hasHeader(name)` / `Response.header(name)` | `bool` / `String` | |
+| `Response.retryAfter()` | `Option<u64>` | the `Retry-After` header, seconds form only (see below) |
+| `Response.rateLimit()` | `RateLimit` | the `X-RateLimit-*` bucket headers, each field `Option` |
 | `send_fresh(...)`, `exchange(...)`, `one_exchange(...)` | `Response` | the lower-level steps, if you need them; each has a `_try` twin returning `Result<Response, HttpErr>` |
 
 Response header lookup is case-insensitive (`name_eq`). The body framing handles
@@ -146,11 +146,11 @@ net.connect: connection failed
 
 ### Rate limits
 
-`Response.retry_after()` parses the `Retry-After` header's **seconds form**
+`Response.retryAfter()` parses the `Retry-After` header's **seconds form**
 only (`Retry-After: 2`); the rarer HTTP-date form reads as `None` rather than
 being parsed, because turning a date into a delay needs a clock, and giving
 every `std/http` program a second capability (`time`) just for the rare 429
-case was rejected as too costly for what it buys. `Response.rate_limit()`
+case was rejected as too costly for what it buys. `Response.rateLimit()`
 reads `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`,
 `X-RateLimit-Reset-After` and `X-RateLimit-Bucket` into a `RateLimit`, each
 field `None` when the server didn't send that header. Neither method sleeps
@@ -161,7 +161,7 @@ policy (back off, queue, fail) to them.
 impl "std/result"
 val resp = result.expect(client.send(req), "send")
 if resp.status == 429 {
-    when resp.retry_after() {
+    when resp.retryAfter() {
         is Some(secs) -> print("retry after " + secs.to_str() + "s")
         is None -> print("no Retry-After header")
     }
@@ -187,9 +187,9 @@ its pool was small.
 | `Pool.checkout(use_tls: bool)` | `Lease` (`mut`) |
 | `Pool.release(lease, reusable: bool)` | `Unit` (`mut`) |
 | `Pool.size()` / `Pool.len()` | `int`: the keep count, and how many are idle |
-| `Pool.set_idle_timeout(ms)` | `Unit` (`mut`): `checkout` closes a connection idle for `ms` or longer instead of reusing it; 0 is off (the default) |
-| `Pool.close_idle(after_ms)` | `int` (`mut`): closes every connection idle for `after_ms` or longer, returns how many; `close_idle(0)` closes them all |
-| `Pool.close_all()` | `Unit` (`mut`) |
+| `Pool.setIdleTimeout(ms)` | `Unit` (`mut`): `checkout` closes a connection idle for `ms` or longer instead of reusing it; 0 is off (the default) |
+| `Pool.closeIdle(after_ms)` | `int` (`mut`): closes every connection idle for `after_ms` or longer, returns how many; `close_idle(0)` closes them all |
+| `Pool.closeAll()` | `Unit` (`mut`) |
 | `Lease.conn()` | `Conn` |
 
 `warm`/`checkout` take `use_tls` because a pool is keyed on `host:port` alone,
@@ -199,7 +199,7 @@ connection of the scheme asked for: a kept connection of the other scheme is
 closed and replaced by a fresh one, so an `https` request is never sent over a
 plain connection or the reverse.
 
-Idle time is measured on `net.mono_ms`, so `std/http` needs no `time` grant. Set
+Idle time is measured on `net.monoMs`, so `std/http` needs no `time` grant. Set
 the idle timeout below the server's own keep-alive timeout and a connection the
 peer has already closed is not the one a request gets; `close_idle` is for a
 program that talks to many hosts and wants to cap the descriptors it holds
@@ -219,9 +219,9 @@ a test wants a stable body. It panics on a bad boundary.
 
 ```kelp
 var form = http.multipart("kelp-7f3a91c2d4e5")
-form.add_field("content", "build finished")
-form.add_file("file", "report.txt", "text/plain", Bytes.from_str("ok"))
-val req = http.multipart_request("https://api.example.com/upload", &mut form)
+form.addField("content", "build finished")
+form.addFile("file", "report.txt", "text/plain", Bytes.from_str("ok"))
+val req = http.multipartRequest("https://api.example.com/upload", &mut form)
 ```
 
 | Function | What it does |
@@ -251,7 +251,7 @@ fun main() {
     )
     val resp = result.expect(client.send(req), "send")
     print(resp.status)
-    print(resp.is_ok())
+    print(resp.isOk())
     print(resp.text())
 }
 ```
@@ -304,13 +304,13 @@ pieces, each decoded; `text()` panics on invalid UTF-8.
 | Function | Returns | Notes |
 | --- | --- | --- |
 | `ServerRequest.header(name)` / `has_header(name)` | `String` / `bool` | case-insensitive, `""` when absent |
-| `ServerRequest.query_param(name)` | `Option<String>` | form-decoded; `?a` is `Some("")` |
-| `ServerRequest.path_segments()` | `List<String>` | `/users/42/` is `["users", "42"]` |
+| `ServerRequest.queryParam(name)` | `Option<String>` | form-decoded; `?a` is `Some("")` |
+| `ServerRequest.pathSegments()` | `List<String>` | `/users/42/` is `["users", "42"]` |
 | `ServerRequest.text()` | `String` | panics on invalid UTF-8 |
 | `ok_text(&str)` / `json(&str)` / `html(&str)` | `ServerResponse` | `200` with the matching `Content-Type` |
 | `status(code)` / `not_found()` / `bad_request(&str)` | `ServerResponse` | status, `404`, `400` |
-| `ServerResponse.with_header(name, value)` | `ServerResponse` | a copy with one more header |
-| `ServerResponse.add_header(name, value)` | `Unit` (`mut`) | grows the response in place |
+| `ServerResponse.withHeader(name, value)` | `ServerResponse` | a copy with one more header |
+| `ServerResponse.addHeader(name, value)` | `Unit` (`mut`) | grows the response in place |
 
 `Content-Length` is added automatically (not for `1xx`, `204` or `304`). A
 handler's own `Content-Length`, `Transfer-Encoding` and `Connection` headers are
@@ -321,7 +321,7 @@ Every body goes out with its head in one `send`.
 
 ### Limits
 
-`default_limits()` is the table below. `Limits.with_timeouts(head, body,
+`default_limits()` is the table below. `Limits.withTimeouts(head, body,
 idle)` returns a copy with other timeouts, and `Limits.dup()` copies one.
 Every violation is answered with its status and a closed connection.
 
@@ -362,7 +362,7 @@ token of any `Connection` header) closes.
 | --- | --- | --- |
 | `listen(port)` | `Server` | port `0` asks the kernel for a free one |
 | `Server.port()` | `u16` | the bound port |
-| `Server.set_accept_timeout(ms)` | `Unit` | `0` waits forever |
+| `Server.setAcceptTimeout(ms)` | `Unit` | `0` waits forever |
 | `Server.accept()` | `Result<ServerConn, HttpErr>` | |
 | `Server.close()` | `Unit` | |
 | `ServerConn.read_request(&Limits)` | `Result<ServerRequest, HttpErr>` | |
@@ -390,7 +390,7 @@ discarded for at most 250 ms and 1 MiB, then `close`.
 | `serve_on(&Server, handler, &Limits, max_requests)` | the same on a listener you hold |
 | `serve_threaded(port, handler, workers)` | forever, `workers` threads on one listener |
 | `serve_threaded_on(&Server, handler, &Limits, workers, idle_ms)` | returns `u64`; each worker stops after `idle_ms` with no client (`0` never stops) |
-| `default_limits()` / `Limits.with_timeouts(head, body, idle)` / `Limits.dup()` | |
+| `default_limits()` / `Limits.withTimeouts(head, body, idle)` / `Limits.dup()` | |
 
 `handler` is a plain `fun(&ServerRequest) => ServerResponse` function value, so
 nothing borrowed crosses a thread. `serve_on` and `serve_threaded_on` exist
@@ -409,16 +409,16 @@ impl "std/thread"
 
 fun handle(req: &http.ServerRequest) => http.ServerResponse {
     if str.eq(req.path.as_str(), "/ping") {
-        return http.ok_text("pong\n")
+        return http.okText("pong\n")
     }
-    return http.not_found()
+    return http.notFound()
 }
 
 fun client(port: u16) => String {
     var out = String.empty()
 
     val a = result.expect(net.connect("127.0.0.1", port), "connect")
-    net.send_text(a, "GET /ping HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n")
+    net.sendText(a, "GET /ping HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n")
     val ok = result.expect(net.recv(a, 4096), "recv")
     out.push_str(ok.as_str())
     net.close(a)
@@ -433,7 +433,7 @@ fun client(port: u16) => String {
     }
     over.push_str(" HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n")
     val b = result.expect(net.connect("127.0.0.1", port), "connect")
-    net.send_text(b, over.as_str())
+    net.sendText(b, over.as_str())
     val bad = result.expect(net.recv(b, 4096), "recv")
     out.push_str(bad.as_str())
     net.close(b)
@@ -485,7 +485,7 @@ connection limit, and `Expect` on anything but `100-continue`.
 
 ### Serving HTTPS
 
-`http.serve_tls(port, config, handler)`, `serve_tls_n(port, config, handler, max_requests)`
+`http.serveTls(port, config, handler)`, `serve_tls_n(port, config, handler, max_requests)`
 and `serve_tls_on(&server, config, handler, &limits, max_requests)` are `serve`,
 `serve_n` and `serve_on` with every accepted connection put through
 [`tls.accept`](/stdlib/tls#serving-tls) first. `config` is a `tls.ServerConfig`,
@@ -495,13 +495,13 @@ is required, no common protocol, a reset) costs that socket and nothing else: it
 is closed and the loop goes on. `serve_tls_n` returns the number of requests
 answered. Like `net.listen`, `serve_tls` binds every interface only when the
 `net` grant admits every interface, and `127.0.0.1` otherwise; to bind one host
-by name, listen with `http.listen_on("127.0.0.1", port)` and serve with
+by name, listen with `http.listenOn("127.0.0.1", port)` and serve with
 `serve_tls_on`.
 
-On the client side, `http.get_tls(url, &opts)` and
+On the client side, `http.getTls(url, &opts)` and
 `Client.send_tls(req, &opts)` take a `tls.TlsClientOptions` (private CA as
 PEM bytes, client certificate, ALPN). The CA bytes come from
-`tlsfile.ca_pem(path)`, which needs an `fs` grant; there is no `ca_file` option.
+`tlsfile.caPem(path)`, which needs an `fs` grant; there is no `ca_file` option.
 
 This program serves one HTTPS request on a second thread and fetches it with a
 private CA (the certificate files are made as in
@@ -515,12 +515,12 @@ impl "std/tlsfile" caps(fs = ["/etc/myapp/certs/**"])
 impl "std/thread"
 
 fun hello(req: &http.ServerRequest) => http.ServerResponse {
-    return http.ok_text("hello over tls")
+    return http.okText("hello over tls")
 }
 
 fun serve(fd: i32) => u64 {
-    val cert = tlsfile.read_pem("/etc/myapp/certs/server.pem", "certificate chain")
-    val key = tlsfile.read_pem("/etc/myapp/certs/server.key", "private key")
+    val cert = tlsfile.readPem("/etc/myapp/certs/server.pem", "certificate chain")
+    val key = tlsfile.readPem("/etc/myapp/certs/server.key", "private key")
     return when cert {
         Ok(c) -> when key {
             Ok(k) -> serve_with(c, k, fd)
@@ -531,7 +531,7 @@ fun serve(fd: i32) => u64 {
 }
 
 fun serve_with(cert: move Bytes, key: move Bytes, fd: i32) => u64 {
-    return when tls.server_config_pem(cert, key) {
+    return when tls.serverConfigPem(cert, key) {
         Ok(cfg) -> {
             val server = http.Server(fd = fd)
             val limits = http.default_limits()
@@ -545,7 +545,7 @@ fun serve_with(cert: move Bytes, key: move Bytes, fd: i32) => u64 {
 
 fun main() {
     val server = http.listen(0)
-    server.set_accept_timeout(10000)
+    server.setAcceptTimeout(10000)
     val port = server.port()
     val h = thread.spawn(serve, server.fd)
 
@@ -553,15 +553,15 @@ fun main() {
     val digits = port.toText()
     url.push_str(digits.as_str())
     url.push_str("/")
-    when tlsfile.ca_pem("/etc/myapp/certs/ca.pem") {
+    when tlsfile.caPem("/etc/myapp/certs/ca.pem") {
         Ok(ca) -> {
-            val opts = tls.client_options().with_ca_pem(ca).with_timeout_ms(10000)
-            when http.get_tls(url.as_str(), &opts) {
+            val opts = tls.clientOptions().withCaPem(ca).withTimeoutMs(10000)
+            when http.getTls(url.as_str(), &opts) {
                 Ok(resp) -> {
                     print(resp.status)
                     print(String.from_bytes(resp.body.clone()))
                 }
-                Err(e) -> print(http.http_error_text(&e))
+                Err(e) -> print(http.httpErrorText(&e))
             }
         }
         Err(_) -> print("cannot read the CA file")

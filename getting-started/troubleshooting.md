@@ -101,7 +101,7 @@ impl "std/fs" caps(fs = ["/tmp/kelp-sandbox/vault/**"])
 
 fun read(name: str) => String {
     val path = str.concat("/tmp/kelp-sandbox/vault/", name)
-    return fs.read_text(path.as_str())
+    return fs.readText(path.as_str())
 }
 ```
 

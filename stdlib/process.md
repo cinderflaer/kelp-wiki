@@ -52,7 +52,7 @@ datac Child(
 | `run_inherit_in(dir, program, args)` | `RunResult` | the same with `dir` first; kept for one cycle |
 | `executable(program)` | `bool` | |
 | `Child.wait()` | `i32` | exit code; `mut` receiver |
-| `Child.is_running()` | `bool` | `mut` receiver |
+| `Child.isRunning()` | `bool` | `mut` receiver |
 | `Child.kill(signal: i32)` | `Unit` | |
 | `exit(code: i32)` | `Unit` | ends the process with that status |
 | `getpid()` | `i64` | |
@@ -86,7 +86,7 @@ fun main() {
     print(process.executable("/nope/nope"))
 
     val bad = process.run("/nope/nope", argv_tail)
-    print(result.is_err(bad))
+    print(result.isErr(bad))
 }
 ```
 

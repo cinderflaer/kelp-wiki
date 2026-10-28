@@ -13,7 +13,7 @@ It is the smallest example that combines a filesystem walk with a pattern filter
 | --- | --- |
 | Source | [`src/count-lines-in-kelp-tree.kp`](https://homelabone.xenoo.dev/gittea/Lilly/kelp-wiki-wikijs/raw/branch/main/examples/src/count-lines-in-kelp-tree.kp) |
 | Needs | `glob = "Lilly/fpl/glob"` |
-| Shows | `fs.walk`, `glob.glob_filter`, `fs.is_file`, `std/path`, a running total |
+| Shows | `fs.walk`, `glob.glob_filter`, `fs.isFile`, `std/path`, a running total |
 
 ## The dependency
 
@@ -33,9 +33,9 @@ impl "std/path"
 // Printing the file name keeps the output short; the walk returns full paths,
 // and they are absolute because a gated call needs one.
 fun report(file: str, lines: usize) {
-    val name = path.file_name(file)
+    val name = path.fileName(file)
     val number = lines.toText()
-    val count = fmt.pad_left(number.as_str(), 6, ' ')
+    val count = fmt.padLeft(number.as_str(), 6, ' ')
     val line = str.concat(count.as_str(), "  ")
     print(str.concat(line.as_str(), name))
 }
@@ -44,7 +44,7 @@ fun report(file: str, lines: usize) {
 // call still receives an absolute path: `fs` patterns are absolute, and the
 // capability check normalizes before it matches.
 fun absolute_or_here(name: str, here: str) => String {
-    if path.is_absolute(name) {
+    if path.isAbsolute(name) {
         return String.from_str(name)
     }
     return path.absolute(here, name)
@@ -72,8 +72,8 @@ fun main() {
     var i: int = 0
     while i < candidates.len() {
         val entry = candidates.get(i)
-        if fs.is_file(entry.as_str()) {
-            val lines = fs.read_lines(entry.as_str())
+        if fs.isFile(entry.as_str()) {
+            val lines = fs.readLines(entry.as_str())
             report(entry.as_str(), lines.len())
             total += lines.len().to_i64()
             counted += 1
@@ -132,9 +132,9 @@ when the examples do.
 ## What to take from it
 
 - **`fs.walk` returns full paths, and directories too.** The filter keeps the
-  `.kp` names and `fs.is_file` drops the directories, which is why both calls are
+  `.kp` names and `fs.isFile` drops the directories, which is why both calls are
   there. Without the second, the program would try to read a directory as a file.
-- **A gated call takes an absolute path.** `fs.read_text("notes.txt")` panics with
+- **A gated call takes an absolute path.** `fs.readText("notes.txt")` panics with
   "is outside the fs capability granted to module ..." even under a `/**` grant,
   because the matcher compares absolute patterns, so a relative argument is
   resolved with `path.absolute(fs.cwd(), arg)` first. The directory argument is

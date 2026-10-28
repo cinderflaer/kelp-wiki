@@ -1149,7 +1149,7 @@ order: a libc-free `str` surface, an address-of-function form (plus the `interru
 stage 5 deferred), and a usable panic message.
 
 **Stage 7 closed two of those three.** A freestanding program now has `str.len`,
-`str.byte`, `str.eq`, `str.starts_with` and `str.ptr`, lowered as byte loops inside
+`str.byte`, `str.eq`, `str.startsWith` and `str.ptr`, lowered as byte loops inside
 the module by the LLVM backend (no `strlen`, no C object), with every other
 `std/str` function refused by name and pruned from the program before inference;
 `kelpc/tests/fixtures/examples/kernel0` prints its greeting through `puts(s: str)` and its panic

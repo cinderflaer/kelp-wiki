@@ -65,7 +65,7 @@ iframe.srcdoc = response  <---                       <---    text/plain (the HTM
 | The route | nginx `/webkelpplay/` | static page, and `/webkelpplay/api/` proxied to the service |
 
 Kelp's `std/http` is a client only, so the server is written directly on `std/net`: `net.listen`,
-`net.accept`, `net.recv` and `net.send_all`. It handles one request per connection, one connection at
+`net.accept`, `net.recv` and `net.sendAll`. It handles one request per connection, one connection at
 a time. The compiler is fast enough (a few milliseconds for a normal page) that this is plenty.
 
 ### The API

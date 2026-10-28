@@ -22,23 +22,23 @@ own `Option` or `Result` keeps its own type.
 | `Option<T>` or `option.Option<T>` | none (`impl "std/option"` still works) | `Some(value)`, `None` |
 | `Result<T, E>` or `result.Result<T, E>` | none (`impl "std/result"` still works) | `Ok(value)`, `Err(error)` |
 
-Each module provides free functions such as `option.is_none(o = maybe)`, and most
-of them also exist as methods, such as `maybe.is_none()`. See
+Each module provides free functions such as `option.isNone(o = maybe)`, and most
+of them also exist as methods, such as `maybe.isNone()`. See
 [`std/option`](/stdlib/option) and [`std/result`](/stdlib/result).
 
 ```kelp
 fun main() {
-    val parsed = str.parse_i64(s = "41")
+    val parsed = str.parseI64(s = "41")
     if let Ok(n) = parsed {
         print(n + 1)
     }
 
     val maybe: Option<i32> = Option.None
-    if option.is_none(o = maybe) {
+    if option.isNone(o = maybe) {
         print("nothing")
     }
 
-    print(result.unwrap_or(r = parsed, fallback = 0))
+    print(result.unwrapOr(r = parsed, fallback = 0))
 }
 ```
 
@@ -66,7 +66,7 @@ fun quarter(n: i64) => result.Result<i64, str.ParseErr> {
   the error names both types and the impl to write. `Option` has no failure
   payload, so it never converts. See
   [Generic traits, `From` and `?` conversion](/language/generic-traits).
-  For a one-off conversion, `result.map_err` also works.
+  For a one-off conversion, `result.mapErr` also works.
 - A function that returns `unit` has nowhere to propagate to. `main` may return
   `result.Result<unit, E>` instead, and then `?` works at the top level. See
   [Returning Result from `main`](#returning-result-from-main).

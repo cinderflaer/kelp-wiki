@@ -39,7 +39,7 @@ fun main() {
     val big = list.filter(xs, fun(x: &i64) => bool = x > 1)
     print(big.len())                        // 2
 
-    val at = list.find_index(xs, fun(x: &i64) => bool = x == 3)
+    val at = list.findIndex(xs, fun(x: &i64) => bool = x == 3)
     if let Some(i) = at {
         print(i)                            // 2
     }

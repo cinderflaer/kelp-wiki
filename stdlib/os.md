@@ -13,9 +13,9 @@ impl "std/os" caps(env = ["APP_*"], machine = [], fs = ["/tmp/**"])
 
 fun main() {
     print(os.hostname())
-    os.set_env_var("APP_MODE", "test")
-    val template = str.concat(os.temp_dir(), "/app-XXXXXX")
-    val made = os.make_temp_dir(template)
+    os.setEnvVar("APP_MODE", "test")
+    val template = str.concat(os.tempDir(), "/app-XXXXXX")
+    val made = os.makeTempDir(template)
     let Ok(dir) = &made else { panic("no directory") }
     print(dir.path())
 }
@@ -73,11 +73,11 @@ gives `args()` with no grant.
 impl "std/os" caps(env = ["APP_*"])
 
 fun main() {
-    os.set_env_var("APP_MODE", "test")
-    val mode = os.env_var("APP_MODE")
+    os.setEnvVar("APP_MODE", "test")
+    val mode = os.envVar("APP_MODE")
     let Some(value) = mode else { panic("APP_MODE is unset") }
     print(value)
-    os.unset_env_var("APP_MODE")
+    os.unsetEnvVar("APP_MODE")
 }
 ```
 
@@ -104,12 +104,12 @@ impl "std/os" caps(fs = ["/tmp/**"], machine = [])
 impl "std/fs" caps(fs = ["/tmp/**"])
 
 fun main() {
-    val td = os.temp_dir()
+    val td = os.tempDir()
     val template = str.concat(td, "/build-XXXXXX")
-    val made = os.make_temp_dir(template)
+    val made = os.makeTempDir(template)
     let Ok(dir) = &made else { panic("no directory") }
-    fs.write_text(str.concat(dir.path(), "/log.txt"), "ok")
-    print(fs.is_dir(dir.path()))
+    fs.writeText(str.concat(dir.path(), "/log.txt"), "ok")
+    print(fs.isDir(dir.path()))
 }   // dir is dropped here, and the directory and its contents are removed
 ```
 

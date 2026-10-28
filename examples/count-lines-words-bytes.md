@@ -21,10 +21,10 @@ It is the closest of the examples to a shell one-liner, `wc`.
 impl "std/fs"
 impl "std/process"
 
-fun is_space(c: u8) => bool = c == ' ' || c == '\t' || c == '\n' || c == '\r'
+fun isSpace(c: u8) => bool = c == ' ' || c == '\t' || c == '\n' || c == '\r'
 
 fun report(label: str, n: i64) {
-    val padded = fmt.pad_right(label, 8, ' ')
+    val padded = fmt.padRight(label, 8, ' ')
     val count = n.toText()
     print(str.concat(padded.as_str(), count.as_str()))
 }
@@ -37,7 +37,7 @@ fun main() {
     }
 
     val path = argv.get(1)
-    val text = fs.read_text(path.as_str())
+    val text = fs.readText(path.as_str())
     val s = text.as_str()
     val bytes = str.len(s)
 
@@ -90,13 +90,13 @@ bytes   54
 
 ## What to take from it
 
-- **Text is bytes.** `str.len` and `str.byte` count and index bytes; `str.char_count`
+- **Text is bytes.** `str.len` and `str.byte` count and index bytes; `str.charCount`
   would be the codepoint-oriented pair. The whole loop is `u8` work.
 - **A character literal takes the type its context needs**, which is why
   `if c == '\n'` needs no cast: `c` is a `u8`, so the literal is one.
 - **Output is built, not concatenated with `+`.** There is no `+` on strings:
   `str.concat(a, b)` allocates, `fmt.*` formats, and `String.push_str` appends in
-  place. Note that `fmt.pad_right(...)` and `(...).toText()` are bound to `val`s
+  place. Note that `fmt.padRight(...)` and `(...).toText()` are bound to `val`s
   before `.as_str()` is taken: `.as_str()` on a temporary is refused.
 - **`process.exit(2)` is the only way to fail a program by exit code**
   ([`panic`](/language/errors) also exits non-zero, with a message).

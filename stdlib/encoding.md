@@ -21,35 +21,35 @@ error to say.
 
 | Function | Returns | Notes |
 | --- | --- | --- |
-| `encoding.base64_encode(b: &Bytes)` | `String` | RFC 4648 §4 alphabet, `=` padded |
-| `encoding.base64_decode(s: &str)` | `Result<Bytes, DecodeErr>` | length must be a multiple of 4 |
-| `encoding.base32_encode(b: &Bytes)` | `String` | RFC 4648 §6 alphabet (`A`-`Z`, `2`-`7`), `=` padded to 8 |
-| `encoding.base32_decode(s: &str)` | `Result<Bytes, DecodeErr>` | length must be a multiple of 8 |
-| `encoding.base58_encode(b: &Bytes)` | `String` | Bitcoin alphabet, no padding |
-| `encoding.base58_decode(s: &str)` | `Result<Bytes, DecodeErr>` | |
-| `encoding.hex_encode(b: &Bytes)` | `String` | lowercase, two characters per byte |
-| `encoding.hex_decode(s: &str)` | `Result<Bytes, DecodeErr>` | either case, even length |
-| `encoding.hex_value(c: u8)` | `option.Option<u8>` | the value of one hex digit, either case; `None` for anything else |
-| `encoding.hex_upper(nibble: u8)` / `encoding.hex_lower(nibble: u8)` | `u8` | the ASCII digit for a value from 0 to 15, in uppercase or lowercase |
-| `encoding.percent_encode(s: &str)` | `String` | RFC 3986 §2.3, a space is `%20` |
-| `encoding.percent_decode(s: &str)` | `Result<String, DecodeErr>` | `+` is left alone |
-| `encoding.form_encode(s: &str)` | `String` | form-urlencoded: a space is `+` |
-| `encoding.form_decode(s: &str)` | `Result<String, DecodeErr>` | `+` is a space |
+| `encoding.base64Encode(b: &Bytes)` | `String` | RFC 4648 §4 alphabet, `=` padded |
+| `encoding.base64Decode(s: &str)` | `Result<Bytes, DecodeErr>` | length must be a multiple of 4 |
+| `encoding.base32Encode(b: &Bytes)` | `String` | RFC 4648 §6 alphabet (`A`-`Z`, `2`-`7`), `=` padded to 8 |
+| `encoding.base32Decode(s: &str)` | `Result<Bytes, DecodeErr>` | length must be a multiple of 8 |
+| `encoding.base58Encode(b: &Bytes)` | `String` | Bitcoin alphabet, no padding |
+| `encoding.base58Decode(s: &str)` | `Result<Bytes, DecodeErr>` | |
+| `encoding.hexEncode(b: &Bytes)` | `String` | lowercase, two characters per byte |
+| `encoding.hexDecode(s: &str)` | `Result<Bytes, DecodeErr>` | either case, even length |
+| `encoding.hexValue(c: u8)` | `option.Option<u8>` | the value of one hex digit, either case; `None` for anything else |
+| `encoding.hexUpper(nibble: u8)` / `encoding.hexLower(nibble: u8)` | `u8` | the ASCII digit for a value from 0 to 15, in uppercase or lowercase |
+| `encoding.percentEncode(s: &str)` | `String` | RFC 3986 §2.3, a space is `%20` |
+| `encoding.percentDecode(s: &str)` | `Result<String, DecodeErr>` | `+` is left alone |
+| `encoding.formEncode(s: &str)` | `String` | form-urlencoded: a space is `+` |
+| `encoding.formDecode(s: &str)` | `Result<String, DecodeErr>` | `+` is a space |
 | `encoding.dump(b: &Bytes)` | `String` | a `hexdump -C`-shaped rendering |
-| `encoding.sha1(b: &Bytes)` | `Bytes` | the 20-byte SHA-1 digest, big-endian; `encoding.hex_encode(encoding.sha1(b))` is the hex spelling |
+| `encoding.sha1(b: &Bytes)` | `Bytes` | the 20-byte SHA-1 digest, big-endian; `encoding.hexEncode(encoding.sha1(b))` is the hex spelling |
 
 ```kelp
 impl "std/encoding"
 
 fun main() {
     val b = Bytes.from_str("hello")
-    print(encoding.base64_encode(b))          // aGVsbG8=
-    print(encoding.hex_encode(b))             // 68656c6c6f
-    print(encoding.base32_encode(b))          // NBSWY3DP
-    print(encoding.percent_encode("a b/c"))   // a%20b%2Fc
-    print(encoding.hex_encode(encoding.sha1(Bytes.from_str("abc"))))   // sha1("abc")
+    print(encoding.base64Encode(b))          // aGVsbG8=
+    print(encoding.hexEncode(b))             // 68656c6c6f
+    print(encoding.base32Encode(b))          // NBSWY3DP
+    print(encoding.percentEncode("a b/c"))   // a%20b%2Fc
+    print(encoding.hexEncode(encoding.sha1(Bytes.from_str("abc"))))   // sha1("abc")
 
-    val r = encoding.base64_decode("aGVsbG8=")
+    val r = encoding.base64Decode("aGVsbG8=")
     if let Ok(decoded) = r {
         print(String.from_bytes(decoded))
     }
@@ -68,7 +68,7 @@ hello
 ## Notes
 
 - **A decoder's payload binds by value out of an owned result**: `val r =
-  encoding.base64_decode(..)` then `if let Ok(decoded) = r` gives you the `Bytes`
+  encoding.base64Decode(..)` then `if let Ok(decoded) = r` gives you the `Bytes`
   itself, so `String.from_bytes(decoded)` adopts that buffer. Match a `&Result`
   instead and the payload binds as a borrow, and then the copy out is explicit
   (`decoded.clone()`). The same holds for `percent_decode`, whose payload is a
@@ -91,13 +91,13 @@ hello
   RFC 3174 with no streaming state: the whole message is padded into one buffer.
 - **Whitespace is not skipped by any decoder.** If the source may contain line
   breaks, trim or join it first.
-- `encoding.hex_encode` is the buffer spelling. `fmt.hex` is a different
+- `encoding.hexEncode` is the buffer spelling. `fmt.hex` is a different
   function: one `u64` without leading zeros.
 
 ## See also
 
-- [`std/fmt`](/stdlib/fmt) for `fmt.hex`, `fmt.pad_left` and numbers
+- [`std/fmt`](/stdlib/fmt) for `fmt.hex`, `fmt.padLeft` and numbers
 - [`std/result`](/stdlib/result) for the failure payload the decoders hand back
-- [`std/str`](/stdlib/str) for `str.byte`, `str.len` and `str.is_digit`, which
+- [`std/str`](/stdlib/str) for `str.byte`, `str.len` and `str.isDigit`, which
   the alphabets are read through
 - [`std/ws`](/stdlib/ws) for the `Sec-WebSocket-Accept` check that uses `sha1`

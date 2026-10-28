@@ -41,22 +41,22 @@ datac File(val fd: i32)
 
 | Function | Returns | Notes |
 | --- | --- | --- |
-| `io.buf_reader(f: File)` | `BufReader` | |
-| `BufReader.read_line_into(out: mut String)` | `bool` | fills `out`, `false` at EOF |
-| `BufReader.read_line()` | `option.Option<String>` | `None` at EOF |
-| `BufReader.read_all()` | `Bytes` | |
-| `io.read_line()` | `option.Option<String>` | one line from stdin |
-| `io.read_lines()` | `List<String>` | every line of stdin |
-| `io.read_all()` | `Bytes` | all of stdin |
+| `io.bufReader(f: File)` | `BufReader` | |
+| `BufReader.readLineInto(out: mut String)` | `bool` | fills `out`, `false` at EOF |
+| `BufReader.readLine()` | `option.Option<String>` | `None` at EOF |
+| `BufReader.readAll()` | `Bytes` | |
+| `io.readLine()` | `option.Option<String>` | one line from stdin |
+| `io.readLines()` | `List<String>` | every line of stdin |
+| `io.readAll()` | `Bytes` | all of stdin |
 
 ## Printing
 
 | Function | Writes |
 | --- | --- |
 | `io.print(s: &str)` | the text and a newline, to stdout |
-| `io.print_bare(s: &str)` | the text, no newline |
+| `io.printBare(s: &str)` | the text, no newline |
 | `io.eprint(s: &str)` | the text and a newline, to stderr |
-| `io.eprint_bare(s: &str)` | the text, no newline |
+| `io.eprintBare(s: &str)` | the text, no newline |
 
 These take a `str`, so a `String` needs `.as_str()`. The builtin `print`/`print!`
 handle scalars and templates; these two are for text you have already built.
@@ -66,12 +66,12 @@ impl "std/io"
 
 fun main() {
     io.print("to stdout")
-    io.print_bare("no newline")
+    io.printBare("no newline")
     io.print("")
     io.eprint("to stderr")
 
     val out = io.stdout()
-    print(out.write_str("written through File\n"))
+    print(out.writeStr("written through File\n"))
     out.flush()
 }
 ```
@@ -85,7 +85,7 @@ datac IoErr(val errno: i32, val message: String)
 A failed syscall, as a value: the POSIX `errno` and its text. `errno` is 0 when
 the failure is not a syscall at all (a file that is not valid UTF-8), and
 `message` is then the whole story. The fallible `fs` functions return it
-([`fs.read`](/stdlib/fs) and friends), and `io.errno_text(errno)` turns any
+([`fs.read`](/stdlib/fs) and friends), and `io.errnoText(errno)` turns any
 number into its text, so `errno_text(13)` is `"Permission denied"`.
 
 ## Notes

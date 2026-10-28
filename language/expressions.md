@@ -52,7 +52,7 @@ val c = 7.0 / 2.0    // 3.5
   matters, use the checked or saturating helpers in
   [`mathx`](/libraries/mathx).
 - Float arithmetic is IEEE: `nan`, `inf` and `-0.0` behave as usual, and
-  `math.is_nan` / `math.is_finite` exist to test them.
+  `math.isNan` / `math.isFinite` exist to test them.
 - A `datac` or `enum` gets `+ - * / %`, unary `-` and `< <= > >=` by implementing
   the [`std/ops`](/language/operator-traits) traits, and `"${x}"` and `print(x)` by
   implementing `fmt.Display`; see

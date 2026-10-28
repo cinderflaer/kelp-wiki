@@ -102,18 +102,18 @@ datac Captures(val text: String, val slots: List<i32>)
 
 ```kelp
 regex.compile(pattern: &str) => result.Result<Regex, RegexErr>
-regex.is_match(pattern: &str, text: &str) => bool          // panics on a bad pattern
-Regex.is_match(&str) => bool
+regex.isMatch(pattern: &str, text: &str) => bool          // panics on a bad pattern
+Regex.isMatch(&str) => bool
 Regex.find(&str) => option.Option<Match>
-Regex.find_at(&str, start: int) => option.Option<Match>
+Regex.findAt(&str, start: int) => option.Option<Match>
 Regex.captures(&str) => option.Option<Captures>
-Regex.find_all(&str) => List<Match>
+Regex.findAll(&str) => List<Match>
 Regex.replace(&str, replacement: &str) => String
-Regex.replace_all(&str, replacement: &str) => String
+Regex.replaceAll(&str, replacement: &str) => String
 Regex.split(&str) => List<String>
 Regex.steps() => i64
-Regex.reset_steps()
-Regex.group_count() => int
+Regex.resetSteps()
+Regex.groupCount() => int
 Captures.get(i: int) => option.Option<String>
 Captures.span(i: int) => option.Option<Match>
 Captures.len() => int                                    // groups including group 0
@@ -203,8 +203,8 @@ fun repeated(unit: str, times: int, tail: str) => String {
 
 fun main() {
     var word = compile_or_die("[a-z]+")
-    print(word.is_match("123 abc"))
-    print(word.is_match("123 456"))
+    print(word.isMatch("123 abc"))
+    print(word.isMatch("123 456"))
     if let Some(m) = word.find("one two") {
         print("find: ${m.start}..${m.end} ${m.text}")
     }
@@ -220,7 +220,7 @@ fun main() {
     }
 
     var digits = compile_or_die("(\\d+)")
-    print(digits.replace_all("a1b22", "[$1]"))
+    print(digits.replaceAll("a1b22", "[$1]"))
     print(digits.replace("a1b22", "<$0>"))
 
     var comma = compile_or_die(",\\s*")
@@ -237,14 +237,14 @@ fun main() {
     // roughly doubles the steps, not squares them.
     val bomb = repeated("a", 30, "b")
     var p = compile_or_die("(a+)+$")
-    p.reset_steps()
-    print(p.is_match(bomb.as_str()))
+    p.resetSteps()
+    print(p.isMatch(bomb.as_str()))
     print(p.steps())
 
     val bomb2 = repeated("a", 60, "b")
     var p2 = compile_or_die("(a+)+$")
-    p2.reset_steps()
-    print(p2.is_match(bomb2.as_str()))
+    p2.resetSteps()
+    print(p2.isMatch(bomb2.as_str()))
     print(p2.steps())
 }
 ```

@@ -42,17 +42,17 @@ fun main() {
     print("hash       fnv1a64 = ${hash.fnv1a_64_str(text)}")
 
     val bytes = Bytes.from_str(text)
-    val encoded = encoding.base64_encode(&bytes)
+    val encoded = encoding.base64Encode(&bytes)
     print("encoding   base64  = ${encoded}")
 
-    val decoded = encoding.base64_decode(encoded.as_str())
+    val decoded = encoding.base64Decode(encoded.as_str())
     if let Ok(round_trip) = decoded {
         print("encoding   round trip = ${round_trip.as_str()}")
     }
 
-    val escaped = encoding.percent_encode("kelp lang/1?q=a b")
+    val escaped = encoding.percentEncode("kelp lang/1?q=a b")
     print("encoding   percent = ${escaped}")
-    val unescaped = encoding.percent_decode(escaped.as_str())
+    val unescaped = encoding.percentDecode(escaped.as_str())
     if let Ok(plain) = unescaped {
         print("encoding   unescaped = ${plain.as_str()}")
     }
@@ -66,13 +66,13 @@ fun main() {
 
     val parsed = datetime.parse_iso8601("2024-02-29T12:34:56Z")
     if let Ok(moment) = parsed {
-        print("datetime   parsed seconds = ${datetime.to_unix(moment)}")
+        print("datetime   parsed seconds = ${datetime.toUnix(moment)}")
         print("datetime   days from epoch = ${datetime.days_from_civil(1970, 1, 2)}")
     }
 
     // A bad escape is a value, not a panic.
-    val broken = encoding.percent_decode("%zz")
-    print("encoding   %zz is an error = ${result.is_err(broken)}")
+    val broken = encoding.percentDecode("%zz")
+    print("encoding   %zz is an error = ${result.isErr(broken)}")
 }
 ```
 
@@ -112,7 +112,7 @@ shell tool prints for `kelp` too.
   `kelp%20lang%2F1%3Fq%3Da%20b`, and a space is `%20`, never `+`.
 - **`percent_decode` is URL decoding, not form decoding.** A `+` stays a `+`.
 - **Decoding returns a `Result`,** so a malformed escape is a value: `%zz` is
-  `Err(Invalid)`. The program asks `result.is_err`, which is a free function in
+  `Err(Invalid)`. The program asks `result.isErr`, which is a free function in
   `std/result`, not a method.
 - **`base64_decode` refuses whitespace** rather than skipping it, so text read
   from a file with line breaks needs the break removed first.

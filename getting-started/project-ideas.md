@@ -26,15 +26,15 @@ small program looks like in Kelp:
 
 | Idea | What it uses | What it teaches |
 | --- | --- | --- |
-| `tail`, the other half of [your first tool](/getting-started/first-tool) | `fs.read_lines`, a descending `while` | indexing from the end, and a loop whose exit is in its condition |
-| A line-numbered printout, like `cat -n` | `fmt.pad_left`, a counter | keeping a running index while you walk a list |
-| A palindrome and anagram checker | `str.char_at`, `List<i32>.sort` | byte against character indices, sorting in place |
+| `tail`, the other half of [your first tool](/getting-started/first-tool) | `fs.readLines`, a descending `while` | indexing from the end, and a loop whose exit is in its condition |
+| A line-numbered printout, like `cat -n` | `fmt.padLeft`, a counter | keeping a running index while you walk a list |
+| A palindrome and anagram checker | `str.charAt`, `List<i32>.sort` | byte against character indices, sorting in place |
 | Collatz lengths for 1 to 100 | `while`, `i64` | integer division and modulo, and finding the longest by hand |
-| Roman numerals, both directions | `String.push_str`, `str.parse_i64` | building text a piece at a time |
-| A right-aligned multiplication table | `fmt.pad_left`, `n.toText()` | formatting into a `String` rather than printing pieces |
+| Roman numerals, both directions | `String.push_str`, `str.parseI64` | building text a piece at a time |
+| A right-aligned multiplication table | `fmt.padLeft`, `n.toText()` | formatting into a `String` rather than printing pieces |
 | A dice roller with a histogram | `rand.below`, `str.repeat` | a capability grant, and a `Map` as a counter |
-| A passphrase from a word list on disk | `fs.read_lines`, `rand.below` | two grants in one program, and resolving a relative path with `fs.cwd` |
-| Countdown to a date | `time.now_unix` | the `time` grant, and integer date arithmetic |
+| A passphrase from a word list on disk | `fs.readLines`, `rand.below` | two grants in one program, and resolving a relative path with `fs.cwd` |
+| Countdown to a date | `time.nowUnix` | the `time` grant, and integer date arithmetic |
 
 ## Rung 2: one library from the catalogue
 
@@ -85,8 +85,8 @@ fun main() {
         val f = c.to_f64() * 9.0 / 5.0 + 32.0
         val c_text = c.toText()
         val f_text = f.toText(1)
-        val left = fmt.pad_left(c_text.as_str(), 4, ' ')
-        val right = fmt.pad_left(f_text.as_str(), 6, ' ')
+        val left = fmt.padLeft(c_text.as_str(), 4, ' ')
+        val right = fmt.padLeft(f_text.as_str(), 6, ' ')
         print(str.concat(left.as_str(), right.as_str()))
         c += 10
     }

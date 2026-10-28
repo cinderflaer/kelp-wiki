@@ -73,7 +73,7 @@ Rules the checker enforces:
   holds a borrow pins its owner until the binding is last read; after that the
   owner may be mutated, moved or reassigned. A borrow taken *inside an
   initializer* still ends with that statement, because the bound value does not
-  borrow it: so `val back = str.parse_i64(cand.as_str())` borrows `cand` for one
+  borrow it: so `val back = str.parseI64(cand.as_str())` borrows `cand` for one
   call and keeps nothing of it, and `return cand` a few lines later is fine. A
   binding that *is* the borrow (`val v = l.get(0)`) pins its owner until `v`'s
   last use, and a use inside a loop body counts for every iteration, so the
@@ -297,7 +297,7 @@ fun peek_word(h: &Held) => usize = when h {
 ```
 
 Some helpers take their receiver as a borrow, and they only work on `Copy`
-payloads. Examples are the methods `o.or_else(f)` and `r.and_then(f)`. Others take the
+payloads. Examples are the methods `o.orElse(f)` and `r.andThen(f)`. Others take the
 receiver with `move`, so they also work on owned payloads. Examples are
 `option.unwrap` on an `Option<String>` and `result.map` on a `Result<T, MyErr>`.
 

@@ -45,16 +45,16 @@ impl "std/path"
 
 fun main() {
     val p = "/srv/data/report.csv"
-    print(path.is_absolute(p))
-    print(path.file_name(p))
+    print(path.isAbsolute(p))
+    print(path.fileName(p))
     print(path.extension(p))
     print(path.stem(p))
     print(path.parent(p))
-    print(path.has_extension(p, "csv"))
+    print(path.hasExtension(p, "csv"))
     print(path.join("/srv/data", "other.txt"))
     val parts = path.split(p)
     print(parts.len())
-    print(path.join_all(parts))
+    print(path.joinAll(parts))
 }
 ```
 

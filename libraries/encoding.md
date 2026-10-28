@@ -145,16 +145,16 @@ impl "deps/encoding/lib"
 
 fun main() {
     val data = Bytes.from_str("foobar")
-    print(encoding.base32_encode(&data))
-    val b32 = encoding.base32_decode("MZXW6YTBOI======")
+    print(encoding.base32Encode(&data))
+    val b32 = encoding.base32Decode("MZXW6YTBOI======")
     if let Ok(b) = b32 {
-        print(encoding.hex_encode(b))
+        print(encoding.hexEncode(b))
     }
     val word = Bytes.from_str("hello")
-    print(encoding.base58_encode(&word))
-    print(encoding.hex_encode(&data))
-    print(encoding.form_encode("a b+c/d"))
-    val form = encoding.form_decode("a+b%2Bc%2Fd")
+    print(encoding.base58Encode(&word))
+    print(encoding.hexEncode(&data))
+    print(encoding.formEncode("a b+c/d"))
+    val form = encoding.formDecode("a+b%2Bc%2Fd")
     if let Ok(s) = form {
         print(s)
     }

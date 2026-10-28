@@ -88,9 +88,9 @@ fun main() {
         print(decimal.to_string(x))
     }
     val bad = decimal.from_str("1.234", 2)
-    print(result.is_err(bad))
+    print(result.isErr(bad))
     val empty = decimal.from_str("", 2)
-    print(result.is_err(empty))
+    print(result.isErr(empty))
 }
 ```
 

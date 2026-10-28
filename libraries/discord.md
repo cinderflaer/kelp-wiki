@@ -28,7 +28,7 @@ deny every call at runtime.
 | --- | --- |
 | `net` | `std/http` for the REST API, `std/ws` for the gateway socket |
 | `rand` | `std/ws` needs it for the handshake key and the masking key of every frame (RFC 6455 requires both to be unpredictable) |
-| `time` | the heartbeat interval op 10 HELLO carries is a duration, and the reconnect backoff is a wait: `time.now_mono_ns` and `time.sleep_ms` are v1's only clock, and `kelp issue #245` names `wait_readable` plus a sleep as the single-threaded loop's timer |
+| `time` | the heartbeat interval op 10 HELLO carries is a duration, and the reconnect backoff is a wait: `time.nowMonoNs` and `time.sleepMs` are v1's only clock, and `kelp issue #245` names `wait_readable` plus a sleep as the single-threaded loop's timer |
 
 This library's own `impl` lines grant each shipped module the wildcard,
 `net = ["*"]` for `std/http` and `std/ws` and `time = []` for `std/time`, because
@@ -70,7 +70,7 @@ with **no configuration at all**: [`std/http`](/stdlib/http) has TLS
 (`MISSING-XkcSp`, resolved), so `DEFAULT_API_BASE` and every
 webhook/interaction call reach the real `discord.com`, and
 [`std/ws`](/stdlib/ws) has TLS (`MISSING-wV4tg`, resolved), so the gateway loop
-is meant to dial `DEFAULT_GATEWAY_URL` (`wss://`) with the URL-aware `ws.connect_url`,
+is meant to dial `DEFAULT_GATEWAY_URL` (`wss://`) with the URL-aware `ws.connectUrl`,
 following the URL's scheme. The `fpl` source does not do that yet (see the status note above). Point the gateway URL at a plain `ws://` endpoint (a
 local mock) and nothing else changes:
 
@@ -89,7 +89,7 @@ trust store does not vouch for panics inside `std/tls`.
 > `one_connection` calls `ws.try_connect_secure`, which `std/ws` on `main` does not export.
 > `dial_outcome` matches `Dial` and `Handshake` but not `WsErr.Tls`, so its `match` is not exhaustive.
 > The gateway path therefore does not work against current `main` until both points are fixed.
-> The fix is to call `ws.connect_url` and to add the `WsErr.Tls` arm. Neither change is in the `fpl` source yet.
+> The fix is to call `ws.connectUrl` and to add the `WsErr.Tls` arm. Neither change is in the `fpl` source yet.
 
 ## The constants
 
@@ -219,7 +219,7 @@ fun main() {
             val now = discord.now_ms()
             if session.heartbeat_due(now) {
                 val beat = session.next_heartbeat_payload()
-                conn.send_text(beat.as_str())
+                conn.sendText(beat.as_str())
                 session.note_heartbeat(now)
             }
             var readable = conn.start < conn.buf.len()
@@ -234,7 +234,7 @@ fun main() {
                             if p.op == discord.OP_HELLO {
                                 session.apply_hello(p.data.get_int("heartbeat_interval"))
                                 val hello_reply = session.identify_or_resume(bot)
-                                conn.send_text(hello_reply.as_str())
+                                conn.sendText(hello_reply.as_str())
                             } else if p.op == discord.OP_DISPATCH {
                                 session.apply_dispatch(p.seq)
                                 discord.dispatch_payload(p, hs, bot)
@@ -270,7 +270,7 @@ val req = discord.webhook_request(hook, "POST", path.as_str(), body.as_str())
 print(req.method.as_str())     // POST
 print(req.url.as_str())        // https://discord.com/api/webhooks/WEBHOOK_ID/WEBHOOK_TOKEN
 print(req.headers.len())       // 2: User-Agent and Content-Type, and no Authorization
-val signed = discord.with_header(req, "X-Audit-Log-Reason", "cleanup")
+val signed = discord.withHeader(req, "X-Audit-Log-Reason", "cleanup")
 ```
 
 `with_header` takes the request with `move` and hands the changed one back, and
@@ -457,7 +457,7 @@ them back:
 | `retry_after_ms(resp)` | `Retry-After` in milliseconds, or `X-RateLimit-Reset-After` |
 | `seconds_text_to_ms(text)` | the decimal-seconds parser both use, rounding up |
 
-The caller sleeps with `time.sleep_ms` and decides whether to retry, which is
+The caller sleeps with `time.sleepMs` and decides whether to retry, which is
 the only place that decision can be made correctly: a library cannot know
 whether the request was idempotent.
 
@@ -623,7 +623,7 @@ Content-Type
   honest deployment until `std/crypto` exists.
 - **No retries and no rate-limit waiting.** `rate_limit(resp)` is a value; the
   decision and the sleep are the caller's.
-- **The URL-aware dial is `ws.connect_url`.** It returns `Err(WsErr.Dial)` when the dial fails,
+- **The URL-aware dial is `ws.connectUrl`.** It returns `Err(WsErr.Dial)` when the dial fails,
   with the refused connection's reason (or `WsErr.Tls` when the `wss` handshake
   or certificate check is what failed), so a redial after a dial that fails
   (a wrong host, a refused connection) can survive instead of ending the process.

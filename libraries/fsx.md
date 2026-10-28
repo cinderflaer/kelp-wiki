@@ -29,7 +29,7 @@ needs the module holding the `impl` to have been granted it.
 | Function | Returns | Notes |
 | --- | --- | --- |
 | `write_atomic(path: &str, data: Bytes)` | `Unit` | writes to `<path>.fsx-tmp`, then `rename`s it over `path`. A rename within one filesystem is atomic, so a reader never observes a partially written file. **Panics** under the same conditions `fs.write`/`fs.rename` do, including when `path` is outside the grant |
-| `copy_dir(from: &str, to: &str)` | `Unit` | recursively copies `from` onto `to`, creating directories as needed. `from` should not have a trailing `/`. **Panics** under the same conditions `fs.list`/`fs.mkdir_all`/`fs.copy` do |
+| `copy_dir(from: &str, to: &str)` | `Unit` | recursively copies `from` onto `to`, creating directories as needed. `from` should not have a trailing `/`. **Panics** under the same conditions `fs.list`/`fs.mkdirAll`/`fs.copy` do |
 | `tail(path: &str, n: usize)` | `List<String>` | the last `n` lines of a text file |
 | `files_equal(a: &str, b: &str)` | `bool` | byte-for-byte; **panics** if either file cannot be read |
 | `survey(root: &str, max_depth: usize, keep: closure fun(&PathInfo) => bool)` | `Survey` | walks `root` depth-first to `max_depth` levels, keeping the files `keep` accepts. `keep` is a callback, so this module needs no glob: the caller writes the match |
@@ -57,13 +57,13 @@ datac Survey(val dirs: usize, val files: List<PathInfo>, val unreadable: usize, 
 directory it may not read, so this is the difference between surveying a tree and
 dying on it. The test is the mode bits only, so a file that is mode-readable but
   unreadable in practice (owned by someone else, mode `0400`) passes the filter;
-  the caller who then reads it should use `fs.read`/`fs.read_text`, which
+  the caller who then reads it should use `fs.read`/`fs.readText`, which
   report the failure as an `Err` instead of panicking on it.
 - `too_deep` counts the directories at the ceiling that were not descended into.
 
 That ceiling is a safety valve for huge trees, and it is also still what bounds
 a tree that is simply deep. A cycle is no longer part of the problem: `survey`
-**does not descend a symlink**, because `fs.is_symlink` tells one from the
+**does not descend a symlink**, because `fs.isSymlink` tells one from the
 directory it points at, so a link back up the tree is skipped instead of walking
 until the kernel refuses the path length.
 

@@ -40,7 +40,7 @@ impl "std/fs"
 impl "std/process"
 impl "std/path"
 
-fun is_space(c: u8) => bool = c == ' ' || c == '\t' || c == '\n' || c == '\r'
+fun isSpace(c: u8) => bool = c == ' ' || c == '\t' || c == '\n' || c == '\r'
 
 fun count_lines(s: str) => i64 {
     val bytes = str.len(s)
@@ -76,12 +76,12 @@ fun count_words(s: str) => i64 {
 }
 
 fun measure(file: str, label: str, want_lines: bool, want_words: bool, want_bytes: bool) {
-    val text = fs.read_text(file)
+    val text = fs.readText(file)
     val s = text.as_str()
     val prefix = str.concat(label, " ")
     // The file name, not the full path: the output is a report, and the caller
     // already knows which path it passed.
-    val line = str.concat(prefix.as_str(), path.file_name(file))
+    val line = str.concat(prefix.as_str(), path.fileName(file))
 
     var out = String.empty()
     out.push_str(line.as_str())
@@ -140,7 +140,7 @@ fun run(parser: &argparse.Parser, pa: &argparse.ParsedArgs) {
 // takes `notes.txt` and the gated call still receives an absolute path: `fs`
 // patterns are absolute, and the capability check normalizes before it matches.
 fun absolute_or_here(name: str, here: str) => String {
-    if path.is_absolute(name) {
+    if path.isAbsolute(name) {
         return String.from_str(name)
     }
     return path.absolute(here, name)

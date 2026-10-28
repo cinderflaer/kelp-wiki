@@ -68,7 +68,7 @@ it answered with and `reason` is the message `ws.connect` panics with for it. A
 `101` whose `Sec-WebSocket-Accept` does not match the key this connection sent is
 `Handshake` too, with `status` of `101`, because it is a handshake failure rather
 than a network one. `WsErr.Tls(reason)` is the `wss` half, and `reason` is
-`tls.error_text`'s sentence for the refused handshake or certificate. The
+`tls.errorText`'s sentence for the refused handshake or certificate. The
 distinction is what a reconnecting caller needs: nothing
 listening is worth another attempt, a peer answering `403` usually is not, and a
 peer that is not speaking TLS is not a WebSocket server at all.
@@ -103,17 +103,17 @@ with the same messages `connect` uses. A caller cannot branch on them.
 
 | Function | Returns | Notes |
 | --- | --- | --- |
-| `ws.parse_url(s)` | `Url` | splits `ws://` or `wss://` `host[:port][/path]`; the port defaults to 80 for `ws` and 443 for `wss` |
+| `ws.parseUrl(s)` | `Url` | splits `ws://` or `wss://` `host[:port][/path]`; the port defaults to 80 for `ws` and 443 for `wss` |
 | `ws.default_port_for(scheme)` | `u16` | the scheme's default port, `80` for `ws` and `443` for `wss` |
 | `ws.connect(host, port, path)` | `Result<Conn, WsErr>` | the plain-`ws` HTTP/1.1 upgrade: a refused dial, a refused `wss` handshake and a non-`101` answer are values, the errors with no status still panic |
-| `ws.connect_url(u)` | `Result<Conn, WsErr>` | `connect` for a parsed URL, so the scheme (`wss`) comes off `u` |
-| `ws.connect_scheme(scheme, host, port, path)` | `Result<Conn, WsErr>` | `connect` with the scheme spelled out |
-| `Conn.send_text(text)` | `Unit` | one masked text frame |
-| `Conn.send_binary(data)` | `Unit` | one masked binary frame |
+| `ws.connectUrl(u)` | `Result<Conn, WsErr>` | `connect` for a parsed URL, so the scheme (`wss`) comes off `u` |
+| `ws.connectScheme(scheme, host, port, path)` | `Result<Conn, WsErr>` | `connect` with the scheme spelled out |
+| `Conn.sendText(text)` | `Unit` | one masked text frame |
+| `Conn.sendBinary(data)` | `Unit` | one masked binary frame |
 | `Conn.ping(data)` / `Conn.pong(data)` | `Unit` | a control frame; the payload may not exceed 125 bytes |
 | `Conn.close(code, reason)` | `Unit` | sends the close frame, then closes the descriptor |
 | `Conn.recv()` | `Msg` | `mut`: the next message, or the next control frame |
-| `Conn.read_frame()` | `Frame` | `mut`: the frame layer under `recv` |
+| `Conn.readFrame()` | `Frame` | `mut`: the frame layer under `recv` |
 
 ## The handshake
 
@@ -157,13 +157,13 @@ the number or code the module put there.
 
 | Message | When |
 | --- | --- |
-| `ws.parse_url: only 'ws' and 'wss' are supported` | any other scheme |
-| `ws.parse_url: URL must start with 'ws://' or 'wss://' (no scheme found)` | there is no `://` |
-| `ws.parse_url: URL has no host` | the authority is empty |
-| `ws.parse_url: URL has an empty port` / `ws.parse_url: URL port is not a number` / `ws.parse_url: URL port is out of range` | a port that does not convert |
+| `ws.parseUrl: only 'ws' and 'wss' are supported` | any other scheme |
+| `ws.parseUrl: URL must start with 'ws://' or 'wss://' (no scheme found)` | there is no `://` |
+| `ws.parseUrl: URL has no host` | the authority is empty |
+| `ws.parseUrl: URL has an empty port` / `ws.parseUrl: URL port is not a number` / `ws.parseUrl: URL port is out of range` | a port that does not convert |
 | `net.connect: connection failed`, with a second line `  errno N: ...` | the dial failed: nothing is listening, or every resolved address refused (`WsErr.Dial`) |
 | `net.connect: cannot resolve host`, with a second line `  getaddrinfo: ...` | the host does not resolve (`WsErr.Dial`) |
-| the `tls.error_text` sentence, such as `tls: the peer does not speak TLS 1.2 or newer` | the `wss` handshake or certificate check failed (`WsErr.Tls`; the same sentence through `connect`) |
+| the `tls.errorText` sentence, such as `tls: the peer does not speak TLS 1.2 or newer` | the `wss` handshake or certificate check failed (`WsErr.Tls`; the same sentence through `connect`) |
 | `ws.connect: the server answered '...' instead of '101 Switching Protocols'` | a status other than `101` (`WsErr.Handshake`; a panic through `connect`) |
 | `ws.connect: the 101 response has no Sec-WebSocket-Accept header, so it is not a WebSocket server` | the accept header is missing (`WsErr.Handshake`; a panic through `connect`) |
 | `ws.connect: Sec-WebSocket-Accept does not match the key this connection sent, so the peer did not compute it from the handshake` | the accept value is computed from another key, `status` of `101` included (`WsErr.Handshake`; a panic through `connect`) |
@@ -201,9 +201,9 @@ impl "std/ws" caps(net = ["gateway.example.com:80"], rand = [])
 impl "std/result"
 
 fun main() {
-    val u = ws.parse_url("ws://gateway.example.com/socket")
+    val u = ws.parseUrl("ws://gateway.example.com/socket")
     var c = result.expect(ws.connect(u.host.as_str(), u.port, u.path.as_str()), "connect")
-    c.send_text("hello")
+    c.sendText("hello")
     when c.recv() {
         Text(t) -> print(t)
         Ping(d) -> c.pong(d)
@@ -223,7 +223,7 @@ fun main() {
   host as written, exactly as `https` does. The `net` grant is the same
   host-and-port check (`caps(net = ["gateway.example.com:443"], rand = [])`);
   TLS needs nothing beyond it. A failed TLS handshake or certificate check is
-  `WsErr.Tls`, carrying `tls.error_text`'s sentence. `connect` stays plain-`ws`.
+  `WsErr.Tls`, carrying `tls.errorText`'s sentence. `connect` stays plain-`ws`.
 - **A refused dial is a value, a head that is not HTTP is not.**
   `ws.connect` returns `WsErr.Dial` for a dial that failed, `WsErr.Tls` for a
   `wss` handshake or certificate refusal and

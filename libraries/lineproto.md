@@ -10,7 +10,7 @@ caller already holds: `send_line` appends `\r\n` and sends it whole, and
 time. SMTP/IMAP/Redis-shaped text protocols.
 
 **Gated on `net`.** The library never calls `net.connect`/`net.listen` itself,
-only `net.send_all`/`net.recv` on a socket the consumer connected, but it
+only `net.sendAll`/`net.recv` on a socket the consumer connected, but it
 genuinely calls a `net`-gated function, so its consumer must delegate a real
 grant:
 
@@ -41,9 +41,9 @@ reconstructs `net.Socket(fd = fd)` locally instead of storing one.
 
 | Function | Returns | Notes |
 | --- | --- | --- |
-| `send_line(s: net.Socket, line: &str)` | `Unit` | `<line>\r\n`, sent with `net.send_all` (not one `send`) |
+| `send_line(s: net.Socket, line: &str)` | `Unit` | `<line>\r\n`, sent with `net.sendAll` (not one `send`) |
 | `new_reader(s: net.Socket)` | `LineReader` | takes the socket's `fd`; the caller keeps ownership of the socket |
-| `reader.read_line(r: mut LineReader)` | `option.Option<String>` | the next line without its terminator; `None` when the peer closes with no further complete line pending |
+| `reader.readLine(r: mut LineReader)` | `option.Option<String>` | the next line without its terminator; `None` when the peer closes with no further complete line pending |
 
 Constants: `CR` (13), `LF` (10).
 
@@ -71,7 +71,7 @@ fun main() {
     var reader = lineproto.new_reader(s)
     var going = true
     while going {
-        val got = reader.read_line()
+        val got = reader.readLine()
         if let Some(line) = got {
             print(line)
         } else {
@@ -110,7 +110,7 @@ done
 
 - One connection, no reconnect, no timeouts: `read_line` blocks in `net.recv`
   until a line, a close, or an error. Set a socket timeout with
-  `Socket.set_timeout(ms)` or check `Socket.wait_readable(ms)` first if a
+  `Socket.setTimeout(ms)` or check `Socket.waitReadable(ms)` first if a
   blocking read is not acceptable.
 - No command/response pairing (no "send then read one reply" helper), no pipelining
   bookkeeping, no `\n`-only mode, no line-size limit beyond what memory allows.

@@ -180,7 +180,7 @@ impl convert.From<i64> for AppErr {
 }
 
 fun parse(s: str) => result.Result<i64, str.ParseErr> {
-    return str.parse_i64(s = s)
+    return str.parseI64(s = s)
 }
 
 fun small(s: str) => result.Result<i64, AppErr> {
@@ -231,7 +231,7 @@ by the argument's type.
 - `Some`/`None` has no payload to convert, so `Option` into `Option` is
   unchanged.
 - `?` never uses `Into`, so an `Into` impl with no `From` does not convert.
-- `result.map_err` still works wherever a one-off conversion is wanted.
+- `result.mapErr` still works wherever a one-off conversion is wanted.
 
 ## Limits
 

@@ -48,7 +48,7 @@ fun main() {
 
     val response = client.send(request)
     print(response.status)
-    print(response.is_ok())
+    print(response.isOk())
 
     val body = response.text()
     print(str.len(body.as_str()))
@@ -93,7 +93,7 @@ fetched by kelp
   construction time, which is what makes a request simple to build in pieces.
 - **`write_atomic` writes to a sibling temp file and renames it over the target.**
   A rename inside one filesystem is atomic, so a reader never sees half a file,
-  and a crash halfway leaves the previous file intact. `fs.write_text` truncates
+  and a crash halfway leaves the previous file intact. `fs.writeText` truncates
   in place and would not.
 - **The status is a number and `is_ok()` is the range check.** A caller that
   cares about a 404 or a 304 asks `response.status` directly. `http.Response`
@@ -106,7 +106,7 @@ fetched by kelp
   may be dialled and the `fs` grant says which directory may be written. Neither
   one widens the other, and a program that only fetches does not need the
   filesystem grant at all.
-- **`http.parse_url` accepts `https` too** (MK5-S4b-M1): the same `net` grant
+- **`http.parseUrl` accepts `https` too** (MK5-S4b-M1): the same `net` grant
   covers it, because [`std/tls`](/stdlib/tls) wraps the connection `std/http`
   already opened rather than dialing one of its own.
 

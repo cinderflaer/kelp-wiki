@@ -88,7 +88,7 @@ the first missing component too (up to 40 hops).
 impl "std/fs"
 
 pub fun go() {
-    fs.write_text(".../a/data/dangling", "pwn")
+    fs.writeText(".../a/data/dangling", "pwn")
     print("wrote")
 }
 ```
@@ -142,7 +142,7 @@ interface: a pattern whose host part is `*`, `0.0.0.0`, a glob that matches
 val l = net.listen(0)
 print(l.port())
 val f = fs.open("/proc/net/tcp", "r")
-print(String.from_bytes(f.read_all()))
+print(String.from_bytes(f.readAll()))
 ```
 
 Reading the listener's own line out of `/proc/net/tcp` (the first printed number
@@ -273,7 +273,7 @@ The handshake opened the CA paths in `TlsOptions` with no `fs` check, so a modul
 with `net` and no `fs` could make the client read a PEM path and learn whether
 verification succeeded. The options now take PEM bytes (`TlsOptions(ca_pem,
 timeout_ms)`, `TlsClientOptions.with_ca_pem`), the runtime never opens a path,
-and a file is read with `tlsfile.ca_pem(path)`, which goes through `fs`. `ca_dir`
+and a file is read with `tlsfile.caPem(path)`, which goes through `fs`. `ca_dir`
 has no bytes form and is gone.
 
 ```text

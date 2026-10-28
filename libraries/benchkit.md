@@ -7,7 +7,7 @@ tags: "library, testing"
 Timing over a closure on the monotonic clock, with median/percentile over the
 runs.
 
-**Gated on `time`** (it calls `time.now_mono_ns()`):
+**Gated on `time`** (it calls `time.nowMonoNs()`):
 
 ```toml
 [dependencies]
@@ -46,9 +46,9 @@ impl "deps/benchkit/lib" caps(time = [])
 impl "std/time"
 
 fun main() {
-    val one = benchkit.time_once(fun() = time.sleep_ms(1))
+    val one = benchkit.time_once(fun() = time.sleepMs(1))
     print(one >= 0)
-    val xs = benchkit.time_many(fun() = time.sleep_ms(1), 2, 5)
+    val xs = benchkit.time_many(fun() = time.sleepMs(1), 2, 5)
     print(xs.len())
     print(benchkit.median_ns(xs) >= 0)
     print(benchkit.percentile_ns(xs, 100.0) >= benchkit.percentile_ns(xs, 0.0))

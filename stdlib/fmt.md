@@ -29,13 +29,13 @@ replacement. `--deny-outdated` makes the finding an error. The same goes for
 | --- | --- | --- |
 | `fmt.hex(n: u64)` | `String` | lowercase hex |
 | `fmt.bytes(b: Bytes)` | `String` | a debugging dump: lowercase hex, one space between bytes, `1f 8b 08` |
-| `fmt.pad_left(s: &str, width: usize, fill: u8)` | `String` | pads on the left to `width`; a longer `s` is returned unchanged |
-| `fmt.pad_right(s: &str, width: usize, fill: u8)` | `String` | pads on the right |
-| `fmt.commas_u64(n: u64)` | `String` | a comma every three digits: `1234567` is `1,234,567` |
-| `fmt.commas_i64(n: i64)` | `String` | likewise, with the sign kept |
-| `fmt.human_size(bytes: u64)` | `String` | binary units, two decimals: `585.94 KiB`, `0 B` |
-| `fmt.group_digits(text: &str)` | `String` | the digit run of `text` with a comma every three digits; a leading `-` is kept and not counted |
-| `fmt.human_scale(bytes: u64, div: u64, unit: &str)` | `String` | `bytes / div` with two decimals, then `unit` appended; the helper `human_size` is built on |
+| `fmt.padLeft(s: &str, width: usize, fill: u8)` | `String` | pads on the left to `width`; a longer `s` is returned unchanged |
+| `fmt.padRight(s: &str, width: usize, fill: u8)` | `String` | pads on the right |
+| `fmt.commasU64(n: u64)` | `String` | a comma every three digits: `1234567` is `1,234,567` |
+| `fmt.commasI64(n: i64)` | `String` | likewise, with the sign kept |
+| `fmt.humanSize(bytes: u64)` | `String` | binary units, two decimals: `585.94 KiB`, `0 B` |
+| `fmt.groupDigits(text: &str)` | `String` | the digit run of `text` with a comma every three digits; a leading `-` is kept and not counted |
+| `fmt.humanScale(bytes: u64, div: u64, unit: &str)` | `String` | `bytes / div` with two decimals, then `unit` appended; the helper `human_size` is built on |
 
 `print` itself formats floats with six decimals. For another count, use
 `x.toText(decimals)`.
@@ -52,12 +52,12 @@ fun main() {
     print(x.toText(2))
     print((1.0 / 3.0).toText(4))
     print(fmt.hex(255))
-    print(fmt.pad_left("7", 3, '0'))
-    print(fmt.pad_right("ab", 5, '.'))
-    print(fmt.commas_u64(1234567))
-    print(fmt.human_size(1536))
-    print(fmt.group_digits("-9876543"))       // -9,876,543
-    print(fmt.human_scale(bytes = 3000, div = 1000, unit = " kB"))   // 3.00 kB
+    print(fmt.padLeft("7", 3, '0'))
+    print(fmt.padRight("ab", 5, '.'))
+    print(fmt.commasU64(1234567))
+    print(fmt.humanSize(1536))
+    print(fmt.groupDigits("-9876543"))       // -9,876,543
+    print(fmt.humanScale(bytes = 3000, div = 1000, unit = " kB"))   // 3.00 kB
 }
 ```
 
@@ -112,4 +112,4 @@ example is [Operator traits and `Display`](/language/operator-traits).
 
 - [`std/str`](/stdlib/str) for parsing and the other text functions
 - [Operator traits and `Display`](/language/operator-traits)
-- [`table`](/libraries/table), which is `fmt.pad_right` over columns
+- [`table`](/libraries/table), which is `fmt.padRight` over columns

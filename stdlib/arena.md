@@ -35,7 +35,7 @@ position. `base` and `used` are `var` because an allocation moves `used`;
 | `Arena.used()` | `usize` | bytes handed out so far, alignment padding included |
 | `Arena.remaining()` | `usize` | `cap - used`: bytes left before alignment, not a promise that a request of that size fits |
 | `Arena.alloc(size: usize, align: usize)` | `Ptr<u8>` | a `size`-byte block whose address is `align`-aligned, or the null pointer |
-| `Arena.alloc_zeroed(size: usize, align: usize)` | `Ptr<u8>` | `alloc`, then the block written to zero |
+| `Arena.allocZeroed(size: usize, align: usize)` | `Ptr<u8>` | `alloc`, then the block written to zero |
 | `Arena.reset()` | `Unit` | sets `used` back to zero |
 
 `new` is a module-level function, reached through the `impl` alias:
@@ -102,7 +102,7 @@ fun main() {
     print(p.addr() != q.addr())
 
     a.reset()
-    val z: Ptr<u8> = a.alloc_zeroed(size = 4, align = 4)
+    val z: Ptr<u8> = a.allocZeroed(size = 4, align = 4)
     unsafe {
         print(z.read())
         print(z.offset(1).read())

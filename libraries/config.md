@@ -41,7 +41,7 @@ How a right-hand side is parsed:
 | --- | --- |
 | `"text"` | `Value.Str`, with `\n` and `\t` translated; the string must be exactly one quoted string with nothing after it |
 | `[..]` | `Value.Arr` of quoted strings, comma-separated, whitespace around commas ignored |
-| an integer that `str.parse_i64` accepts (`7`, `-3`) | `Value.Int` |
+| an integer that `str.parseI64` accepts (`7`, `-3`) | `Value.Int` |
 | anything else (`1.5`, `true`, `bare`) | `Value.Str` of the trimmed raw text |
 
 `#` starts a comment **outside** a quoted string, so `key = "# not a comment"`

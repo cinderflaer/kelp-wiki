@@ -53,9 +53,9 @@ Both follow `localtime`'s own numbering, not an ISO one.
 | `parse(data)` | `Result<Zone, TzErr>` | TZif bytes already in hand, no file read |
 | `utc()` | `Zone` | the fixed zero offset under the name `UTC` |
 | `fixed(offset_seconds)` | `Zone` | a fixed offset with no name; `%Z` prints `UTC` for zero and `+HH:MM` otherwise |
-| `Zone.offset_at(unix_seconds)` | `Offset` | the offset in force at the instant |
-| `Zone.local_parts(unix_seconds)` | `LocalTime` | the wall clock the instant names |
-| `Zone.to_unix(y, m, d, h, mi, s)` | `Resolved` | the instant or instants a wall clock names |
+| `Zone.offsetAt(unix_seconds)` | `Offset` | the offset in force at the instant |
+| `Zone.localParts(unix_seconds)` | `LocalTime` | the wall clock the instant names |
+| `Zone.toUnix(y, m, d, h, mi, s)` | `Resolved` | the instant or instants a wall clock names |
 | `Zone.format(unix_seconds, fmt)` | `String` | `%Y %m %d %H %M %S %z %Z %a %b %j %%` |
 
 `format` copies any other `%x` through unchanged, `%` included. `%z` is
@@ -162,19 +162,19 @@ fun main() {
     val loaded = tz.load("America/New_York")
     if let Ok(z) = loaded {
         // The 2024 spring-forward instant, one second either side of it.
-        val before = z.offset_at(1710053999)
-        val after = z.offset_at(1710054000)
+        val before = z.offsetAt(1710053999)
+        val after = z.offsetAt(1710054000)
         print("${before.seconds} ${before.abbrev} dst=${before.is_dst}")
         print("${after.seconds} ${after.abbrev} dst=${after.is_dst}")
 
-        val lt = z.local_parts(1710054000)
+        val lt = z.localParts(1710054000)
         print("${lt.year}-${lt.month}-${lt.day} ${lt.hour}:${lt.minute}:${lt.second} wd=${lt.weekday} yday=${lt.yday}")
 
         // An ordinary wall clock, one the spring jump skipped, and one the
         // fall back repeats.
-        print(label(z.to_unix(2024, 3, 10, 1, 30, 0)))
-        print(label(z.to_unix(2024, 3, 10, 2, 30, 0)))
-        print(label(z.to_unix(2024, 11, 3, 1, 30, 0)))
+        print(label(z.toUnix(2024, 3, 10, 1, 30, 0)))
+        print(label(z.toUnix(2024, 3, 10, 2, 30, 0)))
+        print(label(z.toUnix(2024, 11, 3, 1, 30, 0)))
 
         // 2100 is past the last transition in the file, so this answer comes
         // from the footer's POSIX TZ string alone.

@@ -109,7 +109,7 @@ and `std/result`'s value helpers, `std/math`'s integer
 configured, `std/list`, `std/regex` and the `std/option`/`std/result` callback
 combinators.
 - The five `std/str` operations the compiler lowers itself: `str.len`,
-  `str.byte`, `str.eq`, `str.starts_with` and `str.ptr`. With an allocator
+  `str.byte`, `str.eq`, `str.startsWith` and `str.ptr`. With an allocator
   configured, the three builders `str.concat`, `str.from_u64` and `str.from_i64`
   are kept too. Every other `std/str` function is refused by name, and the rest
   of the module (and `std/mem`, which it imports) is dropped from the AST before
@@ -359,7 +359,7 @@ returned, so no `strlen`, `memcpy` or `realloc` symbol is emitted and
 (`str.concat` over `str.from_u64`, because `"${}"` is a print-only construct and
 `print` needs `printf`). Every other method is refused at the call, by name,
 with "needs the hosted runtime": `str.split`, `str.join`, `str.repeat`,
-`str.to_upper`, `str.char_count`, the parsers, `str.from_f64`, `Bytes.append`,
+`str.toUpper`, `str.charCount`, the parsers, `str.from_f64`, `Bytes.append`,
 `Bytes.as_str`'s UTF-8 validation, and every `String`/`Bytes` method not in
 those lists. The refusal is in the front end, so `kelpc check` and `kelpc build`
 give the same error and nothing reaches the linker.

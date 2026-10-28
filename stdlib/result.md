@@ -43,7 +43,7 @@ tuple element, a `datac` field or a container element ([Types](/language/types))
 | --- | --- | --- |
 | `is_ok<T, E>(r)` / `is_err<T, E>(r)` | `bool` | |
 | `unwrap<T, E>(r)` | `T` | **`T` must be `Copy`**; panics on `Err` |
-| `unwrap_or<T, E>(r, fallback: T)` | `T` | **`T` must be `Copy`**; the same as `r.unwrap_or(fallback)` |
+| `unwrap_or<T, E>(r, fallback: T)` | `T` | **`T` must be `Copy`**; the same as `r.unwrapOr(fallback)` |
 | `unwrap_err<T, E>(r)` | `E` | **`E` must be `Copy`**; panics on `Ok` |
 | `expect<T, E>(r, message: &str)` | `T` | **`T` must be `Copy`**; panics with the message on `Err` |
 | `expect_err<T, E>(r, message: &str)` | `E` | **`E` must be `Copy`**; panics with the message on `Ok` |
@@ -59,36 +59,36 @@ same name:
 | `r.and_then<U>(f: closure fun(&T) => Result<U, E>)` | `Result<U, E>` | **`E` must be `Copy`**: the receiver is a borrow |
 | `r.or_else<F>(f: closure fun(&E) => Result<T, F>)` | `Result<T, F>` | **`T` must be `Copy`**: the receiver is a borrow |
 | `r.each(f: closure fun(&T))` | `Unit` | |
-| `r.unwrap_or(fallback: T)` | `T` | **`T` must be `Copy`**: the receiver is a borrow. The `Err` payload is dropped, not read; see the rule below |
+| `r.unwrapOr(fallback: T)` | `T` | **`T` must be `Copy`**: the receiver is a borrow. The `Err` payload is dropped, not read; see the rule below |
 | `r.orExit(message: &str)` | `T` | **`T` must be `Copy`**: the receiver is a borrow. On `Err` the message goes to standard error as one line and the program exits with status 2 (issue #263); see the note below |
 
-`is_ok` and `is_err` keep their free spelling, `result.is_ok(r)`, and each one is
-the same as the method `r.is_ok()` or `r.is_err()`. `map` and `map_err` take the
+`is_ok` and `is_err` keep their free spelling, `result.isOk(r)`, and each one is
+the same as the method `r.isOk()` or `r.isErr()`. `map` and `map_err` take the
 result with `move`, so they stay free functions.
 
 ## Example
 
 ```kelp
 fun main() {
-    val ok = str.parse_i64("41")
-    val bad = str.parse_i64("nope")
+    val ok = str.parseI64("41")
+    val bad = str.parseI64("nope")
 
-    print(result.is_ok(r = ok))              // true
-    print(result.is_err(r = bad))            // true
+    print(result.isOk(r = ok))              // true
+    print(result.isErr(r = bad))            // true
 
     if let Ok(v) = ok {
         print(v + 1)                         // 42
     }
 
-    print(result.unwrap_or(r = bad, fallback = 0))   // 0
-    print(bad.unwrap_or(-1))                 // -1, the method form
+    print(result.unwrapOr(r = bad, fallback = 0))   // 0
+    print(bad.unwrapOr(-1))                 // -1, the method form
 
     val doubled = result.map(r = ok, f = fun(v: &i64) => i64 = v * 2)
     if let Ok(v) = doubled {
         print(v)                             // 82
     }
 
-    val described = result.map_err(r = bad, f = fun(e: &str.ParseErr) => String = describe(e))
+    val described = result.mapErr(r = bad, f = fun(e: &str.ParseErr) => String = describe(e))
     if let Err(msg) = described {
         print(msg)
     }
@@ -110,7 +110,7 @@ fun describe(e: &str.ParseErr) => String = when e {
   `unwrap_or`, `unwrap_err`, `expect`, `expect_err`, `and_then` and `or_else`
   hand a payload out by value or rebuild the side they did not transform, so the
   payload they touch must be `Copy`.
-- **Errors that a default hides.** `r.unwrap_or(d)` returns `d` on `Err` and drops
+- **Errors that a default hides.** `r.unwrapOr(d)` returns `d` on `Err` and drops
   the error without reading, logging or passing it on, so its error type needs no
   `Copy`. Use it only where the error carries nothing the caller needs: an
   optional setting, or a parse with a plain default. Where the error matters, use
@@ -123,9 +123,9 @@ fun describe(e: &str.ParseErr) => String = when e {
   impl "std/result"
 
   fun main() {
-      val port = str.parse_u64("8080").orExit("bad port")   // 8080
+      val port = str.parseU64("8080").orExit("bad port")   // 8080
       print(port.toText())
-      val bad = str.parse_u64("80x80").orExit("bad port")   // stderr: bad port, exit 2
+      val bad = str.parseU64("80x80").orExit("bad port")   // stderr: bad port, exit 2
       print(bad.toText())
   }
   ```

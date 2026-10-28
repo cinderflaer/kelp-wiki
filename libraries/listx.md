@@ -77,7 +77,7 @@ fun main() {
     print(listx.max_i32(xs))
     print(listx.fold(xs, 0, fun(acc: i32, x: &i32) => i32 = acc + x))
     val at = listx.position_i32(xs, 2)
-    print(option.is_some(o = at))
+    print(option.isSome(o = at))
     print(listx.unique_i32(xs).len())
 
     var ys: List<i32> = List.empty()

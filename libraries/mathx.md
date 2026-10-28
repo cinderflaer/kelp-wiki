@@ -66,11 +66,11 @@ fun main() {
     val ok = mathx.add_checked_i64(1, 2)
     print(option.unwrap(o = ok))
     val over = mathx.add_checked_i64(9223372036854775807, 1)
-    print(option.is_none(o = over))
+    print(option.isNone(o = over))
     print(mathx.add_saturating_i64(9223372036854775807, 1))
     print(mathx.sub_saturating_i64(-9223372036854775807 - 1, 1))
     val big = mathx.mul_checked_i64(1000000000000, 1000000000000)
-    print(option.is_none(o = big))
+    print(option.isNone(o = big))
     print(mathx.to_degrees(mathx.to_radians(90.0)))
 }
 ```
@@ -100,5 +100,5 @@ true
 - `is_prime` is a predicate, not a sieve; for many primes at once, sieve in the
   caller.
 - Checked forms return `Option`, and `Option` has no methods: unwrap with
-  `option.unwrap(o = ..)`, `option.unwrap_or(o = .., fallback = ..)`,
-  `option.is_some(o = ..)`, `option.is_none(o = ..)`.
+  `option.unwrap(o = ..)`, `option.unwrapOr(o = .., fallback = ..)`,
+  `option.isSome(o = ..)`, `option.isNone(o = ..)`.

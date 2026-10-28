@@ -37,7 +37,7 @@ fun quarter(n: i64) => result.Result<i64, String> {
 }
 
 fun parse_half(text: str) => result.Result<i64, String> {
-    val n = str.parse_i64(s = text)
+    val n = str.parseI64(s = text)
     if let Ok(v) = n {
         return half(n = v)
     }
@@ -59,7 +59,7 @@ fun main() {
     if let Some(i) = find(xs, 6) {
         print("found at ${i}")
     }
-    print(option.is_none(o = find(xs, 9)))
+    print(option.isNone(o = find(xs, 9)))
 
     show("10")
     show("7")
@@ -93,7 +93,7 @@ the number is not in the list. The caller has to look at the result before it ca
 use the value, and `if let Some(i) = find(xs, 6)` does that: the block runs only
 for `Some`, and `i` is the number inside it.
 
-`option.is_none(o = ...)` is the same test as a function call. A few helpers in
+`option.isNone(o = ...)` is the same test as a function call. A few helpers in
 the `option` module are written this way.
 
 `Option` is a standard type, so the type name needs no import line at the top.

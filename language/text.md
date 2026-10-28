@@ -40,7 +40,7 @@ is a borrow written `.as_str()`. A `View` is **not** a `str`
 (a slice has no NUL after it), so a view that must become text takes
 `v.to_string()`, and passing a `View` to a `str` parameter is refused.
 
-`str` parameters (`str.len`, `str.eq`, `fs.write_text`, `path.join`, …) keep
+`str` parameters (`str.len`, `str.eq`, `fs.writeText`, `path.join`, …) keep
 taking a borrowed view with no allocation.
 
 ## Printing
@@ -111,7 +111,7 @@ growth. That rule is what makes reallocation safe without lifetime syntax.
 
 Formatting a number: `n.toText()` gives an integer's decimal text, and
 `x.toText()` and `x.toText(decimals)` give a float's text. `fmt.hex(n)`,
-`fmt.pad_left(s, width, fill)` and `fmt.pad_right(...)` format the rest. All
+`fmt.padLeft(s, width, fill)` and `fmt.padRight(...)` format the rest. All
 return `String`. See [`std/fmt`](/stdlib/fmt).
 
 ## `View`: borrowed text with a length
@@ -153,7 +153,7 @@ val n: i32 = -7
 print(n.to_i64())            // widening, exact
 print(n.toText())   // "-7" as a String
 
-val parsed = str.parse_i64(s = "41")   // Result<i64, str.ParseErr>
+val parsed = str.parseI64(s = "41")   // Result<i64, str.ParseErr>
 if let Ok(v) = parsed {
     print(v + 1)
 }
@@ -172,7 +172,7 @@ val x: f64 = big.to_f64()            // 3.0, the only integer-to-float widening
   `String` with the text of the number. The float form needs `impl "std/str"`.
   The old `str.from_i64`, `str.from_u64` and `str.from_f64` spellings are retired
   (see [`std/fmt`](/stdlib/fmt)).
-- `str.parse_i64`, `str.parse_u64`, `str.parse_f64` return
+- `str.parseI64`, `str.parseU64`, `str.parseF64` return
   `Result<T, str.ParseErr>`. `ParseErr` has two variants, `Empty` (the text was
   empty) and `Invalid` (the text is not a number).
 

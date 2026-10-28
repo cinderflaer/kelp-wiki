@@ -180,7 +180,7 @@ fun bump(c: &RwLock<i64>) => i64 {
 fun probe(c: &RwLock<i64>) {
     c.read { v ->
         val w = c.try_write { x -> *x = 0 }
-        print(option.is_none(o = w))
+        print(option.isNone(o = w))
     }
 }
 
@@ -338,7 +338,7 @@ fun main() {
     val m: Mutex<i64> = Mutex.new(0)
     val cv: Condvar = Condvar.new()
     val first = m.wait_while_timeout(&cv, not_ready, 30) { v -> *v }
-    print(option.is_none(o = first))
+    print(option.isNone(o = first))
     m.lock { v -> *v = 7 }
     val second = m.wait_while_timeout(&cv, not_ready, 30) { v -> *v }
     print(option.unwrap(o = second))
@@ -412,7 +412,7 @@ fun Sender<T>.send(value: move T) => option.Option<T>
 fun Sender<T>.clone() => Sender<T>
 fun Receiver<T>.recv() => result.Result<T, RecvErr>
 fun Receiver<T>.try_recv() => option.Option<T>
-fun Receiver<T>.recv_timeout(millis: i64) => result.Result<T, RecvTimeout>
+fun Receiver<T>.recvTimeout(millis: i64) => result.Result<T, RecvTimeout>
 for v in rx { ... }
 ```
 
@@ -424,7 +424,7 @@ for v in rx { ... }
 | `tx.clone()` | `Sender<T>` | another sender on the same channel |
 | `rx.recv()` | `Result<T, RecvErr>` | waits while the queue is empty and a sender is alive; `Err(RecvErr.Closed)` once it is empty and every sender is gone |
 | `rx.try_recv()` | `Option<T>` | the oldest value now; never waits |
-| `rx.recv_timeout(ms)` | `Result<T, RecvTimeout>` | `Err(Timeout)` when the wait ran out with a sender still alive, `Err(Closed)` when every sender is gone |
+| `rx.recvTimeout(ms)` | `Result<T, RecvTimeout>` | `Err(Timeout)` when the wait ran out with a sender still alive, `Err(Closed)` when every sender is gone |
 | `for v in rx` | one value per pass | ends when the channel is closed and drained |
 
 The pair is a tuple, so it is taken apart with a destructuring binding. Write
@@ -490,14 +490,14 @@ fun main() {
     val none = tx.send(5)
     val none2 = tx.send(6)
     print(show(rx.try_recv()))
-    when rx.recv_timeout(10) {
+    when rx.recvTimeout(10) {
         Ok(v) -> print(v)
         Err(e) -> when e {
             Timeout -> print("timeout")
             Closed -> print("closed")
         }
     }
-    when rx.recv_timeout(10) {
+    when rx.recvTimeout(10) {
         Ok(v) -> print(v)
         Err(e) -> when e {
             Timeout -> print("timeout")

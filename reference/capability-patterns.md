@@ -65,7 +65,7 @@ impl "std/net" caps(net = ["*"])                     // anything
   every interface (a host of `*`, `0.0.0.0`, a glob matching `0.0.0.0`, or no host
   at all) binds every interface, and any other grant (`127.0.0.1:*`) binds
   `127.0.0.1` alone, so a loopback grant cannot become a public server.
-  `net.listen_on(host, port)` is checked on `host:port` like `connect`: a grant of
+  `net.listenOn(host, port)` is checked on `host:port` like `connect`: a grant of
   `127.0.0.1:8080` allows `listen_on("127.0.0.1", 8080)` and refuses
   `listen_on("0.0.0.0", 8080)`. Passing `"*"` or `"0.0.0.0"` binds every
   interface.

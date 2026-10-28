@@ -69,6 +69,8 @@ empty on release.
 
 ## Changed
 
+- The standard library's functions and methods that were snake_case are camelCase now, as #368 sets (issue #375, phase 1): `fs.read_text` is `fs.readText`, `str.char_count` is `str.charCount`, and `x.is_some()` is `x.isSome()`. Each old name still builds for one cycle and prints an `outdated:` finding that names the camelCase spelling, and `--deny-outdated` refuses it. `is_empty`, the `from_u64`, `from_i64` and `from_f64` names, the `_raw` bindings and the `try_` names keep their spelling for now, and so do the std helpers that the stdlib index does not list.
+
 - `fmt.int`, `fmt.uint`, `fmt.float`, `str.from_u64`, `str.from_i64` and `str.from_f64` are outdated (issue #262). Each still compiles for one release cycle and prints an `outdated:` finding that names its replacement: `n.toText()` for an integer, `x.toText(decimals)` for a float.
 
 - A freestanding build no longer refuses a `String` or `Bytes` field in a `std` struct that the program never reaches. A project that loads `std/str` without calling `str.bytes` builds again, and a struct the program constructs with such a field is still refused by name (issue #367).

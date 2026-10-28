@@ -25,7 +25,7 @@ The text is in the program so the example runs with no file. In a tool the same
 call reads a path:
 
 ```kelp
-val text = fs.read_text(path.as_str())
+val text = fs.readText(path.as_str())
 val parsed = config.parse(text.as_str())
 ```
 
@@ -98,7 +98,7 @@ config     entries = 5
 - **Only two value types are recognised: quoted strings and integers.** A float,
   a boolean or a bare word is stored as the text it was written as, so `ratio` is
   the string `1.5`, not a number. A tool that wants a float parses it itself with
-  `str.parse_f64`.
+  `str.parseF64`.
 - **Arrays are arrays of quoted strings,** comma-separated, with whitespace around
   a comma ignored. `get_array` panics if the value is not one.
 - **The section is part of the key at the root,** which is the empty string: the

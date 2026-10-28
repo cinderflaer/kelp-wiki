@@ -24,9 +24,9 @@ writes `val x = f(...)?`. Nothing in the compiler knows this module exists: the
 
 | Function | Returns | Notes |
 | --- | --- | --- |
-| `is_some<T>(o)` / `is_none<T>(o)` | `bool` | the same as `o.is_some()` and `o.is_none()` |
+| `is_some<T>(o)` / `is_none<T>(o)` | `bool` | the same as `o.isSome()` and `o.isNone()` |
 | `unwrap<T>(o: move Option<T>)` | `T` | the option is consumed; panics on `None` |
-| `unwrap_or<T>(o: move Option<T>, fallback: move T)` | `T` | the option and the fallback are consumed; for an owned payload. A `Copy` payload also has the method form `o.unwrap_or(fallback)` |
+| `unwrap_or<T>(o: move Option<T>, fallback: move T)` | `T` | the option and the fallback are consumed; for an owned payload. A `Copy` payload also has the method form `o.unwrapOr(fallback)` |
 | `expect<T>(o: move Option<T>, message: &str)` | `T` | the option is consumed; panics with the message |
 
 The borrowing helpers are **methods**. Each one is written once, as a method on
@@ -34,18 +34,18 @@ the option, and takes the option as its receiver:
 
 | Method | Returns | Notes |
 | --- | --- | --- |
-| `o.is_some()` / `o.is_none()` | `bool` | |
+| `o.isSome()` / `o.isNone()` | `bool` | |
 | `o.map<U>(f: closure fun(&T) => U)` | `Option<U>` | |
 | `o.and_then<U>(f: closure fun(&T) => Option<U>)` | `Option<U>` | |
-| `o.or_else(f: closure fun() => Option<T>)` | `Option<T>` | **`T` must be `Copy`**: the receiver is a borrow |
+| `o.orElse(f: closure fun() => Option<T>)` | `Option<T>` | **`T` must be `Copy`**: the receiver is a borrow |
 | `o.each(f: closure fun(&T))` | `Unit` | |
-| `o.unwrap_or(fallback: T)` | `T` | **`T` must be `Copy`**: the receiver is a borrow. An owned payload uses the free `option.unwrap_or(o = ..., fallback = ...)` |
+| `o.unwrapOr(fallback: T)` | `T` | **`T` must be `Copy`**: the receiver is a borrow. An owned payload uses the free `option.unwrapOr(o = ..., fallback = ...)` |
 
 `map`, `and_then`, `or_else` and `each` have no free function of the same name.
-`is_some` and `is_none` keep their free spelling, `option.is_none(o = x)`, which
+`is_some` and `is_none` keep their free spelling, `option.isNone(o = x)`, which
 is what the rest of the library uses. A method always borrows its receiver, so
 `unwrap` and `expect` stay free functions, and the owned form of `unwrap_or` does
-too. `unwrap_or` has a method form for a `Copy` payload: `o.unwrap_or(0)`.
+too. `unwrap_or` has a method form for a `Copy` payload: `o.unwrapOr(0)`.
 
 ## Where the payload goes
 
@@ -72,8 +72,8 @@ fun main() {
     val some: option.Option<i64> = option.Option.Some(value = 7)
     val none: option.Option<i64> = option.Option.None
 
-    print(option.is_some(o = some))          // true
-    print(option.is_none(o = none))          // true
+    print(option.isSome(o = some))          // true
+    print(option.isNone(o = none))          // true
 
     val doubled = some.map(fun(x: &i64) => i64 = x * 2)
     print(option.unwrap(o = doubled))        // 14
@@ -83,12 +83,12 @@ fun main() {
     }
 
     some.each(fun(x: &i64) = print(x))
-    print(some.unwrap_or(0))                 // 7, the method form: `some` is borrowed
+    print(some.unwrapOr(0))                 // 7, the method form: `some` is borrowed
 
     // `unwrap` and `unwrap_or` take the option with `move`, so each of them
     // consumes the option it is given: `some` is used last.
     print(option.unwrap(o = some))           // 7
-    print(option.unwrap_or(o = none, fallback = 0))   // 0
+    print(option.unwrapOr(o = none, fallback = 0))   // 0
 
     // An owned payload comes out of an owned option: `unwrap` takes the option
     // with `move`, so `text` is consumed by the call.

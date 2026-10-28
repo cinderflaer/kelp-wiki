@@ -196,7 +196,7 @@ what the flag was called.
 ## Notes
 
 - Everything else is a `String`: a flag or option outside `get_bytes` has no
-  typed parsing here, so a numeric option is `str.parse_i64` on the
+  typed parsing here, so a numeric option is `str.parseI64` on the
   `get_option` result.
 - A flag given twice stays once in `set_flags` per occurrence (`has_flag` is a
   scan); an option given twice keeps both `SetOption` entries and `get_option`

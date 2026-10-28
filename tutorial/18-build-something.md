@@ -26,13 +26,13 @@ impl "std/process"
 // Words are separated by spaces, and case is ignored.
 
 fun count_words(path: str, counts: mut Map<String, i64>) {
-    val lines = fs.read_lines(path)
+    val lines = fs.readLines(path)
     var i: int = 0
     while i < lines.len() {
         val words = str.split(lines.get(i).as_str(), " ")
         var j: int = 0
         while j < words.len() {
-            val word = str.to_lower(words.get(j).as_str())
+            val word = str.toLower(words.get(j).as_str())
             if !word.is_empty() {
                 if counts.has(key = word.as_str()) {
                     val seen = counts.get(key = word.as_str())
@@ -116,7 +116,7 @@ usage: wordcount <file>
 exit status 2
 ```
 
-If the file does not exist, `fs.read_lines` panics and the program exits with
+If the file does not exist, `fs.readLines` panics and the program exits with
 status 1:
 
 ```text
@@ -126,7 +126,7 @@ panic: fs.read: cannot open file
 ```
 
 A tool that should report a missing file politely would use the fallible
-`fs.read_text`, which returns a `Result`. The
+`fs.readText`, which returns a `Result`. The
 [first real tool](/getting-started/first-tool) page writes that version step by
 step.
 

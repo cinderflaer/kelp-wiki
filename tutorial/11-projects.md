@@ -72,7 +72,7 @@ file:
 impl "std/fs"
 
 pub fun count_lines(path: str) => i64 {
-    val lines = fs.read_lines(path)
+    val lines = fs.readLines(path)
     return lines.len().to_i64()
 }
 ```
@@ -131,7 +131,7 @@ fun main() {
 
 ```text
 $ kelpc check nogrant.kp
-error: 'std.fs.read_lines' needs the 'fs' capability, which module 'notes' was not granted; the module that imports this one must delegate it (`impl "<this module>" caps(fs = ["<pattern>"])`)
+error: 'std.fs.readLines' needs the 'fs' capability, which module 'notes' was not granted; the module that imports this one must delegate it (`impl "<this module>" caps(fs = ["<pattern>"])`)
   --> notes.kp:4:17
 ```
 

@@ -8,8 +8,8 @@ Text: search, slice, split, join, case, format, parse. Ungated.
 
 Needs no `impl` line: the module is in scope by its own name.
 
-`str.len` and `str.byte` are byte-oriented; `str.char_count`, `str.char_at` and
-`str.decode_at` are the codepoint-oriented set.
+`str.len` and `str.byte` are byte-oriented; `str.charCount`, `str.charAt` and
+`str.decodeAt` are the codepoint-oriented set.
 
 ## Functions
 
@@ -64,8 +64,8 @@ fun main() {
     print(t)                          // kelp, language
     print(str.len(t.as_str()))        // 14
     print(str.contains(t.as_str(), "lang"))
-    print(str.starts_with(t.as_str(), "kelp"))
-    print(str.to_upper(t.as_str()))   // KELP, LANGUAGE
+    print(str.startsWith(t.as_str(), "kelp"))
+    print(str.toUpper(t.as_str()))   // KELP, LANGUAGE
 
     val parts = str.split(t.as_str(), ", ")
     print(parts.len())                // 2
@@ -75,12 +75,12 @@ fun main() {
     print(str.join(parts, "-"))       // kelp-language
     print(str.repeat("ab", 3))        // ababab
 
-    val n = str.parse_i64("41")
+    val n = str.parseI64("41")
     if let Ok(v) = n {
         print(v + 1)                  // 42
     }
-    val bad = str.parse_i64("4x")
-    print(result.is_err(bad))         // true
+    val bad = str.parseI64("4x")
+    print(result.isErr(bad))         // true
 
     print((-7).toText())           // -7
     print((1.5).toText(2))       // 1.50
@@ -108,7 +108,7 @@ fun main() {
   compares bytes, not codepoints, which is the same answer `List<u8>.sort` gives
   and the one a caller's sort depends on; write an explicit codepoint comparison
   if that is what you meant.
-- `str.is_digit` pairs with `str.is_space` for hand-written number parsers.
+- `str.isDigit` pairs with `str.isSpace` for hand-written number parsers.
 - A `String` argument needs `.as_str()`: the module takes views, not owners.
 
 ## See also

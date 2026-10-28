@@ -45,7 +45,7 @@ impl "deps/hash/lib"
 
 Every library targets `kelpc 0.1.5` or newer. `json` uses `str.less` and a
 closure over its own `Json` type; `decimal`, `encoding`, `httpx` and `url` use
-`str.is_digit`. Both helpers and the closure codegen landed in that release, so
+`str.isDigit`. Both helpers and the closure codegen landed in that release, so
 an older compiler refuses those files at codegen rather than at the manifest.
 
 Some libraries are **gated** exactly like a `std/*` module, because they wrap one:

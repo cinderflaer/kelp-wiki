@@ -49,7 +49,7 @@ text functions are reviewable Kelp rather than a C blob. It is imported with
 
 The pure modules `std/str`, `std/fmt`, `std/math`, `std/option`, `std/result`,
 `std/convert` and `std/iter` need no `impl` line at all: a project module that
-names one of them (`str.parse_i64`, a bare `Option<T>`) has it in scope under its
+names one of them (`str.parseI64`, a bare `Option<T>`) has it in scope under its
 own name. See [Modules and imports](/language/modules).
 
 `std/internal/...` is reserved for compiler implementation modules. It is not
@@ -134,6 +134,6 @@ Two conventions worth knowing before reading a page:
 - **A `str` parameter takes a borrowed view.** A `String` needs `.as_str()`;
   a literal needs nothing.
 - **`Option`/`Result` have no methods.** Every combinator is a free function in
-  `std/option` / `std/result`: `option.unwrap(o = maybe)`, `result.is_err(r)`.
+  `std/option` / `std/result`: `option.unwrap(o = maybe)`, `result.isErr(r)`.
 
 [Back to the home page](/)

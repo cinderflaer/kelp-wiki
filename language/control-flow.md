@@ -107,7 +107,7 @@ while i < xs.len() {
 ```
 
 `while` is the general loop: a condition, re-evaluated before each pass. The body
-may be empty (`while !file.is_open() { }`), which is how a spin-wait is written.
+may be empty (`while !file.isOpen() { }`), which is how a spin-wait is written.
 
 ## `for`
 

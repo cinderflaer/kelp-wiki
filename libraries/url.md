@@ -173,7 +173,7 @@ accessor for a fallback that does not panic.
 `query_pairs` splits on `&`, then on the first `=`; a part with no `=` is a name
 with an empty value. **`+` is not a space** here, because that is
 `application/x-www-form-urlencoded` and not a URI. Run
-[`encoding.form_decode`](/libraries/encoding) on each half if the query came from an
+[`encoding.formDecode`](/libraries/encoding) on each half if the query came from an
 HTML form.
 
 The sub-delimiters RFC 3986 §2.2 allows in a path include `!$&'()*+,;=`, so
@@ -191,7 +191,7 @@ fun main() {
             print(url.to_string(u))
             print(u.host.as_str())
             print(url.effective_port(u))
-            val segments = url.path_segments(u)
+            val segments = url.pathSegments(u)
             print(segments.get(2).as_str())
             print(url.query_get_or(u, "x", "none"))
             print(url.origin(u))
@@ -248,7 +248,7 @@ print(url.to_string(u))     // https://example.com:8443/api?q=1
   `urn:` beyond the generic component split.
 - **No IDNA, no punycode, no case folding beyond `to_lower`.** A host with a
   non-ASCII name is passed through as written, and `normalize` lowercases it with
-  `str.to_lower`, which is ASCII-only.
+  `str.toLower`, which is ASCII-only.
 - **A decoded component may not be UTF-8.** `decode_component("%FF")` succeeds
   and yields a `String` holding one non-UTF-8 byte, the same caveat
   [`encoding`](/libraries/encoding) documents. Decode only byte sequences you know

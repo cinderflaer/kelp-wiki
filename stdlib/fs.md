@@ -76,7 +76,7 @@ value. Code that must survive a missing file checks `exists` or `is_file` first,
 or matches the result:
 
 ```kelp
-when fs.read_text(path) {
+when fs.readText(path) {
     Ok(text) -> print(text)
     Err(e) -> print(e.message)
 }
@@ -90,14 +90,14 @@ capability check, and that refusal is not a value:
 impl "std/fs"
 impl "std/result"
 
-val text = result.expect(fs.read_text(path), "cannot read the config")
+val text = result.expect(fs.readText(path), "cannot read the config")
 ```
 
 The fallible forms are the ones a tool needs when it is walking a tree the
 author did not write.
 
 ```kelp
-when fs.mkdir_all(dir) {
+when fs.mkdirAll(dir) {
     Ok(_) -> print("ready")
     Err(e) -> print(e.message)
 }
@@ -109,18 +109,18 @@ impl "std/result"
 
 fun main() {
     val path = "/tmp/kelp-example.txt"
-    result.expect(fs.write_text(path, "line one\nline two\n"), "write")
+    result.expect(fs.writeText(path, "line one\nline two\n"), "write")
     print(fs.exists(path))
     print(fs.size(path))
 
-    val text = result.expect(fs.read_text(path), "read")
+    val text = result.expect(fs.readText(path), "read")
     print(text)
 
     val entries = result.expect(fs.list("/tmp"), "list")
     print(entries.len() >= 0)
 
     result.expect(fs.append(path, Bytes.from_str("line three\n")), "append")
-    print(fs.read_lines(path).len())
+    print(fs.readLines(path).len())
 
     result.expect(fs.remove(path), "remove")
     print(fs.exists(path))

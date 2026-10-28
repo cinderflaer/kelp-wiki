@@ -13,7 +13,7 @@ It is the first example with two dependencies, and the first that builds a `Map`
 | --- | --- |
 | Source | [`src/total-csv-column.kp`](https://homelabone.xenoo.dev/gittea/Lilly/kelp-wiki-wikijs/raw/branch/main/examples/src/total-csv-column.kp) |
 | Needs | `csv = "Lilly/fpl/csv"`, `table = "Lilly/fpl/table"` |
-| Shows | CSV rows and fields, a `Map` accumulator, `str.parse_i64`, rendering a table |
+| Shows | CSV rows and fields, a `Map` accumulator, `str.parseI64`, rendering a table |
 
 ## The dependencies
 
@@ -45,7 +45,7 @@ fun totals_by_region(rows: List<csv.Row>) => Map<String, i64> {
     while i < rows.len() {
         val row = rows.get(i)
         val region = row.get(0)
-        val parsed = str.parse_i64(row.get(1))
+        val parsed = str.parseI64(row.get(1))
         if let Ok(units) = parsed {
             var running: i64 = 0
             if totals.has(region) {
@@ -117,7 +117,7 @@ line after it: `print!("{render}")` then `print("")`.
 - **Entries keep insertion order**, so the report is stable: `north` appears
   before `south` because the file mentions it first. There is no sorting step and
   no hash-order surprise.
-- **`str.parse_i64` returns a `Result`,** so a malformed number is a value to
+- **`str.parseI64` returns a `Result`,** so a malformed number is a value to
   handle rather than a panic. This program silently skips such rows; a stricter
   one would report them.
 - **`Row.get(i)` hands back a `&str`,** so no allocation happens while reading a

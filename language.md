@@ -98,7 +98,7 @@ fun main() {
         print("$x")
     }
 
-    val parsed = str.parse_i64("41")     // Result<i64, str.ParseErr>
+    val parsed = str.parseI64("41")     // Result<i64, str.ParseErr>
     if let Ok(n) = parsed {
         print(n + 1)
     }

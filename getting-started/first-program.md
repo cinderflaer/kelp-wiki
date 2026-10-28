@@ -163,7 +163,7 @@ fun quarter(n: i64) => result.Result<i64, str.ParseErr> {
 }
 
 fun main() {
-    val parsed = str.parse_i64("42")
+    val parsed = str.parseI64("42")
     if let Ok(n) = parsed {
         print(n + 1)              // 43
     }
@@ -188,8 +188,8 @@ impl "std/fs"
 
 fun main() {
     val path = "/tmp/kelp-first.txt"
-    fs.write_text(path, "written by kelp\n")
-    val text = fs.read_text(path)
+    fs.writeText(path, "written by kelp\n")
+    val text = fs.readText(path)
     print(text)
 
     val lines = str.split(text.as_str(), "\n")

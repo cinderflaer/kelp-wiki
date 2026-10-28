@@ -30,7 +30,7 @@ decides the interface: a grant that includes `*` or any pattern matching
 `"0.0.0.0"` or `"*"` for every interface, or a name that resolves to an IPv4
 address. It is checked on `host:port` exactly as `connect` is, so a grant of
 `127.0.0.1:8080` lets a module listen on loopback and refuses `0.0.0.0`, another
-host and another port. `http.listen_on(host, port)` is the same for a `Server`.
+host and another port. `http.listenOn(host, port)` is the same for a `Server`.
 
 ## Types
 
@@ -57,7 +57,7 @@ timeout).
 | `listen(port)` | `Listener` | port `0` asks the OS for a free one |
 | `accept(l)` | `Result<Socket, NetErr>` | blocks until a peer connects; a failed accept (including a timeout) is `Err` |
 | `Listener.port()` | `u16` | the bound port: how you learn what `0` became |
-| `Listener.set_timeout(ms)` | `Unit` | `mut` receiver; makes `accept` give up after `ms` (`0` waits forever) |
+| `Listener.setTimeout(ms)` | `Unit` | `mut` receiver; makes `accept` give up after `ms` (`0` waits forever) |
 | `Listener.close()` | `Unit` | |
 | `close(s)` | `Unit` | |
 | `shutdown_write(s)` | `Result<unit, NetErr>` | half-close, which is how a line protocol says "no more input"; `Err` when the peer has already reset the socket |
@@ -66,10 +66,10 @@ timeout).
 | `send_text(s, text)` | `Unit` | |
 | `recv(s, max)` | `Result<Bytes, NetErr>` | up to `max` bytes; **an empty `Ok` means the peer closed**, or that `max` was `0` |
 | `recv_into(s, buf, at)` | `Result<int, NetErr>` | `Ok(0)` is end of stream |
-| `Socket.wait_readable(timeout_ms)` / `wait_writable(...)` | `bool` | |
-| `Socket.set_timeout(ms)` | `Unit` | `mut` receiver |
+| `Socket.waitReadable(timeout_ms)` / `wait_writable(...)` | `bool` | |
+| `Socket.setTimeout(ms)` | `Unit` | `mut` receiver |
 | `mono_ms()` | `i64` | milliseconds on the monotonic clock, for deadlines: only the difference of two readings means anything |
-| `Socket.peer_addr()` | `String` | |
+| `Socket.peerAddr()` | `String` | |
 | `resolve(host)` | `List<String>` | addresses, for a caller that wants to log one |
 
 `send`, `wait_readable` and the other calls that are not in the table above keep
@@ -113,7 +113,7 @@ impl "std/thread"
 
 fun serve(l: move net.Listener) {
     val peer = result.expect(net.accept(l), "accept")
-    thread.sleep_ms(3000)
+    thread.sleepMs(3000)
     net.close(peer)
     l.close()
 }
@@ -126,8 +126,8 @@ fun main() {
     when net.connect("127.0.0.1", port) {
         Ok(sock) -> {
             var s = sock
-            s.set_timeout(300)
-            when net.send_all(s, Bytes.from_str("ping")) {
+            s.setTimeout(300)
+            when net.sendAll(s, Bytes.from_str("ping")) {
                 Ok(n) -> print(n)
                 Err(e) -> {
                     print("send failed")
@@ -215,10 +215,10 @@ gave up
 
 ## A listener that can time out
 
-`accept` blocks forever. `Listener.set_timeout(ms)` puts an upper bound on it,
+`accept` blocks forever. `Listener.setTimeout(ms)` puts an upper bound on it,
 and `accept` then returns an `Err` whose reason is `net.accept: timed out`, which
 is how one thread serves many sockets or stops when nobody is coming.
-`net.mono_ms()` is the monotonic clock the deadlines are built on; it lives
+`net.monoMs()` is the monotonic clock the deadlines are built on; it lives
 here, not in `std/time`, so a module that holds only `net` can keep a deadline
 without being handed the `time` capability too. `shutdown_write` answers `Err`
 for a socket the peer has already reset: a server ending a connection it does
@@ -230,8 +230,8 @@ impl "std/result"
 
 fun main() {
     var l = net.listen(0)
-    l.set_timeout(100)
-    val t0 = net.mono_ms()
+    l.setTimeout(100)
+    val t0 = net.monoMs()
     when net.accept(l) {
         Ok(s) -> {
             net.close(s)
@@ -239,14 +239,14 @@ fun main() {
         }
         Err(e) -> {
             print(e.reason)
-            print(net.mono_ms() - t0 >= 100)
+            print(net.monoMs() - t0 >= 100)
         }
     }
 
     val c = result.expect(net.connect("127.0.0.1", l.port()), "connect")
     when net.accept(l) {
         Ok(s) -> {
-            print(net.shutdown_write(s).is_ok())
+            print(net.shutdownWrite(s).isOk())
             net.close(s)
         }
         Err(e) -> print(e.reason)
@@ -279,7 +279,7 @@ fun main() {
 
     val s = result.expect(net.connect("127.0.0.1", port), "connect")
     val peer = result.expect(net.accept(l), "accept")
-    result.expect(net.send_all(s, Bytes.from_str("hello")), "send")
+    result.expect(net.sendAll(s, Bytes.from_str("hello")), "send")
 
     val got = result.expect(net.recv(peer, 64), "recv")
     print(got.as_str())
@@ -301,8 +301,8 @@ fun main() {
 - Blocking is the default. `set_timeout` and `wait_readable` are how a caller gets
   a bounded wait.
 - `std/net` itself is plain TCP; TLS lives one layer up in
-  [`std/tls`](/stdlib/tls), which `http.parse_url` uses for `https`
-  (MK5-S4b-M1) and `ws.parse_url` uses for `wss` (`meta/milestones.md`). A `wss`
+  [`std/tls`](/stdlib/tls), which `http.parseUrl` uses for `https`
+  (MK5-S4b-M1) and `ws.parseUrl` uses for `wss` (`meta/milestones.md`). A `wss`
   connection is the same WebSocket client over a `TlsStream`.
 - Fallible calls return `Result`, and a panic is `result.expect(call, "message")`.
   A capability denial still panics, since it is not a value in this module.
