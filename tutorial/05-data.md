@@ -100,6 +100,7 @@ fun main() {
 $ kelpc check moved.kp
 error: use of moved value 'a'
   --> moved.kp:4:11
+  help: pass &a to keep the value here, or do not use it after the move.
 ```
 
 `val b = a` gave the `String` to `b`, so `a` is empty. If a function should keep

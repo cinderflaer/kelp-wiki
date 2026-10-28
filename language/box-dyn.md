@@ -1,6 +1,6 @@
 ---
 title: "Owned trait objects: `Box<dyn Trait>`"
-description: "Box<dyn Name> is an owned trait object. A Box<T> coerces to it, calls go through a vtable, get() borrows a &dyn, and dropping runs the concrete type's drop. There are no upcasts or take()."
+description: "Box<dyn Name> is an owned trait object. A Box<T> coerces to it, calls go through a vtable, get() borrows a &dyn. There are no upcasts or take()."
 isPublished: true
 tags: "language"
 ---
@@ -41,10 +41,6 @@ impl Shape for Rect {
     }
 }
 
-fun mut Rect.drop() {
-    print("drop rect")
-}
-
 fun make(square: bool) => Box<dyn Shape> {
     if square {
         return Box.of(Square(side = 3))
@@ -82,8 +78,6 @@ It prints:
 rect 10
 rect 18
 end
-drop rect
-drop rect
 ```
 
 - `Box.of(Square(side = 3))` builds a `Box<Square>`, and **returning it where a
@@ -94,10 +88,9 @@ drop rect
   boxed shape is passed to a function taking `&dyn Shape`.
 - `one.grow(1)` is a `mut Self` method, so the receiver has to be a writable
   place: here a `var`.
-- The `drop` output at the end: dropping a `Box<dyn Shape>` runs the **concrete
-  type's** drop. `Rect` has a user [`drop`](/language/drop) and `Square` has
-  none, and both rects, the one in the list and `one`, drop after `end`. The
-  list drops its elements through each element's own vtable.
+- `Rect` has no user [`drop`](/language/drop). A type with a drop is a resource,
+  and a resource cannot be the payload of a `Box` in a hosted build, so the
+  boxed types here have none. See [Common refusals](/memory/refusals).
 
 ## Where the coercion happens
 

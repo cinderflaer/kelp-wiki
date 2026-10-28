@@ -37,7 +37,7 @@ fun main() {
     }
 
     val path = argv.get(1)
-    val text = fs.readText(path.as_str())
+    let Ok(text) = fs.readText(path.as_str()) else { panic("cannot read") }
     val s = text.as_str()
     val bytes = str.len(s)
 
@@ -50,7 +50,7 @@ fun main() {
         if c == '\n' {
             lines += 1
         }
-        if is_space(c) {
+        if isSpace(c) {
             in_word = false
         } else if !in_word {
             words += 1

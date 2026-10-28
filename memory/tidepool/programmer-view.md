@@ -120,6 +120,10 @@ fun main() {
 }
 ```
 
+```text
+sent
+```
+
 The fixture `chan_select_send.kp` runs this shape and prints `sent`, `7` and
 `received`. The fixture `chan_select_default.kp` prints `-1` for a `default` arm when
 nothing is queued, and `4` once a value is queued. The fixture `chan_select_arms.kp`
@@ -161,7 +165,7 @@ start-up (`kelpc/gc/src/lib.rs`). The other environment variables are on
 [tooling and release](/memory/tidepool/tooling-release).
 
 ```text
-KELP_GC_VERIFY=1 ./program
+$ KELP_GC_VERIFY=1 ./program
 ```
 
 Verify mode is for tests and debugging. The variable is read by the collector only, so

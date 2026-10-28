@@ -12,7 +12,7 @@ shown.
 
 ## Use after a move
 
-```kelp
+```kelp refused
 fun main() {
     val a = String.from_str("x")
     val b = a
@@ -23,7 +23,8 @@ fun main() {
 
 ```text
 error: use of moved value 'a'
-  --> fail_move.kp:4:11
+  --> example.kp:4:11
+  help: pass &a to keep the value here, or do not use it after the move.
 ```
 
 `val b = a` moved the string into `b`, so `a` is empty. Read the name that still
@@ -46,7 +47,7 @@ x
 `first` borrows an element of `names`. The `push` runs while `first` is still read
 on the next line, so the list cannot be changed.
 
-```kelp
+```kelp refused
 fun main() {
     var names: List<String> = List.empty()
     names.push("alpha")
@@ -59,7 +60,7 @@ fun main() {
 
 ```text
 error: cannot borrow 'names' as exclusive: already borrowed as shared
-  --> fail_mut_borrow.kp:7:5
+  --> example.kp:5:5
 ```
 
 Move the mutation after the last read of the borrow. The borrow is dead once
@@ -87,7 +88,7 @@ A `datac` may hold a `View` only when the text the view points into is moved int
 earlier field of the same value. Here the view points at a local, which the value
 does not own.
 
-```kelp
+```kelp refused
 datac Doc(val body: View)
 
 fun main() {
@@ -99,7 +100,7 @@ fun main() {
 
 ```text
 error: field 'body' borrows 'text', but that value is not moved into an earlier String/Bytes field of this datac
-  --> fail_field_view.kp:5:13
+  --> example.kp:5:13
 ```
 
 Store an owned `String` instead. Copying the view into a `String` makes the field own
@@ -124,7 +125,7 @@ fun main() {
 `&mk()` borrows the result of a call, and a call's result is not a place that can
 be borrowed: it has no name for the borrow to point at.
 
-```kelp
+```kelp refused
 datac Name(val text: String)
 
 fun mk() => Name = Name(text = "kelp")
@@ -140,7 +141,7 @@ fun main() {
 
 ```text
 error: cannot borrow a temporary value
-  --> fail_temp_call.kp:10:10
+  --> example.kp:10:10
 ```
 
 Bind the value to a name first, then borrow the name.

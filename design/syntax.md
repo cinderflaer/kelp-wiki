@@ -1004,7 +1004,7 @@ The rules:
 ### 7.3 `main`
 
 ```kelp
-fun main() { ... }
+fun main() {}
 ```
 
 `main` must exist in the entry module, takes no parameters, returns `Unit`, and cannot be called. A program with no `main` fails with `no 'main' function found`.
@@ -1629,7 +1629,9 @@ impl ops.Ord for Vec2 {
 
 impl fmt.Display for Vec2 {
     fun Self.to_text() => String {
-        return str.concat("(", str.concat(fmt.float(x, 1), ")"))
+        val inner = x.toText(1)
+        val closed = str.concat(inner.as_str(), ")")
+        return str.concat("(", closed.as_str())
     }
 }
 
@@ -2332,11 +2334,11 @@ impl "std/time"
 
 ```kelp
 impl "std/fs"          // 1. imports
-alias %*debug*% = true // 2. aliases, anywhere a statement can start
+alias _debug = true // 2. aliases, anywhere a statement can start
 const LIMIT: i32 = 10  // 3. constants and passdowns, in any mix
 pd val app = "demo"
 datac Point(val x: i32, val y: i32)   // 4. types and functions, in any mix
-fun main() { ... }
+fun main() {}
 ```
 
 An `impl` after a declaration is a parse error, and so is a `const` or `pd` after a `datac` or a `fun`.
@@ -2346,11 +2348,11 @@ An `impl` after a declaration is a parse error, and so is a `const` or `pd` afte
 Alias substitution is textual and runs before parsing, so it can rewrite an import path:
 
 ```kelp
-alias %*db*% = "storage/postgres"
-impl %*db*%
+alias _db = "storage/postgres"
+impl _db
 ```
 
-Aliases come from two places: an inline `alias %*name*% = <raw text to end of line>` declaration, and the `[alias]` section of `coral.toml`, one `name = "module/path"` per line. A `[alias]` value is a relative module path: non-empty, with no leading `/` and no `..` component, and it is checked when the manifest is read. `coral.toml` is the only place the table is read from; a file named `alias.kpconf` is ignored. Substitution has no parameters, no scoping and no hygiene; `%*a*%` defined as `%*b*% * 2` with `%*b*%` defined as `40 + 2` prints `84`, because precedence is whatever the expanded text happens to produce.
+Aliases come from two places: an inline `alias _name = <raw text to end of line>` declaration, and the `[alias]` section of `coral.toml`, one `_name = "module/path"` per line. A `[alias]` value is a relative module path: non-empty, with no leading `/` and no `..` component, and it is checked when the manifest is read. `coral.toml` is the only place the table is read from; a file named `alias.kpconf` is ignored. Substitution has no parameters, no scoping and no hygiene; `_a` defined as `_b * 2` with `_b` defined as `40 + 2` prints `84`, because precedence is whatever the expanded text happens to produce.
 
 ### 13.4 Visibility
 
@@ -3012,7 +3014,8 @@ impl "std/ws" caps(net = ["gateway.example.com:80"], rand = [])
 
 fun main() {
     val u = ws.parseUrl("ws://gateway.example.com/socket")
-    var c = ws.connect(u.host.as_str(), u.port, u.path.as_str())
+    let Ok(conn) = ws.connect(u.host.as_str(), u.port, u.path.as_str()) else { panic("connect") }
+    var c = conn
     c.sendText("hello")
     when c.recv() {
         Text(t) -> print(t)
@@ -3425,10 +3428,10 @@ fun main() {
     }
 
     val path = args.get(1)
-    val text = fs.readText(path.as_str())
+    let Ok(text) = fs.readText(path.as_str()) else { panic("cannot read") }
     val words = str.split(text.as_str(), " ")
 
-    var counts: Map<i64> = Map.new()
+    var counts: Map<i64> = Map.empty()
     for raw in words {
         val word = str.trim(raw.as_str())
         if !str.is_empty(word.as_str()) {
@@ -3445,7 +3448,7 @@ fun main() {
         total += n
         print("${key}: ${n}")
     }
-    val total_text = fmt.int(total)
+    val total_text = total.toText()
     print(str.concat("words: ", total_text.as_str()))
 }
 ```

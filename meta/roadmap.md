@@ -1071,7 +1071,8 @@ impl "std/fs" caps(fs = ["/project/out/**", "/project/data/**"])
 
 fun main() {
     val size = fs.size("/project/data/input.csv").toText()
-    fs.writeText("/project/out/report.txt", str.concat("input bytes: ", size.as_str()))
+    val text = str.concat("input bytes: ", size.as_str())
+    let Ok(_w) = fs.writeText("/project/out/report.txt", text.as_str()) else { panic("write") }
 }
 ```
 

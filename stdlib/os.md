@@ -14,8 +14,9 @@ impl "std/os" caps(env = ["APP_*"], machine = [], fs = ["/tmp/**"])
 fun main() {
     print(os.hostname())
     os.setEnvVar("APP_MODE", "test")
-    val template = str.concat(os.tempDir(), "/app-XXXXXX")
-    val made = os.makeTempDir(template)
+    val base = os.tempDir()
+    val template = str.concat(base.as_str(), "/app-XXXXXX")
+    val made = os.makeTempDir(template.as_str())
     let Ok(dir) = &made else { panic("no directory") }
     print(dir.path())
 }
@@ -105,12 +106,18 @@ impl "std/fs" caps(fs = ["/tmp/**"])
 
 fun main() {
     val td = os.tempDir()
-    val template = str.concat(td, "/build-XXXXXX")
-    val made = os.makeTempDir(template)
+    val template = str.concat(td.as_str(), "/build-XXXXXX")
+    val made = os.makeTempDir(template.as_str())
     let Ok(dir) = &made else { panic("no directory") }
-    fs.writeText(str.concat(dir.path(), "/log.txt"), "ok")
-    print(fs.isDir(dir.path()))
-}   // dir is dropped here, and the directory and its contents are removed
+    val p = dir.path()
+    val log = str.concat(p.as_str(), "/log.txt")
+    let Ok(_w) = fs.writeText(log.as_str(), "ok") else { panic("write") }
+    print(fs.isDir(p.as_str()))
+}
+```
+
+```text
+true
 ```
 
 `make_temp_dir(template)` and `make_temp_file(template)` return

@@ -160,46 +160,39 @@ fun main() {
 
 ## Getting results home
 
-A job returns nothing, so results travel over a [channel](/stdlib/sync#channels)
-the job owns a sender of (each job takes its own `tx.clone()`), or into an
-atomic as above.
+A job returns nothing, so results go into an atomic, as above. A job cannot own a
+sender: a channel end is a resource, and a closure environment cannot hold a resource
+(see [Common refusals](/memory/refusals)).
+
+A `fun` literal cannot read a passdown itself, so the job calls `addSquare`, which
+does:
 
 ```kelp
 impl "std/pool"
-impl "std/sync"
+impl "std/atomic"
+
+pd val total: AtomicI64 = AtomicI64.new(0)
+
+fun addSquare(n: i64) {
+    total.fetch_add(value = n * n, order = atomic.Ordering.SeqCst)
+}
 
 fun main() {
-    val (tx, rx) = sync.bounded<i64>(4)
-    var rxm = rx
     val p = pool.new(2)
     var i: i64 = 1
     while i <= 5 {
-        val mine = tx.clone()
         val n = i
-        p.spawn(fun() {
-            val back = mine.send(n * n)
-        })
+        p.spawn(fun() { addSquare(n) })
         i += 1
     }
-    var sum: i64 = 0
-    var got = 0
-    while got < 5 {
-        when rxm.recv() {
-            Ok(v) -> sum += v
-            Err(_) -> {}
-        }
-        got += 1
-    }
-    print(sum)
+    p.join()
+    print(total.load(order = atomic.Ordering.SeqCst))
 }
 ```
 
-```
+```text
 55
 ```
-
-The loop counts five receives instead of using `for v in rx`, because `main`
-still holds `tx` itself, so the channel would not close on its own.
 
 ## How a panic is survived, and what it costs
 

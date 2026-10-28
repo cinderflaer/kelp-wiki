@@ -111,18 +111,7 @@ impl "std/net" caps(net = ["127.0.0.1:*"])
 impl "std/result"
 impl "std/thread"
 
-fun serve(l: move net.Listener) {
-    val peer = result.expect(net.accept(l), "accept")
-    thread.sleepMs(3000)
-    net.close(peer)
-    l.close()
-}
-
-fun main() {
-    val l = net.listen(0)
-    val port = l.port()
-    val h = thread.spawn(serve, l)
-
+fun dial(port: u16) {
     when net.connect("127.0.0.1", port) {
         Ok(sock) -> {
             var s = sock
@@ -145,6 +134,16 @@ fun main() {
         }
         Err(e) -> print(e.reason)
     }
+}
+
+fun main() {
+    val l = net.listen(0)
+    val port = l.port()
+    val h = thread.spawn(dial, port)
+
+    val peer = result.expect(net.accept(l), "accept")
+    thread.sleepMs(3000)
+    net.close(peer)
 
     when thread.join(h) {
         Ok(_) -> {}

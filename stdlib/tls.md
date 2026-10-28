@@ -120,14 +120,6 @@ impl "std/result"
 impl "std/tls"
 impl "std/thread"
 
-fun serve(l: move net.Listener) {
-    val peer = result.expect(net.accept(l), "accept")
-    net.sendText(peer, "this is not a TLS record\n")
-    thread.sleepMs(200)
-    net.close(peer)
-    l.close()
-}
-
 fun report(e: move tls.TlsError) {
     when e {
         Untrusted -> print("untrusted certificate")
@@ -147,11 +139,7 @@ fun report(e: move tls.TlsError) {
     }
 }
 
-fun main() {
-    val l = net.listen(0)
-    val port = l.port()
-    val h = thread.spawn(serve, l)
-
+fun dial(port: u16) {
     when net.connect("127.0.0.1", port) {
         Ok(sock) -> {
             when tls.handshake(sock, "127.0.0.1") {
@@ -164,7 +152,16 @@ fun main() {
         }
         Err(e) -> print(e.reason)
     }
+}
 
+fun main() {
+    val l = net.listen(0)
+    val port = l.port()
+    val h = thread.spawn(dial, port)
+    val peer = result.expect(net.accept(l), "accept")
+    net.sendText(peer, "this is not a TLS record\n")
+    thread.sleepMs(200)
+    net.close(peer)
     when thread.join(h) {
         Ok(_) -> {}
         Err(_) -> {}

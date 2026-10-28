@@ -188,13 +188,13 @@ impl "std/fs"
 
 fun main() {
     val path = "/tmp/kelp-first.txt"
-    fs.writeText(path, "written by kelp\n")
-    val text = fs.readText(path)
+    let Ok(_w) = fs.writeText(path, "written by kelp\n") else { panic("write") }
+    let Ok(text) = fs.readText(path) else { panic("read") }
     print(text)
 
     val lines = str.split(text.as_str(), "\n")
     print(lines.len())
-    fs.remove(path)
+    let Ok(_r) = fs.remove(path) else { panic("remove") }
 }
 ```
 
