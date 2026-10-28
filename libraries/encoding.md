@@ -162,7 +162,7 @@ fun main() {
     var i: u8 = 0
     while i < 20 {
         counter.push(i)
-        i = i + 1
+        i += 1
     }
     print(encoding.dump(&counter))
 }

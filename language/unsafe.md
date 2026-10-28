@@ -165,7 +165,7 @@ fun main() {
         var i: isize = 0
         while i < 3 {
             sum = sum + base.offset(i).read()
-            i = i + 1
+            i += 1
         }
         print(sum)
 

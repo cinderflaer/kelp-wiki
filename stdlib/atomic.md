@@ -91,7 +91,7 @@ fun bump() {
         val seen = hits.load(order = atomic.Ordering.SeqCst)
         val r = hits.compare_exchange(current = seen, new = seen + 1, order = atomic.Ordering.SeqCst)
         when r {
-            Ok(_) -> { done = done + 1 }
+            Ok(_) -> { done += 1 }
             Err(_) -> {}
         }
     }

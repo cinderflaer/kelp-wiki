@@ -196,7 +196,7 @@ fun main() {
             }
             Err(e) -> print("attempt ${attempt}: ${e.reason}")
         }
-        attempt = attempt + 1
+        attempt += 1
     }
     print("gave up")
 }

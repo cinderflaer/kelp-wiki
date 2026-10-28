@@ -16,6 +16,13 @@ total += n                   // compound assignment: total = total + n
 val (lo, hi) = min_max(xs)   // destructuring: one binding per tuple position
 ```
 
+Read-modify-write has one spelling: `x += e`, with `-=`, `*=`, `/=` and `%=` for the other
+operators. The written-out form `x = x + 1` still compiles, and it prints an `outdated:`
+finding that names the compound form (issue #268). Under `--deny-outdated` it is an error.
+Only a single name or number on the right is rewritten. `total += a + b` adds `a + b`
+to `total`, and `total = total + a + b` adds `a` and then `b`, so the two are not the
+same. A longer right side keeps the written-out form and is not flagged.
+
 ## Which one
 
 - `val` cannot be assigned after the declaration.

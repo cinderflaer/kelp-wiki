@@ -97,7 +97,7 @@ static COUNT: AtomicI64 = Atomic.new(0)
 fun main() {
     print(MAGIC)
     unsafe {
-        CURSOR = CURSOR + 4
+        CURSOR += 4
         print(CURSOR)
     }
     print(NAMES.get(i = 0))

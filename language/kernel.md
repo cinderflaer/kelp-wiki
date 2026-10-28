@@ -296,7 +296,7 @@ pub fun puts(s: str) {
     var i: usize = 0
     while i < n {
         putc(str.byte(s, i))
-        i = i + 1
+        i += 1
     }
 }
 
@@ -449,7 +449,7 @@ interrupt-return instruction, so no `asm` has to save and restore anything:
 ```text
 align(4) interrupt fun trap() {
     unsafe {
-        TICKS = TICKS + 1
+        TICKS += 1
     }
 }
 ```
