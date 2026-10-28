@@ -20,11 +20,11 @@ fun is_space(c: u8) => bool = c == ' ' || c == '\t' || c == '\n' || c == '\r'
 
 // A gated call takes an **absolute** path, and v1 has no way to make one:
 // there is no `fs.cwd()` and no `getcwd` behind it, so a relative argument
-// cannot be turned into an absolute one by the program. `fs.read_text("in.txt")`
+// cannot be turned into an absolute one by the program. `fs.readText("in.txt")`
 // therefore panics ("is outside the fs capability granted to module ..."), even
 // with a `/**` grant. Refusing it here gives the caller a sentence instead.
 fun require_absolute(tool: str, file: str) {
-    if !path.is_absolute(file) {
+    if !path.isAbsolute(file) {
         val message = str.concat("error: ", tool)
         val rest = String.from_str(" takes an absolute path (this language has no cwd accessor)")
         print(str.concat(message.as_str(), rest.as_str()))
@@ -33,7 +33,7 @@ fun require_absolute(tool: str, file: str) {
 }
 
 fun report(label: str, n: i64) {
-    val padded = fmt.pad_right(label, 8, ' ')
+    val padded = fmt.padRight(label, 8, ' ')
     val count = n.toText()
     print(str.concat(padded.as_str(), count.as_str()))
 }
@@ -47,7 +47,7 @@ fun main() {
 
     val path = argv.get(1)
     require_absolute("count-lines-words-bytes", path.as_str())
-    val text = fs.read_text(path.as_str())
+    val text = fs.readText(path.as_str())
     val s = text.as_str()
     val bytes = str.len(s)
 

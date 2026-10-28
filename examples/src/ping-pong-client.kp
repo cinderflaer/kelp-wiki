@@ -13,7 +13,7 @@ impl "deps/lineproto/lib" caps(net = ["127.0.0.1:*"])
 
 fun port_from(argv: List<String>) => u16 {
     if argv.len() >= 2 {
-        val parsed = str.parse_i64(argv.get(1).as_str())
+        val parsed = str.parseI64(argv.get(1).as_str())
         if let Ok(v) = parsed {
             return v.to_u16()
         }
@@ -29,13 +29,13 @@ fun main() {
     var reader = lineproto.new_reader(sock)
 
     lineproto.send_line(sock, "PING")
-    val first = reader.read_line()
+    val first = reader.readLine()
     if let Some(text) = first {
         print(text)
     }
 
     lineproto.send_line(sock, "QUIT")
-    val second = reader.read_line()
+    val second = reader.readLine()
     if let Some(text) = second {
         print(text)
     }

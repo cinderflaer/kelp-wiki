@@ -10,7 +10,7 @@
 // Shows: the subset of TOML that coral.toml itself uses, typed accessors with
 // defaults, and the fact that an unquoted value which is not an integer is a
 // string. The text is in the program so the example runs with no file, and the
-// same call would read `fs.read_text(path)` in a real tool.
+// same call would read `fs.readText(path)` in a real tool.
 
 impl "deps/config/lib"
 impl "std/str"

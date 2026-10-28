@@ -21,9 +21,9 @@ impl "std/path"
 // Printing the file name keeps the output short; the walk returns full paths,
 // and they are absolute because a gated call needs one.
 fun report(file: str, lines: usize) {
-    val name = path.file_name(file)
+    val name = path.fileName(file)
     val number = lines.toText()
-    val count = fmt.pad_left(number.as_str(), 6, ' ')
+    val count = fmt.padLeft(number.as_str(), 6, ' ')
     val line = str.concat(count.as_str(), "  ")
     print(str.concat(line.as_str(), name))
 }
@@ -32,7 +32,7 @@ fun report(file: str, lines: usize) {
 // call still receives an absolute path: `fs` patterns are absolute, and the
 // capability check normalizes before it matches.
 fun absolute_or_here(name: str, here: str) => String {
-    if path.is_absolute(name) {
+    if path.isAbsolute(name) {
         return String.from_str(name)
     }
     return path.absolute(here, name)
@@ -60,8 +60,8 @@ fun main() {
     var i: int = 0
     while i < candidates.len() {
         val entry = candidates.get(i)
-        if fs.is_file(entry.as_str()) {
-            val lines = fs.read_lines(entry.as_str())
+        if fs.isFile(entry.as_str()) {
+            val lines = fs.readLines(entry.as_str())
             report(entry.as_str(), lines.len())
             total += lines.len().to_i64()
             counted += 1

@@ -360,27 +360,27 @@ fun str.concat(a: &str, b: &str) => String       // no `+` operator; see open it
 fun str.from_i64(n: i64) => String
 fun str.from_u64(n: u64) => String
 fun str.from_f64(x: f64, decimals: i32) => String    // one extern: snprintf("%.*f")
-fun str.parse_i64(s: &str) => ParseInt               // superseded: `Result<i64, ParseErr>` since MK5-S6-M1
-fun str.parse_u64(s: &str) => ParseUint
-fun str.parse_f64(s: &str) => ParseFloat             // one extern: strtod
+fun str.parseI64(s: &str) => ParseInt               // superseded: `Result<i64, ParseErr>` since MK5-S6-M1
+fun str.parseU64(s: &str) => ParseUint
+fun str.parseF64(s: &str) => ParseFloat             // one extern: strtod
 fun str.replace(s: &str, from: &str, to: &str) => String
-fun str.char_at(s: &str, i: usize) => u32            // codepoint at char index i, 0 past the end
-fun str.byte_index(s: &str, i: usize) => usize       // byte offset of char i
+fun str.charAt(s: &str, i: usize) => u32            // codepoint at char index i, 0 past the end
+fun str.byteIndex(s: &str, i: usize) => usize       // byte offset of char i
 
 // --- std/fmt.kp (ungated, pure) ---
 fun fmt.int(n: i64) => String
 fun fmt.uint(n: u64) => String
 fun fmt.float(x: f64, decimals: i32) => String
 fun fmt.hex(n: u64) => String                        // lowercase, no prefix
-fun fmt.pad_left(s: &str, width: usize, fill: u8) => String    // fill: u8, not char (item 53)
-fun fmt.pad_right(s: &str, width: usize, fill: u8) => String
+fun fmt.padLeft(s: &str, width: usize, fill: u8) => String    // fill: u8, not char (item 53)
+fun fmt.padRight(s: &str, width: usize, fill: u8) => String
 fun fmt.bytes(b: Bytes) => String                    // "1f 8b 08", for debugging binary
 
 // --- List additions (builtin methods, monomorphized) ---
 fun mut List.sort()                                  // numeric/bool: value order; String: byte order
 fun mut List.reverse()
 fun List.contains(v: T) => bool                      // String elements use str.eq, not `==`
-fun List.index_of(v: T) => i64                       // -1 when absent (a datac would be nicer; open item 42)
+fun List.indexOf(v: T) => i64                       // -1 when absent (a datac would be nicer; open item 42)
 fun List.slice(from: usize, to: usize) => List<T>    // an owned copy
 fun mut List.insert(i: usize, v: T)
 fun List.remove(i: usize) => T                       // moves the element out; panics out of range
@@ -413,35 +413,35 @@ impl "std/mem"
 // sockets and stdio are the same thing at POSIX level, so there is one type.
 datac File(val fd: i32)
 
-fun File.is_open() => bool
+fun File.isOpen() => bool
 fun File.read(max: usize) => Bytes                 // one read; empty Bytes at EOF (no Option)
-fun File.read_into(buf: mut Bytes, at: usize) => usize   // fills buf[at..], returns bytes read, 0 at EOF
+fun File.readInto(buf: mut Bytes, at: usize) => usize   // fills buf[at..], returns bytes read, 0 at EOF
 fun File.write(data: Bytes) => usize
-fun File.write_text(text: String) => usize
+fun File.writeText(text: String) => usize
 fun File.flush()
 fun File.close()
-fun mut File.set_nonblocking(on: bool)
-fun File.wait_readable(timeout_ms: u64) => bool    // poll(2); the event-loop primitive
-fun File.wait_writable(timeout_ms: u64) => bool
+fun mut File.setNonblocking(on: bool)
+fun File.waitReadable(timeout_ms: u64) => bool    // poll(2); the event-loop primitive
+fun File.waitWritable(timeout_ms: u64) => bool
 
 fun io.stdin() => File
 fun io.stdout() => File
 fun io.stderr() => File
 
 datac Line(val ok: bool, val text: String)         // superseded: `Option<String>` since MK5-S6-M1
-fun io.read_line() => Line                         // strips the trailing '\n'
-fun io.read_all() => Bytes
-fun io.read_lines() => List<String>
+fun io.readLine() => Line                         // strips the trailing '\n'
+fun io.readAll() => Bytes
+fun io.readLines() => List<String>
 fun io.eprint(s: &str)
-fun io.eprint_bare(s: &str)
+fun io.eprintBare(s: &str)
 fun io.print(s: &str)
-fun io.print_bare(s: &str)                         // `print`/`print!` already do these
+fun io.printBare(s: &str)                         // `print`/`print!` already do these
 
 // Buffered IO is an owned datac, which is also the "no generics" answer.
 datac BufReader(val file: File, var buf: Bytes, var start: usize, var end: usize)
-fun io.buf_reader(f: File) => BufReader
-fun mut BufReader.read_line() => Line
-fun mut BufReader.read_all() => Bytes
+fun io.bufReader(f: File) => BufReader
+fun mut BufReader.readLine() => Line
+fun mut BufReader.readAll() => Bytes
 
 // ---- std/process.kp gated: process --------------------------------------
 // `program` is a separate argument, not `argv[0]`, because that is what makes
@@ -457,10 +457,10 @@ fun process.spawn(program: &str, args: List<String>) => Child
 datac Child(val pid: i32, val stdin: File, val stdout: File, val stderr: File, var exited: bool, var code: i32)
 fun mut Child.wait() => i32                        // exit code, or 128+signal
 fun Child.kill(signal: i32)
-fun mut Child.is_running() => bool
+fun mut Child.isRunning() => bool
 
 fun process.args() => List<String>                 // from the runtime's saved argv
-fun process.arg_count() => usize
+fun process.argCount() => usize
 fun process.exit(code: i32)                        // your own process: not a capability
 fun process.getpid() => i64
 ```
@@ -504,20 +504,20 @@ datac Listener(val fd: i32)
 
 fun net.accept(l: Listener) => Socket
 fun net.close(s: Socket)
-fun net.shutdown_write(s: Socket)
+fun net.shutdownWrite(s: Socket)
 
 fun net.send(s: Socket, data: Bytes) => usize       // may be short; send_all is the common case
-fun net.send_all(s: Socket, data: Bytes)
-fun net.send_text(s: Socket, text: &str)
+fun net.sendAll(s: Socket, data: Bytes)
+fun net.sendText(s: Socket, text: &str)
 fun net.recv(s: Socket, max: usize) => Bytes        // one read, empty at EOF
-fun net.recv_into(s: Socket, buf: mut Bytes, at: usize) => usize
+fun net.recvInto(s: Socket, buf: mut Bytes, at: usize) => usize
 
-fun Socket.wait_readable(timeout_ms: u64) => bool   // one thread can serve many sockets
-fun Socket.wait_writable(timeout_ms: u64) => bool
-fun mut Socket.set_timeout(ms: u64)                 // SO_RCVTIMEO/SO_SNDTIMEO
+fun Socket.waitReadable(timeout_ms: u64) => bool   // one thread can serve many sockets
+fun Socket.waitWritable(timeout_ms: u64) => bool
+fun mut Socket.setTimeout(ms: u64)                 // SO_RCVTIMEO/SO_SNDTIMEO
 
 fun Listener.port() => u16                          // getsockname: bind 0, learn the port
-fun Socket.peer_addr() => String
+fun Socket.peerAddr() => String
 fun net.resolve(host: &str) => List<String>         // dotted-quad / v6 strings, not a getaddrinfo blob
 ```
 
@@ -557,15 +557,15 @@ const pool_size: usize = __KELP_HTTP_POOL__
 datac Url(val scheme: String, val host: String, val port: u16, val path: String)
 // Panics: no scheme/host, a port that is not a number, or a scheme that is not
 // `http` (`https` panics naming MK5-S4b-M1 rather than pretending, open item 37).
-fun http.parse_url(s: &str) => Url
+fun http.parseUrl(s: &str) => Url
 
 datac Header(val name: String, val value: String)
 // `reusable` is the framing verdict: true only when the body was completely
 // framed (Content-Length or chunked) and the server did not ask to close.
 datac Response(val status: i32, val headers: List<Header>, val body: Bytes, val reusable: bool)
 fun Response.header(name: &str) => String          // "" when absent (no Option)
-fun Response.has_header(name: &str) => bool
-fun Response.is_ok() => bool                       // 200..299
+fun Response.hasHeader(name: &str) => bool
+fun Response.isOk() => bool                       // 200..299
 fun Response.text() => String                      // panics on invalid utf-8
 
 datac Request(val method: String, val url: String, val headers: List<Header>, val body: Bytes)
@@ -590,7 +590,7 @@ fun Pool.len() => usize                            // connections currently kept
 fun mut Pool.warm()                                // opens up to `size` now (optional)
 fun mut Pool.checkout() => Lease                    // lazy: idle one, else a fresh one
 fun mut Pool.release(lease: Lease, reusable: bool)  // keeps it, or closes it
-fun mut Pool.close_all()
+fun mut Pool.closeAll()
 fun Lease.socket() => net.Socket                   // a descriptor, re-wrapped
 
 // `connect_configured` is where a timeout is applied to a new socket, so a
@@ -606,7 +606,7 @@ fun mut Pool.send(req: Request) => Response        // checkout + exchange + rele
 fun exchange(s: net.Socket, req: Request) => Response
 
 fun http.get(url: &str) => Response                // the one-liner: default client, no pool
-fun http.post_text(url: &str, body: &str, content_type: &str) => Response
+fun http.postText(url: &str, body: &str, content_type: &str) => Response
 fun http.default_client() => Client
 ```
 

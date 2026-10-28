@@ -250,21 +250,21 @@ fun Map.values() => List<V>
 impl "std/io"
 impl "std/fs" caps(fs = ["/var/lib/app/**"])
 
-fun fs.mkdir_all(path: &str)                   // split on '/', mkdir each prefix
-fun fs.remove_all(path: &str)                  // recursive (`caps_list`'s clear, once join exists)
+fun fs.mkdirAll(path: &str)                   // split on '/', mkdir each prefix
+fun fs.removeAll(path: &str)                  // recursive (`caps_list`'s clear, once join exists)
 fun fs.walk(path: &str) => List<String>        // recursive names, joined with path.join
 fun fs.copy(from: &str, to: &str)              // one extern: sendfile(2)
 fun fs.touch(path: &str)
 fun fs.open(path: &str, mode: &str) => File     // "r", "w", "a", "rw"; std/io's File
-fun fs.read_lines(path: &str) => List<String>   // split of read_text; no extern
-fun fs.temp_path(prefix: &str) => String        // mkstemp; the file is created
+fun fs.readLines(path: &str) => List<String>   // split of read_text; no extern
+fun fs.tempPath(prefix: &str) => String        // mkstemp; the file is created
 datac Metadata(val size: u64, val mtime: i64, val mode: u32, val is_dir: bool, val is_file: bool)
 fun fs.metadata(path: &str) => Metadata
 
 // ---- path polish ---------------------------------------------------------
 fun path.stem(s: &str) => &str
-fun path.has_extension(s: &str, ext: &str) => bool
-fun path.join_all(parts: List<String>) => String
+fun path.hasExtension(s: &str, ext: &str) => bool
+fun path.joinAll(parts: List<String>) => String
 fun path.split(s: &str) => List<String>
 
 // ---- env, real bodies (gated: env, variable-name allowlist) --------------
@@ -1071,7 +1071,7 @@ impl "std/fs" caps(fs = ["/project/out/**", "/project/data/**"])
 
 fun main() {
     val size = fs.size("/project/data/input.csv").toText()
-    fs.write_text("/project/out/report.txt", str.concat("input bytes: ", size.as_str()))
+    fs.writeText("/project/out/report.txt", str.concat("input bytes: ", size.as_str()))
 }
 ```
 

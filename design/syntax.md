@@ -1876,9 +1876,9 @@ print(fmt.int(n.to_i64()))          // "-7" as a String
 print(fmt.uint(1024))
 print(fmt.float(1.5, 2))            // two decimals
 print(fmt.hex(255))
-print(fmt.pad_left("7", 3, '0'))    // fill byte '0'
+print(fmt.padLeft("7", 3, '0'))    // fill byte '0'
 
-val parsed = str.parse_i64("41")    // Result<i64, str.ParseErr>
+val parsed = str.parseI64("41")    // Result<i64, str.ParseErr>
 if let Ok(v) = parsed {
     print(v + 1)
 }
@@ -2629,26 +2629,26 @@ fun alloc(n: usize) => Bytes      // zero-filled buffer of n bytes; panics on fa
 
 ```kelp
 datac File(val fd: i32)
-fun File.is_open() => bool
+fun File.isOpen() => bool
 fun File.read(max: usize) => Bytes
-fun File.read_into(buf: mut Bytes, at: usize) => usize
-fun File.read_all() => Bytes
+fun File.readInto(buf: mut Bytes, at: usize) => usize
+fun File.readAll() => Bytes
 fun File.write(data: Bytes) => usize
-fun File.write_text(text: String) => usize
-fun File.write_str(text: &str) => usize
+fun File.writeText(text: String) => usize
+fun File.writeStr(text: &str) => usize
 fun File.flush()
 fun File.close()
-fun mut File.set_nonblocking(on: bool)
-fun File.wait_readable(timeout_ms: u64) => bool
-fun File.wait_writable(timeout_ms: u64) => bool
+fun mut File.setNonblocking(on: bool)
+fun File.waitReadable(timeout_ms: u64) => bool
+fun File.waitWritable(timeout_ms: u64) => bool
 
 fun stdin() => File      fun stdout() => File      fun stderr() => File
 
 datac BufReader(val file: File, var buf: Bytes, var start: usize, var end: usize)
 fun buf_reader(f: File) => BufReader
-fun mut BufReader.read_line_into(out: mut String) => bool
-fun mut BufReader.read_line() => Option<String>   // None at end of file
-fun mut BufReader.read_all() => Bytes
+fun mut BufReader.readLineInto(out: mut String) => bool
+fun mut BufReader.readLine() => Option<String>   // None at end of file
+fun mut BufReader.readAll() => Bytes
 fun read_line() => Option<String>   // buffered stdin
 fun read_lines() => List<String>
 fun read_all() => Bytes
@@ -2691,9 +2691,9 @@ fun metadata(path: &str) => Metadata
 ### 16.8 `std/time` (domain `time`) and `std/rand` (domain `rand`)
 
 ```kelp
-fun time.now_unix() => i64
-fun time.now_mono_ns() => i64
-fun time.sleep_ms(ms: u64)
+fun time.nowUnix() => i64
+fun time.nowMonoNs() => i64
+fun time.sleepMs(ms: u64)
 
 fun rand.u64() => u64
 fun rand.below(n: u64) => u64          // 0 .. n-1
@@ -2756,7 +2756,7 @@ fun run(program: &str, args: List<String>) => RunResult
 fun run_inherit(program: &str, args: List<String>) => RunResult
 fun run_inherit_in(dir: &str, program: &str, args: List<String>) => RunResult
 fun mut Child.wait() => i32
-fun mut Child.is_running() => bool
+fun mut Child.isRunning() => bool
 fun Child.kill(signal: i32)
 fun exit(code: i32)
 fun getpid() => i64
@@ -2783,11 +2783,11 @@ fun send_all(s: Socket, data: Bytes) => usize
 fun send_text(s: Socket, text: &str)
 fun recv(s: Socket, max: usize) => Bytes
 fun recv_into(s: Socket, buf: mut Bytes, at: usize) => usize
-fun Socket.wait_readable(timeout_ms: u64) => bool
-fun Socket.wait_writable(timeout_ms: u64) => bool
-fun mut Socket.set_timeout(ms: u64)
+fun Socket.waitReadable(timeout_ms: u64) => bool
+fun Socket.waitWritable(timeout_ms: u64) => bool
+fun mut Socket.setTimeout(ms: u64)
 fun Listener.port() => u16
-fun Socket.peer_addr() => String
+fun Socket.peerAddr() => String
 fun resolve(host: &str) => List<String>
 
 datac Socket(val fd: i32)
@@ -2813,8 +2813,8 @@ datac Request(val method: String, val url: String, val headers: List<Header>, va
 datac Response(val status: i32, val headers: List<Header>, val body: Bytes, val reusable: bool)
 datac Client(val timeout_ms: u64, val max_redirects: i32, val follow_redirects: bool)
 
-fun Response.is_ok() => bool
-fun Response.has_header(name: &str) => bool
+fun Response.isOk() => bool
+fun Response.hasHeader(name: &str) => bool
 fun Response.header(name: &str) => String
 fun Response.text() => String
 ```
@@ -2839,7 +2839,7 @@ fun map<T, U>(o: &Option<T>, f: closure fun(&T) => U) => Option<U>
 fun and_then<T, U>(o: &Option<T>, f: closure fun(&T) => Option<U>) => Option<U>
 fun or_else<T>(o: &Option<T>, f: fun() => Option<T>) => Option<T>   // `T` must be Copy
 fun each<T>(o: &Option<T>, f: closure fun(&T))
-fun Option<T>.unwrap_or(fallback: T) => T   // method form; `T` must be Copy
+fun Option<T>.unwrapOr(fallback: T) => T   // method form; `T` must be Copy
 ```
 
 The enum is the point: `Some`/`None` is one of the two shapes `?` (5) and `if let` (6.1) understand, so a function that can fail one way returns `Option<T>` and its caller writes `val x = f(...)?`. Nothing in the compiler knows this module exists, the *shape* is the contract, so a program's own `Option` works identically.
@@ -2849,7 +2849,7 @@ The **callbacks borrow the payload** (`closure fun(&T) => U`, so a plain functio
 ```kelp
 val text = option.Option.Some(value = String.from_str("hello"))
 val len = option.map(o = text, f = fun(s: &String) => usize = s.len())
-val shout = option.map(o = text, f = fun(s: &String)=> = str.to_upper(s.as_str()))
+val shout = option.map(o = text, f = fun(s: &String)=> = str.toUpper(s.as_str()))
 ```
 
 What hands the payload *out by value* takes the option with **`move`**: `unwrap`, `expect` and `unwrap_or` read the payload of the owned option, which is a partial move of the local the caller gave up, so `Option<String>.unwrap()` works. The move form is the caller's contract too: the option is consumed, so a caller that wants it afterwards passes a fresh expression, or matches it for a tag test only (a pattern that binds an owned payload takes it out just as `unwrap` does, while a `Copy` payload is copied). `or_else` rebuilds `Some` from a payload it was handed through a borrow, so it stays `Copy`-only.
@@ -2864,7 +2864,7 @@ enum Result<T, E> {
 
 fun is_ok<T, E>(r: &Result<T, E>) => bool
 fun is_err<T, E>(r: &Result<T, E>) => bool
-fun unwrap_or<T, E>(r: &Result<T, E>, fallback: T) => T   // `T` must be Copy; the same as `r.unwrap_or(fallback)`
+fun unwrap_or<T, E>(r: &Result<T, E>, fallback: T) => T   // `T` must be Copy; the same as `r.unwrapOr(fallback)`
 fun unwrap<T, E>(r: &Result<T, E>) => T                   // `T` must be Copy; panics on Err
 fun unwrap_err<T, E>(r: &Result<T, E>) => E               // `E` must be Copy; panics on Ok
 
@@ -2873,7 +2873,7 @@ fun map_err<T, E, F>(r: move Result<T, E>, f: closure fun(&E) => F) => Result<T,
 fun and_then<T, U, E>(r: &Result<T, E>, f: closure fun(&T) => Result<U, E>) => Result<U, E>
 fun or_else<T, E, F>(r: &Result<T, E>, f: closure fun(&E) => Result<T, F>) => Result<T, F>
 fun each<T, E>(r: &Result<T, E>, f: closure fun(&T))
-fun Result<T, E>.unwrap_or(fallback: T) => T   // method form; `T` must be Copy; the `Err` payload is dropped
+fun Result<T, E>.unwrapOr(fallback: T) => T   // method form; `T` must be Copy; the `Err` payload is dropped
 fun Result<T, E>.orExit(message: &str) => T   // method form; `T` must be Copy; on Err, the message to stderr and exit 2
 ```
 
@@ -2970,8 +2970,8 @@ fun try_connect(host: &str, port: u16, path: &str) => result.Result<Conn, WsErr>
 datac Url(val scheme: String, val host: String, val port: u16, val path: String)
 datac Conn(val fd: i32, var buf: Bytes, var start: usize, var frag_opcode: u8, var frag_data: Bytes)
 
-fun Conn.send_text(text: &str)
-fun Conn.send_binary(data: &Bytes)
+fun Conn.sendText(text: &str)
+fun Conn.sendBinary(data: &Bytes)
 fun Conn.ping(data: &Bytes)
 fun Conn.pong(data: &Bytes)
 fun Conn.close(code: u16, reason: &str)
@@ -3011,9 +3011,9 @@ Not here, deliberately: a **server**, extensions (`Sec-WebSocket-Extensions`, so
 impl "std/ws" caps(net = ["gateway.example.com:80"], rand = [])
 
 fun main() {
-    val u = ws.parse_url("ws://gateway.example.com/socket")
+    val u = ws.parseUrl("ws://gateway.example.com/socket")
     var c = ws.connect(u.host.as_str(), u.port, u.path.as_str())
-    c.send_text("hello")
+    c.sendText("hello")
     when c.recv() {
         Text(t) -> print(t)
         Ping(d) -> c.pong(d)
@@ -3425,7 +3425,7 @@ fun main() {
     }
 
     val path = args.get(1)
-    val text = fs.read_text(path.as_str())
+    val text = fs.readText(path.as_str())
     val words = str.split(text.as_str(), " ")
 
     var counts: Map<i64> = Map.new()

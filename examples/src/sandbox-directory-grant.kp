@@ -23,7 +23,7 @@ fun main() {
 
     // Inside the grant, straight from the entry module: fine, because the entry
     // module holds everything.
-    print(fs.read_text("/tmp/kelp-sandbox/vault/ok.txt"))
+    print(fs.readText("/tmp/kelp-sandbox/vault/ok.txt"))
 
     // Outside the grant, through the gated module: refused.
     print(vault.read("../secret.txt"))

@@ -275,7 +275,7 @@ fun Bytes.from_str(s: &str) => Bytes       // shipped
 fun Bytes.empty() => Bytes                 // shipped
 
 fun String.len() => usize                  // shipped (MK3-S1-M2); bytes, not chars
-fun String.char_count() => usize           // shipped
+fun String.charCount() => usize           // shipped
 fun String.is_empty() => bool              // shipped
 fun String.as_str() => &str                // needs &-return elision (MK2-S2-M1)
 fun String.as_bytes() => &Bytes            // needs &-return elision (MK2-S2-M1)
@@ -423,8 +423,8 @@ fun math.cos(x: f64) => f64
 fun math.tan(x: f64) => f64
 fun math.atan2(y: f64, x: f64) => f64
 
-fun math.is_nan(x: f64) => bool
-fun math.is_finite(x: f64) => bool
+fun math.isNan(x: f64) => bool
+fun math.isFinite(x: f64) => bool
 
 fun math.checked_add(a: i64, b: i64) => i64   // panics on overflow
 fun math.saturating_add(a: i64, b: i64) => i64
@@ -448,28 +448,28 @@ C signed overflow is UB, so it must be defined:
 ```kelp
 fun str.len(s: &str) => usize              // bytes, not chars
 fun str.is_empty(s: &str) => bool
-fun str.char_count(s: &str) => usize
+fun str.charCount(s: &str) => usize
 fun str.trim(s: &str) => String   // shipped: truncation cannot be a view
-fun str.trim_start(s: &str) => &str
-fun str.trim_end(s: &str) => &str
-fun str.starts_with(s: &str, prefix: &str) => bool
-fun str.ends_with(s: &str, suffix: &str) => bool
+fun str.trimStart(s: &str) => &str
+fun str.trimEnd(s: &str) => &str
+fun str.startsWith(s: &str, prefix: &str) => bool
+fun str.endsWith(s: &str, suffix: &str) => bool
 fun str.contains(s: &str, needle: &str) => bool
-fun str.index_of(s: &str, needle: &str) => Option<usize>   // `None` when absent
+fun str.indexOf(s: &str, needle: &str) => Option<usize>   // `None` when absent
 fun str.eq_ignore_case(a: &str, b: &str) => bool
-fun str.char_at(s: &str, i: usize) => u32    // MK5-S1 shipped `u32`, not `char` (item 53)
-fun str.byte_index(s: &str, i: usize) => usize
+fun str.charAt(s: &str, i: usize) => u32    // MK5-S1 shipped `u32`, not `char` (item 53)
+fun str.byteIndex(s: &str, i: usize) => usize
 fun str.repeat(s: &str, n: usize) => String
 fun str.split(s: &str, sep: &str) => List<String>   // shipped (MK3-S2-M1)
 fun str.join(parts: List<String>, sep: &str) => String   // shipped (MK3-S2-M1)
-fun str.copy_range(s: &str, from: usize, to: usize) => String   // shipped (MK3-S2-M1); the piece-copier split is built on
+fun str.copyRange(s: &str, from: usize, to: usize) => String   // shipped (MK3-S2-M1); the piece-copier split is built on
 fun str.replace(s: &str, from: &str, to: &str) => String
-fun str.to_upper(s: &str) => String
-fun str.to_lower(s: &str) => String
+fun str.toUpper(s: &str) => String
+fun str.toLower(s: &str) => String
 fun str.from_i64(n: i64) => String
 fun str.from_f64(x: f64) => String
-fun str.parse_i64(s: &str) => i64                  // panics on garbage
-fun str.parse_f64(s: &str) => f64
+fun str.parseI64(s: &str) => i64                  // panics on garbage
+fun str.parseF64(s: &str) => f64
 ```
 
 Text-returning functions return `String`, not `Bytes` that is the fix forced by `String` being v1. Byte-level functions (`fs.read`, `net.recv`, `rand.bytes`) still return `Bytes`.
@@ -483,12 +483,12 @@ Receiver form is available and preferred in user code: `name.trim()`, `s.contain
 **Shipped in MK3-S1-M2** (`kelpc/std/path.kp`): `path.is_absolute` and `path.join`. The predicate/slicing family below (`file_name`, `parent`, `extension`, `stem`) returns `&str` and waits on return elision with the rest of `str`. `path.normalize` is deferred *on purpose* it is the same lexical normalization the MK4-S1-M1 capability matcher needs for its `..` rejection, so it should be written once, against the grant matcher, rather than written here and then re-derived there. `path.join` does not normalize (`a/` + `b` collapses the duplicate separator, which is what users mean, but `..` is left alone).
 
 ```kelp
-fun path.is_absolute(s: &str) => bool
-fun path.file_name(s: &str) => &str
+fun path.isAbsolute(s: &str) => bool
+fun path.fileName(s: &str) => &str
 fun path.parent(s: &str) => &str
 fun path.extension(s: &str) => &str
 fun path.stem(s: &str) => &str
-fun path.has_extension(s: &str, ext: &str) => bool
+fun path.hasExtension(s: &str, ext: &str) => bool
 fun path.join(a: &str, b: &str) => String      // needs owned allocation
 fun path.normalize(s: &str) => String          // needs owned allocation
 ```
@@ -501,17 +501,17 @@ Path separator is `/` on every platform; codegen translates to `\` for Windows a
 
 ```kelp
 fun fs.read(path: &str) => Bytes
-fun fs.read_text(path: &str) => String
+fun fs.readText(path: &str) => String
 fun fs.write(path: &str, data: Bytes)
-fun fs.write_text(path: &str, text: String)
+fun fs.writeText(path: &str, text: String)
 fun fs.exists(path: &str) => bool
-fun fs.is_file(path: &str) => bool
-fun fs.is_dir(path: &str) => bool
+fun fs.isFile(path: &str) => bool
+fun fs.isDir(path: &str) => bool
 fun fs.size(path: &str) => u64
 fun fs.remove(path: &str)
 fun fs.rename(from: &str, to: &str)            // both paths checked
 fun fs.mkdir(path: &str)
-fun fs.mkdir_all(path: &str)
+fun fs.mkdirAll(path: &str)
 fun fs.append(path: &str, data: Bytes)         // shipped, and not in the original sketch
 fun fs.sync(path: &str)                        // shipped: fsync, so a timing is of storage
 fun fs.symlink(target: &str, link: &str)       // shipped in MK5-S2-M2; both paths checked
@@ -536,16 +536,16 @@ Glob metacharacters inside a granted path *argument* are literal `fs.read("*.txt
 
 ```kelp
 fun io.print(s: &str)
-fun io.print_bare(s: &str)               // `print`/`print!` already do these two
+fun io.printBare(s: &str)               // `print`/`print!` already do these two
 fun io.eprint(s: &str)
-fun io.eprint_bare(s: &str)
+fun io.eprintBare(s: &str)
 fun io.stdin() => File                   // one stream type over an fd; see MK5-S2-M1
 fun io.stdout() => File
 fun io.stderr() => File
 fun read_line() => Option<String>   // `None` at end of file
-fun io.read_line() => Line                 // needs String, and a buffer: MK5-S2-M1
-fun io.read_all() => Bytes
-fun io.read_lines() => List<String>
+fun io.readLine() => Line                 // needs String, and a buffer: MK5-S2-M1
+fun io.readAll() => Bytes
+fun io.readLines() => List<String>
 datac BufReader(val file: File, var buf: Bytes, var start: usize, var end: usize)
 ```
 
@@ -558,8 +558,8 @@ fun fmt.int(n: i64) => String
 fun fmt.uint(n: u64) => String
 fun fmt.float(x: f64, decimals: i32) => String    // one extern: snprintf("%.*f")
 fun fmt.hex(n: u64) => String                     // lowercase, no prefix
-fun fmt.pad_left(s: &str, width: usize, fill: u8) => String    // fill: u8, not char (item 53)
-fun fmt.pad_right(s: &str, width: usize, fill: u8) => String
+fun fmt.padLeft(s: &str, width: usize, fill: u8) => String    // fill: u8, not char (item 53)
+fun fmt.padRight(s: &str, width: usize, fill: u8) => String
 fun fmt.bytes(b: Bytes) => String                 // "1f 8b 08" the first debugging printer
 ```
 
@@ -596,13 +596,13 @@ impl "std/mem"
 const pool_size: usize = __KELP_HTTP_POOL__      // from coral.toml's http_pool, spliced in by the compiler
 
 datac Url(val scheme: String, val host: String, val port: u16, val path: String)
-fun http.parse_url(s: &str) => Url               // Panics: no scheme/host, or unsupported scheme
+fun http.parseUrl(s: &str) => Url               // Panics: no scheme/host, or unsupported scheme
 
 datac Header(val name: String, val value: String)
 datac Response(val status: i32, val headers: List<Header>, val body: Bytes, val reusable: bool)
 fun Response.header(name: &str) => &str          // "" when absent (no Option)
-fun Response.has_header(name: &str) => bool
-fun Response.is_ok() => bool                     // 200..299
+fun Response.hasHeader(name: &str) => bool
+fun Response.isOk() => bool                     // 200..299
 fun Response.text() => String                    // Panics: invalid utf-8
 
 datac Request(val method: String, val url: String, val headers: List<Header>, val body: Bytes)
@@ -619,12 +619,12 @@ fun Pool.len() => usize                          // sockets currently open
 fun mut Pool.warm()                              // opens up to `size` now (optional)
 fun mut Pool.checkout() => Lease                 // lazy: opens one when none is free
 fun mut Pool.release(lease: Lease, reusable: bool)
-fun mut Pool.close_all()
+fun mut Pool.closeAll()
 fun Client.send(req: Request) => Response        // one fresh connection, follows redirects
 fun mut Pool.send(req: Request) => Response      // checkout + exchange + release
 fun http.exchange(client: Client, lease: Lease, req: Request) => Response   // the concurrency-ready shape
 fun http.get(url: &str) => Response              // the one-liner, default client, no pool
-fun http.post_text(url: &str, body: &str, content_type: &str) => Response
+fun http.postText(url: &str, body: &str, content_type: &str) => Response
 fun http.default_client() => Client
 ```
 
@@ -638,10 +638,10 @@ Four body-length cases, all framed without ambiguity: `Content-Length` (a `mem.a
 fun process.run(program: &str, args: List<String>) => RunResult
 // MK5-S2-M2: the same, with the *child's* working directory. An empty `dir`
 // means the parent's, which is what `run`/`spawn` now delegate with.
-fun process.run_in(dir: &str, program: &str, args: List<String>) => RunResult
+fun process.runIn(dir: &str, program: &str, args: List<String>) => RunResult
 datac RunResult(val code: i32, val out: Bytes, val err: Bytes)
 fun process.spawn(program: &str, args: List<String>) => Child
-fun process.spawn_in(dir: &str, program: &str, args: List<String>) => Child
+fun process.spawnIn(dir: &str, program: &str, args: List<String>) => Child
 // MK5-S2-M2: the fallible shape, so a missing program is a value rather than a
 // panic. Every reason is decided by a `stat`/`access` pre-check *before* the
 // fork. A program outside the grant is not one of them, since that refusal is
@@ -658,9 +658,9 @@ fun process.executable(program: &str) => bool  // the pre-check `try_run` uses
 datac Child(val pid: i32, val stdin: File, val stdout: File, val stderr: File, var exited: bool, var code: i32)
 fun mut Child.wait() => i32                  // exit code, or 128+signal
 fun Child.kill(signal: i32)
-fun mut Child.is_running() => bool
+fun mut Child.isRunning() => bool
 fun process.args() => List<String>           // your own invocation (open item 39)
-fun process.arg_count() => usize
+fun process.argCount() => usize
 fun process.exit(code: i32)
 fun process.getpid() => i64
 ```
@@ -677,20 +677,20 @@ datac Listener(val fd: i32)
 fun net.accept(l: Listener) => Socket
 fun net.close(s: Socket)
 fun Listener.close()                               // shipped in MK5-S3; `net.close` takes a Socket
-fun net.try_accept(l: Listener) => Result<Socket, NetErr>   // st2; `Listener.set_timeout(ms)` makes it time out
-fun net.mono_ms() => i64                           // st2: monotonic ms, for deadlines (in `net`, so `std/http` needs no `time` grant)
+fun net.try_accept(l: Listener) => Result<Socket, NetErr>   // st2; `Listener.setTimeout(ms)` makes it time out
+fun net.monoMs() => i64                           // st2: monotonic ms, for deadlines (in `net`, so `std/http` needs no `time` grant)
 fun net.try_shutdown_write(s: Socket) => bool      // st2: false for a reset socket instead of a panic
-fun net.shutdown_write(s: Socket)
+fun net.shutdownWrite(s: Socket)
 fun net.send(s: Socket, data: Bytes) => usize      // may be short; send_all is the common case
-fun net.send_all(s: Socket, data: Bytes) => usize  // the short-write loop, in the extern
-fun net.send_text(s: Socket, text: &str)
+fun net.sendAll(s: Socket, data: Bytes) => usize  // the short-write loop, in the extern
+fun net.sendText(s: Socket, text: &str)
 fun net.recv(s: Socket, max: usize) => Bytes       // one read, empty at EOF
-fun net.recv_into(s: Socket, buf: mut Bytes, at: usize) => usize
-fun Socket.wait_readable(timeout_ms: u64) => bool  // one thread can serve many sockets
-fun Socket.wait_writable(timeout_ms: u64) => bool
-fun mut Socket.set_timeout(ms: u64)                // SO_RCVTIMEO/SO_SNDTIMEO
+fun net.recvInto(s: Socket, buf: mut Bytes, at: usize) => usize
+fun Socket.waitReadable(timeout_ms: u64) => bool  // one thread can serve many sockets
+fun Socket.waitWritable(timeout_ms: u64) => bool
+fun mut Socket.setTimeout(ms: u64)                // SO_RCVTIMEO/SO_SNDTIMEO
 fun Listener.port() => u16                         // bind 0, learn the port (testability)
-fun Socket.peer_addr() => String
+fun Socket.peerAddr() => String
 fun net.resolve(host: &str) => List<String>        // deduplicated, resolver order
 ```
 
@@ -699,9 +699,9 @@ All shipped in MK5-S3. The pattern vocabulary is `host`, `host:port`, `*.host`, 
 #### time / rand (gated: time, rand)
 
 ```kelp
-fun time.now_unix() => i64
-fun time.now_mono_ns() => i64
-fun time.sleep_ms(ms: u64)          // lives in gated std/time today, so sleeping needs a grant (item 45)
+fun time.nowUnix() => i64
+fun time.nowMonoNs() => i64
+fun time.sleepMs(ms: u64)          // lives in gated std/time today, so sleeping needs a grant (item 45)
 fun rand.u64() => u64
 fun rand.below(n: u64) => u64
 fun rand.bytes(n: usize) => Bytes
