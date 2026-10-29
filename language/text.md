@@ -78,11 +78,16 @@ newline and the stream, plus `File` writes. See
 ## Building text
 
 ```kelp
-var out = String.empty()
-out.push_str("wrote ")
-out.push_str(size_text.as_str())
+val out = "wrote ${size_text}"
 print(out)
 ```
+
+Build text once with a template and bind it to a `val`. A template is a
+`String` value, so the result can be printed, returned or passed on. Use a
+`String` with `push_str` only when the text is built in steps, such as in a loop
+or behind a condition. A template passed straight to a call that borrows its
+argument, such as `out.push_str("...")`, is refused; bind it to a `val` first.
+A template needs `printf`, so a freestanding build refuses it; there, build the text with `str.concat` or a `String`.
 
 | `String` | Notes |
 | --- | --- |
